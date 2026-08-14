@@ -43,6 +43,15 @@ final class EventRepository
         return (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $this->table));
     }
 
+    public function find(int $id): ?array
+    {
+        global $wpdb;
+
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE id = %d', $this->table, $id), ARRAY_A);
+
+        return $row ?: null;
+    }
+
     public function findUpcoming(array $calendarIds = [], int $limit = 10): array
     {
         global $wpdb;

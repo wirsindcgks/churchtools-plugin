@@ -1,0 +1,288 @@
+/*
+ * ChurchTools Events – frontend styles for all three layouts (list/grid/upcoming).
+ * Scoped entirely under .ctp-events so it never leaks into the surrounding theme.
+ * Colors/radius/surface pull from the active theme's Global Styles (theme.json)
+ * where available, with plain fallbacks for classic themes that don't define them.
+ */
+
+.ctp-events {
+    --ctp-accent: var(--wp--preset--color--primary, #2563eb);
+    --ctp-color-text: inherit;
+    --ctp-color-muted: color-mix(in srgb, currentColor 60%, transparent);
+    --ctp-color-surface: var(--wp--preset--color--base, #fff);
+    --ctp-color-border: color-mix(in srgb, currentColor 12%, transparent);
+    --ctp-radius: var(--wp--custom--ctp--radius, 14px);
+    --ctp-gap: clamp(1rem, 1.5vw + 0.5rem, 1.75rem);
+    --ctp-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
+        0 12px 28px -16px color-mix(in srgb, currentColor 30%, transparent);
+    --ctp-columns: 3;
+
+    color: var(--ctp-color-text);
+    line-height: 1.5;
+}
+
+.ctp-events__empty {
+    color: var(--ctp-color-muted);
+    font-style: italic;
+}
+
+.ctp-events__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ctp-events__color-dot {
+    display: inline-block;
+    width: 0.55em;
+    height: 0.55em;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--ctp-accent);
+}
+
+.ctp-events__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ctp-accent) 14%, transparent);
+    color: var(--ctp-accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+/* ---------- shared row pattern (list layout + the "further events" list in the upcoming layout) ---------- */
+
+.ctp-events__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 0.25rem;
+    border-block-end: 1px solid var(--ctp-color-border);
+}
+
+.ctp-events__item:last-child {
+    border-block-end: none;
+}
+
+.ctp-events__date-chip {
+    flex: 0 0 auto;
+    width: 3.25rem;
+    padding: 0.4rem 0;
+    border-radius: calc(var(--ctp-radius) * 0.6);
+    background: color-mix(in srgb, var(--ctp-accent) 12%, var(--ctp-color-surface));
+    text-align: center;
+    line-height: 1.1;
+}
+
+.ctp-events__day {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.ctp-events__month {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.ctp-events__body {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ctp-events__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.ctp-events__subtitle {
+    color: var(--ctp-color-muted);
+    font-size: 0.9rem;
+}
+
+.ctp-events__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 0.2rem;
+    color: var(--ctp-color-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    .ctp-events__item {
+        align-items: flex-start;
+    }
+}
+
+/* ---------- grid layout ---------- */
+
+.ctp-events--grid .ctp-events__list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ctp-gap);
+}
+
+@media (min-width: 480px) {
+    .ctp-events--grid .ctp-events__list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 780px) {
+    .ctp-events--grid .ctp-events__list {
+        grid-template-columns: repeat(var(--ctp-columns), minmax(0, 1fr));
+    }
+}
+
+.ctp-events__card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--ctp-radius);
+    background: var(--ctp-color-surface);
+    box-shadow: var(--ctp-shadow);
+}
+
+.ctp-events__media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--ctp-accent) 55%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 15%, transparent)
+    );
+}
+
+.ctp-events__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ctp-events__date-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: calc(var(--ctp-radius) * 0.5);
+    background: var(--ctp-color-surface);
+    box-shadow: var(--ctp-shadow);
+    text-align: center;
+    line-height: 1.1;
+}
+
+.ctp-events__card .ctp-events__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.1rem 1.25rem;
+}
+
+.ctp-events__card .ctp-events__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.ctp-events__card .ctp-events__meta {
+    flex-direction: column;
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+
+/* ---------- upcoming layout ---------- */
+
+.ctp-events--upcoming .ctp-events__hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-block-end: var(--ctp-gap);
+    overflow: hidden;
+    border-radius: var(--ctp-radius);
+    background: var(--ctp-color-surface);
+    box-shadow: var(--ctp-shadow);
+}
+
+@media (min-width: 640px) {
+    .ctp-events--upcoming .ctp-events__hero {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        align-items: stretch;
+    }
+}
+
+.ctp-events--upcoming .ctp-events__hero-media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--ctp-accent) 60%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 18%, transparent)
+    );
+}
+
+.ctp-events--upcoming .ctp-events__hero-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ctp-events--upcoming .ctp-events__hero-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.5rem 1.75rem;
+}
+
+.ctp-events--upcoming .ctp-events__eyebrow {
+    color: var(--ctp-accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ctp-events--upcoming .ctp-events__hero-title {
+    font-size: clamp(1.35rem, 1rem + 1.2vw, 1.9rem);
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.ctp-events--upcoming .ctp-events__hero-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--ctp-color-muted);
+}
+
+.ctp-events--upcoming .ctp-events__more-label {
+    margin: 0 0 0.5rem;
+    color: var(--ctp-color-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ctp-events__card {
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+}

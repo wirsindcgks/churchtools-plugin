@@ -10,7 +10,8 @@
     "attributes": {
         "calendarIds": { "type": "array", "default": [] },
         "layout": { "type": "string", "default": "list" },
-        "limit": { "type": "number", "default": 10 }
+        "limit": { "type": "number", "default": 10 },
+        "columns": { "type": "number", "default": 3 }
     },
     "editorScript": "file:./build/index.js"
 }

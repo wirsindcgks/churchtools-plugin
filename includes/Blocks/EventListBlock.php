@@ -27,6 +27,7 @@ final class EventListBlock
             'calendar_ids' => SettingsPage::resolveCalendarIds($attributes['calendarIds'] ?? []),
             'layout' => $attributes['layout'] ?? 'list',
             'limit' => (int) ($attributes['limit'] ?? 10),
+            'columns' => (int) ($attributes['columns'] ?? 3),
         ]);
     }
 }

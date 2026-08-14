@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Blocks\EventListBlock;
 use ChurchToolsPlugin\Db\Installer;
+use ChurchToolsPlugin\Frontend\Assets;
 use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
 use ChurchToolsPlugin\Sync\RetentionCleanup;
@@ -40,6 +41,7 @@ final class Plugin
         }
 
         (new Shortcode())->register();
+        (new Assets())->register();
         (new EventListBlock())->register();
         (new WpBakeryIntegration())->register();
 

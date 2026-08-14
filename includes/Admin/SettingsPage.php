@@ -52,6 +52,7 @@ final class SettingsPage
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
+            'events' => __('Events', 'churchtools-plugin'),
         ];
     }
 
@@ -446,6 +447,190 @@ final class SettingsPage
         <?php
     }
 
+    /**
+     * Read-only overview of the actually synced wp_ctp_events rows, so an admin can
+     * verify the sync really pulled the right appointments without needing DB
+     * access. Reuses findUpcoming() (soonest first, capped) rather than a plain
+     * "all rows" query, since a year-long sync window can hold hundreds of
+     * recurring-series occurrences and the near-term ones are what matters here.
+     */
+    private function renderEventsOverview(): void
+    {
+        $repository = new EventRepository();
+        $events = $repository->findUpcoming([], 200);
+        $totalCount = $repository->count();
+        $calendars = self::get()['calendars'];
+        ?>
+        <p class="description">
+            <?php
+            printf(
+                /* translators: 1: number of events shown below, 2: total number of stored events */
+                esc_html__('Zeigt die nächsten %1$d von insgesamt %2$d gespeicherten Terminen.', 'churchtools-plugin'),
+                (int) count($events),
+                (int) $totalCount
+            );
+            ?>
+        </p>
+        <?php if ($events === []) : ?>
+            <p><?php esc_html_e('Noch keine Termine synchronisiert.', 'churchtools-plugin'); ?></p>
+        <?php else : ?>
+            <table class="widefat striped" style="max-width:900px;">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Titel', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($events as $event) : ?>
+                        <?php $this->renderEventOverviewRow($event, $calendars); ?>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+        <?php
+    }
+
+    private function renderEventOverviewRow(array $event, array $calendars): void
+    {
+        $calendarId = (int) $event['ct_calendar_id'];
+        $calendarName = $calendars[$calendarId]['name'] ?? sprintf('#%d', $calendarId);
+        ?>
+        <tr>
+            <td>
+                <a href="<?php echo esc_url(self::eventDetailUrl((int) $event['id'])); ?>">
+                    <?php echo esc_html($event['title']); ?>
+                </a>
+                <?php if ($event['subtitle'] !== '') : ?>
+                    <br /><span style="opacity:.6;"><?php echo esc_html($event['subtitle']); ?></span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if (!empty($event['all_day'])) : ?>
+                    <?php echo esc_html(mysql2date(get_option('date_format'), $event['start_date'])); ?>
+                    (<?php esc_html_e('ganztägig', 'churchtools-plugin'); ?>)
+                <?php else : ?>
+                    <?php echo esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $event['start_date'])); ?>
+                    &ndash;
+                    <?php echo esc_html(mysql2date(get_option('time_format'), $event['end_date'])); ?>
+                <?php endif; ?>
+            </td>
+            <td><?php echo esc_html($calendarName); ?></td>
+        </tr>
+        <?php
+    }
+
+    private static function eventDetailUrl(int $id): string
+    {
+        return add_query_arg(
+            ['page' => self::PAGE_SLUG, 'tab' => 'events', 'event_id' => $id],
+            admin_url('admin.php')
+        );
+    }
+
+    private static function eventsOverviewUrl(): string
+    {
+        return add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'events'], admin_url('admin.php'));
+    }
+
+    /**
+     * Detail view for a single synced occurrence, reached by clicking a title in
+     * renderEventsOverview(). Shows every field the sync stores, including ones the
+     * public frontend template deliberately leaves out (description, raw image_url)
+     * — this is an admin-only, manage_options-gated view, not public output.
+     */
+    private function renderEventDetail(int $id): void
+    {
+        $event = (new EventRepository())->find($id);
+        $backUrl = self::eventsOverviewUrl();
+
+        if ($event === null) {
+            printf('<p>%s</p>', esc_html__('Termin nicht gefunden.', 'churchtools-plugin'));
+            printf(
+                '<p><a href="%s">&larr; %s</a></p>',
+                esc_url($backUrl),
+                esc_html__('Zurück zur Übersicht', 'churchtools-plugin')
+            );
+
+            return;
+        }
+
+        $calendarId = (int) $event['ct_calendar_id'];
+        $calendar = self::get()['calendars'][$calendarId] ?? null;
+        ?>
+        <p><a href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?></a></p>
+        <div class="card" style="max-width:760px;">
+            <h2 style="margin-top:0;">
+                <?php echo esc_html($event['title']); ?>
+                <?php if ($event['subtitle'] !== '') : ?>
+                    <br />
+                    <span style="font-weight:normal;opacity:.7;font-size:.7em;">
+                        <?php echo esc_html($event['subtitle']); ?>
+                    </span>
+                <?php endif; ?>
+            </h2>
+
+            <?php if ($event['image_url'] !== '') : ?>
+                <p>
+                    <img
+                        src="<?php echo esc_url($event['image_url']); ?>"
+                        alt=""
+                        style="max-width:100%;height:auto;border-radius:4px;"
+                    />
+                </p>
+            <?php endif; ?>
+
+            <table class="form-table">
+                <tbody>
+                    <tr>
+                        <th><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></th>
+                        <td>
+                            <?php if (!empty($event['all_day'])) : ?>
+                                <?php echo esc_html(mysql2date(get_option('date_format'), $event['start_date'])); ?>
+                                (<?php esc_html_e('ganztägig', 'churchtools-plugin'); ?>)
+                            <?php else : ?>
+                                <?php
+                                $dateTimeFormat = get_option('date_format') . ' ' . get_option('time_format');
+                                echo esc_html(mysql2date($dateTimeFormat, $event['start_date']));
+                                ?>
+                                &ndash;
+                                <?php echo esc_html(mysql2date($dateTimeFormat, $event['end_date'])); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
+                        <td>
+                            <?php if (!empty($calendar['color'])) : ?>
+                                <span style="display:inline-block;width:.8em;height:.8em;border-radius:50%;
+                                    background-color:<?php echo esc_attr($calendar['color']); ?>;vertical-align:middle;"></span>
+                            <?php endif; ?>
+                            <?php echo esc_html($calendar['name'] ?? sprintf('#%d', $calendarId)); ?>
+                        </td>
+                    </tr>
+                    <?php if ($event['location'] !== '') : ?>
+                        <tr>
+                            <th><?php esc_html_e('Ort', 'churchtools-plugin'); ?></th>
+                            <td><?php echo esc_html($event['location']); ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <?php if ($event['description'] !== '') : ?>
+                        <tr>
+                            <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
+                            <td><?php echo wp_kses_post($event['description']); ?></td>
+                        </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <th><?php esc_html_e('ChurchTools-ID', 'churchtools-plugin'); ?></th>
+                        <td><?php echo (int) $event['ct_event_id']; ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
     public function renderPage(): void
     {
         if (!current_user_can('manage_options')) {
@@ -469,13 +654,25 @@ final class SettingsPage
                 <?php $this->renderSyncStatus(); ?>
             <?php endif; ?>
 
-            <form method="post" action="options.php">
+            <?php if ($tab === 'events') : ?>
                 <?php
-                settings_fields(self::PAGE_SLUG);
-                do_settings_sections(self::PAGE_SLUG . '_' . $tab);
-                submit_button();
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which event to display), not a state change; same pattern as currentTab()'s $_GET['tab'] read above.
+                $eventId = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+                if ($eventId > 0) {
+                    $this->renderEventDetail($eventId);
+                } else {
+                    $this->renderEventsOverview();
+                }
                 ?>
-            </form>
+            <?php else : ?>
+                <form method="post" action="options.php">
+                    <?php
+                    settings_fields(self::PAGE_SLUG);
+                    do_settings_sections(self::PAGE_SLUG . '_' . $tab);
+                    submit_button();
+                    ?>
+                </form>
+            <?php endif; ?>
         </div>
         <script>
         document.getElementById('ctp-test-connection')?.addEventListener('click', function () {

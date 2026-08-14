@@ -34,9 +34,20 @@ final class WpBakeryIntegration
                 ],
                 [
                     'type' => 'dropdown',
-                    'heading' => __('Layout', 'churchtools-plugin'),
+                    'heading' => __('Ansicht', 'churchtools-plugin'),
                     'param_name' => 'layout',
-                    'value' => ['list' => 'list', 'grid' => 'grid'],
+                    'value' => [
+                        __('Liste', 'churchtools-plugin') => 'list',
+                        __('Grid', 'churchtools-plugin') => 'grid',
+                        __('Nächster Termin', 'churchtools-plugin') => 'upcoming',
+                    ],
+                ],
+                [
+                    'type' => 'textfield',
+                    'heading' => __('Spalten (nur Grid)', 'churchtools-plugin'),
+                    'param_name' => 'columns',
+                    'value' => '3',
+                    'dependency' => ['element' => 'layout', 'value' => 'grid'],
                 ],
                 [
                     'type' => 'textfield',

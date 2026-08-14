@@ -1,30 +1,61 @@
 <?php
+
 /**
- * Default template for the ctp_events output.
+ * Default "list" layout template for the ctp_events output.
  * Override by copying this file to yourtheme/churchtools-plugin/event-list.php.
  *
  * @var array $events
  * @var array $args
  */
 
+use ChurchToolsPlugin\Frontend\EventFormatter;
+
 if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events ctp-events--<?php echo esc_attr($args['layout']); ?>">
+<div class="ctp-events ctp-events--list">
     <?php if (empty($events)) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
         <ul class="ctp-events__list">
             <?php foreach ($events as $event) : ?>
-                <li class="ctp-events__item">
-                    <span class="ctp-events__date">
-                        <?php echo esc_html(mysql2date(get_option('date_format'), $event['start_date'])); ?>
-                    </span>
-                    <span class="ctp-events__title"><?php echo esc_html($event['title']); ?></span>
-                    <?php if (!empty($event['location'])) : ?>
-                        <span class="ctp-events__location"><?php echo esc_html($event['location']); ?></span>
+                <li
+                    class="ctp-events__item"
+                    <?php if ($event['calendar_color'] !== '') : ?>
+                        style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
                     <?php endif; ?>
+                >
+                    <span class="ctp-events__date-chip" aria-hidden="true">
+                        <span class="ctp-events__day">
+                            <?php echo esc_html(EventFormatter::dayNumber($event['start_date'])); ?>
+                        </span>
+                        <span class="ctp-events__month">
+                            <?php echo esc_html(EventFormatter::monthAbbreviation($event['start_date'])); ?>
+                        </span>
+                    </span>
+                    <span class="ctp-events__body">
+                        <span class="ctp-events__title">
+                            <?php if ($event['calendar_color'] !== '') : ?>
+                                <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                            <?php endif; ?>
+                            <?php echo esc_html($event['title']); ?>
+                            <?php if (!empty($event['all_day'])) : ?>
+                                <span class="ctp-events__badge">
+                                    <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
+                                </span>
+                            <?php endif; ?>
+                        </span>
+                        <?php if ($event['subtitle'] !== '') : ?>
+                            <span class="ctp-events__subtitle"><?php echo esc_html($event['subtitle']); ?></span>
+                        <?php endif; ?>
+                        <span class="ctp-events__meta">
+                            <span><?php echo esc_html(EventFormatter::dateRange($event)); ?></span>
+                            <?php if ($event['location'] !== '') : ?>
+                                <span><?php echo esc_html($event['location']); ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </span>
                 </li>
             <?php endforeach; ?>
         </ul>

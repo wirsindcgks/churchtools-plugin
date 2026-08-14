@@ -24,6 +24,45 @@ Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und 
 2. Plugin aktivieren.
 3. Unter Einstellungen → ChurchTools Events den Instanz-Namen (z. B. „cg-ks“ für https://cg-ks.church.tools) und den API-Key hinterlegen.
 
+== Verwendung ==
+
+Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbinden – alle drei nutzen dieselbe Rendering-Basis und bieten dieselben Optionen. Welche Kalender-IDs/-Namen zur Verfügung stehen, zeigt der „Kalender“-Tab in den Plugin-Einstellungen.
+
+= Shortcode =
+
+`[ctp_events calendar="1,Gottesdienste" layout="list" limit="10" columns="3"]`
+
+* `calendar` – Kommagetrennte Liste von Kalender-IDs und/oder -Namen. Leer = alle aktiven Kalender.
+* `layout` – Ansicht: `list` (Standard), `grid` oder `upcoming`.
+* `limit` – Anzahl der angezeigten Termine (Standard: 10).
+* `columns` – Nur bei `layout="grid"` relevant: Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3). Auf schmaleren Bildschirmen wird automatisch reduziert (1 Spalte auf Smartphones, 2 auf Tablets), unabhängig vom gewählten Wert.
+
+= Die drei Ansichten =
+
+**Liste** – kompakte Zeilen mit Datums-Chip, Titel, Untertitel und Ort.
+
+`[ctp_events calendar="Gottesdienste" layout="list" limit="5"]`
+
+**Grid** – Kartenraster mit Bild (bzw. Farbverlauf-Platzhalter, falls kein Bild hinterlegt ist), Datums-Badge und wählbarer Spaltenzahl.
+
+`[ctp_events calendar="Gottesdienste" layout="grid" columns="4" limit="8"]`
+
+**Nächster Termin** – großer Hero-Bereich für den nächstgelegenen Termin, darunter eine kompakte Liste der übrigen Termine bis `limit`.
+
+`[ctp_events calendar="Gottesdienste" layout="upcoming" limit="4"]`
+
+= Gutenberg-Block =
+
+Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender, Ansicht, Spaltenzahl (nur bei Grid) und Anzahl der Termine festlegen.
+
+= WPBakery-Element =
+
+Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Grid“ als Ansicht gewählt ist.
+
+= Eigenes Design =
+
+Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `event-grid.php`, `event-upcoming.php`). Zum Anpassen die gewünschte Datei aus `wp-content/plugins/churchtools-plugin/includes/Frontend/templates/` nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort bearbeiten – das Original bleibt unangetastet und übersteht Plugin-Updates. Das mitgelieferte Stylesheet orientiert sich zusätzlich automatisch an den Globalen Stilen des aktiven Theme (Akzentfarbe, Eckenradius, Flächenfarbe), sofern das Theme diese über `theme.json` bereitstellt.
+
 == Changelog ==
 
 = 0.1.0 =

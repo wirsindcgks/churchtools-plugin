@@ -12,8 +12,8 @@ Frühe Entwicklungsphase (Grundgerüst). Noch offen: API-Endpunkte gegen die rea
 - **`ChurchToolsPlugin\Api\Client`** – REST-Client für die ChurchTools API.
 - **`ChurchToolsPlugin\Sync\SyncEngine`** – per WP-Cron (`ctp_run_sync`) getriggerter Sync in die eigene DB-Tabelle (`{prefix}ctp_events`). Bildet ChurchTools-Terminserien (`appointment` + `calculatedDates`) auf je eine Zeile pro tatsächlichem Vorkommnis ab (eindeutig über `ct_event_id` + `start_date`); Vorkommnisse, die im Sync-Zeitraum nicht mehr zurückkommen (z. B. eine abgesagte Einzelinstanz), werden per `EventRepository::deleteOrphans()` entfernt.
 - **`ChurchToolsPlugin\Sync\RetentionCleanup`** – per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist.
-- **`ChurchToolsPlugin\Frontend\EventListRenderer`** – zentrale Rendering-Logik, theme-überschreibbares Template (`yourtheme/churchtools-plugin/event-list.php`).
-- **Shortcode** `[ctp_events calendar="1,Gottesdienste" layout="list" limit="10"]` (Kalender per ID und/oder Name, aufgelöst über `SettingsPage::resolveCalendarIds()`), **Gutenberg-Block** (`churchtools-plugin/event-list`) und **WPBakery-Element** rufen alle denselben Renderer über den `ctp_events`-Shortcode auf.
+- **`ChurchToolsPlugin\Frontend\EventListRenderer`** – zentrale Rendering-Logik, wählt je nach `layout` eines von drei theme-überschreibbaren Templates (`yourtheme/churchtools-plugin/event-{list|grid|upcoming}.php`).
+- **Shortcode** `[ctp_events calendar="1,Gottesdienste" layout="list" limit="10" columns="3"]` (Kalender per ID und/oder Name, aufgelöst über `SettingsPage::resolveCalendarIds()`; `layout` = `list`/`grid`/`upcoming`, `columns` nur bei `grid` relevant), **Gutenberg-Block** (`churchtools-plugin/event-list`) und **WPBakery-Element** rufen alle denselben Renderer über den `ctp_events`-Shortcode auf. Ausführliche Nutzungsdoku inkl. Beispielen für alle drei Ansichten: siehe [readme.txt](readme.txt), Abschnitt „Verwendung".
 
 ## Lizenz
 
