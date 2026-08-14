@@ -1,0 +1,11 @@
+{
+    "name": "churchtools-plugin",
+    "private": true,
+    "scripts": {
+        "build": "wp-scripts build blocks/event-list/index.js --output-path=blocks/event-list/build",
+        "start": "wp-scripts start blocks/event-list/index.js --output-path=blocks/event-list/build"
+    },
+    "devDependencies": {
+        "@wordpress/scripts": "^30.0.0"
+    }
+}

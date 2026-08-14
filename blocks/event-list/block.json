@@ -1,0 +1,16 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "churchtools-plugin/event-list",
+    "title": "ChurchTools Events",
+    "category": "widgets",
+    "icon": "calendar-alt",
+    "description": "Zeigt synchronisierte ChurchTools Kalender-Events an.",
+    "textdomain": "churchtools-plugin",
+    "attributes": {
+        "calendarIds": { "type": "array", "default": [] },
+        "layout": { "type": "string", "default": "list" },
+        "limit": { "type": "number", "default": 10 }
+    },
+    "editorScript": "file:./build/index.js"
+}
