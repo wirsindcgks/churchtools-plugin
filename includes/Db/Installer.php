@@ -6,7 +6,7 @@ namespace ChurchToolsPlugin\Db;
 
 final class Installer
 {
-    public const DB_VERSION = '1.2.0';
+    public const DB_VERSION = '1.3.0';
 
     public static function activate(): void
     {
@@ -70,6 +70,7 @@ final class Installer
             all_day TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
             location VARCHAR(255) NULL,
             image_url VARCHAR(1000) NULL,
+            attachment_id BIGINT UNSIGNED NULL,
             raw_data LONGTEXT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

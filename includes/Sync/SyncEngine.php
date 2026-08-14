@@ -38,6 +38,11 @@ final class SyncEngine
         $appointmentEnvelopes = $client->getEvents($calendarIds, $from, $to);
         $keepOccurrenceKeys = [];
 
+        // A recurring series has one image shared by every occurrence row, so the
+        // "does this series need a (re-)import" check must happen once per series,
+        // not once per row.
+        $seriesImageUrls = [];
+
         foreach ($appointmentEnvelopes as $envelope) {
             $row = self::mapOccurrence($envelope);
 
@@ -45,8 +50,15 @@ final class SyncEngine
                 continue;
             }
 
+            $ctEventId = $row['ct_event_id'];
+            $seriesImageUrls[$ctEventId] = $row['image_url'];
+
             $repository->upsert($row);
-            $keepOccurrenceKeys[] = $row['ct_event_id'] . ':' . $row['start_date'];
+            $keepOccurrenceKeys[] = $ctEventId . ':' . $row['start_date'];
+        }
+
+        foreach ($seriesImageUrls as $ctEventId => $imageUrl) {
+            self::syncSeriesImage($repository, $ctEventId, $imageUrl);
         }
 
         $repository->deleteOrphans($calendarIds, $from, $to, $keepOccurrenceKeys);
@@ -93,6 +105,76 @@ final class SyncEngine
             'image_url' => $imageUrl,
             'raw_data' => $envelope,
         ];
+    }
+
+    /**
+     * Imports (or clears) the WP attachment for one series. The "did the image
+     * change" check compares against the '_ctp_source_image_url' postmeta stored on
+     * the *existing attachment itself* (set in importImage()), not against this
+     * table's image_url column — that column gets overwritten with ChurchTools'
+     * current value by every upsert() regardless of whether an import ever
+     * succeeded, so comparing against it would mean a single failed download (e.g.
+     * a transient network error) permanently stops future retries: the next sync
+     * would find image_url already "matching" the failed URL and skip re-importing
+     * forever. Comparing against the attachment's own postmeta instead means we only
+     * ever consider an import successful once it actually is.
+     */
+    private static function syncSeriesImage(EventRepository $repository, int $ctEventId, string $newImageUrl): void
+    {
+        $previousAttachmentId = $repository->getSeriesAttachmentId($ctEventId);
+
+        if ($newImageUrl === '') {
+            if ($previousAttachmentId !== null) {
+                wp_delete_attachment($previousAttachmentId, true);
+                $repository->setSeriesAttachment($ctEventId, null);
+            }
+
+            return;
+        }
+
+        $importedUrl = $previousAttachmentId !== null
+            ? get_post_meta($previousAttachmentId, '_ctp_source_image_url', true)
+            : null;
+
+        if ($importedUrl === $newImageUrl) {
+            return;
+        }
+
+        $newAttachmentId = self::importImage($newImageUrl);
+
+        if ($newAttachmentId === null) {
+            return;
+        }
+
+        $repository->setSeriesAttachment($ctEventId, $newAttachmentId);
+
+        if ($previousAttachmentId !== null && $previousAttachmentId !== $newAttachmentId) {
+            wp_delete_attachment($previousAttachmentId, true);
+        }
+    }
+
+    /**
+     * Sideloads into the media library unattached to any post (post_id 0) — the
+     * event row's attachment_id column is the only reference that needs to track it,
+     * and tying it to a post would have no meaningful post to tie it to. Records the
+     * source URL as postmeta so syncSeriesImage() can detect future changes (see its
+     * docblock for why that can't just be the events table's image_url column).
+     */
+    private static function importImage(string $url): ?int
+    {
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $attachmentId = media_sideload_image($url, 0, null, 'id');
+
+        if (is_wp_error($attachmentId)) {
+            return null;
+        }
+
+        update_post_meta((int) $attachmentId, '_ctp_source_image_url', $url);
+
+        return (int) $attachmentId;
     }
 
     /**

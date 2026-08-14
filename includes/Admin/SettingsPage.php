@@ -558,6 +558,15 @@ final class SettingsPage
 
         $calendarId = (int) $event['ct_calendar_id'];
         $calendar = self::get()['calendars'][$calendarId] ?? null;
+
+        // Prefer the imported WP attachment over the raw ChurchTools image_url — see
+        // EventListRenderer::withCalendarMeta() for why (avoids hotlinking the
+        // ChurchTools domain from the admin's browser too).
+        $attachmentId = (int) ($event['attachment_id'] ?? 0);
+        $displayImageUrl = $attachmentId > 0 ? wp_get_attachment_image_url($attachmentId, 'large') : false;
+        if ($displayImageUrl === false) {
+            $displayImageUrl = $event['image_url'];
+        }
         ?>
         <p><a href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?></a></p>
         <div class="card" style="max-width:760px;">
@@ -571,10 +580,10 @@ final class SettingsPage
                 <?php endif; ?>
             </h2>
 
-            <?php if ($event['image_url'] !== '') : ?>
+            <?php if ($displayImageUrl !== '') : ?>
                 <p>
                     <img
-                        src="<?php echo esc_url($event['image_url']); ?>"
+                        src="<?php echo esc_url($displayImageUrl); ?>"
                         alt=""
                         style="max-width:100%;height:auto;border-radius:4px;"
                     />

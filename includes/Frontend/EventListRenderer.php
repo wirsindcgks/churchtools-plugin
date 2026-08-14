@@ -44,6 +44,10 @@ final class EventListRenderer
     /**
      * Adds the calendar's configured name/color to each event row so templates can
      * show them without every override having to know about SettingsPage/options.
+     * Also resolves image_url to the imported WP attachment when one exists, so
+     * templates never have to hotlink the ChurchTools-hosted original — falls back
+     * to the raw ChurchTools URL only for rows synced before the image import
+     * (attachment_id not yet set) or where the download failed.
      */
     private function withCalendarMeta(array $events): array
     {
@@ -53,6 +57,14 @@ final class EventListRenderer
             $calendar = $calendars[(int) $event['ct_calendar_id']] ?? null;
             $event['calendar_color'] = $calendar['color'] ?? '';
             $event['calendar_name'] = $calendar['name'] ?? '';
+
+            $attachmentId = (int) ($event['attachment_id'] ?? 0);
+            if ($attachmentId > 0) {
+                $attachmentUrl = wp_get_attachment_image_url($attachmentId, 'large');
+                if ($attachmentUrl !== false) {
+                    $event['image_url'] = $attachmentUrl;
+                }
+            }
         }
         unset($event);
 
