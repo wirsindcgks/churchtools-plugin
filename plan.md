@@ -8,11 +8,12 @@ WordPress-Plugin, das Kalender-Events aus der ChurchTools API synchronisiert, lo
 - **Ziel-Instanz für Tests**: `cg-ks.church.tools` (CG Kraichgau-Stromberg)
 - **PHP**: 8.1+, **WordPress**: 6.4+
 - **Architektur**: Namespace `ChurchToolsPlugin\`, PSR-4 via Composer, eigene DB-Tabelle `wp_ctp_events` (kein Custom Post Type)
-- **Verteilung**: GitHub-first (noch **kein** `git init` im Projektordner erfolgt)
+- **Verteilung**: GitHub-first – privates Repo unter [github.com/wirsindcgks/churchtools-plugin](https://github.com/wirsindcgks/churchtools-plugin) (Org-Account, nicht der persönliche `t0bn1k`-Account; lokal via `gh auth switch -u wirsindcgks` umgeschaltet)
 
 ## Konventionen
 
 - **Admin-UI**: Für jedes neue Feature-Thema einen eigenen Tab in `includes/Admin/SettingsPage.php` anlegen (siehe „Admin-UI"-Abschnitt), statt Felder in einen bestehenden Tab zu mischen. Ziel: die UI bleibt übersichtlich, auch wenn das Plugin wächst. Neue Tabs bekommen ihren eigenen Settings-Page-Slug (`self::PAGE_SLUG . '_<tab>'`) und damit ein eigenes `<form>` – wichtig für `sanitizeSettings()`, das fehlende Keys im `$_POST` als „unverändert lassen" behandelt (siehe Bugfix-Hinweis unten).
+- **Changelog**: Nennenswerte Änderungen (neue Features, behobene Bugs) zusätzlich in `CHANGELOG.md` festhalten (Keep-a-Changelog-Format, unter „Unreleased" bis zur nächsten Versionsnummer). `plan.md` bleibt das ausführliche Arbeits-/Kontextdokument, `CHANGELOG.md` die knappe, versionierte Historie fürs Repo. Bei einer neuen Versionsnummer: `Unreleased` → `[x.y.z] - Datum` umbenennen, `Version`-Header in `churchtools-plugin.php` und `Stable tag` in `readme.txt` mitziehen, neuen Git-Tag `vx.y.z` setzen.
 
 ## Was bereits funktioniert (Stand heute)
 
@@ -85,7 +86,7 @@ Gegen den echten OpenAPI-Spec der Instanz verifiziert (`{instance}/system/runtim
 - [ ] **i18n**: Text-Domain wird durchgängig verwendet, aber es existiert noch keine `.pot`-Datei
 
 ### Infrastruktur
-- [ ] **Git-Repo initialisieren** – Projektordner ist bisher kein Git-Repository, kein einziger Commit
+- [x] **Git-Repo initialisieren** – 2026-08-14: lokal initialisiert, erster Commit, privates Repo bei `github.com/wirsindcgks/churchtools-plugin` angelegt und gepusht
 - [ ] Entscheidung, ob/wann eine WordPress.org-Veröffentlichung angestrebt wird (beeinflusst `readme.txt`-Pflege und Composer-Build-Strategie)
 
 ## Nächste sinnvolle Schritte (Vorschlag, Reihenfolge)
@@ -93,7 +94,7 @@ Gegen den echten OpenAPI-Spec der Instanz verifiziert (`{instance}/system/runtim
 Bewusst von kleinen Quick-Wins zu größeren Brocken sortiert (Entscheidung vom 2026-08-14):
 
 **Quick Wins**
-1. Git-Repo initialisieren, ersten Commit erstellen (aktueller Stand ist committable)
+1. ~~Git-Repo initialisieren, ersten Commit erstellen~~ ✅ erledigt (2026-08-14)
 2. Frontend-Template um `subtitle`/`image_url`/`all_day`/Kalenderfarbe erweitern – Daten liegen bereits synchronisiert in der DB, reine Ausgabe-Erweiterung
 3. Admin-Übersichtsseite der importierten Events – neuer Tab, listet die synchronisierten Termine auf (Ergänzung zum bestehenden Sync-Status-Block)
 
