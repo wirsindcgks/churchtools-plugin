@@ -1,6 +1,7 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, CheckboxControl, SelectControl, RangeControl, TextControl } from '@wordpress/components';
+import ServerSideRender from '@wordpress/server-side-render';
 import { __, sprintf } from '@wordpress/i18n';
 import metadata from './block.json';
 
@@ -78,7 +79,7 @@ registerBlockType(metadata.name, {
 						/>
 					</PanelBody>
 				</InspectorControls>
-				<p>{__('ChurchTools Events (Vorschau erscheint im Frontend)', 'churchtools-plugin')}</p>
+				<ServerSideRender block={metadata.name} attributes={attributes} />
 			</div>
 		);
 	},

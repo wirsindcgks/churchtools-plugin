@@ -13,5 +13,7 @@
         "limit": { "type": "number", "default": 10 },
         "columns": { "type": "number", "default": 3 }
     },
-    "editorScript": "file:./build/index.js"
+    "editorScript": "file:./build/index.js",
+    "style": "file:../../assets/css/frontend.css",
+    "script": "file:../../assets/js/frontend.js"
 }
