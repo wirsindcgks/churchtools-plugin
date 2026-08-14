@@ -26,6 +26,27 @@
     font-style: italic;
 }
 
+/* ---------- calendar filter (list/grid layouts only, see EventListRenderer::filterCalendars()) ---------- */
+
+.ctp-events__filter-bar {
+    margin-block-end: var(--ctp-gap);
+}
+
+.ctp-events__filter {
+    padding: 0.5rem 2rem 0.5rem 0.9rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: calc(var(--ctp-radius) * 0.5);
+    background-color: var(--ctp-color-surface);
+    color: var(--ctp-color-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ctp-events__filter:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 2px;
+}
+
 .ctp-events__list {
     display: flex;
     flex-direction: column;

@@ -51,6 +51,8 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 `[ctp_events calendar="Gottesdienste" layout="upcoming" limit="4"]`
 
+Zeigen **Liste** oder **Grid** Termine aus mehr als einem Kalender an (z. B. bei leerem `calendar`-Attribut), erscheint automatisch ein Dropdown zum Filtern nach Kalender – ohne eigenes Attribut, ohne Neuladen der Seite. Bei nur einem Kalender im Ergebnis bleibt es weg. Die „Nächster Termin“-Ansicht hat keinen Filter, da sie nur einen einzelnen Hero-Termin zeigt.
+
 = Gutenberg-Block =
 
 Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender, Ansicht, Spaltenzahl (nur bei Grid) und Anzahl der Termine festlegen.

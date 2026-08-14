@@ -6,6 +6,7 @@
  *
  * @var array $events
  * @var array $args
+ * @var array $filterCalendars
  */
 
 use ChurchToolsPlugin\Frontend\EventFormatter;
@@ -15,6 +16,9 @@ if (!defined('ABSPATH')) {
 }
 ?>
 <div class="ctp-events ctp-events--list">
+    <?php if ($filterCalendars !== []) : ?>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/filter-bar.php'; ?>
+    <?php endif; ?>
     <?php if (empty($events)) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
@@ -22,6 +26,7 @@ if (!defined('ABSPATH')) {
             <?php foreach ($events as $event) : ?>
                 <li
                     class="ctp-events__item"
+                    data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
                     <?php if ($event['calendar_color'] !== '') : ?>
                         style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
                     <?php endif; ?>

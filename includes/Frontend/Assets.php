@@ -6,7 +6,8 @@ namespace ChurchToolsPlugin\Frontend;
 
 final class Assets
 {
-    private const HANDLE = 'ctp-frontend';
+    private const STYLE_HANDLE = 'ctp-frontend';
+    private const SCRIPT_HANDLE = 'ctp-frontend-filter';
 
     public function register(): void
     {
@@ -27,7 +28,14 @@ final class Assets
             return;
         }
 
-        wp_enqueue_style(self::HANDLE, CTP_PLUGIN_URL . 'assets/css/frontend.css', [], CTP_VERSION);
+        wp_enqueue_style(self::STYLE_HANDLE, CTP_PLUGIN_URL . 'assets/css/frontend.css', [], CTP_VERSION);
+
+        // Powers the list/grid calendar filter dropdown (see filter-bar.php /
+        // frontend.js) — enqueued unconditionally alongside the stylesheet rather
+        // than only when a filter actually renders, since that depends on how many
+        // distinct calendars end up in the query results, not something knowable
+        // from the post content alone the way has_shortcode()/has_block() are.
+        wp_enqueue_script(self::SCRIPT_HANDLE, CTP_PLUGIN_URL . 'assets/js/frontend.js', [], CTP_VERSION, true);
     }
 
     /**

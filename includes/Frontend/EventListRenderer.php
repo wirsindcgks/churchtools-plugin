@@ -29,6 +29,11 @@ final class EventListRenderer
         $events = (new EventRepository())->findUpcoming($args['calendar_ids'], $args['limit']);
         $events = $this->withCalendarMeta($events);
 
+        // "upcoming" has a single hero item plus a compact list, not a set of peer
+        // items — filtering it client-side would either leave an empty hero slot or
+        // need JS to re-elect a new hero, so the filter bar is scoped to list/grid.
+        $filterCalendars = $args['layout'] !== 'upcoming' ? $this->filterCalendars($events) : [];
+
         $templateName = "churchtools-plugin/event-{$args['layout']}.php";
         $template = locate_template($templateName);
         if ($template === '') {
@@ -69,5 +74,34 @@ final class EventListRenderer
         unset($event);
 
         return $events;
+    }
+
+    /**
+     * Builds the options for the frontend filter dropdown from the calendars
+     * actually present among $events (not every enabled calendar in settings) —
+     * showing a filter option with zero matching events would be confusing.
+     * Returns [] when there's nothing to filter (0 or 1 distinct calendar), so
+     * templates can render the filter bar with a plain empty-check.
+     */
+    private function filterCalendars(array $events): array
+    {
+        $calendars = [];
+
+        foreach ($events as $event) {
+            $id = (int) $event['ct_calendar_id'];
+
+            if (!isset($calendars[$id])) {
+                $name = $event['calendar_name'] !== '' ? $event['calendar_name'] : sprintf('#%d', $id);
+                $calendars[$id] = ['id' => $id, 'name' => $name];
+            }
+        }
+
+        if (count($calendars) < 2) {
+            return [];
+        }
+
+        usort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $calendars;
     }
 }
