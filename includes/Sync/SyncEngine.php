@@ -159,6 +159,18 @@ final class SyncEngine
      * and tying it to a post would have no meaningful post to tie it to. Records the
      * source URL as postmeta so syncSeriesImage() can detect future changes (see its
      * docblock for why that can't just be the events table's image_url column).
+     *
+     * Deliberately not media_sideload_image() (WP core's usual one-liner for this):
+     * it requires the URL itself to end in a recognizable image extension
+     * (`preg_match('/[^\?]+\.(jpe?g|jpe|gif|png|webp|avif)\b/i', $url)` internally)
+     * and immediately fails with "Invalid image URL" otherwise — before even
+     * attempting a download. ChurchTools' file download endpoints are query-string
+     * based (`…?q=public/filedownload&id=…&filename=<hash, no extension>`), so every
+     * single import failed this way (verified: 0 of 154 synced rows ever got an
+     * attachment_id, despite 116 of them having an image_url). Downloads manually
+     * instead, determining the real file type from the downloaded content via
+     * getimagesize() — not from the URL — and converting it to WebP via
+     * prepareForSideload() before storing it.
      */
     private static function importImage(string $url): ?int
     {
@@ -166,15 +178,69 @@ final class SyncEngine
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
 
-        $attachmentId = media_sideload_image($url, 0, null, 'id');
+        $downloadedFile = download_url($url);
+
+        if (is_wp_error($downloadedFile)) {
+            return null;
+        }
+
+        [$sideloadFile, $extension] = self::prepareForSideload($downloadedFile);
+
+        if ($sideloadFile !== $downloadedFile) {
+            wp_delete_file($downloadedFile);
+        }
+
+        if ($sideloadFile === null) {
+            return null;
+        }
+
+        $attachmentId = media_handle_sideload([
+            'name' => 'churchtools-event-' . md5($url) . '.' . $extension,
+            'tmp_name' => $sideloadFile,
+        ], 0);
 
         if (is_wp_error($attachmentId)) {
+            wp_delete_file($sideloadFile);
+
             return null;
         }
 
         update_post_meta((int) $attachmentId, '_ctp_source_image_url', $url);
 
         return (int) $attachmentId;
+    }
+
+    /**
+     * Converts the downloaded image to WebP — smaller files, one consistent format
+     * regardless of whatever ChurchTools originally stored it as — using WordPress'
+     * own image editor abstraction (GD or Imagick, whichever the server has).
+     * WebP encoding support isn't guaranteed on every host (this plugin's own local
+     * dev environment's GD build lacks it, for instance, and Imagick isn't always
+     * installed either), so this falls back to keeping the original format rather
+     * than failing the whole import — a differently-formatted image still beats
+     * hotlinking ChurchTools' original DSGVO-wise, which is the actual point.
+     *
+     * @return array{0: ?string, 1: ?string} File path to sideload (WebP copy or the
+     *                                       original download) and its extension;
+     *                                       both null if the file isn't a real image.
+     */
+    private static function prepareForSideload(string $downloadedFile): array
+    {
+        $editor = wp_get_image_editor($downloadedFile);
+
+        if (!is_wp_error($editor) && $editor->supports_mime_type('image/webp')) {
+            $webpFile = $downloadedFile . '.webp';
+            $saved = $editor->save($webpFile, 'image/webp');
+
+            if (!is_wp_error($saved)) {
+                return [$webpFile, 'webp'];
+            }
+        }
+
+        $imageInfo = @getimagesize($downloadedFile);
+        $extension = $imageInfo !== false ? image_type_to_extension($imageInfo[2], false) : false;
+
+        return $extension !== false ? [$downloadedFile, $extension] : [null, null];
     }
 
     /**
