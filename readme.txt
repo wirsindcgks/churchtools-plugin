@@ -55,7 +55,7 @@ Zeigen **Liste** oder **Grid** Termine aus mehr als einem Kalender an (z. B. bei
 
 = Gutenberg-Block =
 
-Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender, Ansicht, Spaltenzahl (nur bei Grid) und Anzahl der Termine festlegen.
+Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der im „Kalender“-Tab geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid) und Anzahl der Termine festlegen.
 
 = WPBakery-Element =
 

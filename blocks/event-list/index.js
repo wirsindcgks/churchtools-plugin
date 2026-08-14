@@ -1,30 +1,56 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, TextControl, SelectControl, RangeControl } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { PanelBody, CheckboxControl, SelectControl, RangeControl, TextControl } from '@wordpress/components';
+import { __, sprintf } from '@wordpress/i18n';
 import metadata from './block.json';
+
+// Localized by EventListBlock::localizeCalendars() from the calendars already
+// fetched into the plugin settings — the editor has no ChurchTools access of its
+// own. Empty when nothing's been fetched yet (see the fallback hint below).
+const knownCalendars = window.ctpBlockCalendars || [];
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
 		const { calendarIds, layout, limit, columns } = attributes;
 		const blockProps = useBlockProps();
 
+		// Union of the known calendars and any IDs already saved on this block
+		// instance — a calendar later removed from settings, or not fetched yet,
+		// must still show up as checked instead of silently disappearing.
+		const knownIds = knownCalendars.map((calendar) => calendar.id);
+		const unknownCalendars = calendarIds
+			.filter((id) => !knownIds.includes(id))
+			.map((id) => ({ id, name: sprintf(__('#%d (unbekannt)', 'churchtools-plugin'), id) }));
+		const calendarOptions = [...knownCalendars, ...unknownCalendars];
+
+		const toggleCalendar = (id, checked) => {
+			setAttributes({
+				calendarIds: checked ? [...calendarIds, id] : calendarIds.filter((existingId) => existingId !== id),
+			});
+		};
+
 		return (
 			<div {...blockProps}>
 				<InspectorControls>
 					<PanelBody title={__('Einstellungen', 'churchtools-plugin')}>
-						<TextControl
-							label={__('Kalender-IDs (kommagetrennt)', 'churchtools-plugin')}
-							value={calendarIds.join(',')}
-							onChange={(value) =>
-								setAttributes({
-									calendarIds: value
-										.split(',')
-										.map((id) => parseInt(id.trim(), 10))
-										.filter((id) => !Number.isNaN(id)),
-								})
-							}
-						/>
+						<p>{__('Kalender (leer = alle aktiven Kalender)', 'churchtools-plugin')}</p>
+						{calendarOptions.length === 0 ? (
+							<p>
+								{__(
+									'Keine Kalender geladen. Im Plugin-Tab „Kalender“ zuerst Kalender laden.',
+									'churchtools-plugin'
+								)}
+							</p>
+						) : (
+							calendarOptions.map((calendar) => (
+								<CheckboxControl
+									key={calendar.id}
+									label={calendar.name}
+									checked={calendarIds.includes(calendar.id)}
+									onChange={(checked) => toggleCalendar(calendar.id, checked)}
+								/>
+							))
+						)}
 						<SelectControl
 							label={__('Ansicht', 'churchtools-plugin')}
 							value={layout}
