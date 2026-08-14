@@ -40,15 +40,15 @@ final class EventRepository
     {
         global $wpdb;
 
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
+        return (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $this->table));
     }
 
     public function findUpcoming(array $calendarIds = [], int $limit = 10): array
     {
         global $wpdb;
 
-        $sql = "SELECT * FROM {$this->table} WHERE end_date >= %s";
-        $params = [current_time('mysql')];
+        $sql = 'SELECT * FROM %i WHERE end_date >= %s';
+        $params = [$this->table, current_time('mysql')];
 
         if ($calendarIds !== []) {
             $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
@@ -59,6 +59,7 @@ final class EventRepository
         $sql .= ' ORDER BY start_date ASC LIMIT %d';
         $params[] = $limit;
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from string literals plus a dynamically-sized "%d,%d,..." placeholder list (WordPress's own documented pattern for IN clauses with a variable-length array), then passed straight into $wpdb->prepare() with matching positional $params.
         $results = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
 
         return $results ?: [];
@@ -69,7 +70,7 @@ final class EventRepository
         global $wpdb;
 
         $deleted = $wpdb->query(
-            $wpdb->prepare("DELETE FROM {$this->table} WHERE end_date < %s", $cutoff->format('Y-m-d H:i:s'))
+            $wpdb->prepare('DELETE FROM %i WHERE end_date < %s', $this->table, $cutoff->format('Y-m-d H:i:s'))
         );
 
         return (int) $deleted;
@@ -88,8 +89,12 @@ final class EventRepository
      * "{ct_event_id}:{start_date}" format the sync builds while upserting, so a row
      * survives exactly when its series+occurrence pair was present in this run.
      */
-    public function deleteOrphans(array $calendarIds, DateTimeInterface $from, DateTimeInterface $to, array $keepOccurrenceKeys): int
-    {
+    public function deleteOrphans(
+        array $calendarIds,
+        DateTimeInterface $from,
+        DateTimeInterface $to,
+        array $keepOccurrenceKeys
+    ): int {
         global $wpdb;
 
         if ($calendarIds === []) {
@@ -97,8 +102,8 @@ final class EventRepository
         }
 
         $calendarPlaceholders = implode(',', array_fill(0, count($calendarIds), '%d'));
-        $sql = "DELETE FROM {$this->table} WHERE ct_calendar_id IN ({$calendarPlaceholders}) AND start_date BETWEEN %s AND %s";
-        $params = [...$calendarIds, $from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')];
+        $sql = 'DELETE FROM %i WHERE ct_calendar_id IN (' . $calendarPlaceholders . ') AND start_date BETWEEN %s AND %s';
+        $params = [$this->table, ...$calendarIds, $from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')];
 
         if ($keepOccurrenceKeys !== []) {
             $keyPlaceholders = implode(',', array_fill(0, count($keepOccurrenceKeys), '%s'));
@@ -106,6 +111,7 @@ final class EventRepository
             array_push($params, ...$keepOccurrenceKeys);
         }
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from string literals plus dynamically-sized "%d,%d,..." / "%s,%s,..." placeholder lists (WordPress's own documented pattern for IN/NOT IN clauses with variable-length arrays), then passed straight into $wpdb->prepare() with matching positional $params.
         $deleted = $wpdb->query($wpdb->prepare($sql, ...$params));
 
         return (int) $deleted;

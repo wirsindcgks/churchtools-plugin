@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name:       ChurchTools Events
  * Plugin URI:        https://github.com/tobiasnikola/churchtools-plugin
@@ -26,11 +27,12 @@ define('CTP_PLUGIN_FILE', __FILE__);
 define('CTP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CTP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-$ctpAutoload = CTP_PLUGIN_DIR . 'vendor/autoload.php';
-if (file_exists($ctpAutoload)) {
-    require_once $ctpAutoload;
-}
-unset($ctpAutoload);
+(static function (): void {
+    $autoload = CTP_PLUGIN_DIR . 'vendor/autoload.php';
+    if (file_exists($autoload)) {
+        require_once $autoload;
+    }
+})();
 
 register_activation_hook(__FILE__, [Db\Installer::class, 'activate']);
 register_deactivation_hook(__FILE__, [Db\Installer::class, 'deactivate']);

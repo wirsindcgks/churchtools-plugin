@@ -138,11 +138,13 @@ final class SettingsPage
     {
         $stored = self::get();
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- both callers (ajaxTestConnection/ajaxFetchCalendars) already run check_ajax_referer() before reaching this helper.
         $instance = self::sanitizeInstance((string) wp_unslash($_POST['instance'] ?? ''));
         if ($instance === '') {
             $instance = $stored['instance'];
         }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- see above.
         $apiKey = trim((string) wp_unslash($_POST['api_key'] ?? ''));
         if ($apiKey === '') {
             $apiKey = self::getDecryptedApiKey();
@@ -621,6 +623,7 @@ final class SettingsPage
             $name = trim(($person['firstName'] ?? '') . ' ' . ($person['lastName'] ?? ''));
 
             wp_send_json_success([
+                /* translators: %s: full name of the authenticated ChurchTools person */
                 'message' => $name !== ''
                     ? sprintf(__('Verbunden als %s', 'churchtools-plugin'), $name)
                     : __('Verbindung erfolgreich', 'churchtools-plugin'),

@@ -73,7 +73,11 @@ final class Client
         $body = json_decode($rawBody, true);
 
         if ($code >= 400) {
-            throw new RuntimeException(sprintf('ChurchTools API error %d: %s', $code, $this->extractErrorMessage($rawBody, $body)));
+            throw new RuntimeException(sprintf(
+                'ChurchTools API error %d: %s',
+                $code,
+                $this->extractErrorMessage($rawBody, $body)
+            ));
         }
 
         return is_array($body['data'] ?? null) ? $body['data'] : [];

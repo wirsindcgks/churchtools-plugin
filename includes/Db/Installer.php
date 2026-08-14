@@ -95,7 +95,7 @@ final class Installer
         ));
 
         if ((int) $indexExists > 0) {
-            $wpdb->query("ALTER TABLE {$tableName} DROP INDEX ct_event_id");
+            $wpdb->query($wpdb->prepare('ALTER TABLE %i DROP INDEX %i', $tableName, 'ct_event_id'));
         }
     }
 }

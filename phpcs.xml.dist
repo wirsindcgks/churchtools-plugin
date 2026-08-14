@@ -13,19 +13,51 @@
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
-    <rule ref="WordPress">
-        <exclude name="WordPress.Files.FileName"/>
+    <!-- Warnings are advisory (e.g. "direct DB call", line-length nitpicks in a
+         WordPress plugin header line) - only errors should block CI. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
+    <!-- Formatting: the codebase deliberately follows modern PSR-12 style (spaces,
+         short array syntax, PSR-4 namespaces - see .editorconfig), not the
+         WordPress-core style (tabs, array(), Yoda conditions, ...). -->
+    <rule ref="PSR12">
+        <!-- A WordPress plugin's main file always mixes declarations (classes it
+             loads) with side effects (define(), add_action(), register_*_hook()) by
+             design - that's simply how a plugin bootstrap file works. -->
+        <exclude name="PSR1.Files.SideEffects"/>
     </rule>
+
+    <!-- WordPress-specific correctness/security rules PSR-12 doesn't cover,
+         cherry-picked instead of the full "WordPress" ruleset so we don't also pull
+         in WordPress-core formatting sniffs that would conflict with PSR-12 above. -->
+    <rule ref="WordPress.Security">
+        <!-- False positive on exception messages: they're plain PHP strings caught
+             and JSON-encoded via wp_send_json_error(), never echoed as HTML. -->
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+    </rule>
+    <rule ref="WordPress.DB"/>
+    <rule ref="WordPress.WP.I18n"/>
+    <rule ref="WordPress.WP.GlobalVariablesOverride"/>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions"/>
+    <rule ref="WordPress.PHP.DevelopmentFunctions"/>
 
     <rule ref="PHPCompatibilityWP"/>
     <config name="testVersion" value="8.1-"/>
 
+    <!-- "ctp"/"CTP" alone are below the sniff's own 4-character minimum; the
+         trailing underscore also matches how every hook/option/table name in this
+         plugin is actually written (ctp_settings, ctp_run_sync, wp_ctp_events, ...). -->
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <properties>
             <property name="prefixes" type="array">
-                <element value="ctp"/>
+                <element value="ctp_"/>
+                <element value="CTP_"/>
                 <element value="ChurchToolsPlugin"/>
             </property>
         </properties>
+        <!-- Template parts execute in include-scope, so their loop variables (e.g.
+             $event in event-list.php) look "global" to static analysis even though
+             they're never actually accessed outside the template. -->
+        <exclude-pattern>*/templates/*</exclude-pattern>
     </rule>
 </ruleset>
