@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 $hero = $events[0] ?? null;
 $upcoming = array_slice($events, 1);
 ?>
-<div class="ctp-events ctp-events--upcoming">
+<div class="ctp-events ctp-events--upcoming" style="<?php echo esc_attr($args['design_style']); ?>">
     <?php if ($hero === null) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>

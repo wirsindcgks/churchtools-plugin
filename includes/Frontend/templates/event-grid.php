@@ -16,7 +16,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events ctp-events--grid" style="--ctp-columns:<?php echo (int) $args['columns']; ?>;">
+<div
+    class="ctp-events ctp-events--grid"
+    style="--ctp-columns:<?php echo (int) $args['columns']; ?>;<?php echo esc_attr($args['design_style']); ?>"
+>
     <?php if ($filterCalendars !== []) : ?>
         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/filter-bar.php'; ?>
     <?php endif; ?>

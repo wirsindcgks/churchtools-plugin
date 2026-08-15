@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Tests\Admin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Frontend\CardDesign;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -136,5 +137,78 @@ final class SettingsPageTest extends TestCase
         $sanitized = SettingsPage::sanitizeSettings(['instance' => 'cg-ks']);
 
         $this->assertSame(90, $sanitized['sync_days_ahead']);
+    }
+
+    public function testSanitizeSettingsAcceptsValidCornerStyle(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['corner_style' => 'square']);
+
+        $this->assertSame('square', $sanitized['corner_style']);
+    }
+
+    public function testSanitizeSettingsFallsBackToExistingCornerStyleWhenInvalid(): void
+    {
+        ctp_test_set_option('ctp_settings', ['corner_style' => 'square']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['corner_style' => 'triangular']);
+
+        $this->assertSame('square', $sanitized['corner_style']);
+    }
+
+    /**
+     * sanitizeElementOrder() is private — reflection over widening visibility
+     * just for tests, same rationale as sanitizeInstance() above: it's the
+     * one piece of logic in sanitizeSettings() worth pinning down directly,
+     * here because it deliberately breaks the file's usual "fall back to the
+     * existing stored value" convention (see its docblock in SettingsPage.php).
+     */
+    private function sanitizeElementOrder(string $raw): array
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'sanitizeElementOrder');
+        $method->setAccessible(true);
+
+        return $method->invoke(null, $raw);
+    }
+
+    public function testSanitizeElementOrderAcceptsAValidNonDefaultPermutation(): void
+    {
+        $this->assertSame(
+            ['meta', 'media', 'title', 'subtitle'],
+            $this->sanitizeElementOrder('meta,media,title,subtitle')
+        );
+    }
+
+    /**
+     * A garbled element_order must snap to the hardcoded default, not to
+     * whatever was previously stored — this is the one field in
+     * sanitizeSettings() that intentionally doesn't fall back to $existing.
+     */
+    public function testSanitizeElementOrderFallsBackToDefaultOnDuplicateKey(): void
+    {
+        $this->assertSame(
+            CardDesign::DEFAULT_ORDER,
+            $this->sanitizeElementOrder('media,media,title,subtitle')
+        );
+    }
+
+    public function testSanitizeElementOrderFallsBackToDefaultOnMissingKey(): void
+    {
+        $this->assertSame(
+            CardDesign::DEFAULT_ORDER,
+            $this->sanitizeElementOrder('media,title,subtitle')
+        );
+    }
+
+    public function testSanitizeElementOrderFallsBackToDefaultOnUnknownKey(): void
+    {
+        $this->assertSame(
+            CardDesign::DEFAULT_ORDER,
+            $this->sanitizeElementOrder('media,title,subtitle,color')
+        );
+    }
+
+    public function testSanitizeElementOrderFallsBackToDefaultOnEmptyString(): void
+    {
+        $this->assertSame(CardDesign::DEFAULT_ORDER, $this->sanitizeElementOrder(''));
     }
 }

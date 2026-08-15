@@ -6,6 +6,7 @@ namespace ChurchToolsPlugin\Admin;
 
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use Throwable;
@@ -52,6 +53,7 @@ final class SettingsPage
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
+            'design' => __('Design', 'churchtools-plugin'),
             'events' => __('Events', 'churchtools-plugin'),
         ];
     }
@@ -70,6 +72,15 @@ final class SettingsPage
         }
 
         wp_enqueue_media();
+
+        // Own handle rather than reusing Assets::STYLE_HANDLE — that class'
+        // enqueue is conditioned on the current *frontend* request using the
+        // shortcode/block, an unrelated concern to whether the admin's Design
+        // tab preview needs the stylesheet.
+        if (self::currentTab() === 'design') {
+            wp_enqueue_style('ctp-admin-design', CTP_PLUGIN_URL . 'assets/css/frontend.css', [], CTP_VERSION);
+            wp_enqueue_script('ctp-admin-design', CTP_PLUGIN_URL . 'assets/js/admin-design.js', [], CTP_VERSION, true);
+        }
     }
 
     public function registerSettings(): void
@@ -97,6 +108,12 @@ final class SettingsPage
         add_settings_field('sync_interval', __('Sync-Intervall', 'churchtools-plugin'), [$this, 'renderSyncIntervalField'], $syncPage, 'ctp_sync');
         add_settings_field('sync_days_ahead', __('Sync-Zeitraum (Tage in die Zukunft)', 'churchtools-plugin'), [$this, 'renderSyncDaysAheadField'], $syncPage, 'ctp_sync');
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
+
+        $designPage = self::PAGE_SLUG . '_design';
+        add_settings_section('ctp_design_order', __('Reihenfolge der Kartenelemente', 'churchtools-plugin'), '__return_false', $designPage);
+        add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designPage, 'ctp_design_order');
+        add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designPage);
+        add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designPage, 'ctp_design_corners');
     }
 
     public static function defaults(): array
@@ -112,6 +129,8 @@ final class SettingsPage
             'sync_interval' => 'hourly',
             'sync_days_ahead' => 180,
             'retention_days' => 30,
+            'element_order' => CardDesign::DEFAULT_ORDER,
+            'corner_style' => 'rounded',
         ];
     }
 
@@ -230,6 +249,11 @@ final class SettingsPage
             $syncInterval = $input['sync_interval'];
         }
 
+        $cornerStyle = $existing['corner_style'];
+        if (array_key_exists('corner_style', $input) && in_array($input['corner_style'], CardDesign::CORNER_STYLES, true)) {
+            $cornerStyle = $input['corner_style'];
+        }
+
         return [
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
@@ -245,7 +269,34 @@ final class SettingsPage
             'retention_days' => array_key_exists('retention_days', $input)
                 ? max(0, (int) $input['retention_days'])
                 : $existing['retention_days'],
+            'element_order' => array_key_exists('element_order', $input)
+                ? self::sanitizeElementOrder((string) $input['element_order'])
+                : $existing['element_order'],
+            'corner_style' => $cornerStyle,
         ];
+    }
+
+    /**
+     * The Design tab's hidden input submits the drag&drop order as a
+     * comma-separated string. Unlike every other field in this method, an
+     * invalid value here does NOT fall back to $existing — a *present but
+     * malformed* value (JS bug, tampered POST, a duplicate/missing/unknown
+     * key) snaps straight to CardDesign::DEFAULT_ORDER instead. Falling back
+     * to $existing would risk silently keeping a half-applied permutation;
+     * the known-good default is the safer failure mode. The ordinary "key
+     * entirely absent from $input" case (a different tab's form was
+     * submitted) still falls back to $existing in sanitizeSettings() above,
+     * same as every other field.
+     */
+    private static function sanitizeElementOrder(string $raw): array
+    {
+        $keys = array_filter(array_map('trim', explode(',', $raw)));
+
+        $isValidPermutation = count($keys) === count(CardDesign::ELEMENT_KEYS)
+            && count($keys) === count(array_unique($keys))
+            && array_diff($keys, CardDesign::ELEMENT_KEYS) === [];
+
+        return $isValidPermutation ? array_values($keys) : CardDesign::DEFAULT_ORDER;
     }
 
     /**
@@ -429,6 +480,114 @@ final class SettingsPage
             esc_attr((string) self::get()['retention_days']),
             esc_html__('Tage', 'churchtools-plugin')
         );
+    }
+
+    /**
+     * German labels for CardDesign::ELEMENT_KEYS, shared by the drag&drop
+     * field and (indirectly, via the same key set) the preview markup below.
+     */
+    private static function elementOrderLabels(): array
+    {
+        return [
+            'media' => __('Bild / Datum', 'churchtools-plugin'),
+            'title' => __('Titel', 'churchtools-plugin'),
+            'subtitle' => __('Untertitel', 'churchtools-plugin'),
+            'meta' => __('Datum & Ort', 'churchtools-plugin'),
+        ];
+    }
+
+    public function renderElementOrderField(): void
+    {
+        $labels = self::elementOrderLabels();
+        $order = self::get()['element_order'];
+        $rowStyle = 'display:flex;align-items:center;gap:0.5em;padding:0.6em 0.8em;margin-bottom:4px;'
+            . 'border:1px solid #dcdcde;border-radius:4px;background:#fff;cursor:move;';
+        ?>
+        <ul id="ctp-design-order" style="max-width:320px;margin:0;padding:0;list-style:none;">
+            <?php foreach ($order as $key) : ?>
+                <li draggable="true" data-key="<?php echo esc_attr($key); ?>" style="<?php echo esc_attr($rowStyle); ?>">
+                    <span class="dashicons dashicons-menu" aria-hidden="true" style="opacity:.5;"></span>
+                    <?php echo esc_html($labels[$key] ?? $key); ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+        <input
+            type="hidden"
+            id="ctp-design-order-input"
+            name="<?php echo esc_attr(self::OPTION_KEY); ?>[element_order]"
+            value="<?php echo esc_attr(implode(',', $order)); ?>"
+        />
+        <p class="description">
+            <?php esc_html_e('Reihenfolge per Drag&Drop ändern (Maus/Trackpad – Touch-Sortierung wird derzeit nicht unterstützt). Die Bild-Position bestimmt nur, ob das Bild über oder unter dem Textblock erscheint, nicht zwischen einzelnen Textzeilen.', 'churchtools-plugin'); ?>
+        </p>
+        <?php
+    }
+
+    public function renderCornerStyleField(): void
+    {
+        $current = self::get()['corner_style'];
+        $options = [
+            'rounded' => __('Rund', 'churchtools-plugin'),
+            'square' => __('Eckig', 'churchtools-plugin'),
+        ];
+
+        foreach ($options as $value => $label) {
+            printf(
+                '<label style="margin-right:1.5em;"><input type="radio" name="%1$s[corner_style]" value="%2$s" %3$s /> %4$s</label>',
+                esc_attr(self::OPTION_KEY),
+                esc_attr($value),
+                checked($current, $value, false),
+                esc_html($label)
+            );
+        }
+    }
+
+    /**
+     * Reuses the real grid-card markup/classes with placeholder content, so
+     * the preview reflects the actual rendering rules instead of a
+     * hand-drawn approximation. Accent/surface colors fall back to this
+     * stylesheet's plain defaults (not the active theme's Global Styles)
+     * because --wp--preset--color--* custom properties are only emitted on
+     * the frontend, not in wp-admin — expected, not a bug, since color isn't
+     * part of what this feature controls.
+     */
+    private function renderDesignPreview(): void
+    {
+        $settings = self::get();
+        $style = CardDesign::styleAttribute($settings['element_order'], $settings['corner_style']);
+        ?>
+        <div class="card" style="max-width:760px;margin:16px 0;">
+            <h2 style="margin-top:0;"><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Vorschau als Grid-Kachel – die Einstellung gilt gleichermaßen für Grid, Liste und „Nächster Termin".', 'churchtools-plugin'); ?>
+            </p>
+            <div class="ctp-events ctp-events--grid" id="ctp-design-preview" style="max-width:280px;<?php echo esc_attr($style); ?>">
+                <ul class="ctp-events__list" style="display:block;">
+                    <li>
+                        <article class="ctp-events__card" style="--ctp-accent:#2563eb;">
+                            <div class="ctp-events__media">
+                                <span class="ctp-events__date-badge" aria-hidden="true">
+                                    <span class="ctp-events__day">24</span>
+                                    <span class="ctp-events__month"><?php esc_html_e('Dez', 'churchtools-plugin'); ?></span>
+                                </span>
+                            </div>
+                            <div class="ctp-events__content">
+                                <span class="ctp-events__title">
+                                    <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                                    <?php esc_html_e('Beispiel-Termin', 'churchtools-plugin'); ?>
+                                </span>
+                                <span class="ctp-events__subtitle"><?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?></span>
+                                <span class="ctp-events__meta">
+                                    <span>24.12.2026, 18:00</span>
+                                    <span><?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?></span>
+                                </span>
+                            </div>
+                        </article>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <?php
     }
 
     private function renderSyncStatus(): void
@@ -694,6 +853,10 @@ final class SettingsPage
 
             <?php if ($tab === 'sync') : ?>
                 <?php $this->renderSyncStatus(); ?>
+            <?php endif; ?>
+
+            <?php if ($tab === 'design') : ?>
+                <?php $this->renderDesignPreview(); ?>
             <?php endif; ?>
 
             <?php if ($tab === 'events') : ?>

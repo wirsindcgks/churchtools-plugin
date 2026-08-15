@@ -26,6 +26,12 @@ final class EventListRenderer
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'list';
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
 
+        $designSettings = SettingsPage::get();
+        $args['design_style'] = CardDesign::styleAttribute(
+            $designSettings['element_order'],
+            $designSettings['corner_style']
+        );
+
         $events = (new EventRepository())->findUpcoming($args['calendar_ids'], $args['limit']);
         $events = $this->withCalendarMeta($events);
 

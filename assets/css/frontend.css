@@ -17,6 +17,20 @@
         0 12px 28px -16px color-mix(in srgb, currentColor 30%, transparent);
     --ctp-columns: 3;
 
+    /*
+     * Fallbacks only — real values come from the inline style each template
+     * sets from CardDesign::styleAttribute() (see EventListRenderer::render()).
+     * These just keep behavior sane for a cached page rendered by an older
+     * plugin version, or a theme override template that doesn't emit
+     * $args['design_style']. Values match the pre-Design-tab visual order:
+     * media, then the title/subtitle/meta content block.
+     */
+    --ctp-order-media: 0;
+    --ctp-order-content: 1;
+    --ctp-order-title: 1;
+    --ctp-order-subtitle: 2;
+    --ctp-order-meta: 3;
+
     color: var(--ctp-color-text);
     line-height: 1.5;
 }
@@ -93,6 +107,7 @@
 }
 
 .ctp-events__date-chip {
+    order: var(--ctp-order-media);
     flex: 0 0 auto;
     width: 3.25rem;
     padding: 0.4rem 0;
@@ -117,11 +132,13 @@
 }
 
 .ctp-events__body {
+    order: var(--ctp-order-content);
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .ctp-events__title {
+    order: var(--ctp-order-title);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -130,11 +147,13 @@
 }
 
 .ctp-events__subtitle {
+    order: var(--ctp-order-subtitle);
     color: var(--ctp-color-muted);
     font-size: 0.9rem;
 }
 
 .ctp-events__meta {
+    order: var(--ctp-order-meta);
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
@@ -180,6 +199,7 @@
 }
 
 .ctp-events__media {
+    order: var(--ctp-order-media);
     position: relative;
     aspect-ratio: 16 / 9;
     background: linear-gradient(
@@ -209,6 +229,7 @@
 }
 
 .ctp-events__card .ctp-events__content {
+    order: var(--ctp-order-content);
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -248,6 +269,7 @@
 }
 
 .ctp-events--upcoming .ctp-events__hero-media {
+    order: var(--ctp-order-media);
     position: relative;
     aspect-ratio: 16 / 10;
     background: linear-gradient(
@@ -265,6 +287,7 @@
 }
 
 .ctp-events--upcoming .ctp-events__hero-body {
+    order: var(--ctp-order-content);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -272,6 +295,8 @@
     padding: 1.5rem 1.75rem;
 }
 
+/* Not part of the reorderable element set — always renders first regardless
+   of the Design tab's element order (calendar name / "Nächster Termin"). */
 .ctp-events--upcoming .ctp-events__eyebrow {
     color: var(--ctp-accent);
     font-size: 0.78rem;
@@ -281,12 +306,14 @@
 }
 
 .ctp-events--upcoming .ctp-events__hero-title {
+    order: var(--ctp-order-title);
     font-size: clamp(1.35rem, 1rem + 1.2vw, 1.9rem);
     font-weight: 800;
     line-height: 1.15;
 }
 
 .ctp-events--upcoming .ctp-events__hero-meta {
+    order: var(--ctp-order-meta);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
