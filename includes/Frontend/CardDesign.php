@@ -9,44 +9,94 @@ namespace ChurchToolsPlugin\Frontend;
  * properties, shared by all three layout templates (list/grid/upcoming) the
  * same way EventFormatter shares date formatting between them.
  *
- * The four reorderable elements ("media" = image/date-badge/date-chip,
- * "title", "subtitle", "meta" = date range + location) map onto two nesting
- * levels every layout already has: media is one flex/grid child, and
- * title/subtitle/meta are three flex children *inside* a single sibling
- * "content" child — the content block can only move before/after media as a
- * whole, not interleave with it. See cssVariables()'s --ctp-order-content
- * derivation for how a single flat 4-element order still expresses that.
+ * The six reorderable elements ("media" = image/date-badge/date-chip,
+ * "calendar" = calendar name label, "title", "subtitle", "excerpt" =
+ * description snippet, "meta" = date range + location) map onto two nesting
+ * levels every layout already has: media is one flex/grid child, and the
+ * other five are flex children *inside* a single sibling "content" child —
+ * the content block can only move before/after media as a whole, not
+ * interleave with it. See cssVariables()'s --ctp-order-content derivation for
+ * how a single flat order still expresses that.
+ *
+ * On top of the six fixed elements (each appears exactly once, enforced by
+ * isValidOrder()), $elementOrder may also contain any number of "separator"
+ * entries — purely decorative spacers/dividers the admin inserts between
+ * elements from the Design tab (see renderElementOrderField()). Unlike the
+ * six fixed elements, these have no dedicated markup in the layout templates
+ * to attach a CSS order var to (there can be any number of them, or none),
+ * so renderSeparators() renders them directly as HTML with the order baked
+ * into an inline style instead of a shared stylesheet rule.
  */
 final class CardDesign
 {
-    public const ELEMENT_KEYS = ['media', 'title', 'subtitle', 'meta'];
+    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'excerpt', 'meta'];
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
     public const CORNER_STYLES = ['rounded', 'square'];
+    public const SEPARATOR_TYPES = ['spacer', 'divider'];
 
     /**
-     * @param string[] $elementOrder A permutation of self::ELEMENT_KEYS.
+     * Separator keys always carry a unique instance suffix generated client-side
+     * (e.g. "divider-m5f3k2"), since — unlike the six fixed keys — a design can
+     * contain any number of spacers/dividers, so the type name alone can't
+     * identify one array entry.
+     */
+    public static function isSeparator(string $key): bool
+    {
+        return (bool) preg_match('/^(' . implode('|', self::SEPARATOR_TYPES) . ')-/', $key);
+    }
+
+    public static function separatorType(string $key): string
+    {
+        return explode('-', $key, 2)[0];
+    }
+
+    /**
+     * @param string[] $elementOrder The six ELEMENT_KEYS once each, plus any
+     *                                number of separator entries, in any order.
+     */
+    public static function isValidOrder(array $elementOrder): bool
+    {
+        $fixedKeys = array_values(array_filter($elementOrder, static fn (string $key): bool => !self::isSeparator($key)));
+        $isValidPermutation = count($fixedKeys) === count(self::ELEMENT_KEYS)
+            && count($fixedKeys) === count(array_unique($fixedKeys))
+            && array_diff(self::ELEMENT_KEYS, $fixedKeys) === [];
+
+        $separatorKeys = array_values(array_filter($elementOrder, static fn (string $key): bool => self::isSeparator($key)));
+        $separatorsAreUnique = count($separatorKeys) === count(array_unique($separatorKeys));
+
+        return $isValidPermutation && $separatorsAreUnique;
+    }
+
+    /**
+     * @param string[] $elementOrder See isValidOrder().
      *
      * @return array<string, int|string>
      */
     public static function cssVariables(array $elementOrder, string $cornerStyle): array
     {
         // Defensive fallback: sanitizeSettings() already guarantees a valid
-        // permutation gets stored, but this method has no access to that
-        // guarantee on its own (e.g. if called with a stale/foreign array).
-        $isValidPermutation = array_diff(self::ELEMENT_KEYS, $elementOrder) === []
-            && array_diff($elementOrder, self::ELEMENT_KEYS) === [];
-
-        if (!$isValidPermutation) {
+        // order gets stored, but this method has no access to that guarantee
+        // on its own (e.g. if called with a stale/foreign array).
+        if (!self::isValidOrder($elementOrder)) {
             $elementOrder = self::DEFAULT_ORDER;
         }
 
         $position = array_flip($elementOrder);
 
+        $contentPositions = [];
+        foreach ($position as $key => $index) {
+            if ($key !== 'media') {
+                $contentPositions[] = $index;
+            }
+        }
+
         $variables = [
             '--ctp-order-media' => $position['media'],
-            '--ctp-order-content' => min($position['title'], $position['subtitle'], $position['meta']),
+            '--ctp-order-content' => min($contentPositions),
+            '--ctp-order-calendar' => $position['calendar'],
             '--ctp-order-title' => $position['title'],
             '--ctp-order-subtitle' => $position['subtitle'],
+            '--ctp-order-excerpt' => $position['excerpt'],
             '--ctp-order-meta' => $position['meta'],
         ];
 
@@ -70,5 +120,37 @@ final class CardDesign
         }
 
         return $declarations;
+    }
+
+    /**
+     * Renders every spacer/divider in $elementOrder as content-region HTML,
+     * each with its configured position baked into an inline `order` (see the
+     * class docblock for why this can't be a shared stylesheet rule). Position
+     * within the returned markup's source order is irrelevant — like every
+     * other content element, the inline `order` alone decides where it lands
+     * — so templates just echo this once anywhere inside the content block.
+     */
+    public static function renderSeparators(array $elementOrder): string
+    {
+        if (!self::isValidOrder($elementOrder)) {
+            $elementOrder = self::DEFAULT_ORDER;
+        }
+
+        $position = array_flip($elementOrder);
+        $html = '';
+
+        foreach ($elementOrder as $key) {
+            if (!self::isSeparator($key)) {
+                continue;
+            }
+
+            $order = (int) $position[$key];
+
+            $html .= self::separatorType($key) === 'divider'
+                ? '<hr class="ctp-events__divider" style="order:' . $order . ';" />'
+                : '<span class="ctp-events__spacer" aria-hidden="true" style="order:' . $order . ';"></span>';
+        }
+
+        return $html;
     }
 }

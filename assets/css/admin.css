@@ -77,6 +77,30 @@
     margin-top: 0;
 }
 
+/* Design tab only: settings form (left) and live preview (right) side by side
+ * instead of stacked — the two panels lose their own max-width/margin here so
+ * the grid columns are what sizes them, same panel chrome otherwise. Falls
+ * back to a single column once there isn't room for both side by side. */
+.ctp-design-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+    max-width: 1400px;
+    margin: 20px 0;
+}
+
+.ctp-design-layout > .ctp-panel {
+    max-width: none;
+    margin: 0;
+}
+
+@media (max-width: 960px) {
+    .ctp-design-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
 .ctp-panel h2 {
     font-size: 13px;
     font-weight: 600;
@@ -230,6 +254,35 @@
 
 .ctp-order-item .dashicons {
     opacity: 0.5;
+}
+
+/* Admin-inserted spacer/divider entries (see CardDesign::SEPARATOR_TYPES) —
+   dashed border sets them visually apart from the six fixed card elements
+   above, which can be reordered but never removed. */
+.ctp-order-item--separator {
+    border-style: dashed;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-order-item__remove {
+    margin-left: auto;
+    padding: 0 0.4em;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 1.1em;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.ctp-order-item__remove:hover {
+    color: #b32d2e;
+}
+
+.ctp-order-actions {
+    display: flex;
+    gap: 0.5em;
+    margin: 0.75em 0;
 }
 
 .ctp-radio-inline {

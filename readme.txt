@@ -39,11 +39,11 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 = Die drei Ansichten =
 
-**Liste** – kompakte Zeilen mit Datums-Chip, Titel, Untertitel und Ort.
+**Liste** – kompakte Zeilen mit Datums-Chip, Kalendername, Titel, Untertitel sowie Uhrzeit und Ort (mit Icons).
 
 `[ctp_events calendar="Gottesdienste" layout="list" limit="5"]`
 
-**Grid** – Kartenraster mit Bild (bzw. Farbverlauf-Platzhalter, falls kein Bild hinterlegt ist), Datums-Badge und wählbarer Spaltenzahl.
+**Grid** – Kartenraster mit Bild (bzw. Farbverlauf-Platzhalter, falls kein Bild hinterlegt ist), Datums-Badge, Kalendername, wählbarer Spaltenzahl sowie einem kurzen Auszug aus der Terminbeschreibung.
 
 `[ctp_events calendar="Gottesdienste" layout="grid" columns="4" limit="8"]`
 

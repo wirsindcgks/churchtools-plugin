@@ -30,6 +30,10 @@ final class EventListRenderer
             $designSettings['element_order'],
             $designSettings['corner_style']
         );
+        // Same value for every card in the loop below (element order is a global
+        // design setting, not per-event), so it's computed once here rather than
+        // per iteration in the templates.
+        $args['design_separators'] = CardDesign::renderSeparators($designSettings['element_order']);
 
         $events = EventQueryCache::findUpcoming($args['calendar_ids'], $args['limit']);
         $events = $this->withCalendarMeta($events);

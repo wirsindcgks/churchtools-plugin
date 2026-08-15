@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Admin;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Frontend\CardDesign;
+use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use Throwable;
@@ -99,6 +100,14 @@ final class SettingsPage
         if (self::currentTab() === 'design') {
             wp_enqueue_style('ctp-admin-design', CTP_PLUGIN_URL . 'assets/css/frontend.css', ['ctp-admin'], CTP_VERSION);
             wp_enqueue_script('ctp-admin-design', CTP_PLUGIN_URL . 'assets/js/admin-design.js', [], CTP_VERSION, true);
+            // Every other user-facing string in this plugin is translated in PHP
+            // (__()/esc_html_e()), not duplicated in JS — the labels the script
+            // needs for dynamically-added spacer/divider list items (see
+            // renderElementOrderField()/separatorLabels()) go through the same path.
+            wp_localize_script('ctp-admin-design', 'ctpDesignLabels', array_merge(
+                self::separatorLabels(),
+                ['remove' => __('Entfernen', 'churchtools-plugin')]
+            ));
         }
     }
 
@@ -354,26 +363,30 @@ final class SettingsPage
     }
 
     /**
-     * The Design tab's hidden input submits the drag&drop order as a
-     * comma-separated string. Unlike every other field in this method, an
-     * invalid value here does NOT fall back to $existing — a *present but
-     * malformed* value (JS bug, tampered POST, a duplicate/missing/unknown
-     * key) snaps straight to CardDesign::DEFAULT_ORDER instead. Falling back
-     * to $existing would risk silently keeping a half-applied permutation;
-     * the known-good default is the safer failure mode. The ordinary "key
-     * entirely absent from $input" case (a different tab's form was
-     * submitted) still falls back to $existing in sanitizeSettings() above,
-     * same as every other field.
+     * The Design tab's hidden input submits the drag&drop order (the six fixed
+     * CardDesign::ELEMENT_KEYS plus any admin-inserted spacer-/divider-prefixed
+     * separators, see renderElementOrderField()) as a comma-separated string.
+     * Unlike every other field in this method, an invalid value here does NOT
+     * fall back to $existing — a *present but malformed* value (JS bug,
+     * tampered POST, a duplicate/missing/unknown fixed key) snaps straight to
+     * CardDesign::DEFAULT_ORDER instead. Falling back to $existing would risk
+     * silently keeping a half-applied permutation; the known-good default is
+     * the safer failure mode. The ordinary "key entirely absent from $input"
+     * case (a different tab's form was submitted) still falls back to
+     * $existing in sanitizeSettings() above, same as every other field.
      */
     private static function sanitizeElementOrder(string $raw): array
     {
         $keys = array_filter(array_map('trim', explode(',', $raw)));
+        // Drops anything that isn't a plain key/instance-id string (JS only ever
+        // generates keys matching this shape) before the permutation check below,
+        // rather than letting one garbage entry invalidate an otherwise-valid order.
+        $keys = array_values(array_filter(
+            $keys,
+            static fn (string $key): bool => (bool) preg_match('/^[a-z0-9-]+$/', $key)
+        ));
 
-        $isValidPermutation = count($keys) === count(CardDesign::ELEMENT_KEYS)
-            && count($keys) === count(array_unique($keys))
-            && array_diff($keys, CardDesign::ELEMENT_KEYS) === [];
-
-        return $isValidPermutation ? array_values($keys) : CardDesign::DEFAULT_ORDER;
+        return CardDesign::isValidOrder($keys) ? $keys : CardDesign::DEFAULT_ORDER;
     }
 
     /**
@@ -577,22 +590,48 @@ final class SettingsPage
     {
         return [
             'media' => __('Bild / Datum', 'churchtools-plugin'),
+            'calendar' => __('Kalendername', 'churchtools-plugin'),
             'title' => __('Titel', 'churchtools-plugin'),
             'subtitle' => __('Untertitel', 'churchtools-plugin'),
+            'excerpt' => __('Beschreibungsauszug', 'churchtools-plugin'),
             'meta' => __('Datum & Ort', 'churchtools-plugin'),
+        ];
+    }
+
+    /** German labels for CardDesign::SEPARATOR_TYPES, keyed the same way. */
+    private static function separatorLabels(): array
+    {
+        return [
+            'divider' => __('Trennlinie', 'churchtools-plugin'),
+            'spacer' => __('Abstand', 'churchtools-plugin'),
         ];
     }
 
     public function renderElementOrderField(): void
     {
         $labels = self::elementOrderLabels();
+        $separatorLabels = self::separatorLabels();
         $order = self::get()['element_order'];
         ?>
         <ul id="ctp-design-order" class="ctp-order-list">
             <?php foreach ($order as $key) : ?>
-                <li draggable="true" data-key="<?php echo esc_attr($key); ?>" class="ctp-order-item">
+                <?php $isSeparator = CardDesign::isSeparator($key); ?>
+                <li
+                    draggable="true"
+                    data-key="<?php echo esc_attr($key); ?>"
+                    class="ctp-order-item<?php echo $isSeparator ? ' ctp-order-item--separator' : ''; ?>"
+                >
                     <span class="dashicons dashicons-menu" aria-hidden="true"></span>
-                    <?php echo esc_html($labels[$key] ?? $key); ?>
+                    <?php if ($isSeparator) : ?>
+                        <?php echo esc_html($separatorLabels[CardDesign::separatorType($key)] ?? $key); ?>
+                        <button
+                            type="button"
+                            class="ctp-order-item__remove"
+                            aria-label="<?php esc_attr_e('Entfernen', 'churchtools-plugin'); ?>"
+                        >&times;</button>
+                    <?php else : ?>
+                        <?php echo esc_html($labels[$key] ?? $key); ?>
+                    <?php endif; ?>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -602,8 +641,16 @@ final class SettingsPage
             name="<?php echo esc_attr(self::OPTION_KEY); ?>[element_order]"
             value="<?php echo esc_attr(implode(',', $order)); ?>"
         />
+        <p class="ctp-order-actions">
+            <button type="button" class="button" id="ctp-design-add-divider">
+                <?php esc_html_e('+ Trennlinie einfügen', 'churchtools-plugin'); ?>
+            </button>
+            <button type="button" class="button" id="ctp-design-add-spacer">
+                <?php esc_html_e('+ Abstand einfügen', 'churchtools-plugin'); ?>
+            </button>
+        </p>
         <p class="description">
-            <?php esc_html_e('Reihenfolge per Drag&Drop ändern (Maus/Trackpad – Touch-Sortierung wird derzeit nicht unterstützt). Die Bild-Position bestimmt nur, ob das Bild über oder unter dem Textblock erscheint, nicht zwischen einzelnen Textzeilen.', 'churchtools-plugin'); ?>
+            <?php esc_html_e('Reihenfolge per Drag&Drop ändern (Maus/Trackpad – Touch-Sortierung wird derzeit nicht unterstützt). Die Bild-Position bestimmt nur, ob das Bild über oder unter dem Textblock erscheint, nicht zwischen einzelnen Textzeilen. Trennlinien und Abstände lassen sich beliebig oft einfügen und wie jedes andere Element per Drag&Drop verschieben oder über das „×“ wieder entfernen.', 'churchtools-plugin'); ?>
         </p>
         <?php
     }
@@ -669,16 +716,29 @@ final class SettingsPage
                                     <span class="ctp-events__month"><?php esc_html_e('Dez', 'churchtools-plugin'); ?></span>
                                 </span>
                             </div>
-                            <div class="ctp-events__content">
-                                <span class="ctp-events__title">
+                            <div class="ctp-events__content" id="ctp-design-preview-content">
+                                <span class="ctp-events__eyebrow">
                                     <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                                    <?php esc_html_e('Beispiel-Kalender', 'churchtools-plugin'); ?>
+                                </span>
+                                <span class="ctp-events__title">
                                     <?php esc_html_e('Beispiel-Termin', 'churchtools-plugin'); ?>
                                 </span>
                                 <span class="ctp-events__subtitle"><?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?></span>
                                 <span class="ctp-events__meta">
-                                    <span>24.12.2026, 18:00</span>
-                                    <span><?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?></span>
+                                    <span class="ctp-events__meta-item">
+                                        <?php echo Icons::clock(); ?>
+                                        24.12.2026, 18:00
+                                    </span>
+                                    <span class="ctp-events__meta-item">
+                                        <?php echo Icons::location(); ?>
+                                        <?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?>
+                                    </span>
                                 </span>
+                                <p class="ctp-events__excerpt">
+                                    <?php esc_html_e('Kurzer Auszug aus der Terminbeschreibung, wie er auf der Kachel erscheint …', 'churchtools-plugin'); ?>
+                                </p>
+                                <?php echo CardDesign::renderSeparators($settings['element_order']); ?>
                             </div>
                         </article>
                     </li>
@@ -1059,10 +1119,6 @@ final class SettingsPage
                 <?php $this->renderSyncStatus(); ?>
             <?php endif; ?>
 
-            <?php if ($tab === 'design') : ?>
-                <?php $this->renderDesignPreview(); ?>
-            <?php endif; ?>
-
             <?php if ($tab === 'events') : ?>
                 <?php
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which event to display), not a state change; same pattern as currentTab()'s $_GET['tab'] read above.
@@ -1073,6 +1129,19 @@ final class SettingsPage
                     $this->renderEventsOverview();
                 }
                 ?>
+            <?php elseif ($tab === 'design') : ?>
+                <?php // Settings form on the left, live preview on the right — see .ctp-design-layout in admin.css. ?>
+                <div class="ctp-design-layout">
+                    <form method="post" action="options.php" class="ctp-panel">
+                        <?php
+                        settings_fields(self::PAGE_SLUG);
+                        do_settings_sections(self::PAGE_SLUG . '_' . $tab);
+                        submit_button();
+                        ?>
+                    </form>
+                    <?php $this->renderDesignPreview(); ?>
+                </div>
+                <?php $this->renderShortcodeReference(); ?>
             <?php else : ?>
                 <form method="post" action="options.php" class="ctp-panel">
                     <?php
@@ -1081,10 +1150,6 @@ final class SettingsPage
                     submit_button();
                     ?>
                 </form>
-            <?php endif; ?>
-
-            <?php if ($tab === 'design') : ?>
-                <?php $this->renderShortcodeReference(); ?>
             <?php endif; ?>
         </div>
         <script>

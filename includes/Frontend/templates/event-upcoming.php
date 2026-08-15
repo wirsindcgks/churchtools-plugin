@@ -11,6 +11,7 @@
  */
 
 use ChurchToolsPlugin\Frontend\EventFormatter;
+use ChurchToolsPlugin\Frontend\Icons;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -36,6 +37,9 @@ $upcoming = array_slice($events, 1);
             </div>
             <div class="ctp-events__hero-body">
                 <span class="ctp-events__eyebrow">
+                    <?php if ($hero['calendar_name'] !== '' && $hero['calendar_color'] !== '') : ?>
+                        <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                    <?php endif; ?>
                     <?php
                     $eyebrow = $hero['calendar_name'] !== ''
                         ? $hero['calendar_name']
@@ -48,7 +52,8 @@ $upcoming = array_slice($events, 1);
                     <p class="ctp-events__subtitle"><?php echo esc_html($hero['subtitle']); ?></p>
                 <?php endif; ?>
                 <p class="ctp-events__hero-meta">
-                    <span>
+                    <span class="ctp-events__meta-item">
+                        <?php echo Icons::clock(); ?>
                         <?php echo esc_html(EventFormatter::dateRange($hero)); ?>
                         <?php if (!empty($hero['all_day'])) : ?>
                             <span class="ctp-events__badge">
@@ -57,9 +62,18 @@ $upcoming = array_slice($events, 1);
                         <?php endif; ?>
                     </span>
                     <?php if ($hero['location'] !== '') : ?>
-                        <span><?php echo esc_html($hero['location']); ?></span>
+                        <span class="ctp-events__meta-item">
+                            <?php echo Icons::location(); ?>
+                            <?php echo esc_html($hero['location']); ?>
+                        </span>
                     <?php endif; ?>
                 </p>
+                <?php if ($hero['description'] !== '') : ?>
+                    <p class="ctp-events__excerpt">
+                        <?php echo esc_html(EventFormatter::excerpt($hero['description'])); ?>
+                    </p>
+                <?php endif; ?>
+                <?php echo $args['design_separators']; ?>
             </div>
         </div>
 
@@ -82,7 +96,18 @@ $upcoming = array_slice($events, 1);
                             </span>
                         </span>
                         <span class="ctp-events__body">
+                            <?php if ($event['calendar_name'] !== '') : ?>
+                                <span class="ctp-events__eyebrow">
+                                    <?php if ($event['calendar_color'] !== '') : ?>
+                                        <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                                    <?php endif; ?>
+                                    <?php echo esc_html($event['calendar_name']); ?>
+                                </span>
+                            <?php endif; ?>
                             <span class="ctp-events__title">
+                                <?php if ($event['calendar_name'] === '' && $event['calendar_color'] !== '') : ?>
+                                    <span class="ctp-events__color-dot" aria-hidden="true"></span>
+                                <?php endif; ?>
                                 <?php echo esc_html($event['title']); ?>
                                 <?php if (!empty($event['all_day'])) : ?>
                                     <span class="ctp-events__badge">
@@ -91,11 +116,23 @@ $upcoming = array_slice($events, 1);
                                 <?php endif; ?>
                             </span>
                             <span class="ctp-events__meta">
-                                <span><?php echo esc_html(EventFormatter::dateRange($event)); ?></span>
+                                <span class="ctp-events__meta-item">
+                                    <?php echo Icons::clock(); ?>
+                                    <?php echo esc_html(EventFormatter::dateRange($event)); ?>
+                                </span>
                                 <?php if ($event['location'] !== '') : ?>
-                                    <span><?php echo esc_html($event['location']); ?></span>
+                                    <span class="ctp-events__meta-item">
+                                        <?php echo Icons::location(); ?>
+                                        <?php echo esc_html($event['location']); ?>
+                                    </span>
                                 <?php endif; ?>
                             </span>
+                            <?php if ($event['description'] !== '') : ?>
+                                <p class="ctp-events__excerpt">
+                                    <?php echo esc_html(EventFormatter::excerpt($event['description'])); ?>
+                                </p>
+                            <?php endif; ?>
+                            <?php echo $args['design_separators']; ?>
                         </span>
                     </li>
                 <?php endforeach; ?>

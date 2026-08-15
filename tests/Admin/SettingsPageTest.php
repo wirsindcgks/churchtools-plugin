@@ -173,8 +173,8 @@ final class SettingsPageTest extends TestCase
     public function testSanitizeElementOrderAcceptsAValidNonDefaultPermutation(): void
     {
         $this->assertSame(
-            ['meta', 'media', 'title', 'subtitle'],
-            $this->sanitizeElementOrder('meta,media,title,subtitle')
+            ['meta', 'media', 'title', 'calendar', 'subtitle', 'excerpt'],
+            $this->sanitizeElementOrder('meta,media,title,calendar,subtitle,excerpt')
         );
     }
 
@@ -187,7 +187,7 @@ final class SettingsPageTest extends TestCase
     {
         $this->assertSame(
             CardDesign::DEFAULT_ORDER,
-            $this->sanitizeElementOrder('media,media,title,subtitle')
+            $this->sanitizeElementOrder('media,media,title,subtitle,excerpt,meta')
         );
     }
 
@@ -203,12 +203,40 @@ final class SettingsPageTest extends TestCase
     {
         $this->assertSame(
             CardDesign::DEFAULT_ORDER,
-            $this->sanitizeElementOrder('media,title,subtitle,color')
+            $this->sanitizeElementOrder('media,title,subtitle,excerpt,meta,color')
         );
     }
 
     public function testSanitizeElementOrderFallsBackToDefaultOnEmptyString(): void
     {
         $this->assertSame(CardDesign::DEFAULT_ORDER, $this->sanitizeElementOrder(''));
+    }
+
+    /**
+     * Any number of admin-inserted spacer-*/divider-* entries (see
+     * CardDesign::SEPARATOR_TYPES) may sit anywhere alongside the six fixed
+     * keys — this is what lets the Design tab offer "+ Trennlinie"/"+ Abstand".
+     */
+    public function testSanitizeElementOrderAcceptsInterspersedSeparators(): void
+    {
+        $this->assertSame(
+            ['media', 'calendar', 'divider-a1b2', 'title', 'subtitle', 'spacer-c3d4', 'excerpt', 'meta'],
+            $this->sanitizeElementOrder('media,calendar,divider-a1b2,title,subtitle,spacer-c3d4,excerpt,meta')
+        );
+    }
+
+    /**
+     * Characters outside CardDesign's expected key shape (lowercase letters,
+     * digits, hyphens — see the regex in sanitizeElementOrder()) are stripped
+     * before the permutation check, so one garbage entry from a tampered POST
+     * doesn't invalidate an otherwise-valid, non-default order — it's simply
+     * dropped, the surrounding valid order is kept as-is.
+     */
+    public function testSanitizeElementOrderStripsEntriesWithUnexpectedCharacters(): void
+    {
+        $this->assertSame(
+            ['meta', 'calendar', 'title', 'subtitle', 'excerpt', 'media'],
+            $this->sanitizeElementOrder('meta,calendar,title,subtitle,excerpt,media,<script>')
+        );
     }
 }

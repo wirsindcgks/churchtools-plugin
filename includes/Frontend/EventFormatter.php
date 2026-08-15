@@ -48,4 +48,14 @@ final class EventFormatter
     {
         return mysql2date('M', $mysqlDate);
     }
+
+    /**
+     * wp_trim_words() already strips tags itself (descriptions can contain HTML,
+     * see SettingsPage's wp_kses_post() on the admin detail view), so the result
+     * here is plain text — callers still esc_html() it like every other field.
+     */
+    public static function excerpt(string $description, int $wordCount = 20): string
+    {
+        return wp_trim_words($description, $wordCount);
+    }
 }

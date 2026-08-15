@@ -22,14 +22,16 @@
      * sets from CardDesign::styleAttribute() (see EventListRenderer::render()).
      * These just keep behavior sane for a cached page rendered by an older
      * plugin version, or a theme override template that doesn't emit
-     * $args['design_style']. Values match the pre-Design-tab visual order:
-     * media, then the title/subtitle/meta content block.
+     * $args['design_style']. Values match CardDesign::DEFAULT_ORDER: media,
+     * then calendar/title/subtitle/excerpt/meta as the content block.
      */
     --ctp-order-media: 0;
     --ctp-order-content: 1;
-    --ctp-order-title: 1;
-    --ctp-order-subtitle: 2;
-    --ctp-order-meta: 3;
+    --ctp-order-calendar: 1;
+    --ctp-order-title: 2;
+    --ctp-order-subtitle: 3;
+    --ctp-order-excerpt: 4;
+    --ctp-order-meta: 5;
 
     color: var(--ctp-color-text);
     line-height: 1.5;
@@ -77,6 +79,65 @@
     flex-shrink: 0;
     border-radius: 50%;
     background-color: var(--ctp-accent);
+}
+
+.ctp-events__icon {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+}
+
+/* Calendar name label (color dot + name) — a full member of the Design tab's
+   reorderable element set (--ctp-order-calendar), same as title/subtitle/etc. */
+.ctp-events__eyebrow {
+    order: var(--ctp-order-calendar);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ctp-accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Description excerpt — likewise a full member of the reorderable set. */
+.ctp-events__excerpt {
+    order: var(--ctp-order-excerpt);
+    margin: 0;
+    color: var(--ctp-color-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+/* Compact rows (list layout + the "further events" list in the upcoming
+   layout) have much less room than a grid/hero card — clamp to a single line
+   there instead of three. */
+.ctp-events__item .ctp-events__excerpt {
+    -webkit-line-clamp: 1;
+}
+
+/* Spacer/divider — decorative, admin-inserted elements (see
+   CardDesign::renderSeparators()). Not part of the six fixed keys: there can
+   be any number of them (or none), each with its visual position baked into
+   an inline `order` style rather than one of the --ctp-order-* variables
+   above, so these two rules only ever supply the *look*, never the position. */
+.ctp-events__divider {
+    width: 100%;
+    margin: 0.15rem 0;
+    border: none;
+    border-block-start: 1px solid var(--ctp-color-border);
+}
+
+.ctp-events__spacer {
+    display: block;
+    flex: 0 0 auto;
+    width: 100%;
+    height: 0.75rem;
 }
 
 .ctp-events__badge {
@@ -133,6 +194,8 @@
 
 .ctp-events__body {
     order: var(--ctp-order-content);
+    display: flex;
+    flex-direction: column;
     min-width: 0;
     flex: 1 1 auto;
 }
@@ -160,6 +223,12 @@
     margin-top: 0.2rem;
     color: var(--ctp-color-muted);
     font-size: 0.9rem;
+}
+
+.ctp-events__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
 }
 
 @media (max-width: 480px) {
@@ -293,16 +362,6 @@
     justify-content: center;
     gap: 0.6rem;
     padding: 1.5rem 1.75rem;
-}
-
-/* Not part of the reorderable element set — always renders first regardless
-   of the Design tab's element order (calendar name / "Nächster Termin"). */
-.ctp-events--upcoming .ctp-events__eyebrow {
-    color: var(--ctp-accent);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
 }
 
 .ctp-events--upcoming .ctp-events__hero-title {
