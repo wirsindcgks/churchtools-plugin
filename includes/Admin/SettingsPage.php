@@ -123,7 +123,9 @@ final class SettingsPage
             'api_key' => '',
             /**
              * Keyed by ChurchTools calendar ID:
-             * [ 'name' => string, 'enabled' => bool, 'color' => '#rrggbb', 'default_image_id' => int (attachment ID) ]
+             * [ 'name' => string, 'enabled' => bool, 'color' => '#rrggbb',
+             *   'default_color' => '#rrggbb' (ChurchTools' own color, for the "reset" button, see renderCalendarRow()),
+             *   'default_image_id' => int (attachment ID) ]
              */
             'calendars' => [],
             'sync_interval' => 'hourly',
@@ -181,9 +183,45 @@ final class SettingsPage
 
     public static function getDecryptedApiKey(): string
     {
-        $apiKey = self::get()['api_key'];
+        $stored = self::get()['api_key'];
+        if ($stored === '') {
+            return '';
+        }
 
-        return $apiKey === '' ? '' : Crypto::decrypt($apiKey);
+        $decrypted = Crypto::decrypt($stored);
+
+        return self::isPlausibleApiKey($decrypted) ? $decrypted : '';
+    }
+
+    /**
+     * Detects a stored, encrypted API key that no longer decrypts to a plausible
+     * token — the symptom of an AUTH_KEY rotation (salt change, server move,
+     * secrets-management switch), which silently breaks Crypto::decrypt() since the
+     * key is derived from AUTH_KEY (see Crypto::key()). A failed openssl_decrypt()
+     * already returns '' on its own, but a wrong key can also "succeed" by chance
+     * and hand back binary garbage — this used to be sent straight into the
+     * Authorization header and fail as a generic, misleading 401 (see the
+     * 2026-08-14 "No valid token" incident in plan.md, which had a different root
+     * cause but the same confusing symptom).
+     */
+    public static function apiKeyDecryptionFailed(): bool
+    {
+        $stored = self::get()['api_key'];
+        if ($stored === '') {
+            return false;
+        }
+
+        return !self::isPlausibleApiKey(Crypto::decrypt($stored));
+    }
+
+    private static function isPlausibleApiKey(string $token): bool
+    {
+        return $token !== '' && strlen($token) <= 512 && ctype_print($token);
+    }
+
+    public static function apiKeyDecryptionErrorMessage(): string
+    {
+        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte im Tab „Verbindung" neu eingeben.', 'churchtools-plugin');
     }
 
     public static function getEnabledCalendarIds(): array
@@ -336,6 +374,10 @@ final class SettingsPage
                 'name' => $existing[$id]['name'],
                 'enabled' => !empty($row['enabled']),
                 'color' => $color ?: $existing[$id]['color'],
+                // Not user-editable here (no form field for it) — always carried
+                // over from $existing, where mergeCalendars() keeps it in sync
+                // with ChurchTools' own color on every "Kalender laden".
+                'default_color' => $existing[$id]['default_color'] ?? $existing[$id]['color'],
                 'default_image_id' => absint($row['default_image_id'] ?? 0),
             ];
         }
@@ -423,8 +465,11 @@ final class SettingsPage
                 <?php echo esc_html($calendar['name']); ?>
                 <br /><code style="opacity:.6;">ID: <?php echo (int) $id; ?></code>
             </td>
-            <td>
-                <input type="color" name="<?php echo esc_attr($fieldBase); ?>[color]" value="<?php echo esc_attr($calendar['color']); ?>" />
+            <td class="ctp-color-field">
+                <input type="color" class="ctp-color-input" name="<?php echo esc_attr($fieldBase); ?>[color]" value="<?php echo esc_attr($calendar['color']); ?>" />
+                <button type="button" class="button-link ctp-color-reset" data-default-color="<?php echo esc_attr($calendar['default_color'] ?? $calendar['color']); ?>" title="<?php esc_attr_e('Auf ChurchTools-Standardfarbe zurücksetzen', 'churchtools-plugin'); ?>">
+                    <?php esc_html_e('Zurücksetzen', 'churchtools-plugin'); ?>
+                </button>
             </td>
             <td class="ctp-image-field">
                 <input type="hidden" class="ctp-image-id" name="<?php echo esc_attr($fieldBase); ?>[default_image_id]" value="<?php echo esc_attr((string) $imageId); ?>" />
@@ -963,6 +1008,15 @@ final class SettingsPage
                 });
         });
 
+        document.querySelectorAll('.ctp-color-reset').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var cell = button.closest('.ctp-color-field');
+                cell.querySelector('.ctp-color-input').value = button.dataset.defaultColor;
+            });
+        });
+
         document.querySelectorAll('.ctp-image-select').forEach(function (button) {
             button.addEventListener('click', function (event) {
                 event.preventDefault();
@@ -1015,6 +1069,10 @@ final class SettingsPage
 
         $connection = self::effectiveConnection();
 
+        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
+            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
+        }
+
         if ($connection['instance'] === '' || $connection['api_key'] === '') {
             wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
         }
@@ -1044,6 +1102,10 @@ final class SettingsPage
         }
 
         $connection = self::effectiveConnection();
+
+        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
+            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
+        }
 
         if ($connection['instance'] === '' || $connection['api_key'] === '') {
             wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
@@ -1106,7 +1168,10 @@ final class SettingsPage
     /**
      * Keeps enabled/color/default_image_id for calendars that still exist remotely,
      * seeds new ones as disabled with ChurchTools' own color, and drops ones that
-     * were removed on the ChurchTools side.
+     * were removed on the ChurchTools side. `default_color` is always overwritten
+     * with ChurchTools' current value (never carried over from $existing) so the
+     * "Auf Standardfarbe zurücksetzen" button (renderCalendarRow()) keeps pointing
+     * at ChurchTools' actual color even if it changed there since the last fetch.
      */
     private static function mergeCalendars(array $existing, array $remoteCalendars): array
     {
@@ -1119,10 +1184,13 @@ final class SettingsPage
                 continue;
             }
 
+            $remoteColor = (string) ($calendar['color'] ?? '#3388ff');
+
             $merged[$id] = [
                 'name' => (string) ($calendar['name'] ?? ''),
                 'enabled' => (bool) ($existing[$id]['enabled'] ?? false),
-                'color' => (string) ($existing[$id]['color'] ?? ($calendar['color'] ?? '#3388ff')),
+                'color' => (string) ($existing[$id]['color'] ?? $remoteColor),
+                'default_color' => $remoteColor,
                 'default_image_id' => (int) ($existing[$id]['default_image_id'] ?? 0),
             ];
         }

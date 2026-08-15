@@ -8,6 +8,8 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use DateTimeImmutable;
+use RuntimeException;
+use Throwable;
 
 final class SyncEngine
 {
@@ -58,6 +60,14 @@ final class SyncEngine
 
     private static function doRun(array $settings, array $calendarIds): void
     {
+        // $settings['api_key'] (checked in run()) is the encrypted value, so it
+        // stays non-empty even after an AUTH_KEY rotation breaks decryption —
+        // without this check, a garbage/empty decrypted key would silently reach
+        // the Client and fail as a generic 401 instead of this explicit message.
+        if (SettingsPage::apiKeyDecryptionFailed()) {
+            throw new RuntimeException(SettingsPage::apiKeyDecryptionErrorMessage());
+        }
+
         $client = new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey());
         $repository = new EventRepository();
 
