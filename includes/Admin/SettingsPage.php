@@ -66,6 +66,22 @@ final class SettingsPage
         return array_key_exists($tab, self::tabs()) ? $tab : self::DEFAULT_TAB;
     }
 
+    /**
+     * Purely cosmetic (tab-nav scanability) — keyed the same as tabs(), one dashicon
+     * per topic so the tabs read as distinct sections instead of plain text labels.
+     */
+    private static function tabIcons(): array
+    {
+        return [
+            'connection' => 'admin-links',
+            'calendars' => 'calendar-alt',
+            'sync' => 'update',
+            'design' => 'admin-appearance',
+            'events' => 'list-view',
+            'updates' => 'cloud-upload',
+        ];
+    }
+
     public function enqueueAssets(string $hook): void
     {
         if ($hook !== $this->pageHook) {
@@ -73,13 +89,15 @@ final class SettingsPage
         }
 
         wp_enqueue_media();
+        wp_enqueue_style('ctp-admin', CTP_PLUGIN_URL . 'assets/css/admin.css', [], CTP_VERSION);
 
         // Own handle rather than reusing Assets::STYLE_HANDLE — that class'
         // enqueue is conditioned on the current *frontend* request using the
         // shortcode/block, an unrelated concern to whether the admin's Design
-        // tab preview needs the stylesheet.
+        // tab preview needs the stylesheet. Loaded after ctp-admin so its
+        // .ctp-events rules (needed for the live preview) aren't shadowed by it.
         if (self::currentTab() === 'design') {
-            wp_enqueue_style('ctp-admin-design', CTP_PLUGIN_URL . 'assets/css/frontend.css', [], CTP_VERSION);
+            wp_enqueue_style('ctp-admin-design', CTP_PLUGIN_URL . 'assets/css/frontend.css', ['ctp-admin'], CTP_VERSION);
             wp_enqueue_script('ctp-admin-design', CTP_PLUGIN_URL . 'assets/js/admin-design.js', [], CTP_VERSION, true);
         }
     }
@@ -410,9 +428,9 @@ final class SettingsPage
     public function renderInstanceField(): void
     {
         printf(
-            '<span style="display:inline-flex;align-items:center;gap:4px;">'
+            '<span class="ctp-instance-row">'
             . '<code>https://</code>'
-            . '<input type="text" id="ctp-instance" name="%1$s[instance]" value="%2$s" class="regular-text" style="width:160px;" placeholder="musterkirche" pattern="[a-z0-9-]+" />'
+            . '<input type="text" id="ctp-instance" name="%1$s[instance]" value="%2$s" class="regular-text" placeholder="musterkirche" pattern="[a-z0-9-]+" />'
             . '<code>.church.tools</code>'
             . '</span>'
             . '<p class="description">%3$s</p>',
@@ -427,9 +445,11 @@ final class SettingsPage
         $hasKey = self::get()['api_key'] !== '';
 
         printf(
-            '<input type="password" id="ctp-api-key" name="%1$s[api_key]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
-            . ' <button type="button" class="button" id="ctp-test-connection">%3$s</button>'
-            . ' <span id="ctp-test-connection-result"></span>',
+            '<span class="ctp-field-with-button">'
+            . '<input type="password" id="ctp-api-key" name="%1$s[api_key]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
+            . '<button type="button" class="button" id="ctp-test-connection">%3$s</button>'
+            . '<span id="ctp-test-connection-result"></span>'
+            . '</span>',
             esc_attr(self::OPTION_KEY),
             $hasKey ? esc_attr__('Hinterlegt – zum Ändern neuen Key eingeben', 'churchtools-plugin') : '',
             esc_html__('Verbindung testen', 'churchtools-plugin')
@@ -448,15 +468,15 @@ final class SettingsPage
             <span id="ctp-fetch-calendars-result"></span>
         </p>
         <?php if ($calendars === []) : ?>
-            <p class="description"><?php esc_html_e('Noch keine Kalender geladen.', 'churchtools-plugin'); ?></p>
+            <p class="ctp-empty-state"><?php esc_html_e('Noch keine Kalender geladen.', 'churchtools-plugin'); ?></p>
         <?php else : ?>
-            <table class="widefat striped" style="max-width:760px;">
+            <table class="widefat striped ctp-calendars-table ctp-borderless">
                 <thead>
                     <tr>
-                        <th style="width:60px;"><?php esc_html_e('Aktiv', 'churchtools-plugin'); ?></th>
+                        <th class="ctp-col-active"><?php esc_html_e('Aktiv', 'churchtools-plugin'); ?></th>
                         <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
-                        <th style="width:90px;"><?php esc_html_e('Farbe', 'churchtools-plugin'); ?></th>
-                        <th style="width:240px;"><?php esc_html_e('Standardbild', 'churchtools-plugin'); ?></th>
+                        <th class="ctp-col-color"><?php esc_html_e('Farbe', 'churchtools-plugin'); ?></th>
+                        <th class="ctp-col-image"><?php esc_html_e('Standardbild', 'churchtools-plugin'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -485,7 +505,7 @@ final class SettingsPage
             </td>
             <td>
                 <?php echo esc_html($calendar['name']); ?>
-                <br /><code style="opacity:.6;">ID: <?php echo (int) $id; ?></code>
+                <br /><code class="ctp-muted-code">ID: <?php echo (int) $id; ?></code>
             </td>
             <td class="ctp-color-field">
                 <input type="color" class="ctp-color-input" name="<?php echo esc_attr($fieldBase); ?>[color]" value="<?php echo esc_attr($calendar['color']); ?>" />
@@ -495,9 +515,9 @@ final class SettingsPage
             </td>
             <td class="ctp-image-field">
                 <input type="hidden" class="ctp-image-id" name="<?php echo esc_attr($fieldBase); ?>[default_image_id]" value="<?php echo esc_attr((string) $imageId); ?>" />
-                <img class="ctp-image-preview" src="<?php echo esc_url($imageUrl); ?>" style="max-width:60px;max-height:40px;vertical-align:middle;<?php echo $imageUrl ? '' : 'display:none;'; ?>" alt="" />
+                <img class="ctp-image-preview" src="<?php echo esc_url($imageUrl); ?>" alt="" <?php echo $imageUrl ? '' : 'hidden'; ?> />
                 <button type="button" class="button ctp-image-select"><?php esc_html_e('Bild wählen', 'churchtools-plugin'); ?></button>
-                <button type="button" class="button-link ctp-image-remove" style="<?php echo $imageUrl ? '' : 'display:none;'; ?>">
+                <button type="button" class="button-link ctp-image-remove" <?php echo $imageUrl ? '' : 'hidden'; ?>>
                     <?php esc_html_e('Entfernen', 'churchtools-plugin'); ?>
                 </button>
             </td>
@@ -567,13 +587,11 @@ final class SettingsPage
     {
         $labels = self::elementOrderLabels();
         $order = self::get()['element_order'];
-        $rowStyle = 'display:flex;align-items:center;gap:0.5em;padding:0.6em 0.8em;margin-bottom:4px;'
-            . 'border:1px solid #dcdcde;border-radius:4px;background:#fff;cursor:move;';
         ?>
-        <ul id="ctp-design-order" style="max-width:320px;margin:0;padding:0;list-style:none;">
+        <ul id="ctp-design-order" class="ctp-order-list">
             <?php foreach ($order as $key) : ?>
-                <li draggable="true" data-key="<?php echo esc_attr($key); ?>" style="<?php echo esc_attr($rowStyle); ?>">
-                    <span class="dashicons dashicons-menu" aria-hidden="true" style="opacity:.5;"></span>
+                <li draggable="true" data-key="<?php echo esc_attr($key); ?>" class="ctp-order-item">
+                    <span class="dashicons dashicons-menu" aria-hidden="true"></span>
                     <?php echo esc_html($labels[$key] ?? $key); ?>
                 </li>
             <?php endforeach; ?>
@@ -600,7 +618,7 @@ final class SettingsPage
 
         foreach ($options as $value => $label) {
             printf(
-                '<label style="margin-right:1.5em;"><input type="radio" name="%1$s[corner_style]" value="%2$s" %3$s /> %4$s</label>',
+                '<label class="ctp-radio-inline"><input type="radio" name="%1$s[corner_style]" value="%2$s" %3$s /> %4$s</label>',
                 esc_attr(self::OPTION_KEY),
                 esc_attr($value),
                 checked($current, $value, false),
@@ -636,15 +654,15 @@ final class SettingsPage
         $settings = self::get();
         $style = CardDesign::styleAttribute($settings['element_order'], $settings['corner_style']);
         ?>
-        <div class="card" style="max-width:760px;margin:16px 0;">
-            <h2 style="margin-top:0;"><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
             <p class="description">
                 <?php esc_html_e('Vorschau als Grid-Kachel – die Einstellung gilt gleichermaßen für Grid, Liste und „Nächster Termin".', 'churchtools-plugin'); ?>
             </p>
-            <div class="ctp-events ctp-events--grid" id="ctp-design-preview" style="max-width:280px;<?php echo esc_attr($style); ?>">
-                <ul class="ctp-events__list" style="display:block;">
+            <div class="ctp-events ctp-events--grid ctp-design-preview-frame" id="ctp-design-preview" style="<?php echo esc_attr($style); ?>">
+                <ul class="ctp-events__list">
                     <li>
-                        <article class="ctp-events__card" style="--ctp-accent:#2563eb;">
+                        <article class="ctp-events__card">
                             <div class="ctp-events__media">
                                 <span class="ctp-events__date-badge" aria-hidden="true">
                                     <span class="ctp-events__day">24</span>
@@ -676,10 +694,10 @@ final class SettingsPage
         $lastError = SyncEngine::getLastError();
         $eventCount = (new EventRepository())->count();
         ?>
-        <div class="card" style="max-width:760px;margin:16px 0;">
-            <h2 style="margin-top:0;"><?php esc_html_e('Status', 'churchtools-plugin'); ?></h2>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Status', 'churchtools-plugin'); ?></h2>
             <?php if ($lastError !== null) : ?>
-                <div class="notice notice-error inline" style="margin:0 0 12px;">
+                <div class="notice notice-error inline">
                     <p>
                         <?php
                         printf(
@@ -733,41 +751,44 @@ final class SettingsPage
         $totalCount = $repository->count();
         $calendars = self::get()['calendars'];
         ?>
-        <p class="description">
-            <?php
-            printf(
-                /* translators: 1: number of events shown below, 2: total number of stored events */
-                esc_html__('Zeigt die nächsten %1$d von insgesamt %2$d gespeicherten Terminen.', 'churchtools-plugin'),
-                (int) count($events),
-                (int) $totalCount
-            );
-            ?>
-        </p>
-        <?php if ($events === []) : ?>
-            <p><?php esc_html_e('Noch keine Termine synchronisiert.', 'churchtools-plugin'); ?></p>
-        <?php else : ?>
-            <table class="widefat striped" style="max-width:900px;">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e('Titel', 'churchtools-plugin'); ?></th>
-                        <th><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></th>
-                        <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($events as $event) : ?>
-                        <?php $this->renderEventOverviewRow($event, $calendars); ?>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
+        <div class="ctp-panel">
+            <p class="description">
+                <?php
+                printf(
+                    /* translators: 1: number of events shown below, 2: total number of stored events */
+                    esc_html__('Zeigt die nächsten %1$d von insgesamt %2$d gespeicherten Terminen.', 'churchtools-plugin'),
+                    (int) count($events),
+                    (int) $totalCount
+                );
+                ?>
+            </p>
+            <?php if ($events === []) : ?>
+                <p class="ctp-empty-state"><?php esc_html_e('Noch keine Termine synchronisiert.', 'churchtools-plugin'); ?></p>
+            <?php else : ?>
+                <table class="widefat striped ctp-borderless">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Titel', 'churchtools-plugin'); ?></th>
+                            <th><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></th>
+                            <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($events as $event) : ?>
+                            <?php $this->renderEventOverviewRow($event, $calendars); ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
         <?php
     }
 
     private function renderEventOverviewRow(array $event, array $calendars): void
     {
         $calendarId = (int) $event['ct_calendar_id'];
-        $calendarName = $calendars[$calendarId]['name'] ?? sprintf('#%d', $calendarId);
+        $calendar = $calendars[$calendarId] ?? null;
+        $calendarName = $calendar['name'] ?? sprintf('#%d', $calendarId);
         ?>
         <tr>
             <td>
@@ -775,7 +796,7 @@ final class SettingsPage
                     <?php echo esc_html($event['title']); ?>
                 </a>
                 <?php if ($event['subtitle'] !== '') : ?>
-                    <br /><span style="opacity:.6;"><?php echo esc_html($event['subtitle']); ?></span>
+                    <br /><span class="ctp-muted-text"><?php echo esc_html($event['subtitle']); ?></span>
                 <?php endif; ?>
             </td>
             <td>
@@ -788,7 +809,12 @@ final class SettingsPage
                     <?php echo esc_html(mysql2date(get_option('time_format'), $event['end_date'])); ?>
                 <?php endif; ?>
             </td>
-            <td><?php echo esc_html($calendarName); ?></td>
+            <td>
+                <?php if (!empty($calendar['color'])) : ?>
+                    <span class="ctp-cal-dot" style="background-color:<?php echo esc_attr($calendar['color']); ?>" aria-hidden="true"></span>
+                <?php endif; ?>
+                <?php echo esc_html($calendarName); ?>
+            </td>
         </tr>
         <?php
     }
@@ -818,9 +844,9 @@ final class SettingsPage
         $backUrl = self::eventsOverviewUrl();
 
         if ($event === null) {
-            printf('<p>%s</p>', esc_html__('Termin nicht gefunden.', 'churchtools-plugin'));
+            printf('<div class="ctp-panel"><p>%s</p>', esc_html__('Termin nicht gefunden.', 'churchtools-plugin'));
             printf(
-                '<p><a href="%s">&larr; %s</a></p>',
+                '<p><a class="ctp-back-link" href="%s">&larr; %s</a></p></div>',
                 esc_url($backUrl),
                 esc_html__('Zurück zur Übersicht', 'churchtools-plugin')
             );
@@ -840,13 +866,12 @@ final class SettingsPage
             $displayImageUrl = $event['image_url'];
         }
         ?>
-        <p><a href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?></a></p>
-        <div class="card" style="max-width:760px;">
-            <h2 style="margin-top:0;">
+        <p><a class="ctp-back-link" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?></a></p>
+        <div class="ctp-panel">
+            <h2 class="ctp-event-detail-title">
                 <?php echo esc_html($event['title']); ?>
                 <?php if ($event['subtitle'] !== '') : ?>
-                    <br />
-                    <span style="font-weight:normal;opacity:.7;font-size:.7em;">
+                    <span class="ctp-event-detail-subtitle">
                         <?php echo esc_html($event['subtitle']); ?>
                     </span>
                 <?php endif; ?>
@@ -857,7 +882,7 @@ final class SettingsPage
                     <img
                         src="<?php echo esc_url($displayImageUrl); ?>"
                         alt=""
-                        style="max-width:100%;height:auto;border-radius:4px;"
+                        class="ctp-event-detail-image"
                     />
                 </p>
             <?php endif; ?>
@@ -884,8 +909,7 @@ final class SettingsPage
                         <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
                         <td>
                             <?php if (!empty($calendar['color'])) : ?>
-                                <span style="display:inline-block;width:.8em;height:.8em;border-radius:50%;
-                                    background-color:<?php echo esc_attr($calendar['color']); ?>;vertical-align:middle;"></span>
+                                <span class="ctp-cal-dot" style="background-color:<?php echo esc_attr($calendar['color']); ?>" aria-hidden="true"></span>
                             <?php endif; ?>
                             <?php echo esc_html($calendar['name'] ?? sprintf('#%d', $calendarId)); ?>
                         </td>
@@ -919,13 +943,21 @@ final class SettingsPage
         }
 
         $tab = self::currentTab();
+        $icons = self::tabIcons();
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('ChurchTools Events', 'churchtools-plugin'); ?></h1>
+        <div class="wrap ctp-admin">
+            <div class="ctp-admin-header">
+                <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                <h1><?php esc_html_e('ChurchTools Events', 'churchtools-plugin'); ?></h1>
+            </div>
+            <p class="ctp-admin-tagline">
+                <?php esc_html_e('Kalender-Events aus ChurchTools synchronisieren, gestalten und anzeigen.', 'churchtools-plugin'); ?>
+            </p>
             <nav class="nav-tab-wrapper">
                 <?php foreach (self::tabs() as $tabSlug => $label) : ?>
                     <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => $tabSlug], admin_url('admin.php'))); ?>"
                         class="nav-tab <?php echo $tab === $tabSlug ? 'nav-tab-active' : ''; ?>">
+                        <span class="dashicons dashicons-<?php echo esc_attr($icons[$tabSlug] ?? 'admin-generic'); ?>" aria-hidden="true"></span>
                         <?php echo esc_html($label); ?>
                     </a>
                 <?php endforeach; ?>
@@ -950,7 +982,7 @@ final class SettingsPage
                 }
                 ?>
             <?php else : ?>
-                <form method="post" action="options.php">
+                <form method="post" action="options.php" class="ctp-panel">
                     <?php
                     settings_fields(self::PAGE_SLUG);
                     do_settings_sections(self::PAGE_SLUG . '_' . $tab);
@@ -1070,8 +1102,8 @@ final class SettingsPage
                     var attachment = frame.state().get('selection').first().toJSON();
                     input.value = attachment.id;
                     preview.src = (attachment.sizes && attachment.sizes.thumbnail) ? attachment.sizes.thumbnail.url : attachment.url;
-                    preview.style.display = 'inline-block';
-                    removeButton.style.display = 'inline';
+                    preview.hidden = false;
+                    removeButton.hidden = false;
                 });
 
                 frame.open();
@@ -1085,9 +1117,9 @@ final class SettingsPage
                 var cell = button.closest('.ctp-image-field');
                 cell.querySelector('.ctp-image-id').value = '0';
                 var preview = cell.querySelector('.ctp-image-preview');
-                preview.style.display = 'none';
+                preview.hidden = true;
                 preview.src = '';
-                button.style.display = 'none';
+                button.hidden = true;
             });
         });
         </script>

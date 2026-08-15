@@ -27,6 +27,7 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Frontend-Event-Queries werden jetzt für 10 Minuten per Transient gecacht (`EventQueryCache`) statt bei jedem Seitenaufruf live aus der DB zu lesen; der Cache wird nach jedem erfolgreichen Sync automatisch invalidiert
 - Beispielwerte in Doku und UI (Instanz-Platzhalter im „Verbindung"-Tab, README, readme.txt) von der internen Testgemeinde auf „Musterkirche" umgestellt, als Vorbereitung für eine mögliche Veröffentlichung
 - Automatische Plugin-Updates über GitHub Releases: neuer „Updates"-Tab (GitHub-Token, verschlüsselt gespeichert) und ein Release-Workflow, der bei einem Versions-Tag ein installierbares ZIP baut und veröffentlicht – WordPress zeigt neue Versionen jetzt wie bei einem regulären Plugin-Update an
+- Admin-Oberfläche überarbeitet: alle Tabs nutzen jetzt ein einheitliches Karten-Design (`assets/css/admin.css`) statt der bisherigen Mischung aus vereinzelten Karten und nacktem `form-table` auf grauem Hintergrund. Tab-Navigation mit Icons, Events-Übersicht/-Detailansicht mit Kalenderfarbpunkten
 
 ### Fixed
 

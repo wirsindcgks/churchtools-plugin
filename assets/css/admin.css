@@ -1,0 +1,273 @@
+/*
+ * ChurchTools Events – admin settings screen. Applies one consistent panel/spacing
+ * system across all tabs instead of the previous mix of ad-hoc inline styles (some
+ * sections wrapped in a card, most not). Deliberately stays close to wp-admin's own
+ * structural palette (surface/border/text tokens below match core's own values)
+ * rather than introducing a custom brand color — buttons/active-tab accents keep
+ * using WP's native .button-primary/.nav-tab-active classes so the page still
+ * respects whichever admin color scheme the user has picked in their profile.
+ */
+
+.ctp-admin {
+    --ctp-admin-surface: #fff;
+    --ctp-admin-border: #dcdcde;
+    --ctp-admin-text: #1d2327;
+    --ctp-admin-muted: #646970;
+    --ctp-admin-radius: 8px;
+    --ctp-admin-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --ctp-admin-max-width: 960px;
+}
+
+.ctp-admin-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 4px;
+}
+
+.ctp-admin-header .dashicons {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-admin-header h1 {
+    margin: 0;
+    padding: 0;
+}
+
+.ctp-admin-tagline {
+    margin: 0 0 20px;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-admin .nav-tab-wrapper {
+    margin-bottom: 4px;
+}
+
+.ctp-admin .nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ctp-admin .nav-tab .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+}
+
+/* The shared panel chrome every tab's content sits in — settings forms, the sync
+ * status box, the design preview, and the read-only events tables all use this so
+ * the page reads as one design instead of some sections having a card and others
+ * being bare text on the wp-admin background. */
+.ctp-panel {
+    max-width: var(--ctp-admin-max-width);
+    margin: 20px 0;
+    padding: 24px 28px;
+    background: var(--ctp-admin-surface);
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: var(--ctp-admin-radius);
+    box-shadow: var(--ctp-admin-shadow);
+}
+
+.ctp-panel > h2:first-child {
+    margin-top: 0;
+}
+
+.ctp-panel h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ctp-admin-muted);
+    margin: 28px 0 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-panel .form-table {
+    margin-top: 0;
+}
+
+.ctp-panel .form-table:last-of-type {
+    margin-bottom: 0;
+}
+
+.ctp-panel .submit {
+    margin: 0;
+    padding-top: 20px;
+}
+
+.ctp-panel table.widefat {
+    border: 1px solid var(--ctp-admin-border);
+    box-shadow: none;
+}
+
+.ctp-panel table.widefat.ctp-borderless {
+    border: 0;
+}
+
+.ctp-empty-state {
+    color: var(--ctp-admin-muted);
+    font-style: italic;
+}
+
+.ctp-panel .notice {
+    margin: 0 0 12px;
+}
+
+/* Connection tab */
+.ctp-instance-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ctp-instance-row input {
+    width: 180px;
+}
+
+.ctp-field-with-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Calendars tab */
+.ctp-calendars-table th.ctp-col-active,
+.ctp-calendars-table td:first-child {
+    width: 60px;
+}
+
+.ctp-calendars-table th.ctp-col-color,
+.ctp-calendars-table td:nth-child(3) {
+    width: 140px;
+}
+
+.ctp-calendars-table th.ctp-col-image,
+.ctp-calendars-table td:nth-child(4) {
+    width: 240px;
+}
+
+.ctp-calendars-table td {
+    vertical-align: middle;
+}
+
+.ctp-muted-code {
+    opacity: 0.6;
+}
+
+/* .ctp-color-field/.ctp-image-field are <td> elements — deliberately NOT flexed
+ * (display:flex on a table cell drops it out of table layout and breaks row
+ * alignment with its siblings). Plain inline flow + vertical-align instead, same
+ * approach the image cell's thumbnail/buttons already relied on. */
+.ctp-color-field .ctp-color-input {
+    vertical-align: middle;
+}
+
+.ctp-color-field .ctp-color-reset {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.ctp-image-field .ctp-image-select,
+.ctp-image-field .ctp-image-remove {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.ctp-image-preview {
+    max-width: 60px;
+    max-height: 40px;
+    vertical-align: middle;
+    border-radius: 4px;
+}
+
+.ctp-image-preview[hidden],
+.ctp-image-preview.ctp-hidden {
+    display: none;
+}
+
+/* Design tab */
+.ctp-design-preview-frame {
+    max-width: 280px;
+}
+
+/* frontend.css defaults .ctp-events__list to a grid for multi-item layouts; this
+ * preview only ever shows one fake item, so force it back to a simple block. The
+ * accent color is a fixed demo value — the real one comes from each calendar's
+ * configured color, irrelevant to what this preview actually controls. */
+#ctp-design-preview .ctp-events__list {
+    display: block;
+}
+
+#ctp-design-preview .ctp-events__card {
+    --ctp-accent: #2563eb;
+}
+
+.ctp-order-list {
+    max-width: 320px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ctp-order-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.6em 0.8em;
+    margin-bottom: 4px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: 4px;
+    background: var(--ctp-admin-surface);
+    cursor: move;
+}
+
+.ctp-order-item .dashicons {
+    opacity: 0.5;
+}
+
+.ctp-radio-inline {
+    margin-right: 1.5em;
+}
+
+/* Events tab */
+.ctp-cal-dot {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.ctp-muted-text {
+    opacity: 0.6;
+}
+
+.ctp-event-detail-title {
+    margin-top: 0;
+}
+
+.ctp-event-detail-subtitle {
+    display: block;
+    font-weight: normal;
+    opacity: 0.7;
+    font-size: 0.7em;
+}
+
+.ctp-event-detail-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.ctp-back-link {
+    display: inline-block;
+    margin-bottom: 4px;
+}
