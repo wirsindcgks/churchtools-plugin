@@ -1,0 +1,16 @@
+.git/
+.github/
+.gitignore
+.editorconfig
+.phpunit.result.cache
+tests/
+node_modules/
+phpcs.xml.dist
+phpunit.xml.dist
+composer.lock
+package.json
+package-lock.json
+plan.md
+README.md
+Start.txt
+.DS_Store

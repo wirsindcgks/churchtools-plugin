@@ -22,7 +22,7 @@ Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und 
 
 1. Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` hochladen.
 2. Plugin aktivieren.
-3. Unter Einstellungen → ChurchTools Events den Instanz-Namen (z. B. „cg-ks“ für https://cg-ks.church.tools) und den API-Key hinterlegen.
+3. Unter Einstellungen → ChurchTools Events den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen.
 
 == Verwendung ==
 

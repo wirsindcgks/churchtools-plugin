@@ -12,6 +12,7 @@ use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
 use ChurchToolsPlugin\Sync\RetentionCleanup;
 use ChurchToolsPlugin\Sync\SyncEngine;
+use ChurchToolsPlugin\Update\GitHubUpdateChecker;
 
 final class Plugin
 {
@@ -47,5 +48,6 @@ final class Plugin
 
         SyncEngine::registerHooks();
         RetentionCleanup::registerHooks();
+        GitHubUpdateChecker::register();
     }
 }

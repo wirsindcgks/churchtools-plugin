@@ -55,6 +55,7 @@ final class SettingsPage
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
             'events' => __('Events', 'churchtools-plugin'),
+            'updates' => __('Updates', 'churchtools-plugin'),
         ];
     }
 
@@ -114,6 +115,10 @@ final class SettingsPage
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designPage, 'ctp_design_order');
         add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designPage);
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designPage, 'ctp_design_corners');
+
+        $updatesPage = self::PAGE_SLUG . '_updates';
+        add_settings_section('ctp_updates', __('Plugin-Updates über GitHub', 'churchtools-plugin'), '__return_false', $updatesPage);
+        add_settings_field('github_token', __('GitHub-Token', 'churchtools-plugin'), [$this, 'renderGitHubTokenField'], $updatesPage, 'ctp_updates');
     }
 
     public static function defaults(): array
@@ -133,6 +138,7 @@ final class SettingsPage
             'retention_days' => 30,
             'element_order' => CardDesign::DEFAULT_ORDER,
             'corner_style' => 'rounded',
+            'github_token' => '',
         ];
     }
 
@@ -191,6 +197,19 @@ final class SettingsPage
         $decrypted = Crypto::decrypt($stored);
 
         return self::isPlausibleApiKey($decrypted) ? $decrypted : '';
+    }
+
+    /**
+     * Unlike getDecryptedApiKey(), no "plausible token" check: a GitHub token going
+     * missing after an AUTH_KEY rotation just means update checks silently stop
+     * finding updates, not a broken sync — much lower stakes than a wrong
+     * Authorization header reaching the ChurchTools API on every hourly cron run.
+     */
+    public static function getDecryptedGitHubToken(): string
+    {
+        $stored = self::get()['github_token'];
+
+        return $stored === '' ? '' : Crypto::decrypt($stored);
     }
 
     /**
@@ -281,6 +300,7 @@ final class SettingsPage
         $input ??= [];
         $existing = self::get();
         $apiKey = trim((string) ($input['api_key'] ?? ''));
+        $githubToken = trim((string) ($input['github_token'] ?? ''));
 
         $syncInterval = $existing['sync_interval'];
         if (array_key_exists('sync_interval', $input) && in_array($input['sync_interval'], ['hourly', 'twicedaily', 'daily'], true)) {
@@ -311,6 +331,7 @@ final class SettingsPage
                 ? self::sanitizeElementOrder((string) $input['element_order'])
                 : $existing['element_order'],
             'corner_style' => $cornerStyle,
+            'github_token' => $githubToken === '' ? $existing['github_token'] : Crypto::encrypt($githubToken),
         ];
     }
 
@@ -338,8 +359,9 @@ final class SettingsPage
     }
 
     /**
-     * Accepts either a bare instance name ("cg-ks") or a full URL a user might
-     * paste by habit ("https://cg-ks.church.tools/") and normalizes both to "cg-ks".
+     * Accepts either a bare instance name ("musterkirche") or a full URL a user
+     * might paste by habit ("https://musterkirche.church.tools/") and normalizes
+     * both to "musterkirche".
      */
     private static function sanitizeInstance(string $raw): string
     {
@@ -390,13 +412,13 @@ final class SettingsPage
         printf(
             '<span style="display:inline-flex;align-items:center;gap:4px;">'
             . '<code>https://</code>'
-            . '<input type="text" id="ctp-instance" name="%1$s[instance]" value="%2$s" class="regular-text" style="width:160px;" placeholder="cg-ks" pattern="[a-z0-9-]+" />'
+            . '<input type="text" id="ctp-instance" name="%1$s[instance]" value="%2$s" class="regular-text" style="width:160px;" placeholder="musterkirche" pattern="[a-z0-9-]+" />'
             . '<code>.church.tools</code>'
             . '</span>'
             . '<p class="description">%3$s</p>',
             esc_attr(self::OPTION_KEY),
             esc_attr(self::get()['instance']),
-            esc_html__('Nur der Instanz-Name eintragen, z. B. „cg-ks“ für https://cg-ks.church.tools', 'churchtools-plugin')
+            esc_html__('Nur der Instanz-Name eintragen, z. B. „musterkirche“ für https://musterkirche.church.tools', 'churchtools-plugin')
         );
     }
 
@@ -585,6 +607,19 @@ final class SettingsPage
                 esc_html($label)
             );
         }
+    }
+
+    public function renderGitHubTokenField(): void
+    {
+        $hasToken = self::get()['github_token'] !== '';
+
+        printf(
+            '<input type="password" name="%1$s[github_token]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
+            . '<p class="description">%3$s</p>',
+            esc_attr(self::OPTION_KEY),
+            $hasToken ? esc_attr__('Hinterlegt – zum Ändern neuen Token eingeben', 'churchtools-plugin') : '',
+            esc_html__('Nur nötig, da das GitHub-Repository privat ist: ein Personal Access Token mit Lesezugriff auf Releases, damit das Plugin neue Versionen erkennen und installieren kann.', 'churchtools-plugin')
+        );
     }
 
     /**

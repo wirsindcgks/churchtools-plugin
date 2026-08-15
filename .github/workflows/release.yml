@@ -1,0 +1,57 @@
+name: Release
+
+# Triggered by a version tag (see plan.md's "Changelog"-Konvention: bump the Version
+# header, tag vX.Y.Z). Neither `vendor/` (Composer) nor `blocks/event-list/build/`
+# (the Gutenberg block's compiled editor script) are committed to the repo — a plain
+# GitHub source checkout/zip is missing both and won't actually run. This workflow
+# builds both, packages a clean plugin directory, and attaches it as a release asset
+# so GitHubUpdateChecker (see includes/Update/GitHubUpdateChecker.php) has something
+# installable to point admins at.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+
+      - run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+      - run: npm run build
+
+      # Stage a clean copy under a churchtools-plugin/ top-level directory (the
+      # plugin slug) rather than zipping the checkout in place — WP identifies an
+      # installed plugin by its folder name, and the update package must match it.
+      # Staged outside the checkout (runner.temp) so rsync's source tree never
+      # overlaps its own destination.
+      - name: Stage plugin files
+        run: |
+          mkdir -p "${{ runner.temp }}/churchtools-plugin"
+          rsync -a --exclude-from=.github/release-excludes.txt ./ "${{ runner.temp }}/churchtools-plugin/"
+
+      - name: Create zip
+        run: |
+          cd "${{ runner.temp }}"
+          zip -r "${GITHUB_WORKSPACE}/churchtools-plugin-${GITHUB_REF_NAME}.zip" churchtools-plugin
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: churchtools-plugin-${{ github.ref_name }}.zip
+          generate_release_notes: true

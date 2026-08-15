@@ -66,7 +66,7 @@ final class SyncEngineTest extends TestCase
             'description' => 'Herzliche Einladung',
             'allDay' => false,
             'calendar' => ['id' => 32],
-            'image' => ['fileUrl' => 'https://cg-ks.church.tools/files/image.jpg'],
+            'image' => ['fileUrl' => 'https://musterkirche.church.tools/files/image.jpg'],
             'address' => [
                 'name' => 'Gemeindehaus',
                 'street' => 'Hauptstraße 1',
@@ -99,7 +99,7 @@ final class SyncEngineTest extends TestCase
         $this->assertSame('Predigt: Max Mustermann', $row['subtitle']);
         $this->assertSame('Herzliche Einladung', $row['description']);
         $this->assertFalse($row['all_day']);
-        $this->assertSame('https://cg-ks.church.tools/files/image.jpg', $row['image_url']);
+        $this->assertSame('https://musterkirche.church.tools/files/image.jpg', $row['image_url']);
         $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten', $row['location']);
     }
 

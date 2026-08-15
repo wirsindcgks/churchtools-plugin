@@ -31,7 +31,7 @@ final class SettingsPageTest extends TestCase
 
     public function testSanitizeInstanceAcceptsBareInstanceName(): void
     {
-        $this->assertSame('cg-ks', $this->sanitizeInstance('cg-ks'));
+        $this->assertSame('musterkirche', $this->sanitizeInstance('musterkirche'));
     }
 
     /**
@@ -40,13 +40,13 @@ final class SettingsPageTest extends TestCase
      */
     public function testSanitizeInstanceStripsSchemeAndDomain(): void
     {
-        $this->assertSame('cg-ks', $this->sanitizeInstance('https://cg-ks.church.tools/'));
-        $this->assertSame('cg-ks', $this->sanitizeInstance('http://cg-ks.church.tools'));
+        $this->assertSame('musterkirche', $this->sanitizeInstance('https://musterkirche.church.tools/'));
+        $this->assertSame('musterkirche', $this->sanitizeInstance('http://musterkirche.church.tools'));
     }
 
     public function testSanitizeInstanceLowercasesAndTrims(): void
     {
-        $this->assertSame('cg-ks', $this->sanitizeInstance('  CG-KS  '));
+        $this->assertSame('musterkirche', $this->sanitizeInstance('  MUSTERKIRCHE  '));
     }
 
     public function testSanitizeInstanceStripsDisallowedCharacters(): void
@@ -134,7 +134,7 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_set_option('ctp_settings', ['sync_days_ahead' => 90]);
 
-        $sanitized = SettingsPage::sanitizeSettings(['instance' => 'cg-ks']);
+        $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
 
         $this->assertSame(90, $sanitized['sync_days_ahead']);
     }

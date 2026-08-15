@@ -8,7 +8,7 @@ Frühe Entwicklungsphase (Grundgerüst). Noch offen: API-Endpunkte gegen die rea
 
 ## Architektur
 
-- **`ChurchToolsPlugin\Admin\SettingsPage`** – Einstellungsseite in drei Schritten: (1) ChurchTools-Instanz (nur der Subdomain-Teil, z. B. `cg-ks` für `https://cg-ks.church.tools`), (2) API-Key & Sync-Test, (3) Sync-Intervall & Retention. API-Key wird verschlüsselt gespeichert (`Security\Crypto`).
+- **`ChurchToolsPlugin\Admin\SettingsPage`** – Einstellungsseite in drei Schritten: (1) ChurchTools-Instanz (nur der Subdomain-Teil, z. B. `musterkirche` für `https://musterkirche.church.tools`), (2) API-Key & Sync-Test, (3) Sync-Intervall & Retention. API-Key wird verschlüsselt gespeichert (`Security\Crypto`).
 - **`ChurchToolsPlugin\Api\Client`** – REST-Client für die ChurchTools API.
 - **`ChurchToolsPlugin\Sync\SyncEngine`** – per WP-Cron (`ctp_run_sync`) getriggerter Sync in die eigene DB-Tabelle (`{prefix}ctp_events`). Bildet ChurchTools-Terminserien (`appointment` + `calculatedDates`) auf je eine Zeile pro tatsächlichem Vorkommnis ab (eindeutig über `ct_event_id` + `start_date`); Vorkommnisse, die im Sync-Zeitraum nicht mehr zurückkommen (z. B. eine abgesagte Einzelinstanz), werden per `EventRepository::deleteOrphans()` entfernt.
 - **`ChurchToolsPlugin\Sync\RetentionCleanup`** – per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist.
