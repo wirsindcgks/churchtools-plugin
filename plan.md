@@ -120,7 +120,21 @@ Gegen den echten OpenAPI-Spec der Instanz verifiziert (`{instance}/system/runtim
   - Gegen die lokale Testumgebung verifiziert: alle drei Layouts inkl. `columns`-Override und Stylesheet-Einbindung im `<head>` korrekt gerendert
 - [ ] **Visueller Editor für die Single-Event-Darstellung in der Grid-Ansicht** (Idee vom 2026-08-14): Tool, mit dem sich das Aussehen einer einzelnen Event-Karte anpassen lässt (welche Felder wo, Bildgröße, Farbakzente etc.) – Umsetzungsansatz (z. B. Gutenberg-Inner-Blocks vs. eigenes Settings-Panel) noch zu klären, baut auf der Grid-Ansicht oben auf
 - [ ] **Wählbare Detail-Anzeige: eigene Seite vs. Popup** (Idee vom 2026-08-14): Der Anwender soll einstellen können, ob ein Klick auf ein Event in der Liste/Grid-Ansicht zu einer eigenen Single-Event-Seite führt oder die Details als Popup/Modal auf derselben Seite öffnet. Aktuell verlinkt das Frontend-Template gar nicht auf eine Detailansicht (keine Single-Event-Seite existiert bisher) – hängt an den ToDo-Punkten „Verschiedene Frontend-Ansichten" und „Visueller Editor" oben, da dort erst die Kartendarstellung entsteht, die man anklickbar machen würde. Einstellung vermutlich als Shortcode-/Block-Attribut plus globaler Default in den Plugin-Settings
-- [ ] **Welcome/Status-Seite im Plugin-Menü** (Idee vom 2026-08-14): eigener Tab oder Landing-Screen unter „ChurchTools" mit Status-Übersicht auf einen Blick (Verbindung ok?, letzter Sync, Anzahl Events, aktive Kalender) – bündelt, was aktuell verteilt auf die drei bestehenden Tabs zu finden ist
+- [ ] **Welcome/Status-Seite im Plugin-Menü** (Idee vom 2026-08-14): eigener Tab oder Landing-Screen unter „ChurchTools" mit Status-Übersicht auf einen Blick (Verbindung ok?, letzter Sync, Anzahl Events, aktive Kalender) – bündelt, was aktuell verteilt auf die drei bestehenden Tabs zu finden ist. Sollte den neuen Sync-Fehlerstatus (siehe „Betrieb/Robustheit" unten) mit anzeigen, sobald der existiert – macht sonst nur halb Sinn
+
+### Betrieb / Robustheit (neu, Review vom 2026-08-15)
+- [ ] **Sync-Fehler sichtbar machen**: `SyncEngine::run()` hat kein `try`/`catch` um `$client->getEvents()` – schlägt die ChurchTools-API fehl (down, 401, Netzwerkfehler), fliegt eine unbehandelte `RuntimeException` durch den `ctp_run_sync`-Cron-Request. Aktuell merkt das niemand außer über `debug.log` oder aktives Nachschauen im Sync-Tab. Fix: Exception fangen, letzten Fehler (Zeitpunkt + Meldung) persistieren und im Sync-Tab neben „letzter Sync" anzeigen
+- [ ] **`AUTH_KEY`-Rotation erkennbar machen**: Der API-Key wird aus `AUTH_KEY` abgeleitet verschlüsselt (`Crypto.php`). Ändert sich `AUTH_KEY` (Salt-Rotation, Server-Umzug, Secrets-Management-Umstellung), wird der gespeicherte Key stillschweigend unbrauchbar und der Sync scheitert mit einem generischen 401 – genau das Fehlerbild, das am 2026-08-14 schon mal Debugging-Zeit gekostet hat (siehe Bugfix-Log oben), nur mit anderer Ursache. Fix: `getDecryptedApiKey()` erkennt „Entschlüsselung ergibt keinen plausiblen Token" und meldet das explizit statt einen kaputten Wert als Header zu verschicken
+- [ ] **WP-Cron-Zuverlässigkeit dokumentieren**: `wp_schedule_event()` feuert nur bei tatsächlichem Traffic auf der Seite – bei wenig besuchten Gemeinde-Websites kann der „stündliche" Sync real deutlich seltener laufen. Kein Code-Fix, aber ein Doku-Hinweis (README) auf System-Cron (`wget`/`curl` gegen `wp-cron.php` per echtem Crontab) als Alternative für Betreiber, denen das auffällt
+- [ ] **Retry/Backoff bei transienten API-Fehlern** (niedrige Priorität): aktuell kein Retry – der nächste stündliche Lauf ist de facto schon ein einfacher Backoff. Erst relevant, falls sich in der Praxis zeigt, dass eine Stunde Wartezeit bei kurzen ChurchTools-Ausfällen tatsächlich stört
+- [ ] **Sync-Zeitraum/Datenmenge im Blick behalten**: Sync holt aktuell pauschal ein volles Jahr im Voraus (`SyncEngine::run()`, `+1 year`). Bei vielen Kalendern mit wöchentlichen Serien kann die Zeilenzahl schnell groß werden (Admin-Übersicht deckelt jetzt schon hart auf 200). Keine akute Änderung nötig, aber im Auge behalten, ob der Zeitraum konfigurierbar werden muss, sobald eine Instanz mit spürbar mehr Kalendern/Serien dazukommt
+
+### Performance (neu, Review vom 2026-08-15)
+- [ ] **Frontend-Caching für Event-Queries**: Jeder Seitenaufruf mit `[ctp_events]` fragt live die DB ab, kein `wp_cache_`/Transient-Layer vorhanden. Bei Seiten mit viel Traffic und vergleichsweise seltenem Sync (stündlich) wäre ein kurzlebiger Transient (z. B. 5–15 Min TTL, invalidiert am Ende von `SyncEngine::run()`) ein günstiger Gewinn. Kein akutes Problem bei aktuellem Traffic-Level, aber bevor größere UI-Features draufgesetzt werden, lohnt sich der Blick
+
+### Datenschutz (neu, Review vom 2026-08-15)
+- [ ] **Personenbezogene Daten in `description`/`location` prüfen**: Der Bildimport in die Media Library war explizit eine DSGVO-Entscheidung (kein Hotlinking zu ChurchTools). Dieselbe Überlegung wurde für `description`/`location` noch nicht angestellt – je nach Gemeinde könnten dort Ansprechpartner-Namen oder Telefonnummern in der Freitext-Beschreibung stehen, die unverändert übernommen und öffentlich im Frontend ausgegeben werden. Erstmal nur eine bewusste Prüfung/Doku-Notiz, kein Automatismus (Freitext lässt sich nicht zuverlässig maschinell bereinigen)
+- [ ] **Auftragsverarbeitungs-Hinweis ergänzen**: Kurzer Absatz in README/readme.txt, dass Termindaten aus ChurchTools lokal auf dem WP-Server dupliziert werden – für den eigenen Verein reicht vermutlich ein Satz, wird aber relevant, sobald das Plugin an andere Gemeinden weitergegeben wird (siehe WordPress.org-Entscheidung unten)
 
 ### Code-Qualität / Tooling
 - [x] **PHPCS-Richtungsentscheidung** – 2026-08-14: `phpcs.xml.dist` auf PSR-12 (passend zur bereits gelebten Codebasis, siehe `.editorconfig`) umgestellt statt den vollen `WordPress`-Ruleset zu erzwingen; nur WordPress-spezifische Security-/i18n-/DB-Sniffs gezielt dazugenommen. ~2450 Findings → 0 Errors (51 Warnings, blockieren den Build bewusst nicht mehr über `ignore_warnings_on_exit`). Siehe „Gefundene und behobene Bugs" für Details zu den dabei mitgefixten echten Findings (z. B. `%i`-Identifier-Platzhalter statt String-Interpolation in SQL)
@@ -138,24 +152,40 @@ Gegen den echten OpenAPI-Spec der Instanz verifiziert (`{instance}/system/runtim
 - [ ] Entscheidung, ob/wann eine WordPress.org-Veröffentlichung angestrebt wird (beeinflusst `readme.txt`-Pflege und Composer-Build-Strategie)
 - [ ] **CG-KS-Branding aus Doku/Platzhaltern entfernen** (Idee vom 2026-08-14): `cg-ks`/„CG Kraichgau-Stromberg" taucht aktuell nur als Beispielwert in Doku und Placeholder-Texten auf (`README.md`, `readme.txt`, Platzhalter „cg-ks" in `SettingsPage.php`), nicht hartkodiert in der Logik – für eine allgemeinere Veröffentlichung auf ein generisches Beispiel umstellen (z. B. „meine-gemeinde")
 - [ ] **Plugin-Autor auf `wirsindcgks` umstellen** (Idee vom 2026-08-14): aktuell `Author: Tobias Nikola` + `Plugin URI: https://github.com/tobiasnikola/churchtools-plugin` in `churchtools-plugin.php`, `Contributors: tobiasnikola` in `readme.txt`, Package-Name `tobiasnikola/churchtools-plugin` in `composer.json` – auf `wirsindcgks` umstellen, konsistent mit dem tatsächlichen Repo-Owner (siehe „Rahmendaten" oben)
+- [ ] **Multi-Instanz-Support: Scope-Entscheidung** (Idee vom 2026-08-15): Aktuell ist genau eine ChurchTools-Instanz pro WP-Install vorgesehen (ein Satz Settings, eine Verbindung). Bewusste Entscheidung nötig, ob das für den Anwendungsfall (eigene Gemeinde) dauerhaft reicht oder ob Multi-Standort/Multisite-Szenarien absehbar sind – beeinflusst u. a. das DB-Schema (aktuell keine „welche Instanz"-Spalte) und die Settings-Struktur. Bis zur Entscheidung: bewusst out of scope, nicht mitdenken
 
 ## Nächste sinnvolle Schritte (Vorschlag, Reihenfolge)
 
-Bewusst von kleinen Quick-Wins zu größeren Brocken sortiert (Entscheidung vom 2026-08-14):
+**Neu priorisiert am 2026-08-15** (nach Review-Fragen zu Betrieb/Sicherheit/Datenschutz, siehe die neuen Abschnitte oben). Leitgedanke für die Reihenfolge: Erst Dinge, die die Korrektheit/Zuverlässigkeit der Daten und den unbeaufsichtigten Betrieb absichern (ein stiller Sync-Ausfall ist schlimmer als ein fehlender Reset-Button), dann Entscheidungen, die andere Arbeit gaten (WordPress.org), dann mittlerer Aufwand, **kosmetische UI-Arbeit bewusst zuletzt**: Sie lässt sich jederzeit nachziehen/umbauen, blockiert nichts anderes, und wie viel Polish überhaupt sinnvoll ist (Welcome-Screen, Karten-Editor) hängt auch davon ab, ob das Plugin intern bleibt oder breiter veröffentlicht wird – deshalb erst die WP.org-Entscheidung, dann die Feinarbeit an der Oberfläche.
 
 **Quick Wins**
 1. ~~Git-Repo initialisieren, ersten Commit erstellen~~ ✅ erledigt (2026-08-14)
 2. ~~Frontend-Template um `subtitle`/`all_day`/Kalenderfarbe erweitern~~ ✅ erledigt (2026-08-14)
 3. ~~Admin-Übersichtsseite der importierten Events~~ ✅ erledigt (2026-08-14)
+4. **Entscheidung zur WordPress.org-Veröffentlichung** – reine Entscheidung, kein Code, gated aber Branding-Cleanup, Autor-Umstellung, i18n-.pot und README-Pflege weiter unten; deshalb vorgezogen statt ganz am Ende
+5. **Sync-Fehler sichtbar machen** (try/catch + Fehlerstatus im Sync-Tab) – behebt die größte „Betrieb/Robustheit"-Lücke aus dem Review, vergleichsweise klein umzusetzen
+6. **`AUTH_KEY`-Rotation erkennbar machen** – klein, verhindert ein erneutes „mysteriöses 401" wie am 2026-08-14
+7. **WP-Cron-Zuverlässigkeit dokumentieren** – reiner Doku-Zusatz in README
+8. **„Auf Standardfarbe zurücksetzen"-Button im Kalender-Tab** – bereits bestehender, kleiner UI-Punkt, passt als Quick Win
 
 **Mittlerer Aufwand**
-4. ~~Event-Bilder in die WP-Medienbibliothek importieren statt Hotlinking~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details, inkl. eines dabei gefundenen und behobenen Change-Detection-Bugs
-5. ~~Frontend-Kalenderfilter-UI umsetzen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details
-6. ~~Gutenberg-Block: Kalenderauswahl auf echte Mehrfachauswahl umstellen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details
-7. WPBakery-Integration in echter Umgebung testen (abhängig von Verfügbarkeit einer WPBakery-Installation)
+9. ~~Event-Bilder in die WP-Medienbibliothek importieren statt Hotlinking~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details, inkl. eines dabei gefundenen und behobenen Change-Detection-Bugs
+10. ~~Frontend-Kalenderfilter-UI umsetzen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details
+11. ~~Gutenberg-Block: Kalenderauswahl auf echte Mehrfachauswahl umstellen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Funktional" für Details
+12. **Frontend-Caching für Event-Queries** (Transients) – bevor mehr UI draufgesetzt wird, lohnt sich der Performance-Grundschutz
+13. **Datenschutz**: `description`/`location` auf personenbezogene Daten prüfen + Auftragsverarbeitungs-Hinweis in README ergänzen
+14. **Sync-Zeitraum/Datenmenge im Blick behalten** – ggf. konfigurierbar machen, falls eine größere Instanz dazukommt
+15. **WPBakery-Integration in echter Umgebung testen** (abhängig von Verfügbarkeit einer WPBakery-Installation)
+16. `uninstall.php` überdenken
+17. **i18n `.pot`-Datei ergänzen** – jetzt sinnvoll verortet, da die WP.org-Entscheidung (Punkt 4) zu dem Zeitpunkt schon gefallen ist
+18. **CG-KS-Branding entfernen / Plugin-Autor auf `wirsindcgks` umstellen** – ebenfalls abhängig von Punkt 4
 
-**Größere Brocken**
-8. ~~PHPCS-Richtung klären und umsetzen~~ ✅ erledigt (2026-08-14) – CI läuft grün
-9. ~~Erste PHPUnit-Tests für die kritischen, reinen Funktionen ergänzen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Code-Qualität / Tooling" für Details
-10. `uninstall.php` überdenken, i18n `.pot`-Datei ergänzen
-11. Entscheidung zur WordPress.org-Veröffentlichung
+**Größere Brocken (inkl. kosmetische UI-Arbeit – bewusst zuletzt, siehe Leitgedanke oben)**
+19. ~~PHPCS-Richtung klären und umsetzen~~ ✅ erledigt (2026-08-14) – CI läuft grün
+20. ~~Erste PHPUnit-Tests für die kritischen, reinen Funktionen ergänzen~~ ✅ erledigt (2026-08-14) – siehe „Offene ToDos → Code-Qualität / Tooling" für Details
+21. ~~Verschiedene Frontend-Ansichten (Grid/List/Upcoming)~~ ✅ erledigt (2026-08-14)
+22. **Welcome/Status-Seite im Plugin-Menü** – jetzt zusätzlich sinnvoll, weil sie den neuen Sync-Fehlerstatus (Punkt 5) mit anzeigen kann
+23. **Visueller Editor für die Single-Event-Darstellung in der Grid-Ansicht** – rein kosmetisch/UX, bewusst nach den Robustheits-/Entscheidungspunkten
+24. **Wählbare Detail-Anzeige: eigene Seite vs. Popup** – hängt an Punkt 23
+25. **Multi-Instanz-Support: Scope-Entscheidung** – nur bei Bedarf, aktuell keine konkrete Anforderung erkennbar
+26. **Retry/Backoff bei transienten API-Fehlern** – niedrigste Priorität, der stündliche Cron ist de facto schon ein einfacher Backoff
