@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Sync;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Frontend\EventQueryCache;
 use DateTimeImmutable;
 use RuntimeException;
 use Throwable;
@@ -40,6 +41,7 @@ final class SyncEngine
             self::doRun($settings, $calendarIds);
             delete_option(self::OPTION_LAST_SYNC_ERROR);
             update_option('ctp_last_sync', current_time('mysql'));
+            EventQueryCache::flush();
         } catch (Throwable $exception) {
             update_option(self::OPTION_LAST_SYNC_ERROR, [
                 'time' => current_time('mysql'),

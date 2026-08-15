@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Frontend;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
-use ChurchToolsPlugin\Db\EventRepository;
 
 final class EventListRenderer
 {
@@ -32,7 +31,7 @@ final class EventListRenderer
             $designSettings['corner_style']
         );
 
-        $events = (new EventRepository())->findUpcoming($args['calendar_ids'], $args['limit']);
+        $events = EventQueryCache::findUpcoming($args['calendar_ids'], $args['limit']);
         $events = $this->withCalendarMeta($events);
 
         // "upcoming" has a single hero item plus a compact list, not a set of peer

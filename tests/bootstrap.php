@@ -82,3 +82,30 @@ function wp_timezone(): DateTimeZone
 {
     return new DateTimeZone('Europe/Berlin');
 }
+
+// EventQueryCache::TTL is computed from this WP core constant at class-load time.
+define('MINUTE_IN_SECONDS', 60);
+
+/**
+ * In-memory stand-in for transients, only as deep as EventQueryCacheTest needs:
+ * pre-seeding a cache-hit and reading it back. No expiration handling — nothing
+ * here exercises TTL behaviour, that's WP core's job, not this plugin's.
+ */
+$GLOBALS['ctp_test_transients'] = [];
+
+function get_transient(string $key)
+{
+    return $GLOBALS['ctp_test_transients'][$key] ?? false;
+}
+
+function set_transient(string $key, $value, int $expiration = 0): bool
+{
+    $GLOBALS['ctp_test_transients'][$key] = $value;
+
+    return true;
+}
+
+function ctp_test_reset_transients(): void
+{
+    $GLOBALS['ctp_test_transients'] = [];
+}
