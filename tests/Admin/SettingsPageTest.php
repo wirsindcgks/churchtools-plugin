@@ -100,4 +100,41 @@ final class SettingsPageTest extends TestCase
 
         $this->assertSame([32], SettingsPage::resolveCalendarIds(['32', 'Gottesdienst']));
     }
+
+    public function testSanitizeSettingsDefaultsSyncDaysAheadTo180(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([]);
+
+        $this->assertSame(180, $sanitized['sync_days_ahead']);
+    }
+
+    public function testSanitizeSettingsAcceptsCustomSyncDaysAhead(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['sync_days_ahead' => '30']);
+
+        $this->assertSame(30, $sanitized['sync_days_ahead']);
+    }
+
+    /**
+     * A sync window of zero (or negative) days would make SyncEngine::run() fetch
+     * an inverted/empty date range — floor it at 1, same enforcement pattern as
+     * retention_days' max(0, ...) just above it in sanitizeSettings().
+     */
+    public function testSanitizeSettingsEnforcesMinimumSyncDaysAheadOfOne(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['sync_days_ahead' => '0']);
+        $this->assertSame(1, $sanitized['sync_days_ahead']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['sync_days_ahead' => '-5']);
+        $this->assertSame(1, $sanitized['sync_days_ahead']);
+    }
+
+    public function testSanitizeSettingsKeepsExistingSyncDaysAheadWhenFieldAbsent(): void
+    {
+        ctp_test_set_option('ctp_settings', ['sync_days_ahead' => 90]);
+
+        $sanitized = SettingsPage::sanitizeSettings(['instance' => 'cg-ks']);
+
+        $this->assertSame(90, $sanitized['sync_days_ahead']);
+    }
 }

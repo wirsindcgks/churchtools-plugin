@@ -16,6 +16,8 @@ final class SyncEngine
         add_action('ctp_run_sync', [self::class, 'run']);
     }
 
+    private const OPTION_LAST_SYNC_ERROR = 'ctp_last_sync_error';
+
     public static function run(): void
     {
         $settings = SettingsPage::get();
@@ -25,6 +27,37 @@ final class SyncEngine
             return;
         }
 
+        // ctp_run_sync is hooked directly to this method (see registerHooks()) and
+        // fires unattended via WP-Cron — an uncaught exception here (e.g. the
+        // ChurchTools API being down, a 401, a network error) would otherwise fatal
+        // the cron request with nobody noticing except via debug.log. Catching here
+        // means both the cron path and the manual "Jetzt synchronisieren" button
+        // (ajaxRunSync(), which calls this method directly) get a persisted,
+        // user-visible error instead.
+        try {
+            self::doRun($settings, $calendarIds);
+            delete_option(self::OPTION_LAST_SYNC_ERROR);
+            update_option('ctp_last_sync', current_time('mysql'));
+        } catch (Throwable $exception) {
+            update_option(self::OPTION_LAST_SYNC_ERROR, [
+                'time' => current_time('mysql'),
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array{time: string, message: string}|null
+     */
+    public static function getLastError(): ?array
+    {
+        $error = get_option(self::OPTION_LAST_SYNC_ERROR, null);
+
+        return is_array($error) ? $error : null;
+    }
+
+    private static function doRun(array $settings, array $calendarIds): void
+    {
         $client = new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey());
         $repository = new EventRepository();
 
@@ -33,7 +66,8 @@ final class SyncEngine
         // stored (see toMysqlDate()) and how EventRepository::findUpcoming() already
         // determines "now" via current_time().
         $from = current_datetime()->setTime(0, 0);
-        $to = $from->modify('+1 year');
+        $daysAhead = max(1, (int) $settings['sync_days_ahead']);
+        $to = $from->modify("+{$daysAhead} days");
 
         $appointmentEnvelopes = $client->getEvents($calendarIds, $from, $to);
         $keepOccurrenceKeys = [];
@@ -62,8 +96,6 @@ final class SyncEngine
         }
 
         $repository->deleteOrphans($calendarIds, $from, $to, $keepOccurrenceKeys);
-
-        update_option('ctp_last_sync', current_time('mysql'));
     }
 
     /**

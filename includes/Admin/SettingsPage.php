@@ -95,6 +95,7 @@ final class SettingsPage
 
         add_settings_section('ctp_sync', __('Sync-Einstellungen', 'churchtools-plugin'), '__return_false', $syncPage);
         add_settings_field('sync_interval', __('Sync-Intervall', 'churchtools-plugin'), [$this, 'renderSyncIntervalField'], $syncPage, 'ctp_sync');
+        add_settings_field('sync_days_ahead', __('Sync-Zeitraum (Tage in die Zukunft)', 'churchtools-plugin'), [$this, 'renderSyncDaysAheadField'], $syncPage, 'ctp_sync');
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
     }
 
@@ -109,6 +110,7 @@ final class SettingsPage
              */
             'calendars' => [],
             'sync_interval' => 'hourly',
+            'sync_days_ahead' => 180,
             'retention_days' => 30,
         ];
     }
@@ -237,6 +239,9 @@ final class SettingsPage
                 ? self::sanitizeCalendars((array) $input['calendars'], $existing['calendars'])
                 : $existing['calendars'],
             'sync_interval' => $syncInterval,
+            'sync_days_ahead' => array_key_exists('sync_days_ahead', $input)
+                ? max(1, (int) $input['sync_days_ahead'])
+                : $existing['sync_days_ahead'],
             'retention_days' => array_key_exists('retention_days', $input)
                 ? max(0, (int) $input['retention_days'])
                 : $existing['retention_days'],
@@ -403,6 +408,19 @@ final class SettingsPage
         echo '</select>';
     }
 
+    public function renderSyncDaysAheadField(): void
+    {
+        printf(
+            '<input type="number" min="1" name="%1$s[sync_days_ahead]" value="%2$s" class="small-text" /> %3$s',
+            esc_attr(self::OPTION_KEY),
+            esc_attr((string) self::get()['sync_days_ahead']),
+            esc_html__('Tage', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Wie weit im Voraus Termine synchronisiert werden. Betrifft nur den Sync-Zeitraum, nicht die Aufbewahrung vergangener Termine.', 'churchtools-plugin')
+            . '</p>';
+    }
+
     public function renderRetentionField(): void
     {
         printf(
@@ -416,10 +434,25 @@ final class SettingsPage
     private function renderSyncStatus(): void
     {
         $lastSync = get_option('ctp_last_sync', '');
+        $lastError = SyncEngine::getLastError();
         $eventCount = (new EventRepository())->count();
         ?>
         <div class="card" style="max-width:760px;margin:16px 0;">
             <h2 style="margin-top:0;"><?php esc_html_e('Status', 'churchtools-plugin'); ?></h2>
+            <?php if ($lastError !== null) : ?>
+                <div class="notice notice-error inline" style="margin:0 0 12px;">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: 1: date/time the sync last failed, 2: error message */
+                            esc_html__('Letzter Sync-Fehler (%1$s): %2$s', 'churchtools-plugin'),
+                            esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $lastError['time'])),
+                            esc_html($lastError['message'])
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
             <p>
                 <?php
                 printf(
@@ -889,17 +922,22 @@ final class SettingsPage
             wp_send_json_error(['message' => __('Bitte zuerst Verbindung und mindestens einen aktiven Kalender einrichten.', 'churchtools-plugin')]);
         }
 
-        try {
-            SyncEngine::run();
+        // SyncEngine::run() catches its own exceptions and persists them (see its
+        // docblock) so an unattended WP-Cron run never fatals — that means a failure
+        // here no longer surfaces as a thrown exception, it has to be read back via
+        // getLastError() instead.
+        SyncEngine::run();
+        $lastError = SyncEngine::getLastError();
 
-            wp_send_json_success([
-                'message' => __('Synchronisation abgeschlossen.', 'churchtools-plugin'),
-                'count' => (new EventRepository())->count(),
-                'last_sync' => mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) get_option('ctp_last_sync', '')),
-            ]);
-        } catch (Throwable $exception) {
-            wp_send_json_error(['message' => $exception->getMessage()]);
+        if ($lastError !== null) {
+            wp_send_json_error(['message' => $lastError['message']]);
         }
+
+        wp_send_json_success([
+            'message' => __('Synchronisation abgeschlossen.', 'churchtools-plugin'),
+            'count' => (new EventRepository())->count(),
+            'last_sync' => mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) get_option('ctp_last_sync', '')),
+        ]);
     }
 
     /**

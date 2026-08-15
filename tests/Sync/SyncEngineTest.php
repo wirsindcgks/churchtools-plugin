@@ -19,6 +19,36 @@ use ReflectionMethod;
  */
 final class SyncEngineTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        ctp_test_reset_options();
+    }
+
+    /**
+     * getLastError() just reads back whatever run() persisted under
+     * "ctp_last_sync_error" — run() itself isn't unit-tested here since it
+     * constructs a real Client and hits the network (see the class docblock on why
+     * this test suite avoids full WP/integration bootstrapping), but the read side
+     * of that error round trip is pure and worth pinning down.
+     */
+    public function testGetLastErrorReturnsNullWhenNoErrorStored(): void
+    {
+        $this->assertNull(SyncEngine::getLastError());
+    }
+
+    public function testGetLastErrorReturnsPersistedError(): void
+    {
+        ctp_test_set_option('ctp_last_sync_error', [
+            'time' => '2026-08-15 12:00:00',
+            'message' => 'ChurchTools API error 401: No valid token',
+        ]);
+
+        $this->assertSame([
+            'time' => '2026-08-15 12:00:00',
+            'message' => 'ChurchTools API error 401: No valid token',
+        ], SyncEngine::getLastError());
+    }
+
     private function mapOccurrence(array $envelope): ?array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'mapOccurrence');

@@ -41,6 +41,26 @@ function get_option(string $name, $default = false)
 }
 
 /**
+ * SyncEngine::getLastError()/run() read and write the "ctp_last_sync_error" option
+ * through update_option()/delete_option(), not just get_option() — needed so tests
+ * can exercise that persisted-error round trip the same way the real option table
+ * would behave.
+ */
+function update_option(string $name, $value): bool
+{
+    $GLOBALS['ctp_test_options'][$name] = $value;
+
+    return true;
+}
+
+function delete_option(string $name): bool
+{
+    unset($GLOBALS['ctp_test_options'][$name]);
+
+    return true;
+}
+
+/**
  * Mirrors WP core's actual merge behaviour (array args override matching default
  * keys, defaults fill in the rest) closely enough for SettingsPage::get()'s use —
  * it always passes two arrays, never the string/object forms wp_parse_args() also
