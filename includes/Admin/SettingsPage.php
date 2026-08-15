@@ -688,6 +688,98 @@ final class SettingsPage
         <?php
     }
 
+    /**
+     * Reference panel for the design tab: the design settings above (element
+     * order, corner style) apply to every [ctp_events] shortcode automatically,
+     * so this is a natural place to also show how to actually place one. The
+     * first example uses a real, currently-enabled calendar when one exists
+     * (same idea as the live example already shown at the bottom of the
+     * Kalender tab) instead of a made-up placeholder name.
+     */
+    private function renderShortcodeReference(): void
+    {
+        $calendars = self::get()['calendars'];
+        $enabledIds = self::getEnabledCalendarIds();
+        $exampleCalendar = '';
+        if ($enabledIds !== []) {
+            $firstId = $enabledIds[0];
+            $exampleCalendar = $calendars[$firstId]['name'] ?? (string) $firstId;
+        }
+
+        $examples = [
+            [
+                'label' => __('Liste', 'churchtools-plugin'),
+                'code' => $exampleCalendar !== ''
+                    ? sprintf('[ctp_events calendar="%s" layout="list" limit="10"]', $exampleCalendar)
+                    : '[ctp_events layout="list" limit="10"]',
+            ],
+            [
+                'label' => __('Grid', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="grid" columns="3" limit="8"]',
+            ],
+            [
+                'label' => __('Nächster Termin', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="upcoming" limit="4"]',
+            ],
+        ];
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Verwendung: Shortcode', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Termine per Shortcode in eine Seite oder einen Beitrag einbinden – dieselbe Rendering-Basis wie der Gutenberg-Block „ChurchTools Events" und das WPBakery-Element. Die Kartengestaltung oben (Reihenfolge, Eckenstil) gilt automatisch für jeden Shortcode, ohne zusätzliches Attribut.', 'churchtools-plugin'); ?>
+            </p>
+
+            <table class="widefat striped ctp-borderless">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Attribut', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Standard', 'churchtools-plugin'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>calendar</code></td>
+                        <td><?php esc_html_e('Kommagetrennte Kalender-IDs und/oder -Namen. Leer = alle aktiven Kalender.', 'churchtools-plugin'); ?></td>
+                        <td>&ndash;</td>
+                    </tr>
+                    <tr>
+                        <td><code>layout</code></td>
+                        <td><code>list</code> &middot; <code>grid</code> &middot; <code>upcoming</code></td>
+                        <td><code>list</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>limit</code></td>
+                        <td><?php esc_html_e('Anzahl angezeigter Termine', 'churchtools-plugin'); ?></td>
+                        <td><code>10</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>columns</code></td>
+                        <td><?php esc_html_e('Nur bei Grid-Layout relevant: Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
+                        <td><code>3</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3><?php esc_html_e('Beispiele', 'churchtools-plugin'); ?></h3>
+            <ul class="ctp-shortcode-examples">
+                <?php foreach ($examples as $example) : ?>
+                    <li>
+                        <span class="ctp-shortcode-label"><?php echo esc_html($example['label']); ?></span>
+                        <code><?php echo esc_html($example['code']); ?></code>
+                        <button type="button" class="button button-small ctp-copy-shortcode" data-shortcode="<?php echo esc_attr($example['code']); ?>">
+                            <?php esc_html_e('Kopieren', 'churchtools-plugin'); ?>
+                        </button>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <p class="description">
+                <?php esc_html_e('Weitere Details zu Gutenberg-Block, WPBakery-Element und Theme-Overrides: siehe readme.txt.', 'churchtools-plugin'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
     private function renderSyncStatus(): void
     {
         $lastSync = get_option('ctp_last_sync', '');
@@ -990,6 +1082,10 @@ final class SettingsPage
                     ?>
                 </form>
             <?php endif; ?>
+
+            <?php if ($tab === 'design') : ?>
+                <?php $this->renderShortcodeReference(); ?>
+            <?php endif; ?>
         </div>
         <script>
         document.getElementById('ctp-test-connection')?.addEventListener('click', function () {
@@ -1120,6 +1216,25 @@ final class SettingsPage
                 preview.hidden = true;
                 preview.src = '';
                 button.hidden = true;
+            });
+        });
+
+        document.querySelectorAll('.ctp-copy-shortcode').forEach(function (button) {
+            // navigator.clipboard needs a secure context (HTTPS, or localhost for
+            // local testing) — simply not offering the button's function is a safer
+            // degrade than the deprecated document.execCommand('copy') fallback.
+            if (!navigator.clipboard) {
+                return;
+            }
+
+            button.addEventListener('click', function () {
+                navigator.clipboard.writeText(button.dataset.shortcode).then(function () {
+                    var original = button.textContent;
+                    button.textContent = '<?php echo esc_js(__('Kopiert!', 'churchtools-plugin')); ?>';
+                    setTimeout(function () {
+                        button.textContent = original;
+                    }, 1500);
+                });
             });
         });
         </script>

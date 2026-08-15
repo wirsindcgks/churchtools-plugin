@@ -236,6 +236,39 @@
     margin-right: 1.5em;
 }
 
+.ctp-panel h3 {
+    margin: 24px 0 8px;
+}
+
+.ctp-shortcode-examples {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ctp-shortcode-examples li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-shortcode-examples li:last-child {
+    border-bottom: 0;
+}
+
+.ctp-shortcode-label {
+    min-width: 110px;
+    font-weight: 600;
+}
+
+.ctp-shortcode-examples code {
+    flex: 1;
+    min-width: 240px;
+}
+
 /* Events tab */
 .ctp-cal-dot {
     display: inline-block;
