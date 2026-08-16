@@ -12,7 +12,10 @@
         "layout": { "type": "string", "default": "list" },
         "limit": { "type": "number", "default": 10 },
         "columns": { "type": "number", "default": 3 },
-        "click": { "type": "string", "default": "default" }
+        "click": { "type": "string", "default": "default" },
+        "filter": { "type": "boolean", "default": false },
+        "search": { "type": "boolean", "default": false },
+        "monthDividers": { "type": "boolean", "default": false }
     },
     "editorScript": "file:./build/index.js",
     "style": "file:../../assets/css/frontend.css",

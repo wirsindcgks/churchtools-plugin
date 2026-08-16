@@ -22,6 +22,9 @@ final class EventListRenderer
             'limit' => 10,
             'columns' => self::DEFAULT_COLUMNS,
             'click' => 'default',
+            'filter' => false,
+            'search' => false,
+            'month_dividers' => false,
         ]);
 
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'list';
@@ -49,9 +52,14 @@ final class EventListRenderer
         $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
 
         // "upcoming" has a single hero item plus a compact list, not a set of peer
-        // items — filtering it client-side would either leave an empty hero slot or
-        // need JS to re-elect a new hero, so the filter bar is scoped to list/grid.
-        $filterCalendars = $args['layout'] !== 'upcoming' ? $this->filterCalendars($events) : [];
+        // items — filtering/searching it client-side would either leave an empty
+        // hero slot or need JS to re-elect a new hero, so the whole toolbar (filter,
+        // search, month dividers) is scoped to list/grid, same as before.
+        $isFilterable = $args['layout'] !== 'upcoming';
+        $filterCalendars = $isFilterable && $args['filter'] ? $this->filterCalendars($events) : [];
+        $args['search'] = $isFilterable && (bool) $args['search'];
+        $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
+        $args['show_toolbar'] = $args['search'] || $filterCalendars !== [];
 
         $templateName = "churchtools-plugin/event-{$args['layout']}.php";
         $template = locate_template($templateName);

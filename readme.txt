@@ -36,6 +36,10 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `layout` – Ansicht: `list` (Standard), `grid` oder `upcoming`.
 * `limit` – Anzahl der angezeigten Termine (Standard: 10).
 * `columns` – Nur bei `layout="grid"` relevant: Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3). Auf schmaleren Bildschirmen wird automatisch reduziert (1 Spalte auf Smartphones, 2 auf Tablets), unabhängig vom gewählten Wert.
+* `click` – Klickverhalten pro Kachel: `default` (Standard, folgt der Design-Tab-Einstellung), `none`, `popup` oder `page`.
+* `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
+* `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
+* `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
 
 = Die drei Ansichten =
 
@@ -51,11 +55,11 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 `[ctp_events calendar="Gottesdienste" layout="upcoming" limit="4"]`
 
-Zeigen **Liste** oder **Grid** Termine aus mehr als einem Kalender an (z. B. bei leerem `calendar`-Attribut), erscheint automatisch ein Dropdown zum Filtern nach Kalender – ohne eigenes Attribut, ohne Neuladen der Seite. Bei nur einem Kalender im Ergebnis bleibt es weg. Die „Nächster Termin“-Ansicht hat keinen Filter, da sie nur einen einzelnen Hero-Termin zeigt.
+**Liste** und **Grid** können zusätzlich eine Werkzeugleiste mit Kalenderfilter (`filter="1"`) und/oder Freitext-Suche (`search="1"`) anzeigen sowie Termine nach Monat gruppieren (`month_dividers="1"`) – alle drei standardmäßig aus, per Attribut (Shortcode), Umschalter (Gutenberg-Block) oder Checkbox (WPBakery) einzeln aktivierbar. Filter und Suche laufen komplett clientseitig (kein Neuladen der Seite, funktioniert unter Full-Page-Caching); der Kalenderfilter erscheint dabei nur, wenn das tatsächliche Ergebnis mindestens zwei verschiedene Kalender enthält. Die „Nächster Termin“-Ansicht unterstützt keines der drei, da sie nur einen einzelnen Hero-Termin zeigt.
 
 = Gutenberg-Block =
 
-Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der im „Kalender“-Tab geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid) und Anzahl der Termine festlegen.
+Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der im „Kalender“-Tab geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid), Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Kalenderfilter, Suchleiste und Monatsgruppierung festlegen.
 
 = WPBakery-Element =
 

@@ -42,10 +42,51 @@
     font-style: italic;
 }
 
-/* ---------- calendar filter (list/grid layouts only, see EventListRenderer::filterCalendars()) ---------- */
+/* ---------- toolbar: search + calendar filter (list/grid layouts only, both opt-in — see EventListRenderer::render()) ---------- */
 
-.ctp-events__filter-bar {
+.ctp-events__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
     margin-block-end: var(--ctp-gap);
+}
+
+.ctp-events__search {
+    position: relative;
+    flex: 1 1 16rem;
+    min-width: 12rem;
+    display: flex;
+    align-items: center;
+}
+
+.ctp-events__search .ctp-events__icon {
+    position: absolute;
+    left: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    color: var(--ctp-color-muted);
+    pointer-events: none;
+}
+
+.ctp-events__search-input {
+    width: 100%;
+    padding: 0.5rem 0.9rem 0.5rem 2.25rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: calc(var(--ctp-radius) * 0.5);
+    background-color: var(--ctp-color-surface);
+    color: var(--ctp-color-text);
+    font: inherit;
+}
+
+/* Firefox/WebKit both add their own reset-icon/clear-button before
+ * :focus-visible is even reachable there — unset so the two native search
+ * decorations (an extra magnifier glyph, an X clear button) don't collide
+ * with the custom icon and padding above. */
+.ctp-events__search-input::-webkit-search-decoration,
+.ctp-events__search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .ctp-events__filter {
@@ -58,9 +99,36 @@
     cursor: pointer;
 }
 
-.ctp-events__filter:focus-visible {
+.ctp-events__filter:focus-visible,
+.ctp-events__search-input:focus-visible {
     outline: 2px solid var(--ctp-accent);
     outline-offset: 2px;
+}
+
+.ctp-events__toolbar-empty {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--ctp-color-muted);
+    font-style: italic;
+}
+
+/* ---------- month dividers (list/grid layouts only, opt-in — see EventFormatter::monthLabel()) ---------- */
+
+.ctp-events__month-divider {
+    margin-block: calc(var(--ctp-gap) * 0.75) calc(var(--ctp-gap) * 0.35);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ctp-color-muted);
+}
+
+.ctp-events__month-divider:first-child {
+    margin-block-start: 0;
+}
+
+.ctp-events--grid .ctp-events__month-divider {
+    grid-column: 1 / -1;
 }
 
 .ctp-events__list {
@@ -151,6 +219,17 @@
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+}
+
+/* frontend.js toggles the native [hidden] attribute on filtered-out items and
+ * empty month dividers (see updateMonthDividers()/applyToolbarState()) — the
+ * browser's own "[hidden] { display: none }" UA rule normally handles that on
+ * its own, but it's the *lowest*-priority origin in the cascade, so any
+ * author rule that sets `display` on the same element (e.g. ".ctp-events__item
+ * { display: flex }" below) silently wins and the item stays visible despite
+ * being "hidden". Restated here as an author rule so it actually takes effect. */
+.ctp-events [hidden] {
+    display: none;
 }
 
 /* ---------- shared row pattern (list layout + the "further events" list in the upcoming layout) ---------- */

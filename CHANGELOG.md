@@ -9,6 +9,8 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- Kalenderfilter, Freitext-Suchleiste (Titel/Untertitel/Ort) und Monatstrenner für die Liste/Grid-Ansicht: alle drei neu per Shortcode-Attribut (`filter`/`search`/`month_dividers`), Gutenberg-Block-Umschalter oder WPBakery-Checkbox einzeln aktivierbar, standardmäßig aus. Ersetzt das bisherige automatische Erscheinen des Kalenderfilters ab zwei Kalendern im Ergebnis durch ein explizites Opt-in. Filter und Suche laufen weiterhin komplett clientseitig (kein Neuladen, cache-kompatibel); ein Monat ohne sichtbare Treffer nach dem Filtern/Suchen blendet seinen Trenner automatisch mit aus
+- Admin: neuer „Übersicht“-Tab (jetzt Startseite des Plugin-Menüs) mit Verbindungs-/Sync-Status, Termin- und Kalenderzahlen sowie installierter/verfügbarer Version inkl. Changelog-Auszug
 - Neue Checkbox „Beim Deinstallieren“ im Sync-Tab: Termindaten, importierte Bilder und Einstellungen können jetzt optional erhalten bleiben, wenn das Plugin deinstalliert (nicht nur deaktiviert) wird – Default weiterhin „löschen“
 - Erste `.pot`-Übersetzungsvorlage (`languages/churchtools-plugin.pot`), extrahiert aus allen `__()`/`esc_html__()`/`esc_attr__()`-Aufrufen in PHP und dem Gutenberg-Block-Editor-Script
 - Neuer „Datenschutz“-Abschnitt in `readme.txt`: Hinweis, dass „Ort“/„Beschreibung“ unverändert und ungefiltert aus ChurchTools übernommen werden und daher ggf. personenbezogene Daten enthalten können, sowie ein kurzer Auftragsverarbeitungs-Hinweis
@@ -39,6 +41,8 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 ### Changed
 
 - Plugin-Autor/-URI konsistent auf `wirsindcgks` umgestellt (`churchtools-plugin.php`, `readme.txt`, `composer.json`) – entspricht dem tatsächlichen GitHub-Repo-Owner statt des persönlichen Alt-Accounts
+- Design-Tab in zwei getrennte Boxen aufgeteilt: „Kachel" (Reihenfolge, Eckenstil) und „Klickverhalten & Detailansicht" (Klickverhalten, Reihenfolge der Detailansicht) – bisher ein einziges langes Formular, jetzt klarer erkennbar getrennt und passend zu den zwei Vorschau-Boxen auf der rechten Seite
+- Popup/eigene-Seite-Vorschau im Design-Tab hebt sich jetzt sichtbar vom Panel-Hintergrund ab (gedimmter Hintergrund + Schatten + eigene Fläche, analog zum echten `<dialog>` im Frontend) statt bisher unauffällig auf dem weißen Panel zu liegen
 
 ### Fixed
 
@@ -47,6 +51,8 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Eine AUTH_KEY-Rotation (Salt-Wechsel, Server-Umzug, Secrets-Management-Umstellung) ließ den gespeicherten API-Key stillschweigend unbrauchbar werden und den Sync mit einem generischen 401 scheitern; `SettingsPage::getDecryptedApiKey()` erkennt eine unplausible Entschlüsselung jetzt und meldet das explizit statt einen kaputten Wert als Header zu verschicken (Verbindung testen, Kalender laden, manueller und automatischer Sync)
 - `SyncEngine::run()`s `catch (Throwable …)` fing wegen eines fehlenden `use Throwable;`-Imports tatsächlich nie eine Exception ab (unqualifizierte Klassennamen lösen in PHP nicht in den globalen Namespace auf) – ein Sync-Fehler hätte trotz des extra dafür gebauten Fehler-Anzeige-Features (siehe oben) weiterhin den WP-Cron-Request fatal enden lassen, statt ihn sichtbar zu machen
 - Ein per `git clone`/ZIP-Download von GitHub heruntergeladenes Plugin startete nie: weder `vendor/` (Composer-Autoloader) noch `blocks/event-list/build/` (kompiliertes Editor-Script) sind im Repo enthalten, beide wurden bisher nur lokal per manuellem `composer install`/`npm run build` erzeugt. Der neue Release-Workflow baut beides und veröffentlicht ein direkt installierbares ZIP
+- Echte Titel-Überschriften (der Termintitel auf der Admin-Detailseite, der Termintitel in der Popup/eigene-Seite-Design-Vorschau) wurden fälschlich vom generischen Panel-Section-Label-Stil erfasst und erschienen dadurch selbst als winzige, graue, unterstrichene Überschrift statt als richtiger Titel – CSS-Selektor auf direkte Kind-Elemente eingeschränkt, betroffene Titel zusätzlich mit eigener, höher-spezifischer Regel abgesichert
+- Der clientseitige Kalenderfilter/Suche/Monatstrenner (siehe oben) blendete gefilterte Termine trotz korrekt gesetztem `hidden`-Attribut nicht aus: `.ctp-events__item { display: flex }` (eine Autoren-Regel) überschrieb die niedriger priorisierte `[hidden]`-Regel des Browsers. Neue `.ctp-events [hidden] { display: none }`-Regel behebt das für alle per JS ein-/ausgeblendeten Elemente
 
 ## [0.1.0] - 2026-08-14
 

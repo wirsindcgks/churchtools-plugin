@@ -60,6 +60,13 @@ final class EventListBlock
             'layout' => $attributes['layout'] ?? 'list',
             'limit' => (int) ($attributes['limit'] ?? 10),
             'columns' => (int) ($attributes['columns'] ?? 3),
+            // "click" was previously missing here entirely, silently making the
+            // block editor's "Klickverhalten" control a no-op — always fixed here
+            // alongside the three new toggles below.
+            'click' => $attributes['click'] ?? 'default',
+            'filter' => (bool) ($attributes['filter'] ?? false),
+            'search' => (bool) ($attributes['search'] ?? false),
+            'month_dividers' => (bool) ($attributes['monthDividers'] ?? false),
         ]);
     }
 }

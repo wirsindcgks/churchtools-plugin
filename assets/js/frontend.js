@@ -1,12 +1,73 @@
 /**
- * Client-side calendar filter for the list/grid layouts. Runs entirely in the
- * browser (no re-fetch) so it keeps working under full-page caching, which the
- * shortcode's server-rendered output has to support. Event delegation on
+ * Client-side calendar filter + search for the list/grid layouts. Runs entirely
+ * in the browser (no re-fetch) so it keeps working under full-page caching, which
+ * the shortcode's server-rendered output has to support. Event delegation on
  * `document` means it works for every [ctp_events] instance on the page without
  * having to (re-)bind listeners per instance.
  */
 (function () {
 	'use strict';
+
+	/**
+	 * Re-applies both the calendar filter (select) and the search box (if
+	 * present) together — a single pass so an item hidden by either one stays
+	 * hidden, instead of two independent handlers fighting over the same
+	 * `hidden` attribute. Also updates month-divider visibility (a divider
+	 * whose whole month is now empty must disappear too, see
+	 * updateMonthDividers()) and the "nothing found" message.
+	 */
+	function applyToolbarState(container) {
+		var select = container.querySelector('.ctp-events__filter');
+		var searchInput = container.querySelector('.ctp-events__search-input');
+		var calendarId = select ? select.value : '';
+		var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+		var items = container.querySelectorAll('[data-ctp-calendar]');
+		var visibleCount = 0;
+
+		items.forEach(function (item) {
+			var matchesCalendar = calendarId === '' || item.getAttribute('data-ctp-calendar') === calendarId;
+			var matchesSearch = query === '' || (item.getAttribute('data-ctp-search') || '').indexOf(query) !== -1;
+			var visible = matchesCalendar && matchesSearch;
+
+			item.hidden = !visible;
+			if (visible) {
+				visibleCount += 1;
+			}
+		});
+
+		updateMonthDividers(container);
+
+		var emptyMessage = container.querySelector('.ctp-events__toolbar-empty');
+		if (emptyMessage) {
+			emptyMessage.hidden = visibleCount !== 0;
+		}
+	}
+
+	/**
+	 * Hides a month divider when every item between it and the next divider
+	 * (or the end of the list) is currently hidden — otherwise an active
+	 * filter/search can leave a "August 2026" heading floating above zero
+	 * visible events.
+	 */
+	function updateMonthDividers(container) {
+		var dividers = container.querySelectorAll('.ctp-events__month-divider');
+
+		dividers.forEach(function (divider) {
+			var hasVisibleItem = false;
+			var sibling = divider.nextElementSibling;
+
+			while (sibling && !sibling.classList.contains('ctp-events__month-divider')) {
+				if (sibling.hasAttribute('data-ctp-calendar') && !sibling.hidden) {
+					hasVisibleItem = true;
+					break;
+				}
+				sibling = sibling.nextElementSibling;
+			}
+
+			divider.hidden = !hasVisibleItem;
+		});
+	}
 
 	document.addEventListener('change', function (event) {
 		var select = event.target;
@@ -16,16 +77,22 @@
 		}
 
 		var container = select.closest('.ctp-events');
-		if (!container) {
+		if (container) {
+			applyToolbarState(container);
+		}
+	});
+
+	document.addEventListener('input', function (event) {
+		var input = event.target;
+
+		if (!input.classList || !input.classList.contains('ctp-events__search-input')) {
 			return;
 		}
 
-		var calendarId = select.value;
-		var items = container.querySelectorAll('[data-ctp-calendar]');
-
-		items.forEach(function (item) {
-			item.hidden = calendarId !== '' && item.getAttribute('data-ctp-calendar') !== calendarId;
-		});
+		var container = input.closest('.ctp-events');
+		if (container) {
+			applyToolbarState(container);
+		}
 	});
 
 	/**

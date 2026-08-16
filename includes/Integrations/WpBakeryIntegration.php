@@ -66,6 +66,27 @@ final class WpBakeryIntegration
                         __('Eigene Seite', 'churchtools-plugin') => 'page',
                     ],
                 ],
+                [
+                    'type' => 'checkbox',
+                    'heading' => __('Kalenderfilter anzeigen', 'churchtools-plugin'),
+                    'param_name' => 'filter',
+                    'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
+                [
+                    'type' => 'checkbox',
+                    'heading' => __('Suchleiste anzeigen', 'churchtools-plugin'),
+                    'param_name' => 'search',
+                    'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
+                [
+                    'type' => 'checkbox',
+                    'heading' => __('Termine nach Monat gruppieren', 'churchtools-plugin'),
+                    'param_name' => 'month_dividers',
+                    'value' => [__('Gruppieren', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
             ],
         ]);
     }

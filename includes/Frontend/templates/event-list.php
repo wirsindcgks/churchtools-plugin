@@ -18,17 +18,25 @@ if (!defined('ABSPATH')) {
 }
 ?>
 <div class="ctp-events ctp-events--list" style="<?php echo esc_attr($args['design_style']); ?>">
-    <?php if ($filterCalendars !== []) : ?>
-        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/filter-bar.php'; ?>
+    <?php if ($args['show_toolbar']) : ?>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/toolbar.php'; ?>
     <?php endif; ?>
     <?php if (empty($events)) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
         <ul class="ctp-events__list">
+            <?php $currentMonthKey = null; ?>
             <?php foreach ($events as $event) : ?>
+                <?php if ($args['month_dividers'] && EventFormatter::monthKey($event['start_date']) !== $currentMonthKey) : ?>
+                    <?php $currentMonthKey = EventFormatter::monthKey($event['start_date']); ?>
+                    <li class="ctp-events__month-divider" data-ctp-month="<?php echo esc_attr($currentMonthKey); ?>">
+                        <?php echo esc_html(EventFormatter::monthLabel($event['start_date'])); ?>
+                    </li>
+                <?php endif; ?>
                 <li
                     class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
                     data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
+                    data-ctp-search="<?php echo esc_attr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); ?>"
                     <?php if ($event['calendar_color'] !== '') : ?>
                         style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
                     <?php endif; ?>

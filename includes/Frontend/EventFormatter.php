@@ -50,6 +50,26 @@ final class EventFormatter
     }
 
     /**
+     * Grouping key for month dividers (event-list.php/event-grid.php) — plain
+     * "Y-m" so consecutive events in the same month compare equal regardless
+     * of locale, independent of monthLabel()'s display text below.
+     */
+    public static function monthKey(string $mysqlDate): string
+    {
+        return mysql2date('Y-m', $mysqlDate);
+    }
+
+    /**
+     * Localized "Month Year" heading text for a month divider, e.g. "August
+     * 2026" — uses date_i18n() (not mysql2date()) so the month name itself
+     * respects the site's language, not just the date *format*.
+     */
+    public static function monthLabel(string $mysqlDate): string
+    {
+        return date_i18n('F Y', mysql2date('U', $mysqlDate));
+    }
+
+    /**
      * wp_trim_words() already strips tags itself (descriptions can contain HTML,
      * see SettingsPage's wp_kses_post() on the admin detail view), so the result
      * here is plain text — callers still esc_html() it like every other field.

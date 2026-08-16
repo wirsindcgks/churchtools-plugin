@@ -141,15 +141,26 @@ final class SettingsPage
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
         add_settings_field('keep_data_on_uninstall', __('Beim Deinstallieren', 'churchtools-plugin'), [$this, 'renderKeepDataOnUninstallField'], $syncPage, 'ctp_sync');
 
-        $designPage = self::PAGE_SLUG . '_design';
-        add_settings_section('ctp_design_order', __('Reihenfolge der Kartenelemente', 'churchtools-plugin'), '__return_false', $designPage);
-        add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designPage, 'ctp_design_order');
-        add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designPage);
-        add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designPage, 'ctp_design_corners');
-        add_settings_section('ctp_design_click', __('Klickverhalten', 'churchtools-plugin'), '__return_false', $designPage);
-        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designPage, 'ctp_design_click');
-        add_settings_section('ctp_design_detail_order', __('Reihenfolge der Detailansicht', 'churchtools-plugin'), '__return_false', $designPage);
-        add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designPage, 'ctp_design_detail_order');
+        // Two page slugs instead of one so renderPage() can wrap each in its own
+        // .ctp-panel box — "Kachel" (how the card itself looks) and "Popup /
+        // eigene Seite" (what a click does + how that detail view looks) are
+        // different concerns that were previously stacked in a single
+        // undifferentiated form, mirroring the two separate preview panels on
+        // the right (renderDesignPreview()/renderDetailPreview()). The page
+        // slug only affects which do_settings_sections() call renders a
+        // section — save behavior is governed solely by settings_fields(
+        // self::PAGE_SLUG) in renderPage(), unaffected by this split.
+        $designTilePage = self::PAGE_SLUG . '_design_tile';
+        add_settings_section('ctp_design_order', __('Reihenfolge der Kartenelemente', 'churchtools-plugin'), '__return_false', $designTilePage);
+        add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
+        add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designTilePage);
+        add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designTilePage, 'ctp_design_corners');
+
+        $designDetailPage = self::PAGE_SLUG . '_design_detail';
+        add_settings_section('ctp_design_click', __('Klickverhalten', 'churchtools-plugin'), '__return_false', $designDetailPage);
+        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_click');
+        add_settings_section('ctp_design_detail_order', __('Reihenfolge der Detailansicht', 'churchtools-plugin'), '__return_false', $designDetailPage);
+        add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $updatesPage = self::PAGE_SLUG . '_updates';
         add_settings_section('ctp_updates', __('Plugin-Updates über GitHub', 'churchtools-plugin'), '__return_false', $updatesPage);
@@ -908,13 +919,15 @@ final class SettingsPage
             <p class="description">
                 <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine" steht.', 'churchtools-plugin'); ?>
             </p>
-            <div class="ctp-events__detail ctp-design-preview-frame" id="ctp-design-detail-preview">
-                <?php foreach ($order as $key) : ?>
-                    <div data-key="<?php echo esc_attr($key); ?>">
-                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
-                        <?php echo $blocks[$key] ?? ''; ?>
-                    </div>
-                <?php endforeach; ?>
+            <div class="ctp-design-preview-backdrop">
+                <div class="ctp-events ctp-events__detail ctp-design-preview-frame" id="ctp-design-detail-preview">
+                    <?php foreach ($order as $key) : ?>
+                        <div data-key="<?php echo esc_attr($key); ?>">
+                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
+                            <?php echo $blocks[$key] ?? ''; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
         <?php
@@ -944,6 +957,10 @@ final class SettingsPage
                 'code' => $exampleCalendar !== ''
                     ? sprintf('[ctp_events calendar="%s" layout="list" limit="10"]', $exampleCalendar)
                     : '[ctp_events layout="list" limit="10"]',
+            ],
+            [
+                'label' => __('Liste mit Filter, Suche & Monatstrennern', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="list" filter="1" search="1" month_dividers="1"]',
             ],
             [
                 'label' => __('Grid', 'churchtools-plugin'),
@@ -997,6 +1014,23 @@ final class SettingsPage
                             &ndash; <?php esc_html_e('überschreibt das Klickverhalten oben nur für diesen Shortcode', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>default</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>filter</code></td>
+                        <td>
+                            <?php esc_html_e('Kalenderfilter-Dropdown anzeigen (nur list/grid, nur bei ≥2 Kalendern im Ergebnis)', 'churchtools-plugin'); ?>
+                        </td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>search</code></td>
+                        <td><?php esc_html_e('Freitext-Suchleiste anzeigen (nur list/grid, filtert Titel/Untertitel/Ort)', 'churchtools-plugin'); ?></td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>month_dividers</code></td>
+                        <td><?php esc_html_e('Termine nach Monat gruppiert darstellen (nur list/grid)', 'churchtools-plugin'); ?></td>
+                        <td><code>0</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -1486,12 +1520,16 @@ final class SettingsPage
             <?php elseif ($tab === 'design') : ?>
                 <?php // Settings form on the left, live preview on the right — see .ctp-design-layout in admin.css. ?>
                 <div class="ctp-design-layout">
-                    <form method="post" action="options.php" class="ctp-panel">
-                        <?php
-                        settings_fields(self::PAGE_SLUG);
-                        do_settings_sections(self::PAGE_SLUG . '_' . $tab);
-                        submit_button();
-                        ?>
+                    <form method="post" action="options.php" class="ctp-design-form">
+                        <?php settings_fields(self::PAGE_SLUG); ?>
+                        <?php // Two boxes, one per concern — see the registerSettings() comment on $designTilePage/$designDetailPage. ?>
+                        <div class="ctp-panel">
+                            <?php do_settings_sections(self::PAGE_SLUG . '_design_tile'); ?>
+                        </div>
+                        <div class="ctp-panel">
+                            <?php do_settings_sections(self::PAGE_SLUG . '_design_detail'); ?>
+                            <?php submit_button(); ?>
+                        </div>
                     </form>
                     <div class="ctp-design-previews">
                         <?php $this->renderDesignPreview(); ?>

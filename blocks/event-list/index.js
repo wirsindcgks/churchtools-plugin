@@ -1,6 +1,14 @@
 import { registerBlockType } from '@wordpress/blocks';
+import { Fragment } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, CheckboxControl, SelectControl, RangeControl, TextControl } from '@wordpress/components';
+import {
+	PanelBody,
+	CheckboxControl,
+	SelectControl,
+	RangeControl,
+	TextControl,
+	ToggleControl,
+} from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 import { __, sprintf } from '@wordpress/i18n';
 import metadata from './block.json';
@@ -12,7 +20,7 @@ const knownCalendars = window.ctpBlockCalendars || [];
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
-		const { calendarIds, layout, limit, columns, click } = attributes;
+		const { calendarIds, layout, limit, columns, click, filter, search, monthDividers } = attributes;
 		const blockProps = useBlockProps();
 
 		// Union of the known calendars and any IDs already saved on this block
@@ -88,6 +96,25 @@ registerBlockType(metadata.name, {
 							]}
 							onChange={(value) => setAttributes({ click: value })}
 						/>
+						{layout !== 'upcoming' && (
+							<Fragment>
+								<ToggleControl
+									label={__('Kalenderfilter anzeigen', 'churchtools-plugin')}
+									checked={filter}
+									onChange={(value) => setAttributes({ filter: value })}
+								/>
+								<ToggleControl
+									label={__('Suchleiste anzeigen', 'churchtools-plugin')}
+									checked={search}
+									onChange={(value) => setAttributes({ search: value })}
+								/>
+								<ToggleControl
+									label={__('Termine nach Monat gruppieren', 'churchtools-plugin')}
+									checked={monthDividers}
+									onChange={(value) => setAttributes({ monthDividers: value })}
+								/>
+							</Fragment>
+						)}
 					</PanelBody>
 				</InspectorControls>
 				<ServerSideRender block={metadata.name} attributes={attributes} />

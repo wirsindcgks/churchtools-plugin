@@ -90,10 +90,19 @@
     margin: 20px 0;
 }
 
-.ctp-design-layout > .ctp-panel,
+.ctp-design-layout > .ctp-design-form,
 .ctp-design-layout > .ctp-design-previews {
     max-width: none;
     margin: 0;
+}
+
+/* Design tab settings form: two stacked panels (Kachel / Popup & eigene Seite)
+ * instead of one long form, so the two concerns line up visually with their
+ * matching preview panel on the right (see .ctp-design-previews below). */
+.ctp-design-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .ctp-design-previews {
@@ -102,6 +111,7 @@
     gap: 24px;
 }
 
+.ctp-design-form > .ctp-panel,
 .ctp-design-previews > .ctp-panel {
     max-width: none;
     margin: 0;
@@ -113,7 +123,15 @@
     }
 }
 
-.ctp-panel h2 {
+/* Direct-child combinator only: this is the section-label style for the
+ * panel's own heading(s), not a blanket rule for every h2 that happens to be
+ * nested somewhere inside a panel — the admin Events detail view and the
+ * Design tab's popup/page preview both render a real event *title* as an
+ * <h2> for its own semantics, and that must not be swallowed by this
+ * uppercase/gray/underlined label style (was previously the case with a
+ * plain ".ctp-panel h2" descendant selector — visible as e.g. an event title
+ * rendering as a tiny gray section label). */
+.ctp-panel > h2 {
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
@@ -241,9 +259,28 @@
     display: block;
 }
 
+/* The real popup is a <dialog> floating over the dimmed page (see
+ * .ctp-events__modal in frontend.css) — bare on the panel's own white
+ * background, the preview had nothing to visually float over. This mimics
+ * that: a dimmed "backdrop" wrapper behind a card with the dialog's own
+ * background/radius/shadow, so it reads as a floating popup instead of
+ * blending into the surrounding panel. */
+.ctp-design-preview-backdrop {
+    display: flex;
+    justify-content: center;
+    padding: 28px 20px;
+    background: color-mix(in srgb, #000 6%, #f0f0f1);
+    border-radius: calc(var(--ctp-admin-radius) * 1.25);
+}
+
 #ctp-design-detail-preview {
     --ctp-accent: #2563eb;
+    width: 100%;
     max-width: 320px;
+    padding: 1.5rem;
+    background: var(--ctp-color-surface, #fff);
+    border-radius: var(--ctp-radius, 14px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .ctp-design-preview-block__media {
@@ -359,15 +396,27 @@
     opacity: 0.6;
 }
 
-.ctp-event-detail-title {
-    margin-top: 0;
+/* Qualified with the "> h2" the .ctp-panel > h2 section-label rule above
+ * also matches (same markup shape: a direct-child <h2> in a .ctp-panel) —
+ * needs to outrank it on specificity, not just source order, since this is
+ * a real event title, not a section label. */
+.ctp-panel > h2.ctp-event-detail-title {
+    margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--ctp-admin-border);
+    font-size: 22px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.3;
+    color: var(--ctp-admin-text);
 }
 
 .ctp-event-detail-subtitle {
     display: block;
     font-weight: normal;
     opacity: 0.7;
-    font-size: 0.7em;
+    font-size: 0.6em;
 }
 
 .ctp-event-detail-image {
