@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Admin;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Frontend\CardDesign;
+use ChurchToolsPlugin\Frontend\DetailDesign;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\SyncEngine;
@@ -142,6 +143,10 @@ final class SettingsPage
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designPage, 'ctp_design_order');
         add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designPage);
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designPage, 'ctp_design_corners');
+        add_settings_section('ctp_design_click', __('Klickverhalten', 'churchtools-plugin'), '__return_false', $designPage);
+        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designPage, 'ctp_design_click');
+        add_settings_section('ctp_design_detail_order', __('Reihenfolge der Detailansicht', 'churchtools-plugin'), '__return_false', $designPage);
+        add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designPage, 'ctp_design_detail_order');
 
         $updatesPage = self::PAGE_SLUG . '_updates';
         add_settings_section('ctp_updates', __('Plugin-Updates über GitHub', 'churchtools-plugin'), '__return_false', $updatesPage);
@@ -165,6 +170,8 @@ final class SettingsPage
             'retention_days' => 30,
             'element_order' => CardDesign::DEFAULT_ORDER,
             'corner_style' => 'rounded',
+            'click_behavior' => 'popup',
+            'detail_element_order' => DetailDesign::DEFAULT_ORDER,
             'github_token' => '',
         ];
     }
@@ -339,6 +346,11 @@ final class SettingsPage
             $cornerStyle = $input['corner_style'];
         }
 
+        $clickBehavior = $existing['click_behavior'];
+        if (array_key_exists('click_behavior', $input) && in_array($input['click_behavior'], ['none', 'popup', 'page'], true)) {
+            $clickBehavior = $input['click_behavior'];
+        }
+
         return [
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
@@ -358,6 +370,10 @@ final class SettingsPage
                 ? self::sanitizeElementOrder((string) $input['element_order'])
                 : $existing['element_order'],
             'corner_style' => $cornerStyle,
+            'click_behavior' => $clickBehavior,
+            'detail_element_order' => array_key_exists('detail_element_order', $input)
+                ? self::sanitizeDetailElementOrder((string) $input['detail_element_order'])
+                : $existing['detail_element_order'],
             'github_token' => $githubToken === '' ? $existing['github_token'] : Crypto::encrypt($githubToken),
         ];
     }
@@ -387,6 +403,22 @@ final class SettingsPage
         ));
 
         return CardDesign::isValidOrder($keys) ? $keys : CardDesign::DEFAULT_ORDER;
+    }
+
+    /**
+     * Same "present but malformed value snaps to the default, absent value falls
+     * back to $existing" rule as sanitizeElementOrder() above, for the detail
+     * view's own (separator-free) six-key order.
+     */
+    private static function sanitizeDetailElementOrder(string $raw): array
+    {
+        $keys = array_filter(array_map('trim', explode(',', $raw)));
+        $keys = array_values(array_filter(
+            $keys,
+            static fn (string $key): bool => (bool) preg_match('/^[a-z0-9-]+$/', $key)
+        ));
+
+        return DetailDesign::isValidOrder($keys) ? $keys : DetailDesign::DEFAULT_ORDER;
     }
 
     /**
@@ -674,6 +706,72 @@ final class SettingsPage
         }
     }
 
+    public function renderClickBehaviorField(): void
+    {
+        $current = self::get()['click_behavior'];
+        $options = [
+            'none' => __('Keine – Kacheln bleiben wie bisher unklickbar', 'churchtools-plugin'),
+            'popup' => __('Popup – öffnet die Details in einem Fenster auf derselben Seite', 'churchtools-plugin'),
+            'page' => __('Eigene Seite – verlinkt auf eine eigene Termin-URL', 'churchtools-plugin'),
+        ];
+
+        foreach ($options as $value => $label) {
+            printf(
+                '<label class="ctp-radio-block"><input type="radio" name="%1$s[click_behavior]" value="%2$s" class="ctp-design-click-input" %3$s /> %4$s</label>',
+                esc_attr(self::OPTION_KEY),
+                esc_attr($value),
+                checked($current, $value, false),
+                esc_html($label)
+            );
+        }
+        echo '<p class="description">'
+            . esc_html__('Gilt für jeden Shortcode/Block/WPBakery-Eintrag, sofern dort nicht per Attribut "click" explizit überschrieben (siehe Referenz unten).', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
+     * German labels for DetailDesign::ELEMENT_KEYS. Same shape as
+     * elementOrderLabels() above, but describing the detail view's own field
+     * set (full description instead of an excerpt, no separate calendar/media
+     * split needed beyond what the card already establishes).
+     */
+    private static function detailElementOrderLabels(): array
+    {
+        return [
+            'media' => __('Bild', 'churchtools-plugin'),
+            'calendar' => __('Kalendername', 'churchtools-plugin'),
+            'title' => __('Titel', 'churchtools-plugin'),
+            'subtitle' => __('Untertitel', 'churchtools-plugin'),
+            'meta' => __('Datum & Ort', 'churchtools-plugin'),
+            'description' => __('Beschreibung', 'churchtools-plugin'),
+        ];
+    }
+
+    public function renderDetailElementOrderField(): void
+    {
+        $labels = self::detailElementOrderLabels();
+        $order = self::get()['detail_element_order'];
+        ?>
+        <ul id="ctp-design-detail-order" class="ctp-order-list">
+            <?php foreach ($order as $key) : ?>
+                <li draggable="true" data-key="<?php echo esc_attr($key); ?>" class="ctp-order-item">
+                    <span class="dashicons dashicons-menu" aria-hidden="true"></span>
+                    <?php echo esc_html($labels[$key] ?? $key); ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+        <input
+            type="hidden"
+            id="ctp-design-detail-order-input"
+            name="<?php echo esc_attr(self::OPTION_KEY); ?>[detail_element_order]"
+            value="<?php echo esc_attr(implode(',', $order)); ?>"
+        />
+        <p class="description">
+            <?php esc_html_e('Reihenfolge der Felder in Popup und eigener Seite, per Drag&Drop änderbar (Maus/Trackpad).', 'churchtools-plugin'); ?>
+        </p>
+        <?php
+    }
+
     public function renderGitHubTokenField(): void
     {
         $hasToken = self::get()['github_token'] !== '';
@@ -727,10 +825,12 @@ final class SettingsPage
                                 <span class="ctp-events__subtitle"><?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?></span>
                                 <span class="ctp-events__meta">
                                     <span class="ctp-events__meta-item">
+                                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
                                         <?php echo Icons::clock(); ?>
                                         24.12.2026, 18:00
                                     </span>
                                     <span class="ctp-events__meta-item">
+                                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
                                         <?php echo Icons::location(); ?>
                                         <?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?>
                                     </span>
@@ -738,11 +838,56 @@ final class SettingsPage
                                 <p class="ctp-events__excerpt">
                                     <?php esc_html_e('Kurzer Auszug aus der Terminbeschreibung, wie er auf der Kachel erscheint …', 'churchtools-plugin'); ?>
                                 </p>
+                                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup. ?>
                                 <?php echo CardDesign::renderSeparators($settings['element_order']); ?>
                             </div>
                         </article>
                     </li>
                 </ul>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Preview for the detail view (popup/own page), rendered in the
+     * detail_element_order's actual server-side order — unlike the card
+     * preview above, no CSS `order` custom properties are involved (see
+     * DetailDesign docblock), so admin-design.js's drag handler just
+     * re-appends these same placeholder blocks in the new order instead of
+     * mirroring CSS var math.
+     */
+    private function renderDetailPreview(): void
+    {
+        $settings = self::get();
+        $order = DetailDesign::isValidOrder($settings['detail_element_order'])
+            ? $settings['detail_element_order']
+            : DetailDesign::DEFAULT_ORDER;
+
+        $blocks = [
+            'media' => '<div class="ctp-events__detail-media ctp-design-preview-block__media" aria-hidden="true"></div>',
+            'calendar' => '<span class="ctp-events__eyebrow"><span class="ctp-events__color-dot" aria-hidden="true"></span>'
+                . esc_html__('Beispiel-Kalender', 'churchtools-plugin') . '</span>',
+            'title' => '<h2 class="ctp-events__detail-title">' . esc_html__('Beispiel-Termin', 'churchtools-plugin') . '</h2>',
+            'subtitle' => '<p class="ctp-events__subtitle">' . esc_html__('Untertitel-Beispiel', 'churchtools-plugin') . '</p>',
+            'meta' => '<p class="ctp-events__meta"><span class="ctp-events__meta-item">' . Icons::clock() . ' 24.12.2026, 18:00</span>'
+                . '<span class="ctp-events__meta-item">' . Icons::location() . ' ' . esc_html__('Gemeindehaus', 'churchtools-plugin') . '</span></p>',
+            'description' => '<div class="ctp-events__detail-description"><p>'
+                . esc_html__('Vollständige Terminbeschreibung, wie sie in Popup und eigener Seite erscheint …', 'churchtools-plugin') . '</p></div>',
+        ];
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine" steht.', 'churchtools-plugin'); ?>
+            </p>
+            <div class="ctp-events__detail ctp-design-preview-frame" id="ctp-design-detail-preview">
+                <?php foreach ($order as $key) : ?>
+                    <div data-key="<?php echo esc_attr($key); ?>">
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
+                        <?php echo $blocks[$key] ?? ''; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php
@@ -817,6 +962,14 @@ final class SettingsPage
                         <td><code>columns</code></td>
                         <td><?php esc_html_e('Nur bei Grid-Layout relevant: Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
                         <td><code>3</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>click</code></td>
+                        <td>
+                            <code>default</code> &middot; <code>none</code> &middot; <code>popup</code> &middot; <code>page</code>
+                            &ndash; <?php esc_html_e('überschreibt das Klickverhalten oben nur für diesen Shortcode', 'churchtools-plugin'); ?>
+                        </td>
+                        <td><code>default</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -1139,7 +1292,10 @@ final class SettingsPage
                         submit_button();
                         ?>
                     </form>
-                    <?php $this->renderDesignPreview(); ?>
+                    <div class="ctp-design-previews">
+                        <?php $this->renderDesignPreview(); ?>
+                        <?php $this->renderDetailPreview(); ?>
+                    </div>
                 </div>
                 <?php $this->renderShortcodeReference(); ?>
             <?php else : ?>

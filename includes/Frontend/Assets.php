@@ -51,9 +51,18 @@ final class Assets
      * widget, a template part calling do_shortcode() directly) won't be detected
      * here and simply renders without the stylesheet — accepted gap rather than a
      * fragile broader heuristic.
+     *
+     * Also covers EventDetailPage's virtual "own page" route — it has no
+     * WP_Post/post_content to scan for the shortcode string, but needs the same
+     * stylesheet/script (the popup JS in particular, since the detail page can
+     * itself be reached from a page whose own [ctp_events] uses the popup).
      */
     private function currentRequestUsesShortcode(): bool
     {
+        if (EventDetailPage::isDetailRequest()) {
+            return true;
+        }
+
         $post = get_post();
 
         return $post instanceof \WP_Post && has_shortcode($post->post_content, 'ctp_events');

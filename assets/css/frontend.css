@@ -156,6 +156,7 @@
 /* ---------- shared row pattern (list layout + the "further events" list in the upcoming layout) ---------- */
 
 .ctp-events__item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -258,6 +259,7 @@
 }
 
 .ctp-events__card {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -320,6 +322,7 @@
 /* ---------- upcoming layout ---------- */
 
 .ctp-events--upcoming .ctp-events__hero {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr;
     gap: 0;
@@ -392,4 +395,146 @@
     .ctp-events__card {
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
+}
+
+/* ---------- click behavior: "stretched link" trigger (see ClickTrigger.php) ---------- */
+
+.ctp-events__card--clickable,
+.ctp-events__item--clickable,
+.ctp-events__hero--clickable {
+    cursor: pointer;
+}
+
+.ctp-events__card-trigger {
+    all: unset;
+    cursor: pointer;
+}
+
+/* Stretches invisibly over the entire card/item/hero (its nearest positioned
+   ancestor, not its own small text bounding box) so the whole tile is
+   clickable while only the title text is the actual <a>/<button> in the DOM —
+   keeps article/h3/p out of interactive content, which <button> forbids. */
+.ctp-events__card-trigger::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.ctp-events__card-trigger:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ctp-events__item--clickable,
+    .ctp-events__hero--clickable {
+        transition: box-shadow 0.18s ease;
+    }
+}
+
+.ctp-events__card--clickable:hover,
+.ctp-events__card--clickable:focus-within {
+    box-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
+        0 18px 34px -16px color-mix(in srgb, var(--ctp-accent) 45%, transparent);
+    transform: translateY(-2px);
+}
+
+.ctp-events__hero--clickable:hover,
+.ctp-events__hero--clickable:focus-within {
+    box-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
+        0 18px 34px -16px color-mix(in srgb, var(--ctp-accent) 45%, transparent);
+}
+
+/* ---------- popup modal (see partials/modal.php, assets/js/frontend.js) ---------- */
+
+.ctp-events__modal {
+    max-width: min(640px, calc(100vw - 2rem));
+    max-height: calc(100vh - 4rem);
+    padding: 0;
+    border: none;
+    border-radius: var(--ctp-radius);
+    background: var(--ctp-color-surface);
+    color: var(--ctp-color-text);
+    box-shadow: var(--ctp-shadow);
+}
+
+.ctp-events__modal::backdrop {
+    background: color-mix(in srgb, black 55%, transparent);
+}
+
+.ctp-events__modal-close {
+    all: unset;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    color: var(--ctp-color-muted);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ctp-events__modal-close:hover,
+.ctp-events__modal-close:focus-visible {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    color: var(--ctp-color-text);
+}
+
+.ctp-events__modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 4rem);
+}
+
+/* ---------- detail view content (partials/event-detail-content.php), shared by the modal body and the "own page" template ---------- */
+
+.ctp-events__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ctp-events__detail-media img {
+    display: block;
+    width: 100%;
+    border-radius: calc(var(--ctp-radius) * 0.7);
+}
+
+.ctp-events__detail-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.ctp-events__detail-description {
+    margin-top: 0.4rem;
+    line-height: 1.6;
+}
+
+.ctp-events__detail-description :first-child {
+    margin-top: 0;
+}
+
+.ctp-events__detail-description :last-child {
+    margin-bottom: 0;
+}
+
+/* ---------- "own page" wrapper (event-detail.php) ---------- */
+
+.ctp-events--detail {
+    max-width: 42rem;
+}
+
+.ctp-events__back {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--ctp-color-muted);
+    text-decoration: none;
+}
+
+.ctp-events__back:hover {
+    color: var(--ctp-accent);
 }

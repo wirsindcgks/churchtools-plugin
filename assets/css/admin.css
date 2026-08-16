@@ -90,7 +90,19 @@
     margin: 20px 0;
 }
 
-.ctp-design-layout > .ctp-panel {
+.ctp-design-layout > .ctp-panel,
+.ctp-design-layout > .ctp-design-previews {
+    max-width: none;
+    margin: 0;
+}
+
+.ctp-design-previews {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.ctp-design-previews > .ctp-panel {
     max-width: none;
     margin: 0;
 }
@@ -227,6 +239,17 @@
  * configured color, irrelevant to what this preview actually controls. */
 #ctp-design-preview .ctp-events__list {
     display: block;
+}
+
+#ctp-design-detail-preview {
+    --ctp-accent: #2563eb;
+    max-width: 320px;
+}
+
+.ctp-design-preview-block__media {
+    aspect-ratio: 16 / 9;
+    border-radius: calc(var(--ctp-radius, 14px) * 0.7);
+    background: color-mix(in srgb, var(--ctp-accent) 25%, transparent);
 }
 
 #ctp-design-preview .ctp-events__card {

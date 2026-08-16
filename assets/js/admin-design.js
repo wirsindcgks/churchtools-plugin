@@ -11,6 +11,116 @@
 (function () {
 	'use strict';
 
+	/**
+	 * Detail view order (popup/own page) — structurally the same drag&drop as
+	 * the card order below, but simpler: no separators, and no CSS `order`
+	 * math to mirror, since DetailDesign applies the order directly while
+	 * building the markup server-side (see DetailDesign docblock). The live
+	 * preview here just re-appends the same placeholder blocks in the new
+	 * order — appendChild() on an already-attached node moves it, no clone
+	 * needed. Runs independently of the card order block below (own early
+	 * guards), since the two settings sections/fields don't depend on each
+	 * other's presence.
+	 */
+	var detailList = document.getElementById('ctp-design-detail-order');
+	var detailHiddenInput = document.getElementById('ctp-design-detail-order-input');
+	var detailPreview = document.getElementById('ctp-design-detail-preview');
+
+	if (detailList && detailHiddenInput) {
+		var draggedDetailItem = null;
+
+		detailList.addEventListener('dragstart', function (event) {
+			var item = event.target.closest('li[draggable]');
+			if (!item) {
+				return;
+			}
+			draggedDetailItem = item;
+			event.dataTransfer.effectAllowed = 'move';
+		});
+
+		detailList.addEventListener('dragover', function (event) {
+			var target = event.target.closest('li[draggable]');
+			if (!draggedDetailItem || !target || target === draggedDetailItem) {
+				return;
+			}
+			event.preventDefault();
+
+			var rect = target.getBoundingClientRect();
+			var isAfter = event.clientY - rect.top > rect.height / 2;
+			detailList.insertBefore(draggedDetailItem, isAfter ? target.nextSibling : target);
+		});
+
+		detailList.addEventListener('drop', function (event) {
+			event.preventDefault();
+		});
+
+		detailList.addEventListener('dragend', function () {
+			draggedDetailItem = null;
+			syncDetailOrderInput();
+			updateDetailPreview();
+		});
+	}
+
+	function syncDetailOrderInput() {
+		if (!detailList || !detailHiddenInput) {
+			return;
+		}
+		var keys = Array.prototype.map.call(detailList.querySelectorAll('li[data-key]'), function (item) {
+			return item.getAttribute('data-key');
+		});
+		detailHiddenInput.value = keys.join(',');
+	}
+
+	function updateDetailPreview() {
+		if (!detailPreview || !detailHiddenInput) {
+			return;
+		}
+		detailHiddenInput.value.split(',').filter(Boolean).forEach(function (key) {
+			var block = detailPreview.querySelector('[data-key="' + key + '"]');
+			if (block) {
+				detailPreview.appendChild(block);
+			}
+		});
+	}
+
+	/**
+	 * Hides the "Reihenfolge der Detailansicht" settings section and its
+	 * preview panel while "Keine" is selected — the setting has no visible
+	 * effect in that case. The section's <h2>/<table> pair comes straight out
+	 * of do_settings_sections() with no wrapping container of its own, so the
+	 * table is found via the field's own hidden input and the heading via its
+	 * previous sibling, rather than relying on a container id that doesn't exist.
+	 */
+	var clickInputs = document.querySelectorAll('.ctp-design-click-input');
+	var detailTable = detailHiddenInput ? detailHiddenInput.closest('table') : null;
+	var detailHeading = detailTable ? detailTable.previousElementSibling : null;
+	var detailPreviewPanel = detailPreview ? detailPreview.closest('.ctp-panel') : null;
+
+	function updateDetailVisibility() {
+		var selected = 'none';
+		clickInputs.forEach(function (input) {
+			if (input.checked) {
+				selected = input.value;
+			}
+		});
+		var hide = selected === 'none';
+
+		if (detailTable) {
+			detailTable.hidden = hide;
+		}
+		if (detailHeading) {
+			detailHeading.hidden = hide;
+		}
+		if (detailPreviewPanel) {
+			detailPreviewPanel.hidden = hide;
+		}
+	}
+
+	clickInputs.forEach(function (input) {
+		input.addEventListener('change', updateDetailVisibility);
+	});
+	updateDetailVisibility();
+
 	var ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'excerpt', 'meta'];
 	var SEPARATOR_TYPES = ['spacer', 'divider'];
 	var labels = window.ctpDesignLabels || { divider: 'Trennlinie', spacer: 'Abstand', remove: 'Entfernen' };

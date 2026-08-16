@@ -20,6 +20,7 @@ final class Shortcode
             'layout' => 'list',
             'limit' => 10,
             'columns' => 3,
+            'click' => 'default',
         ], $atts, 'ctp_events');
 
         $refs = array_filter(array_map('trim', explode(',', (string) $atts['calendar'])));
@@ -30,6 +31,7 @@ final class Shortcode
             'layout' => $atts['layout'],
             'limit' => (int) $atts['limit'],
             'columns' => (int) $atts['columns'],
+            'click' => $atts['click'],
         ]);
     }
 }

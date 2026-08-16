@@ -213,7 +213,7 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
-     * Any number of admin-inserted spacer-*/divider-* entries (see
+     * Any number of admin-inserted spacer- or divider-prefixed entries (see
      * CardDesign::SEPARATOR_TYPES) may sit anywhere alongside the six fixed
      * keys — this is what lets the Design tab offer "+ Trennlinie"/"+ Abstand".
      */

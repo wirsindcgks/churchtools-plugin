@@ -12,7 +12,7 @@ const knownCalendars = window.ctpBlockCalendars || [];
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
-		const { calendarIds, layout, limit, columns } = attributes;
+		const { calendarIds, layout, limit, columns, click } = attributes;
 		const blockProps = useBlockProps();
 
 		// Union of the known calendars and any IDs already saved on this block
@@ -76,6 +76,17 @@ registerBlockType(metadata.name, {
 							label={__('Anzahl Events', 'churchtools-plugin')}
 							value={limit}
 							onChange={(value) => setAttributes({ limit: parseInt(value, 10) || 10 })}
+						/>
+						<SelectControl
+							label={__('Klickverhalten', 'churchtools-plugin')}
+							value={click}
+							options={[
+								{ label: __('Standard (Design-Einstellung)', 'churchtools-plugin'), value: 'default' },
+								{ label: __('Keine', 'churchtools-plugin'), value: 'none' },
+								{ label: __('Popup', 'churchtools-plugin'), value: 'popup' },
+								{ label: __('Eigene Seite', 'churchtools-plugin'), value: 'page' },
+							]}
+							onChange={(value) => setAttributes({ click: value })}
 						/>
 					</PanelBody>
 				</InspectorControls>

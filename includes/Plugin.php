@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Blocks\EventListBlock;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
+use ChurchToolsPlugin\Frontend\EventDetailPage;
 use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
 use ChurchToolsPlugin\Sync\RetentionCleanup;
@@ -46,6 +47,7 @@ final class Plugin
         (new EventListBlock())->register();
         (new WpBakeryIntegration())->register();
 
+        EventDetailPage::registerHooks();
         SyncEngine::registerHooks();
         RetentionCleanup::registerHooks();
         GitHubUpdateChecker::register();

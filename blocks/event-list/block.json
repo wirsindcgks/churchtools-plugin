@@ -11,7 +11,8 @@
         "calendarIds": { "type": "array", "default": [] },
         "layout": { "type": "string", "default": "list" },
         "limit": { "type": "number", "default": 10 },
-        "columns": { "type": "number", "default": 3 }
+        "columns": { "type": "number", "default": 3 },
+        "click": { "type": "string", "default": "default" }
     },
     "editorScript": "file:./build/index.js",
     "style": "file:../../assets/css/frontend.css",

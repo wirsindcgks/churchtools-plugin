@@ -55,6 +55,17 @@ final class WpBakeryIntegration
                     'param_name' => 'limit',
                     'value' => '10',
                 ],
+                [
+                    'type' => 'dropdown',
+                    'heading' => __('Klickverhalten', 'churchtools-plugin'),
+                    'param_name' => 'click',
+                    'value' => [
+                        __('Standard (Design-Einstellung)', 'churchtools-plugin') => 'default',
+                        __('Keine', 'churchtools-plugin') => 'none',
+                        __('Popup', 'churchtools-plugin') => 'popup',
+                        __('Eigene Seite', 'churchtools-plugin') => 'page',
+                    ],
+                ],
             ],
         ]);
     }
