@@ -109,3 +109,19 @@ function ctp_test_reset_transients(): void
 {
     $GLOBALS['ctp_test_transients'] = [];
 }
+
+/**
+ * SettingsPage::sanitizeSettings() calls this directly for "accent_color" (and
+ * indirectly, via sanitizeCalendars(), for each calendar's "color") — a faithful
+ * port of WP core's own implementation (3/6-digit hex or empty string, null
+ * otherwise), not a simplified stand-in, since the exact null-vs-'' distinction is
+ * what sanitizeSettings() branches on.
+ */
+function sanitize_hex_color(string $color): ?string
+{
+    if ($color === '') {
+        return '';
+    }
+
+    return (bool) preg_match('/^#([A-Fa-f0-9]{3}){1,2}$/', $color) ? $color : null;
+}

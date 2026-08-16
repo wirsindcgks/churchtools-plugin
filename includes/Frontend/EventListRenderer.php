@@ -33,12 +33,18 @@ final class EventListRenderer
         $designSettings = SettingsPage::get();
         $args['design_style'] = CardDesign::styleAttribute(
             $designSettings['element_order'],
-            $designSettings['corner_style']
+            $designSettings['corner_style'],
+            $designSettings['media_aspect_ratio'],
+            $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : ''
         );
         // Same value for every card in the loop below (element order is a global
         // design setting, not per-event), so it's computed once here rather than
         // per iteration in the templates.
         $args['design_separators'] = CardDesign::renderSeparators($designSettings['element_order']);
+        // Hidden fields have no dedicated markup to attach a CSS var to (unlike
+        // order/corner/ratio/accent above) — templates check this array directly
+        // with in_array() and skip rendering the element's markup outright.
+        $args['hidden_elements'] = $designSettings['hidden_elements'];
 
         // "default" (the shortcode/block attribute's own default) defers to the
         // Design tab's global setting; an explicit none/popup/page always wins,

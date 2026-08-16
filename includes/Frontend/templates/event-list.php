@@ -41,16 +41,18 @@ if (!defined('ABSPATH')) {
                         style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
                     <?php endif; ?>
                 >
-                    <span class="ctp-events__date-chip" aria-hidden="true">
-                        <span class="ctp-events__day">
-                            <?php echo esc_html(EventFormatter::dayNumber($event['start_date'])); ?>
+                    <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
+                        <span class="ctp-events__date-chip" aria-hidden="true">
+                            <span class="ctp-events__day">
+                                <?php echo esc_html(EventFormatter::dayNumber($event['start_date'])); ?>
+                            </span>
+                            <span class="ctp-events__month">
+                                <?php echo esc_html(EventFormatter::monthAbbreviation($event['start_date'])); ?>
+                            </span>
                         </span>
-                        <span class="ctp-events__month">
-                            <?php echo esc_html(EventFormatter::monthAbbreviation($event['start_date'])); ?>
-                        </span>
-                    </span>
+                    <?php endif; ?>
                     <span class="ctp-events__body">
-                        <?php if ($event['calendar_name'] !== '') : ?>
+                        <?php if (!in_array('calendar', $args['hidden_elements'], true) && $event['calendar_name'] !== '') : ?>
                             <span class="ctp-events__eyebrow">
                                 <?php if ($event['calendar_color'] !== '') : ?>
                                     <span class="ctp-events__color-dot" aria-hidden="true"></span>
@@ -73,24 +75,26 @@ if (!defined('ABSPATH')) {
                                 </span>
                             <?php endif; ?>
                         </span>
-                        <?php if ($event['subtitle'] !== '') : ?>
+                        <?php if (!in_array('subtitle', $args['hidden_elements'], true) && $event['subtitle'] !== '') : ?>
                             <span class="ctp-events__subtitle"><?php echo esc_html($event['subtitle']); ?></span>
                         <?php endif; ?>
-                        <span class="ctp-events__meta">
-                            <span class="ctp-events__meta-item">
-                                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
-                                <?php echo Icons::clock(); ?>
-                                <?php echo esc_html(EventFormatter::dateRange($event)); ?>
-                            </span>
-                            <?php if ($event['location'] !== '') : ?>
+                        <?php if (!in_array('meta', $args['hidden_elements'], true)) : ?>
+                            <span class="ctp-events__meta">
                                 <span class="ctp-events__meta-item">
-                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                                    <?php echo Icons::location(); ?>
-                                    <?php echo esc_html($event['location']); ?>
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
+                                    <?php echo Icons::clock(); ?>
+                                    <?php echo esc_html(EventFormatter::dateRange($event)); ?>
                                 </span>
-                            <?php endif; ?>
-                        </span>
-                        <?php if ($event['description'] !== '') : ?>
+                                <?php if ($event['location'] !== '') : ?>
+                                    <span class="ctp-events__meta-item">
+                                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                                        <?php echo Icons::location(); ?>
+                                        <?php echo esc_html($event['location']); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!in_array('excerpt', $args['hidden_elements'], true) && $event['description'] !== '') : ?>
                             <p class="ctp-events__excerpt">
                                 <?php echo esc_html(EventFormatter::excerpt($event['description'])); ?>
                             </p>

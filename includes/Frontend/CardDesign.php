@@ -26,6 +26,13 @@ namespace ChurchToolsPlugin\Frontend;
  * to attach a CSS order var to (there can be any number of them, or none),
  * so renderSeparators() renders them directly as HTML with the order baked
  * into an inline style instead of a shared stylesheet rule.
+ *
+ * cssVariables()/styleAttribute() also fold in the three "Rest-Scope"
+ * settings from the same Design tab: which of TOGGLEABLE_KEYS are hidden
+ * entirely (consumed directly by the three layout templates as a plain
+ * in_array() check, not a CSS var — omitting markup outright avoids an empty
+ * flex slot a CSS `display:none` toggle would leave behind), the media
+ * aspect-ratio override, and an optional global accent-color override.
  */
 final class CardDesign
 {
@@ -33,6 +40,20 @@ final class CardDesign
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
     public const CORNER_STYLES = ['rounded', 'square'];
     public const SEPARATOR_TYPES = ['spacer', 'divider'];
+
+    /**
+     * Which of the six ELEMENT_KEYS can be hidden entirely from the card via
+     * the "Sichtbare Felder" admin field — "title" is deliberately excluded,
+     * since a card with no title at all isn't a supported/tested state.
+     */
+    public const TOGGLEABLE_KEYS = ['media', 'calendar', 'subtitle', 'excerpt', 'meta'];
+
+    /** CSS aspect-ratio values for the "Bildgröße" admin select, keyed by option value. */
+    public const MEDIA_ASPECT_RATIOS = [
+        'wide' => '16 / 9',
+        'square' => '1 / 1',
+        'tall' => '4 / 5',
+    ];
 
     /**
      * Separator keys always carry a unique instance suffix generated client-side
@@ -68,12 +89,32 @@ final class CardDesign
     }
 
     /**
+     * @param string[] $hidden Arbitrary strings from the admin checkbox group
+     *                          (see SettingsPage::renderFieldVisibilityField()) —
+     *                          filtered down to known TOGGLEABLE_KEYS only.
+     *
+     * @return string[]
+     */
+    public static function sanitizeHiddenElements(array $hidden): array
+    {
+        return array_values(array_unique(array_intersect($hidden, self::TOGGLEABLE_KEYS)));
+    }
+
+    /**
      * @param string[] $elementOrder See isValidOrder().
+     * @param string $mediaAspectRatio One of MEDIA_ASPECT_RATIOS' keys.
+     * @param string $accentColor A '#rrggbb' hex color, or '' to leave the
+     *                             theme-derived default (see frontend.css's
+     *                             --ctp-accent) untouched.
      *
      * @return array<string, int|string>
      */
-    public static function cssVariables(array $elementOrder, string $cornerStyle): array
-    {
+    public static function cssVariables(
+        array $elementOrder,
+        string $cornerStyle,
+        string $mediaAspectRatio = 'wide',
+        string $accentColor = ''
+    ): array {
         // Defensive fallback: sanitizeSettings() already guarantees a valid
         // order gets stored, but this method has no access to that guarantee
         // on its own (e.g. if called with a stale/foreign array).
@@ -108,14 +149,33 @@ final class CardDesign
             $variables['--ctp-radius'] = '0px';
         }
 
+        // Only a non-default ratio needs an inline override — "wide" leaves each
+        // layout's own hardcoded aspect-ratio (16/9 grid, 16/10 hero) untouched,
+        // same "default emits nothing" rule as corner_style above.
+        if (isset(self::MEDIA_ASPECT_RATIOS[$mediaAspectRatio]) && $mediaAspectRatio !== 'wide') {
+            $variables['--ctp-media-aspect-ratio'] = self::MEDIA_ASPECT_RATIOS[$mediaAspectRatio];
+        }
+
+        // Deliberately a plain format check, not full CSS-color validation —
+        // SettingsPage::sanitizeSettings() already runs sanitize_hex_color()
+        // before this ever gets stored; this is just a defensive backstop
+        // against a stale/foreign value, same role isValidOrder() plays above.
+        if ((bool) preg_match('/^#[0-9a-f]{6}$/i', $accentColor)) {
+            $variables['--ctp-accent'] = $accentColor;
+        }
+
         return $variables;
     }
 
-    public static function styleAttribute(array $elementOrder, string $cornerStyle): string
-    {
+    public static function styleAttribute(
+        array $elementOrder,
+        string $cornerStyle,
+        string $mediaAspectRatio = 'wide',
+        string $accentColor = ''
+    ): string {
         $declarations = '';
 
-        foreach (self::cssVariables($elementOrder, $cornerStyle) as $name => $value) {
+        foreach (self::cssVariables($elementOrder, $cornerStyle, $mediaAspectRatio, $accentColor) as $name => $value) {
             $declarations .= $name . ':' . $value . ';';
         }
 

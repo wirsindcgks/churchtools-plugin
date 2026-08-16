@@ -239,4 +239,103 @@ final class SettingsPageTest extends TestCase
             $this->sanitizeElementOrder('meta,calendar,title,subtitle,excerpt,media,<script>')
         );
     }
+
+    public function testSanitizeSettingsDefaultsToNoHiddenElements(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([]);
+
+        $this->assertSame([], $sanitized['hidden_elements']);
+    }
+
+    public function testSanitizeSettingsAcceptsHiddenElements(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['hidden_elements' => ['subtitle', 'excerpt']]);
+
+        $this->assertSame(['subtitle', 'excerpt'], $sanitized['hidden_elements']);
+    }
+
+    /**
+     * renderFieldVisibilityField() prints a hidden "[]" marker before the
+     * checkboxes precisely so an all-unchecked submit still posts this as an
+     * empty array (present, not absent) — this pins down that the empty-array
+     * case actually clears a previously hidden field, rather than being
+     * mistaken for "tab not submitted" and falling back to $existing.
+     */
+    public function testSanitizeSettingsClearsHiddenElementsOnEmptySubmit(): void
+    {
+        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['meta']]);
+
+        $sanitized = SettingsPage::sanitizeSettings(['hidden_elements' => []]);
+
+        $this->assertSame([], $sanitized['hidden_elements']);
+    }
+
+    public function testSanitizeSettingsKeepsExistingHiddenElementsWhenFieldAbsent(): void
+    {
+        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['meta']]);
+
+        $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
+
+        $this->assertSame(['meta'], $sanitized['hidden_elements']);
+    }
+
+    public function testSanitizeSettingsDefaultsMediaAspectRatioToWide(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([]);
+
+        $this->assertSame('wide', $sanitized['media_aspect_ratio']);
+    }
+
+    public function testSanitizeSettingsAcceptsValidMediaAspectRatio(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['media_aspect_ratio' => 'square']);
+
+        $this->assertSame('square', $sanitized['media_aspect_ratio']);
+    }
+
+    public function testSanitizeSettingsFallsBackToExistingMediaAspectRatioWhenInvalid(): void
+    {
+        ctp_test_set_option('ctp_settings', ['media_aspect_ratio' => 'square']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['media_aspect_ratio' => 'panoramic']);
+
+        $this->assertSame('square', $sanitized['media_aspect_ratio']);
+    }
+
+    public function testSanitizeSettingsAcceptsAccentColorEnabled(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['accent_color_enabled' => '1']);
+
+        $this->assertTrue($sanitized['accent_color_enabled']);
+    }
+
+    /**
+     * Same hidden-input trick as keep_data_on_uninstall — the checkbox posts
+     * "0" via a preceding hidden field when unchecked, so this must actually
+     * turn the setting off rather than being mistaken for "tab not submitted".
+     */
+    public function testSanitizeSettingsDisablesAccentColorWhenUnchecked(): void
+    {
+        ctp_test_set_option('ctp_settings', ['accent_color_enabled' => true]);
+
+        $sanitized = SettingsPage::sanitizeSettings(['accent_color_enabled' => '0']);
+
+        $this->assertFalse($sanitized['accent_color_enabled']);
+    }
+
+    public function testSanitizeSettingsAcceptsValidAccentColor(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['accent_color' => '#ff8800']);
+
+        $this->assertSame('#ff8800', $sanitized['accent_color']);
+    }
+
+    public function testSanitizeSettingsFallsBackToExistingAccentColorWhenInvalid(): void
+    {
+        ctp_test_set_option('ctp_settings', ['accent_color' => '#ff8800']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['accent_color' => 'not-a-color']);
+
+        $this->assertSame('#ff8800', $sanitized['accent_color']);
+    }
 }

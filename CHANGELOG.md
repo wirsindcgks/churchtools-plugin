@@ -38,6 +38,7 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Design-Tab zeigt jetzt eine Shortcode-Übersicht (Attribut-Referenz, Beispiele für Liste/Grid/„Nächster Termin" mit Kopieren-Button)
 - Terminkarten zeigen jetzt mehr Informationen: kleine Icons vor Uhrzeit und Ort, ein Kalendername-Label (Farbpunkt + Name) als zusätzliche Visualisierung des Quellkalenders, sowie ein kurzer Auszug aus der Terminbeschreibung – gilt für alle drei Ansichten (Grid/Liste/„Nächster Termin")
 - Design-Tab: Kalendername und Beschreibungsauszug sind jetzt vollwertige, per Drag&Drop verschiebbare Kartenelemente (statt fest an erster/an die Untertitel-Position gebunden) – alle sechs Kartenelemente lassen sich frei anordnen. Zusätzlich beliebig oft einfügbare Trennlinien und Abstände zur optischen Gliederung der Kachel, ebenfalls per Drag&Drop positionierbar und über ein „×“ wieder entfernbar
+- Design-Tab, drei neue Einstellungen im „Kachel"-Bereich: einzelne Kartenelemente (Bild, Kalendername, Untertitel, Beschreibungsauszug, Datum & Ort) lassen sich jetzt per Checkbox komplett ausblenden (Titel bleibt immer sichtbar); Bild-Seitenverhältnis in Grid/„Nächster Termin" umstellbar (Breit/Quadratisch/Hoch); optionale eigene Akzentfarbe als Standardfarbe für Icons, Datumsbadges und Ränder – Termine mit eigener Kalenderfarbe behalten weiterhin Vorrang. Alle drei mit Live-Vorschau, gilt nur für die Kachel, nicht für Popup/eigene Seite
 
 ### Changed
 

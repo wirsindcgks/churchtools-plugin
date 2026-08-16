@@ -155,6 +155,12 @@ final class SettingsPage
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
         add_settings_section('ctp_design_corners', __('Eckenstil', 'churchtools-plugin'), '__return_false', $designTilePage);
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designTilePage, 'ctp_design_corners');
+        add_settings_section('ctp_design_visibility', __('Sichtbare Felder', 'churchtools-plugin'), '__return_false', $designTilePage);
+        add_settings_field('hidden_elements', __('Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designTilePage, 'ctp_design_visibility');
+        add_settings_section('ctp_design_media', __('Bildgröße', 'churchtools-plugin'), '__return_false', $designTilePage);
+        add_settings_field('media_aspect_ratio', __('Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designTilePage, 'ctp_design_media');
+        add_settings_section('ctp_design_accent', __('Akzentfarbe', 'churchtools-plugin'), '__return_false', $designTilePage);
+        add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designTilePage, 'ctp_design_accent');
 
         $designDetailPage = self::PAGE_SLUG . '_design_detail';
         add_settings_section('ctp_design_click', __('Klickverhalten', 'churchtools-plugin'), '__return_false', $designDetailPage);
@@ -185,6 +191,13 @@ final class SettingsPage
             'keep_data_on_uninstall' => false,
             'element_order' => CardDesign::DEFAULT_ORDER,
             'corner_style' => 'rounded',
+            'hidden_elements' => [],
+            'media_aspect_ratio' => 'wide',
+            'accent_color_enabled' => false,
+            // Matches frontend.css's own --ctp-accent fallback, so the color
+            // picker starts on the value that's already visually in effect
+            // rather than on an arbitrary, surprising default.
+            'accent_color' => '#2563eb',
             'click_behavior' => 'popup',
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
             'github_token' => '',
@@ -366,6 +379,19 @@ final class SettingsPage
             $clickBehavior = $input['click_behavior'];
         }
 
+        $mediaAspectRatio = $existing['media_aspect_ratio'];
+        if (array_key_exists('media_aspect_ratio', $input) && array_key_exists($input['media_aspect_ratio'], CardDesign::MEDIA_ASPECT_RATIOS)) {
+            $mediaAspectRatio = $input['media_aspect_ratio'];
+        }
+
+        $accentColor = $existing['accent_color'];
+        if (array_key_exists('accent_color', $input)) {
+            $sanitizedColor = sanitize_hex_color((string) $input['accent_color']);
+            if (!empty($sanitizedColor)) {
+                $accentColor = $sanitizedColor;
+            }
+        }
+
         return [
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
@@ -388,6 +414,18 @@ final class SettingsPage
                 ? self::sanitizeElementOrder((string) $input['element_order'])
                 : $existing['element_order'],
             'corner_style' => $cornerStyle,
+            // Checkbox group: renderFieldVisibilityField() prints a hidden
+            // "[]" marker before the checkboxes (same trick as
+            // keep_data_on_uninstall below) so an all-unchecked submit still
+            // arrives as an empty array, not a missing key.
+            'hidden_elements' => array_key_exists('hidden_elements', $input)
+                ? CardDesign::sanitizeHiddenElements((array) $input['hidden_elements'])
+                : $existing['hidden_elements'],
+            'media_aspect_ratio' => $mediaAspectRatio,
+            'accent_color_enabled' => array_key_exists('accent_color_enabled', $input)
+                ? (bool) $input['accent_color_enabled']
+                : $existing['accent_color_enabled'],
+            'accent_color' => $accentColor,
             'click_behavior' => $clickBehavior,
             'detail_element_order' => array_key_exists('detail_element_order', $input)
                 ? self::sanitizeDetailElementOrder((string) $input['detail_element_order'])
@@ -747,6 +785,86 @@ final class SettingsPage
         }
     }
 
+    /**
+     * Hidden "[]" marker before the checkboxes, same reasoning as
+     * renderKeepDataOnUninstallField()'s single hidden input: without it, an
+     * all-unchecked submit posts no "hidden_elements" key at all, which
+     * sanitizeSettings() would read as "this tab wasn't submitted" and keep
+     * whatever was previously hidden instead of actually clearing it.
+     */
+    public function renderFieldVisibilityField(): void
+    {
+        $labels = self::elementOrderLabels();
+        $hidden = self::get()['hidden_elements'];
+        printf('<input type="hidden" name="%1$s[hidden_elements][]" value="" />', esc_attr(self::OPTION_KEY));
+        foreach (CardDesign::TOGGLEABLE_KEYS as $key) {
+            printf(
+                '<label class="ctp-checkbox-block"><input type="checkbox" class="ctp-design-visibility-input" name="%1$s[hidden_elements][]" value="%2$s" %3$s /> %4$s</label>',
+                esc_attr(self::OPTION_KEY),
+                esc_attr($key),
+                checked(in_array($key, $hidden, true), true, false),
+                esc_html($labels[$key] ?? $key)
+            );
+        }
+        echo '<p class="description">'
+            . esc_html__('Angehakte Felder werden auf der Kachel nicht mehr angezeigt. Der Titel bleibt immer sichtbar. Gilt nur für die Kachel, nicht für Popup/eigene Seite (dort weiterhin über die Reihenfolge unten steuerbar).', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    public function renderMediaAspectRatioField(): void
+    {
+        $current = self::get()['media_aspect_ratio'];
+        $options = [
+            'wide' => __('Breit – 16:9 (Standard)', 'churchtools-plugin'),
+            'square' => __('Quadratisch – 1:1', 'churchtools-plugin'),
+            'tall' => __('Hoch – 4:5', 'churchtools-plugin'),
+        ];
+
+        echo '<select id="ctp-design-media-ratio" name="' . esc_attr(self::OPTION_KEY) . '[media_aspect_ratio]">';
+        foreach ($options as $value => $label) {
+            printf(
+                '<option value="%1$s" %2$s>%3$s</option>',
+                esc_attr($value),
+                selected($current, $value, false),
+                esc_html($label)
+            );
+        }
+        echo '</select>';
+        echo '<p class="description">'
+            . esc_html__('Seitenverhältnis des Bildes in Grid-Kachel und Hero („Nächster Termin"). Ohne Wirkung in der Listenansicht, die kein Bild zeigt.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
+     * "Zusätzlich zur Kalenderfarbe" (see plan.md): a per-event calendar
+     * color, when set, is written as an inline --ctp-accent on a more
+     * specific element than this setting's own inline style (see
+     * CardDesign class docblock/frontend.css), so it keeps winning the CSS
+     * cascade automatically — no extra precedence logic needed here, this
+     * setting only ever supplies the fallback for events whose calendar has
+     * no color of its own.
+     */
+    public function renderAccentColorField(): void
+    {
+        $settings = self::get();
+        printf('<input type="hidden" name="%1$s[accent_color_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" id="ctp-design-accent-enabled" name="%1$s[accent_color_enabled]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty($settings['accent_color_enabled']), true, false),
+            esc_html__('Eigene Akzentfarbe verwenden', 'churchtools-plugin')
+        );
+        printf(
+            '<p><input type="color" id="ctp-design-accent-color" name="%1$s[accent_color]" value="%2$s" %3$s /></p>',
+            esc_attr(self::OPTION_KEY),
+            esc_attr($settings['accent_color']),
+            disabled(empty($settings['accent_color_enabled']), true, false)
+        );
+        echo '<p class="description">'
+            . esc_html__('Ersetzt die vom Theme übernommene Standardfarbe für Icons, Datumsbadges und Ränder. Termine, deren Kalender bereits eine eigene Farbe hat, behalten weiterhin diese Kalenderfarbe.', 'churchtools-plugin')
+            . '</p>';
+    }
+
     public function renderClickBehaviorField(): void
     {
         $current = self::get()['click_behavior'];
@@ -838,7 +956,13 @@ final class SettingsPage
     private function renderDesignPreview(): void
     {
         $settings = self::get();
-        $style = CardDesign::styleAttribute($settings['element_order'], $settings['corner_style']);
+        $style = CardDesign::styleAttribute(
+            $settings['element_order'],
+            $settings['corner_style'],
+            $settings['media_aspect_ratio'],
+            $settings['accent_color_enabled'] ? $settings['accent_color'] : ''
+        );
+        $hidden = $settings['hidden_elements'];
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
@@ -849,22 +973,24 @@ final class SettingsPage
                 <ul class="ctp-events__list">
                     <li>
                         <article class="ctp-events__card">
-                            <div class="ctp-events__media">
+                            <div class="ctp-events__media" data-key="media" <?php echo in_array('media', $hidden, true) ? 'hidden' : ''; ?>>
                                 <span class="ctp-events__date-badge" aria-hidden="true">
                                     <span class="ctp-events__day">24</span>
                                     <span class="ctp-events__month"><?php esc_html_e('Dez', 'churchtools-plugin'); ?></span>
                                 </span>
                             </div>
                             <div class="ctp-events__content" id="ctp-design-preview-content">
-                                <span class="ctp-events__eyebrow">
+                                <span class="ctp-events__eyebrow" data-key="calendar" <?php echo in_array('calendar', $hidden, true) ? 'hidden' : ''; ?>>
                                     <span class="ctp-events__color-dot" aria-hidden="true"></span>
                                     <?php esc_html_e('Beispiel-Kalender', 'churchtools-plugin'); ?>
                                 </span>
                                 <span class="ctp-events__title">
                                     <?php esc_html_e('Beispiel-Termin', 'churchtools-plugin'); ?>
                                 </span>
-                                <span class="ctp-events__subtitle"><?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?></span>
-                                <span class="ctp-events__meta">
+                                <span class="ctp-events__subtitle" data-key="subtitle" <?php echo in_array('subtitle', $hidden, true) ? 'hidden' : ''; ?>>
+                                    <?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?>
+                                </span>
+                                <span class="ctp-events__meta" data-key="meta" <?php echo in_array('meta', $hidden, true) ? 'hidden' : ''; ?>>
                                     <span class="ctp-events__meta-item">
                                         <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
                                         <?php echo Icons::clock(); ?>
@@ -876,7 +1002,7 @@ final class SettingsPage
                                         <?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?>
                                     </span>
                                 </span>
-                                <p class="ctp-events__excerpt">
+                                <p class="ctp-events__excerpt" data-key="excerpt" <?php echo in_array('excerpt', $hidden, true) ? 'hidden' : ''; ?>>
                                     <?php esc_html_e('Kurzer Auszug aus der Terminbeschreibung, wie er auf der Kachel erscheint …', 'churchtools-plugin'); ?>
                                 </p>
                                 <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup. ?>

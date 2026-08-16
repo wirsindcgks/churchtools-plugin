@@ -367,7 +367,9 @@
 .ctp-events__media {
     order: var(--ctp-order-media);
     position: relative;
-    aspect-ratio: 16 / 9;
+    /* --ctp-media-aspect-ratio is only ever set inline (CardDesign::styleAttribute())
+       when the admin picked something other than "wide" — see its own fallback rule. */
+    aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 9);
     background: linear-gradient(
         135deg,
         color-mix(in srgb, var(--ctp-accent) 55%, transparent),
@@ -459,7 +461,8 @@
 .ctp-events--upcoming .ctp-events__hero-media {
     order: var(--ctp-order-media);
     position: relative;
-    aspect-ratio: 16 / 10;
+    /* Same override var as .ctp-events__media above, different fallback ratio. */
+    aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 10);
     background: linear-gradient(
         135deg,
         color-mix(in srgb, var(--ctp-accent) 60%, transparent),

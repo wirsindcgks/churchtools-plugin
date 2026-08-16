@@ -125,4 +125,88 @@ final class CardDesignTest extends TestCase
     {
         $this->assertSame('', CardDesign::renderSeparators(CardDesign::DEFAULT_ORDER));
     }
+
+    /**
+     * "wide" is the implicit pre-feature default (matches each layout's own
+     * hardcoded 16/9 or 16/10 aspect-ratio in frontend.css) — like "rounded"
+     * corner style, it must emit nothing so untouched installs render exactly
+     * as before this feature existed.
+     */
+    public function testWideMediaAspectRatioEmitsNoOverride(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'wide');
+
+        $this->assertArrayNotHasKey('--ctp-media-aspect-ratio', $variables);
+    }
+
+    public function testNonDefaultMediaAspectRatioIsEmitted(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'square');
+
+        $this->assertSame('1 / 1', $variables['--ctp-media-aspect-ratio']);
+    }
+
+    public function testUnknownMediaAspectRatioEmitsNoOverride(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'panoramic');
+
+        $this->assertArrayNotHasKey('--ctp-media-aspect-ratio', $variables);
+    }
+
+    public function testEmptyAccentColorEmitsNoOverride(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'wide', '');
+
+        $this->assertArrayNotHasKey('--ctp-accent', $variables);
+    }
+
+    public function testValidAccentColorIsEmitted(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'wide', '#ff8800');
+
+        $this->assertSame('#ff8800', $variables['--ctp-accent']);
+    }
+
+    /**
+     * A defensive backstop (see cssVariables()' docblock) — sanitizeSettings()
+     * already validates accent_color with sanitize_hex_color() before it's ever
+     * stored, this just guards a stale/foreign value reaching styleAttribute().
+     */
+    public function testMalformedAccentColorEmitsNoOverride(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'wide', 'not-a-color');
+
+        $this->assertArrayNotHasKey('--ctp-accent', $variables);
+    }
+
+    public function testStyleAttributeIncludesMediaRatioAndAccentColor(): void
+    {
+        $style = CardDesign::styleAttribute(CardDesign::DEFAULT_ORDER, 'rounded', 'tall', '#123456');
+
+        $this->assertStringContainsString('--ctp-media-aspect-ratio:4 / 5;', $style);
+        $this->assertStringContainsString('--ctp-accent:#123456;', $style);
+    }
+
+    public function testSanitizeHiddenElementsKeepsOnlyToggleableKeys(): void
+    {
+        $this->assertSame(
+            ['media', 'meta'],
+            CardDesign::sanitizeHiddenElements(['media', 'title', 'meta', 'unknown'])
+        );
+    }
+
+    /**
+     * "title" is deliberately not a TOGGLEABLE_KEYS member (see its own
+     * docblock) — a card with no title at all isn't a supported state, so it
+     * must be dropped even if a tampered POST tries to hide it.
+     */
+    public function testSanitizeHiddenElementsRejectsTitle(): void
+    {
+        $this->assertSame([], CardDesign::sanitizeHiddenElements(['title']));
+    }
+
+    public function testSanitizeHiddenElementsDeduplicates(): void
+    {
+        $this->assertSame(['subtitle'], CardDesign::sanitizeHiddenElements(['subtitle', 'subtitle']));
+    }
 }

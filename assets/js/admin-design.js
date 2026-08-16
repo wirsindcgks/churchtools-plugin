@@ -332,4 +332,77 @@
 	cornerInputs.forEach(function (input) {
 		input.addEventListener('change', updatePreview);
 	});
+
+	/**
+	 * Field visibility / media aspect-ratio / accent color — the three
+	 * "Rest-Scope" settings added alongside order/corner-style. Each mirrors
+	 * its own bit of CardDesign::cssVariables()/styleAttribute() in JS, same
+	 * "duplicated on purpose, drives only the preview" reasoning as
+	 * updatePreview() above. Independent of the drag&drop order state (no
+	 * shared variables), so these can update the live preview directly on
+	 * their own change/input events without going through updatePreview().
+	 */
+	var visibilityInputs = document.querySelectorAll('.ctp-design-visibility-input');
+	var mediaRatioSelect = document.getElementById('ctp-design-media-ratio');
+	var accentEnabledInput = document.getElementById('ctp-design-accent-enabled');
+	var accentColorInput = document.getElementById('ctp-design-accent-color');
+
+	// Mirrors CardDesign::MEDIA_ASPECT_RATIOS ("wide" intentionally omitted —
+	// same "default emits nothing" rule as the corner-style handling above).
+	var MEDIA_ASPECT_RATIOS = { square: '1 / 1', tall: '4 / 5' };
+
+	function updateVisibility() {
+		if (!preview) {
+			return;
+		}
+		visibilityInputs.forEach(function (input) {
+			var block = preview.querySelector('[data-key="' + input.value + '"]');
+			if (block) {
+				block.hidden = input.checked;
+			}
+		});
+	}
+
+	function updateMediaRatio() {
+		if (!preview || !mediaRatioSelect) {
+			return;
+		}
+		var ratio = MEDIA_ASPECT_RATIOS[mediaRatioSelect.value];
+		if (ratio) {
+			preview.style.setProperty('--ctp-media-aspect-ratio', ratio);
+		} else {
+			preview.style.removeProperty('--ctp-media-aspect-ratio');
+		}
+	}
+
+	function updateAccent() {
+		if (accentColorInput) {
+			accentColorInput.disabled = !(accentEnabledInput && accentEnabledInput.checked);
+		}
+		if (!preview) {
+			return;
+		}
+		if (accentEnabledInput && accentEnabledInput.checked && accentColorInput) {
+			preview.style.setProperty('--ctp-accent', accentColorInput.value);
+		} else {
+			preview.style.removeProperty('--ctp-accent');
+		}
+	}
+
+	visibilityInputs.forEach(function (input) {
+		input.addEventListener('change', updateVisibility);
+	});
+	updateVisibility();
+
+	if (mediaRatioSelect) {
+		mediaRatioSelect.addEventListener('change', updateMediaRatio);
+	}
+
+	if (accentEnabledInput) {
+		accentEnabledInput.addEventListener('change', updateAccent);
+	}
+	if (accentColorInput) {
+		accentColorInput.addEventListener('input', updateAccent);
+	}
+	updateAccent();
 })();

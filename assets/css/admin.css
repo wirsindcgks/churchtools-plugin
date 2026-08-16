@@ -425,6 +425,11 @@
     margin-right: 1.5em;
 }
 
+.ctp-checkbox-block {
+    display: block;
+    margin: 0.35em 0;
+}
+
 .ctp-panel h3 {
     margin: 24px 0 8px;
 }
