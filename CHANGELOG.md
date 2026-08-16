@@ -7,6 +7,8 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-16
+
 ### Added
 
 - Kalender-Standardbild wird jetzt tatsächlich verwendet: Termine ohne eigenes Bild zeigen automatisch das im Kalender-Tab hinterlegte Standardbild (mit farblich zum Kalender passendem Overlay) statt des bisherigen reinen Farbverlaufs
@@ -81,5 +83,6 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wirsindcgks/churchtools-plugin/releases/tag/v0.1.0
