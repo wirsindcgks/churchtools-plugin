@@ -1,5 +1,5 @@
 {
-    "name": "tobiasnikola/churchtools-plugin",
+    "name": "wirsindcgks/churchtools-plugin",
     "description": "Synchronisiert ChurchTools Kalender-Events mit WordPress und zeigt sie per Shortcode, Gutenberg-Block oder WPBakery-Element an.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",

@@ -17,7 +17,7 @@ final class SettingsPage
 {
     private const OPTION_KEY = 'ctp_settings';
     private const PAGE_SLUG = 'churchtools-plugin';
-    private const DEFAULT_TAB = 'connection';
+    private const DEFAULT_TAB = 'status';
 
     private string $pageHook = '';
 
@@ -52,6 +52,7 @@ final class SettingsPage
     private static function tabs(): array
     {
         return [
+            'status' => __('Übersicht', 'churchtools-plugin'),
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
@@ -75,6 +76,7 @@ final class SettingsPage
     private static function tabIcons(): array
     {
         return [
+            'status' => 'dashboard',
             'connection' => 'admin-links',
             'calendars' => 'calendar-alt',
             'sync' => 'update',
@@ -137,6 +139,7 @@ final class SettingsPage
         add_settings_field('sync_interval', __('Sync-Intervall', 'churchtools-plugin'), [$this, 'renderSyncIntervalField'], $syncPage, 'ctp_sync');
         add_settings_field('sync_days_ahead', __('Sync-Zeitraum (Tage in die Zukunft)', 'churchtools-plugin'), [$this, 'renderSyncDaysAheadField'], $syncPage, 'ctp_sync');
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
+        add_settings_field('keep_data_on_uninstall', __('Beim Deinstallieren', 'churchtools-plugin'), [$this, 'renderKeepDataOnUninstallField'], $syncPage, 'ctp_sync');
 
         $designPage = self::PAGE_SLUG . '_design';
         add_settings_section('ctp_design_order', __('Reihenfolge der Kartenelemente', 'churchtools-plugin'), '__return_false', $designPage);
@@ -168,6 +171,7 @@ final class SettingsPage
             'sync_interval' => 'hourly',
             'sync_days_ahead' => 180,
             'retention_days' => 30,
+            'keep_data_on_uninstall' => false,
             'element_order' => CardDesign::DEFAULT_ORDER,
             'corner_style' => 'rounded',
             'click_behavior' => 'popup',
@@ -366,6 +370,9 @@ final class SettingsPage
             'retention_days' => array_key_exists('retention_days', $input)
                 ? max(0, (int) $input['retention_days'])
                 : $existing['retention_days'],
+            'keep_data_on_uninstall' => array_key_exists('keep_data_on_uninstall', $input)
+                ? (bool) $input['keep_data_on_uninstall']
+                : $existing['keep_data_on_uninstall'],
             'element_order' => array_key_exists('element_order', $input)
                 ? self::sanitizeElementOrder((string) $input['element_order'])
                 : $existing['element_order'],
@@ -612,6 +619,26 @@ final class SettingsPage
             esc_attr((string) self::get()['retention_days']),
             esc_html__('Tage', 'churchtools-plugin')
         );
+    }
+
+    /**
+     * Hidden field before the checkbox so an unchecked box still posts
+     * "0" — otherwise sanitizeSettings()'s array_key_exists() check would
+     * see the key as entirely absent and keep the previous (possibly
+     * checked) value instead of actually unchecking it.
+     */
+    public function renderKeepDataOnUninstallField(): void
+    {
+        printf('<input type="hidden" name="%1$s[keep_data_on_uninstall]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" name="%1$s[keep_data_on_uninstall]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty(self::get()['keep_data_on_uninstall']), true, false),
+            esc_html__('Termindaten, importierte Bilder und Einstellungen beim Deinstallieren behalten', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Gilt nur für „Deinstallieren“ (Plugin löschen), nicht für „Deaktivieren“. Standardmäßig aus, damit ein versehentliches Löschen keine Daten hinterlässt, die niemand mehr sieht.', 'churchtools-plugin')
+            . '</p>';
     }
 
     /**
@@ -993,6 +1020,178 @@ final class SettingsPage
         <?php
     }
 
+    /**
+     * Landing tab (see DEFAULT_TAB): bundles what was previously scattered
+     * across the Verbindung/Sync/Updates tabs into a single at-a-glance
+     * overview, per the "Welcome/Status-Seite"-idea in plan.md.
+     */
+    private function renderStatusOverview(): void
+    {
+        $settings = self::get();
+        $configured = $settings['instance'] !== '' && self::getDecryptedApiKey() !== '';
+        $calendars = $settings['calendars'];
+        $enabledCalendars = array_filter($calendars, static fn (array $calendar): bool => !empty($calendar['enabled']));
+        $lastSync = get_option('ctp_last_sync', '');
+        $lastError = SyncEngine::getLastError();
+        $eventCount = (new EventRepository())->count();
+        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
+
+        // Reads WP's own update-check cache (populated by GitHubUpdateChecker
+        // via plugin-update-checker, see includes/Update/) instead of forcing
+        // a fresh remote request on every admin page load.
+        $pluginFile = plugin_basename(CTP_PLUGIN_FILE);
+        $updatePlugins = get_site_transient('update_plugins');
+        $availableVersion = null;
+        if (is_object($updatePlugins) && isset($updatePlugins->response[$pluginFile]->new_version)) {
+            $availableVersion = $updatePlugins->response[$pluginFile]->new_version;
+        }
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Verbindung & Betrieb', 'churchtools-plugin'); ?></h2>
+            <?php if ($lastError !== null) : ?>
+                <div class="notice notice-error inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: 1: date/time the sync last failed, 2: error message */
+                            esc_html__('Letzter Sync-Fehler (%1$s): %2$s', 'churchtools-plugin'),
+                            esc_html(mysql2date($dateFormat, $lastError['time'])),
+                            esc_html($lastError['message'])
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php elseif (!$configured) : ?>
+                <div class="notice notice-warning inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: %s: link to the "Verbindung" tab */
+                            esc_html__('Noch keine Instanz/API-Key hinterlegt. Im %s eintragen.', 'churchtools-plugin'),
+                            '<a href="' . esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'connection'], admin_url('admin.php'))) . '">'
+                                . esc_html__('Verbindung-Tab', 'churchtools-plugin') . '</a>'
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+            <table class="widefat striped ctp-status-table">
+                <tbody>
+                    <tr>
+                        <th><?php esc_html_e('Instanz', 'churchtools-plugin'); ?></th>
+                        <td><?php echo $settings['instance'] !== '' ? esc_html($settings['instance']) : '—'; ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Aktive Kalender', 'churchtools-plugin'); ?></th>
+                        <td>
+                            <?php
+                            printf(
+                                /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                                esc_html__('%1$d von %2$d', 'churchtools-plugin'),
+                                count($enabledCalendars),
+                                count($calendars)
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Letzte Synchronisation', 'churchtools-plugin'); ?></th>
+                        <td>
+                            <?php
+                            echo $lastSync !== ''
+                                ? esc_html(mysql2date($dateFormat, $lastSync))
+                                : esc_html__('noch nie', 'churchtools-plugin');
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></th>
+                        <td><?php echo (int) $eventCount; ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Version', 'churchtools-plugin'); ?></h2>
+            <table class="widefat striped ctp-status-table">
+                <tbody>
+                    <tr>
+                        <th><?php esc_html_e('Installiert', 'churchtools-plugin'); ?></th>
+                        <td><?php echo esc_html(CTP_VERSION); ?></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Verfügbar', 'churchtools-plugin'); ?></th>
+                        <td>
+                            <?php if ($availableVersion !== null && version_compare($availableVersion, CTP_VERSION, '>')) : ?>
+                                <?php
+                                printf(
+                                    /* translators: %s: newer version number available via GitHub */
+                                    esc_html__('%s (Update über die Plugins-Übersicht einspielen)', 'churchtools-plugin'),
+                                    esc_html($availableVersion)
+                                );
+                                ?>
+                            <?php else : ?>
+                                <?php esc_html_e('aktuell', 'churchtools-plugin'); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <?php $changelog = self::changelogExcerpt(); ?>
+            <?php if ($changelog !== []) : ?>
+                <h3><?php esc_html_e('Letzte Änderungen', 'churchtools-plugin'); ?></h3>
+                <ul class="ctp-changelog-excerpt">
+                    <?php foreach ($changelog as $item) : ?>
+                        <li><?php echo esc_html($item); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Reads the first release block of CHANGELOG.md (bundled with the plugin,
+     * not excluded from the release zip — see .github/release-excludes.txt)
+     * and returns its top-level bullet items as plain text. A lightweight
+     * excerpt for the status page, not a markdown renderer.
+     *
+     * @return string[]
+     */
+    private static function changelogExcerpt(int $maxItems = 5): array
+    {
+        $path = CTP_PLUGIN_DIR . 'CHANGELOG.md';
+        if (!is_readable($path)) {
+            return [];
+        }
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES);
+        if ($lines === false) {
+            return [];
+        }
+
+        $items = [];
+        $inFirstRelease = false;
+        foreach ($lines as $line) {
+            if (str_starts_with($line, '## ')) {
+                if ($inFirstRelease) {
+                    break;
+                }
+                $inFirstRelease = true;
+                continue;
+            }
+            if ($inFirstRelease && str_starts_with($line, '- ')) {
+                $items[] = substr($line, 2);
+                if (count($items) >= $maxItems) {
+                    break;
+                }
+            }
+        }
+
+        return $items;
+    }
+
     private function renderSyncStatus(): void
     {
         $lastSync = get_option('ctp_last_sync', '');
@@ -1272,7 +1471,9 @@ final class SettingsPage
                 <?php $this->renderSyncStatus(); ?>
             <?php endif; ?>
 
-            <?php if ($tab === 'events') : ?>
+            <?php if ($tab === 'status') : ?>
+                <?php $this->renderStatusOverview(); ?>
+            <?php elseif ($tab === 'events') : ?>
                 <?php
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which event to display), not a state change; same pattern as currentTab()'s $_GET['tab'] read above.
                 $eventId = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;

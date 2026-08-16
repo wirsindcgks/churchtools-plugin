@@ -2,12 +2,12 @@
 
 /**
  * Plugin Name:       ChurchTools Events
- * Plugin URI:        https://github.com/tobiasnikola/churchtools-plugin
+ * Plugin URI:        https://github.com/wirsindcgks/churchtools-plugin
  * Description:       Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und zeigt sie per Shortcode, Gutenberg-Block oder WPBakery-Element an.
  * Version:           0.1.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
- * Author:            Tobias Nikola
+ * Author:            wirsindcgks
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       churchtools-plugin

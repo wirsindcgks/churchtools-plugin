@@ -9,6 +9,9 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- Neue Checkbox „Beim Deinstallieren“ im Sync-Tab: Termindaten, importierte Bilder und Einstellungen können jetzt optional erhalten bleiben, wenn das Plugin deinstalliert (nicht nur deaktiviert) wird – Default weiterhin „löschen“
+- Erste `.pot`-Übersetzungsvorlage (`languages/churchtools-plugin.pot`), extrahiert aus allen `__()`/`esc_html__()`/`esc_attr__()`-Aufrufen in PHP und dem Gutenberg-Block-Editor-Script
+- Neuer „Datenschutz“-Abschnitt in `readme.txt`: Hinweis, dass „Ort“/„Beschreibung“ unverändert und ungefiltert aus ChurchTools übernommen werden und daher ggf. personenbezogene Daten enthalten können, sowie ein kurzer Auftragsverarbeitungs-Hinweis
 - Klickbare Event-Kacheln: Klick auf eine Kachel öffnet wahlweise ein Popup oder eine eigene Termin-Seite (`/churchtools-termin/<id>/`), global im Design-Tab einstellbar (Default: Popup) oder pro Shortcode/Block/WPBakery per neuem `click`-Attribut überschreibbar. Reihenfolge der angezeigten Felder in Popup/eigener Seite per neuem Drag&Drop-Editor im Design-Tab konfigurierbar (analog zur bestehenden Kartenreihenfolge)
 - Frontend-Template zeigt jetzt Untertitel, „Ganztägig"-Kennzeichnung und Kalenderfarbe (als Farbpunkt) pro Termin an
 - Neuer „Events"-Tab in den Plugin-Einstellungen: read-only Übersicht der tatsächlich synchronisierten Termine (Titel, Zeitraum, Kalender)
@@ -32,6 +35,10 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Design-Tab zeigt jetzt eine Shortcode-Übersicht (Attribut-Referenz, Beispiele für Liste/Grid/„Nächster Termin" mit Kopieren-Button)
 - Terminkarten zeigen jetzt mehr Informationen: kleine Icons vor Uhrzeit und Ort, ein Kalendername-Label (Farbpunkt + Name) als zusätzliche Visualisierung des Quellkalenders, sowie ein kurzer Auszug aus der Terminbeschreibung – gilt für alle drei Ansichten (Grid/Liste/„Nächster Termin")
 - Design-Tab: Kalendername und Beschreibungsauszug sind jetzt vollwertige, per Drag&Drop verschiebbare Kartenelemente (statt fest an erster/an die Untertitel-Position gebunden) – alle sechs Kartenelemente lassen sich frei anordnen. Zusätzlich beliebig oft einfügbare Trennlinien und Abstände zur optischen Gliederung der Kachel, ebenfalls per Drag&Drop positionierbar und über ein „×“ wieder entfernbar
+
+### Changed
+
+- Plugin-Autor/-URI konsistent auf `wirsindcgks` umgestellt (`churchtools-plugin.php`, `readme.txt`, `composer.json`) – entspricht dem tatsächlichen GitHub-Repo-Owner statt des persönlichen Alt-Accounts
 
 ### Fixed
 

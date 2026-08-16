@@ -13,9 +13,17 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 (function (): void {
     global $wpdb;
 
+    $settings = get_option('ctp_settings', []);
+    if (!empty($settings['keep_data_on_uninstall'])) {
+        return;
+    }
+
     delete_option('ctp_settings');
     delete_option('ctp_last_sync');
+    delete_option('ctp_last_sync_error');
     delete_option('ctp_db_version');
+    delete_option('ctp_events_cache_version');
+    delete_option('ctp_rewrite_version');
 
     $tableName = $wpdb->prefix . 'ctp_events';
 
