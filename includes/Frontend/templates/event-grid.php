@@ -47,7 +47,7 @@ if (!defined('ABSPATH')) {
                             style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
                         <?php endif; ?>
                     >
-                        <div class="ctp-events__media">
+                        <div class="ctp-events__media<?php echo $event['image_is_fallback'] ? ' ctp-events__media--fallback' : ''; ?>">
                             <?php if ($event['image_url'] !== '') : ?>
                                 <img src="<?php echo esc_url($event['image_url']); ?>" alt="" loading="lazy" />
                             <?php endif; ?>

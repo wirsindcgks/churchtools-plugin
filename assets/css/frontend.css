@@ -8,13 +8,16 @@
 .ctp-events {
     --ctp-accent: var(--wp--preset--color--primary, #2563eb);
     --ctp-color-text: inherit;
-    --ctp-color-muted: color-mix(in srgb, currentColor 60%, transparent);
+    --ctp-color-muted: color-mix(in srgb, currentColor 70%, transparent);
     --ctp-color-surface: var(--wp--preset--color--base, #fff);
-    --ctp-color-border: color-mix(in srgb, currentColor 12%, transparent);
+    --ctp-color-border: color-mix(in srgb, currentColor 16%, transparent);
     --ctp-radius: var(--wp--custom--ctp--radius, 14px);
     --ctp-gap: clamp(1rem, 1.5vw + 0.5rem, 1.75rem);
-    --ctp-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
-        0 12px 28px -16px color-mix(in srgb, currentColor 30%, transparent);
+    /* "Premium" two-layer shadow: a tight contact shadow plus a large soft
+       ambient one, both darker/more spread than a typical flat-UI shadow so
+       cards read with real physical depth rather than a faint hairline. */
+    --ctp-shadow: 0 2px 6px color-mix(in srgb, currentColor 10%, transparent),
+        0 24px 48px -20px color-mix(in srgb, currentColor 42%, transparent);
     --ctp-columns: 3;
 
     /*
@@ -156,16 +159,23 @@
 }
 
 /* Calendar name label (color dot + name) — a full member of the Design tab's
-   reorderable element set (--ctp-order-calendar), same as title/subtitle/etc. */
+   reorderable element set (--ctp-order-calendar), same as title/subtitle/etc.
+   Rendered as a filled pill in the calendar's own color rather than a plain
+   text label, so each calendar reads as a distinct, branded badge instead of
+   a faint caption — the color dot stays as extra reinforcement inside it. */
 .ctp-events__eyebrow {
     order: var(--ctp-order-calendar);
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    align-self: flex-start;
     gap: 0.4rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ctp-accent) 16%, transparent);
     color: var(--ctp-accent);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
@@ -239,8 +249,11 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.9rem 0.25rem;
+    padding: 0.9rem 0.25rem 0.9rem 0.9rem;
     border-block-end: 1px solid var(--ctp-color-border);
+    /* Ties each row back to its calendar without a full card treatment —
+       list rows stay flat/compact, the color lives in this edge instead. */
+    border-inline-start: 3px solid color-mix(in srgb, var(--ctp-accent) 55%, transparent);
 }
 
 .ctp-events__item:last-child {
@@ -345,7 +358,10 @@
     overflow: hidden;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
-    box-shadow: var(--ctp-shadow);
+    /* Calendar-colored top edge, drawn as an inset box-shadow layer (rather
+       than a real border) so it doesn't add to the box's layout size or
+       fight with border-radius clipping on the rounded corners. */
+    box-shadow: inset 0 3px 0 color-mix(in srgb, var(--ctp-accent) 70%, transparent), var(--ctp-shadow);
 }
 
 .ctp-events__media {
@@ -364,6 +380,27 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Calendar "Standardbild" fallback (see EventListRenderer::withCalendarMeta())
+   — a generic photo reused across many events of the same calendar, so a
+   subtle color-matched scrim ties it back to that calendar's identity
+   instead of looking like an unrelated stock photo. Real per-event photos
+   never get this class and render at full color. */
+.ctp-events__media--fallback img {
+    filter: saturate(0.85);
+}
+
+.ctp-events__media--fallback::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+    );
+    mix-blend-mode: multiply;
 }
 
 .ctp-events__date-badge {
@@ -435,6 +472,23 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Same calendar-tinted scrim as .ctp-events__media--fallback, for the hero. */
+.ctp-events--upcoming .ctp-events__hero-media--fallback img {
+    filter: saturate(0.85);
+}
+
+.ctp-events--upcoming .ctp-events__hero-media--fallback::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+    );
+    mix-blend-mode: multiply;
 }
 
 .ctp-events--upcoming .ctp-events__hero-body {
@@ -514,15 +568,16 @@
 
 .ctp-events__card--clickable:hover,
 .ctp-events__card--clickable:focus-within {
-    box-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
-        0 18px 34px -16px color-mix(in srgb, var(--ctp-accent) 45%, transparent);
-    transform: translateY(-2px);
+    box-shadow: inset 0 3px 0 color-mix(in srgb, var(--ctp-accent) 70%, transparent),
+        0 4px 8px color-mix(in srgb, currentColor 10%, transparent),
+        0 32px 56px -18px color-mix(in srgb, var(--ctp-accent) 55%, transparent);
+    transform: translateY(-4px);
 }
 
 .ctp-events__hero--clickable:hover,
 .ctp-events__hero--clickable:focus-within {
-    box-shadow: 0 1px 2px color-mix(in srgb, currentColor 6%, transparent),
-        0 18px 34px -16px color-mix(in srgb, var(--ctp-accent) 45%, transparent);
+    box-shadow: 0 4px 8px color-mix(in srgb, currentColor 10%, transparent),
+        0 32px 56px -18px color-mix(in srgb, var(--ctp-accent) 55%, transparent);
 }
 
 /* ---------- popup modal (see partials/modal.php, assets/js/frontend.js) ---------- */
@@ -575,17 +630,42 @@
     gap: 0.6rem;
 }
 
+.ctp-events__detail-media {
+    position: relative;
+    overflow: hidden;
+    border-radius: calc(var(--ctp-radius) * 0.7);
+    box-shadow: var(--ctp-shadow);
+}
+
 .ctp-events__detail-media img {
     display: block;
     width: 100%;
-    border-radius: calc(var(--ctp-radius) * 0.7);
+}
+
+/* Same calendar-tinted scrim as .ctp-events__media--fallback, for detail view. */
+.ctp-events__detail-media--fallback img {
+    filter: saturate(0.85);
+}
+
+.ctp-events__detail-media--fallback::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+    );
+    mix-blend-mode: multiply;
 }
 
 .ctp-events__detail-title {
     margin: 0;
-    font-size: 1.4rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 35%, transparent);
+    font-size: 1.5rem;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .ctp-events__detail-description {

@@ -9,6 +9,7 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- Kalender-Standardbild wird jetzt tatsächlich verwendet: Termine ohne eigenes Bild zeigen automatisch das im Kalender-Tab hinterlegte Standardbild (mit farblich zum Kalender passendem Overlay) statt des bisherigen reinen Farbverlaufs
 - Kalenderfilter, Freitext-Suchleiste (Titel/Untertitel/Ort) und Monatstrenner für die Liste/Grid-Ansicht: alle drei neu per Shortcode-Attribut (`filter`/`search`/`month_dividers`), Gutenberg-Block-Umschalter oder WPBakery-Checkbox einzeln aktivierbar, standardmäßig aus. Ersetzt das bisherige automatische Erscheinen des Kalenderfilters ab zwei Kalendern im Ergebnis durch ein explizites Opt-in. Filter und Suche laufen weiterhin komplett clientseitig (kein Neuladen, cache-kompatibel); ein Monat ohne sichtbare Treffer nach dem Filtern/Suchen blendet seinen Trenner automatisch mit aus
 - Admin: neuer „Übersicht“-Tab (jetzt Startseite des Plugin-Menüs) mit Verbindungs-/Sync-Status, Termin- und Kalenderzahlen sowie installierter/verfügbarer Version inkl. Changelog-Auszug
 - Neue Checkbox „Beim Deinstallieren“ im Sync-Tab: Termindaten, importierte Bilder und Einstellungen können jetzt optional erhalten bleiben, wenn das Plugin deinstalliert (nicht nur deaktiviert) wird – Default weiterhin „löschen“
@@ -43,6 +44,8 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Plugin-Autor/-URI konsistent auf `wirsindcgks` umgestellt (`churchtools-plugin.php`, `readme.txt`, `composer.json`) – entspricht dem tatsächlichen GitHub-Repo-Owner statt des persönlichen Alt-Accounts
 - Design-Tab in zwei getrennte Boxen aufgeteilt: „Kachel" (Reihenfolge, Eckenstil) und „Klickverhalten & Detailansicht" (Klickverhalten, Reihenfolge der Detailansicht) – bisher ein einziges langes Formular, jetzt klarer erkennbar getrennt und passend zu den zwei Vorschau-Boxen auf der rechten Seite
 - Popup/eigene-Seite-Vorschau im Design-Tab hebt sich jetzt sichtbar vom Panel-Hintergrund ab (gedimmter Hintergrund + Schatten + eigene Fläche, analog zum echten `<dialog>` im Frontend) statt bisher unauffällig auf dem weißen Panel zu liegen
+- Frontend-Kartendesign spürbar überarbeitet: kräftigerer, mehrschichtiger Schatten inkl. stärkerem Hover-Effekt, höherer Textkontrast, Kalendername als farbiges Pill-Badge statt reinem Text sowie eine farbige Kalender-Akzentkante an Listenzeilen/Kacheln – gilt für alle drei Ansichten sowie Popup und eigene Detailseite
+- Admin-Oberfläche: eigenständigeres Branding (farbiges Logo-Icon im Header, Akzentfarbe für den aktiven Tab und die neuen Kennzahl-Kacheln). Der „Übersicht"-Tab ist jetzt ein echtes Dashboard mit Kennzahl-Kacheln statt einer reinen Tabelle und enthält den „Jetzt synchronisieren"-Button direkt (bisher nur auf dem Sync-Tab); der Sync-Tab zeigt dadurch nur noch die Einstellungen (Intervall/Aufbewahrung)
 
 ### Fixed
 

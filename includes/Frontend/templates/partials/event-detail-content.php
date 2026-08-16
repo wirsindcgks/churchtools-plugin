@@ -20,13 +20,18 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events__detail">
+<div
+    class="ctp-events__detail"
+    <?php if ($event['calendar_color'] !== '') : ?>
+        style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
+    <?php endif; ?>
+>
     <?php foreach ($order as $key) : ?>
         <?php switch ($key) :
             case 'media':
                 ?>
                 <?php if ($event['image_url'] !== '') : ?>
-                    <div class="ctp-events__detail-media">
+                    <div class="ctp-events__detail-media<?php echo $event['image_is_fallback'] ? ' ctp-events__detail-media--fallback' : ''; ?>">
                         <img src="<?php echo esc_url($event['image_url']); ?>" alt="" />
                     </div>
                 <?php endif; ?>

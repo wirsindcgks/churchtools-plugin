@@ -1,11 +1,13 @@
 /*
  * ChurchTools Events – admin settings screen. Applies one consistent panel/spacing
  * system across all tabs instead of the previous mix of ad-hoc inline styles (some
- * sections wrapped in a card, most not). Deliberately stays close to wp-admin's own
- * structural palette (surface/border/text tokens below match core's own values)
- * rather than introducing a custom brand color — buttons/active-tab accents keep
- * using WP's native .button-primary/.nav-tab-active classes so the page still
- * respects whichever admin color scheme the user has picked in their profile.
+ * sections wrapped in a card, most not). Structural palette (surface/border/text
+ * tokens below) stays close to wp-admin's own values; the plugin's own signature
+ * color (--ctp-admin-accent) is layered on top only for identity/branding touches
+ * (header logo mark, active-tab underline, dashboard stat cards) — functional
+ * controls keep using WP's native .button-primary/.nav-tab-active classes so the
+ * page still respects whichever admin color scheme the user has picked in their
+ * profile.
  */
 
 .ctp-admin {
@@ -16,6 +18,16 @@
     --ctp-admin-radius: 8px;
     --ctp-admin-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     --ctp-admin-max-width: 960px;
+    /* The plugin's own signature color — deliberately distinct from both the
+     * default wp-admin blue (#2271b1) and the frontend's default accent
+     * (#2563eb), so the two "belong to different systems" at a glance.
+     * Scope is intentionally narrow: only the header logo mark, active-tab
+     * indicator, and dashboard stat cards use it below. Buttons/links keep
+     * using WP's native .button-primary/.nav-tab-active classes so the page
+     * still respects whichever admin color scheme the user picked in their
+     * profile (see the file-level comment above).
+     */
+    --ctp-admin-accent: #4f46e5;
 }
 
 .ctp-admin-header {
@@ -25,11 +37,21 @@
     margin: 16px 0 4px;
 }
 
-.ctp-admin-header .dashicons {
-    width: 32px;
-    height: 32px;
-    font-size: 32px;
-    color: var(--ctp-admin-muted);
+.ctp-admin-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--ctp-admin-accent);
+}
+
+.ctp-admin-logo .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: #fff;
 }
 
 .ctp-admin-header h1 {
@@ -57,6 +79,15 @@
     width: 16px;
     height: 16px;
     opacity: 0.7;
+}
+
+/* Inset box-shadow rather than border-bottom so it doesn't add height and
+ * throw off alignment with the inactive tabs next to it (core's own
+ * .nav-tab-active already sets a 1px border-bottom to blend into the page
+ * background — this just draws a colored line on top of that, inside the box). */
+.ctp-admin .nav-tab-active,
+.ctp-admin .nav-tab-active:hover {
+    box-shadow: inset 0 -3px 0 var(--ctp-admin-accent);
 }
 
 /* The shared panel chrome every tab's content sits in — settings forms, the sync
@@ -167,6 +198,51 @@
 .ctp-empty-state {
     color: var(--ctp-admin-muted);
     font-style: italic;
+}
+
+/* Übersicht/dashboard tab (renderStatusOverview()) — the four/five key metrics
+ * as scannable tiles instead of a plain key-value table, so the landing tab
+ * reads as a dashboard rather than a form. */
+.ctp-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.ctp-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: var(--ctp-admin-radius);
+    background: color-mix(in srgb, var(--ctp-admin-accent) 4%, var(--ctp-admin-surface));
+}
+
+.ctp-stat-card .dashicons {
+    color: var(--ctp-admin-accent);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.ctp-stat-card__value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ctp-admin-text);
+    line-height: 1.3;
+}
+
+.ctp-stat-card__label {
+    color: var(--ctp-admin-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ctp-status-actions {
+    margin: 4px 0 0;
 }
 
 .ctp-panel .notice {
@@ -351,6 +427,29 @@
 
 .ctp-panel h3 {
     margin: 24px 0 8px;
+}
+
+.ctp-changelog-excerpt {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ctp-changelog-excerpt li {
+    position: relative;
+    padding: 4px 0 4px 16px;
+    color: var(--ctp-admin-text);
+}
+
+.ctp-changelog-excerpt li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 12px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ctp-admin-accent);
 }
 
 .ctp-shortcode-examples {

@@ -107,7 +107,13 @@ final class EventListRenderer
      * Also resolves image_url to the imported WP attachment when one exists, so
      * templates never have to hotlink the ChurchTools-hosted original — falls back
      * to the raw ChurchTools URL only for rows synced before the image import
-     * (attachment_id not yet set) or where the download failed.
+     * (attachment_id not yet set) or where the download failed. If the event still
+     * has no image at that point, falls back to the calendar's admin-configured
+     * "Standardbild" (default_image_id, Calendars tab) — image_is_fallback marks
+     * that case so templates/CSS can visually distinguish a generic calendar photo
+     * from a real per-event one (e.g. a tinted overlay). The CSS gradient in
+     * .ctp-events__media remains the last-resort fallback when even the calendar
+     * has no default image.
      *
      * Also adds detail_url (always, cheap to compute) and — only for the "popup"
      * click behavior — detail_html: the pre-rendered detail content for this one
@@ -129,6 +135,18 @@ final class EventListRenderer
                 $attachmentUrl = wp_get_attachment_image_url($attachmentId, 'large');
                 if ($attachmentUrl !== false) {
                     $event['image_url'] = $attachmentUrl;
+                }
+            }
+
+            $event['image_is_fallback'] = false;
+            if ($event['image_url'] === '') {
+                $defaultImageId = (int) ($calendar['default_image_id'] ?? 0);
+                if ($defaultImageId > 0) {
+                    $defaultImageUrl = wp_get_attachment_image_url($defaultImageId, 'large');
+                    if ($defaultImageUrl !== false) {
+                        $event['image_url'] = $defaultImageUrl;
+                        $event['image_is_fallback'] = true;
+                    }
                 }
             }
 

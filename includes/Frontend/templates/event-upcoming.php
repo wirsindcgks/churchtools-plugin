@@ -31,7 +31,7 @@ $upcoming = array_slice($events, 1);
                 style="--ctp-accent:<?php echo esc_attr($hero['calendar_color']); ?>;"
             <?php endif; ?>
         >
-            <div class="ctp-events__hero-media">
+            <div class="ctp-events__hero-media<?php echo $hero['image_is_fallback'] ? ' ctp-events__hero-media--fallback' : ''; ?>">
                 <?php if ($hero['image_url'] !== '') : ?>
                     <img src="<?php echo esc_url($hero['image_url']); ?>" alt="" loading="lazy" />
                 <?php endif; ?>

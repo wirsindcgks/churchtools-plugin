@@ -552,6 +552,9 @@ final class SettingsPage
                 <?php esc_html_e('Aktive Kalender werden synchronisiert. Ansprechbar im Shortcode per ID oder Name, z. B.', 'churchtools-plugin'); ?>
                 <code>[ctp_events calendar="<?php echo esc_html((string) array_key_first($calendars)); ?>,<?php echo esc_html(reset($calendars)['name']); ?>"]</code>
             </p>
+            <p class="description">
+                <?php esc_html_e('Das Standardbild wird angezeigt, sobald ein Termin dieses Kalenders kein eigenes Bild hat.', 'churchtools-plugin'); ?>
+            </p>
         <?php endif; ?>
         <?php
     }
@@ -1109,41 +1112,49 @@ final class SettingsPage
                     </p>
                 </div>
             <?php endif; ?>
-            <table class="widefat striped ctp-status-table">
-                <tbody>
-                    <tr>
-                        <th><?php esc_html_e('Instanz', 'churchtools-plugin'); ?></th>
-                        <td><?php echo $settings['instance'] !== '' ? esc_html($settings['instance']) : '—'; ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Aktive Kalender', 'churchtools-plugin'); ?></th>
-                        <td>
-                            <?php
-                            printf(
-                                /* translators: 1: number of enabled calendars, 2: total number of known calendars */
-                                esc_html__('%1$d von %2$d', 'churchtools-plugin'),
-                                count($enabledCalendars),
-                                count($calendars)
-                            );
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Letzte Synchronisation', 'churchtools-plugin'); ?></th>
-                        <td>
-                            <?php
-                            echo $lastSync !== ''
-                                ? esc_html(mysql2date($dateFormat, $lastSync))
-                                : esc_html__('noch nie', 'churchtools-plugin');
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></th>
-                        <td><?php echo (int) $eventCount; ?></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="ctp-stat-grid">
+                <div class="ctp-stat-card">
+                    <span class="dashicons dashicons-admin-links" aria-hidden="true"></span>
+                    <span class="ctp-stat-card__value"><?php echo $settings['instance'] !== '' ? esc_html($settings['instance']) : '—'; ?></span>
+                    <span class="ctp-stat-card__label"><?php esc_html_e('Instanz', 'churchtools-plugin'); ?></span>
+                </div>
+                <div class="ctp-stat-card">
+                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                    <span class="ctp-stat-card__value">
+                        <?php
+                        printf(
+                            /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                            esc_html__('%1$d von %2$d', 'churchtools-plugin'),
+                            count($enabledCalendars),
+                            count($calendars)
+                        );
+                        ?>
+                    </span>
+                    <span class="ctp-stat-card__label"><?php esc_html_e('Aktive Kalender', 'churchtools-plugin'); ?></span>
+                </div>
+                <div class="ctp-stat-card">
+                    <span class="dashicons dashicons-update" aria-hidden="true"></span>
+                    <span class="ctp-stat-card__value">
+                        <?php
+                        echo $lastSync !== ''
+                            ? esc_html(mysql2date($dateFormat, $lastSync))
+                            : esc_html__('noch nie', 'churchtools-plugin');
+                        ?>
+                    </span>
+                    <span class="ctp-stat-card__label"><?php esc_html_e('Letzte Synchronisation', 'churchtools-plugin'); ?></span>
+                </div>
+                <div class="ctp-stat-card">
+                    <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
+                    <span class="ctp-stat-card__value"><?php echo (int) $eventCount; ?></span>
+                    <span class="ctp-stat-card__label"><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></span>
+                </div>
+            </div>
+            <p class="ctp-status-actions">
+                <button type="button" class="button button-primary" id="ctp-run-sync">
+                    <?php esc_html_e('Jetzt synchronisieren', 'churchtools-plugin'); ?>
+                </button>
+                <span id="ctp-run-sync-result"></span>
+            </p>
         </div>
 
         <div class="ctp-panel">
@@ -1224,55 +1235,6 @@ final class SettingsPage
         }
 
         return $items;
-    }
-
-    private function renderSyncStatus(): void
-    {
-        $lastSync = get_option('ctp_last_sync', '');
-        $lastError = SyncEngine::getLastError();
-        $eventCount = (new EventRepository())->count();
-        ?>
-        <div class="ctp-panel">
-            <h2><?php esc_html_e('Status', 'churchtools-plugin'); ?></h2>
-            <?php if ($lastError !== null) : ?>
-                <div class="notice notice-error inline">
-                    <p>
-                        <?php
-                        printf(
-                            /* translators: 1: date/time the sync last failed, 2: error message */
-                            esc_html__('Letzter Sync-Fehler (%1$s): %2$s', 'churchtools-plugin'),
-                            esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $lastError['time'])),
-                            esc_html($lastError['message'])
-                        );
-                        ?>
-                    </p>
-                </div>
-            <?php endif; ?>
-            <p>
-                <?php
-                printf(
-                    /* translators: %s: date/time of last sync, or a dash if none happened yet */
-                    esc_html__('Letzte Synchronisation: %s', 'churchtools-plugin'),
-                    $lastSync !== '' ? esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $lastSync)) : '—'
-                );
-                ?>
-                <br />
-                <?php
-                printf(
-                    /* translators: %d: number of events currently stored locally */
-                    esc_html__('Gespeicherte Termine: %d', 'churchtools-plugin'),
-                    (int) $eventCount
-                );
-                ?>
-            </p>
-            <p>
-                <button type="button" class="button button-primary" id="ctp-run-sync">
-                    <?php esc_html_e('Jetzt synchronisieren', 'churchtools-plugin'); ?>
-                </button>
-                <span id="ctp-run-sync-result"></span>
-            </p>
-        </div>
-        <?php
     }
 
     /**
@@ -1485,7 +1447,9 @@ final class SettingsPage
         ?>
         <div class="wrap ctp-admin">
             <div class="ctp-admin-header">
-                <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                <span class="ctp-admin-logo" aria-hidden="true">
+                    <span class="dashicons dashicons-calendar-alt"></span>
+                </span>
                 <h1><?php esc_html_e('ChurchTools Events', 'churchtools-plugin'); ?></h1>
             </div>
             <p class="ctp-admin-tagline">
@@ -1500,10 +1464,6 @@ final class SettingsPage
                     </a>
                 <?php endforeach; ?>
             </nav>
-
-            <?php if ($tab === 'sync') : ?>
-                <?php $this->renderSyncStatus(); ?>
-            <?php endif; ?>
 
             <?php if ($tab === 'status') : ?>
                 <?php $this->renderStatusOverview(); ?>
