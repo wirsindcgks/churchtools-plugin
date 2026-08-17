@@ -8,17 +8,20 @@
 .ctp-events {
     --ctp-accent: var(--wp--preset--color--primary, #2563eb);
     --ctp-color-text: inherit;
-    --ctp-color-muted: color-mix(in srgb, currentColor 70%, transparent);
-    --ctp-color-surface: var(--wp--preset--color--base, #fff);
-    --ctp-color-border: color-mix(in srgb, currentColor 16%, transparent);
+    --ctp-color-muted: color-mix(in srgb, currentColor 64%, transparent);
+    --ctp-color-surface: var(--wp--preset--color--base, #fdfbf8);
+    --ctp-color-border: color-mix(in srgb, currentColor 12%, transparent);
     --ctp-radius: var(--wp--custom--ctp--radius, 14px);
-    --ctp-gap: clamp(1rem, 1.5vw + 0.5rem, 1.75rem);
-    /* "Premium" two-layer shadow: a tight contact shadow plus a large soft
-       ambient one, both darker/more spread than a typical flat-UI shadow so
-       cards read with real physical depth rather than a faint hairline. */
-    --ctp-shadow: 0 2px 6px color-mix(in srgb, currentColor 10%, transparent),
-        0 24px 48px -20px color-mix(in srgb, currentColor 42%, transparent);
+    --ctp-gap: clamp(1.35rem, 1.6vw + 0.7rem, 2.4rem);
+    /* Two-layer shadow: a faint contact shadow plus a soft, warm-tinted
+       ambient one — restrained rather than heavy, so cards read with a
+       touch of lift without dominating the page. */
+    --ctp-shadow: 0 1px 3px color-mix(in srgb, currentColor 7%, transparent),
+        0 20px 40px -22px color-mix(in srgb, #8a6a3a 30%, transparent);
     --ctp-columns: 3;
+    /* Floor for a single grid card — see .ctp-events--grid .ctp-events__list
+       below for how it's combined with --ctp-columns. */
+    --ctp-card-min: 240px;
 
     /*
      * Fallbacks only — real values come from the inline style each template
@@ -51,7 +54,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
     margin-block-end: var(--ctp-gap);
 }
 
@@ -65,7 +68,7 @@
 
 .ctp-events__search .ctp-events__icon {
     position: absolute;
-    left: 0.75rem;
+    left: 0.85rem;
     width: 1rem;
     height: 1rem;
     color: var(--ctp-color-muted);
@@ -74,9 +77,9 @@
 
 .ctp-events__search-input {
     width: 100%;
-    padding: 0.5rem 0.9rem 0.5rem 2.25rem;
+    padding: 0.55rem 0.95rem 0.55rem 2.4rem;
     border: 1px solid var(--ctp-color-border);
-    border-radius: calc(var(--ctp-radius) * 0.5);
+    border-radius: calc(var(--ctp-radius) * 0.6);
     background-color: var(--ctp-color-surface);
     color: var(--ctp-color-text);
     font: inherit;
@@ -93,9 +96,9 @@
 }
 
 .ctp-events__filter {
-    padding: 0.5rem 2rem 0.5rem 0.9rem;
+    padding: 0.55rem 2.1rem 0.55rem 0.95rem;
     border: 1px solid var(--ctp-color-border);
-    border-radius: calc(var(--ctp-radius) * 0.5);
+    border-radius: calc(var(--ctp-radius) * 0.6);
     background-color: var(--ctp-color-surface);
     color: var(--ctp-color-text);
     font: inherit;
@@ -105,7 +108,7 @@
 .ctp-events__filter:focus-visible,
 .ctp-events__search-input:focus-visible {
     outline: 2px solid var(--ctp-accent);
-    outline-offset: 2px;
+    outline-offset: 1px;
 }
 
 .ctp-events__toolbar-empty {
@@ -118,12 +121,10 @@
 /* ---------- month dividers (list/grid layouts only, opt-in — see EventFormatter::monthLabel()) ---------- */
 
 .ctp-events__month-divider {
-    margin-block: calc(var(--ctp-gap) * 0.75) calc(var(--ctp-gap) * 0.35);
+    margin-block: calc(var(--ctp-gap) * 0.7) calc(var(--ctp-gap) * 0.35);
     font-size: 0.85rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--ctp-color-muted);
+    color: var(--ctp-color-text);
 }
 
 .ctp-events__month-divider:first-child {
@@ -137,7 +138,7 @@
 .ctp-events__list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -145,8 +146,8 @@
 
 .ctp-events__color-dot {
     display: inline-block;
-    width: 0.55em;
-    height: 0.55em;
+    width: 0.5em;
+    height: 0.5em;
     flex-shrink: 0;
     border-radius: 50%;
     background-color: var(--ctp-accent);
@@ -160,9 +161,9 @@
 
 /* Calendar name label (color dot + name) — a full member of the Design tab's
    reorderable element set (--ctp-order-calendar), same as title/subtitle/etc.
-   Rendered as a filled pill in the calendar's own color rather than a plain
-   text label, so each calendar reads as a distinct, branded badge instead of
-   a faint caption — the color dot stays as extra reinforcement inside it. */
+   Rendered as an outlined pill tinted in the calendar's own color rather than
+   a plain text label, so each calendar still reads as a distinct badge —
+   the color dot stays as extra reinforcement inside it. */
 .ctp-events__eyebrow {
     order: var(--ctp-order-calendar);
     display: inline-flex;
@@ -171,9 +172,10 @@
     gap: 0.4rem;
     padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--ctp-accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ctp-accent) 40%, transparent);
+    background: color-mix(in srgb, var(--ctp-accent) 8%, transparent);
     color: var(--ctp-accent);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -184,8 +186,8 @@
     order: var(--ctp-order-excerpt);
     margin: 0;
     color: var(--ctp-color-muted);
-    font-size: 0.875rem;
-    line-height: 1.45;
+    font-size: 0.88rem;
+    line-height: 1.52;
     display: -webkit-box;
     overflow: hidden;
     -webkit-line-clamp: 3;
@@ -221,12 +223,12 @@
 .ctp-events__badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.2em 0.6em;
+    padding: 0.18em 0.6em;
     border-radius: 999px;
     background: color-mix(in srgb, var(--ctp-accent) 14%, transparent);
     color: var(--ctp-accent);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.73rem;
+    font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
 }
@@ -248,12 +250,9 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.9rem 0.25rem 0.9rem 0.9rem;
+    gap: 1.1rem;
+    padding: 0.95rem 0.2rem;
     border-block-end: 1px solid var(--ctp-color-border);
-    /* Ties each row back to its calendar without a full card treatment —
-       list rows stay flat/compact, the color lives in this edge instead. */
-    border-inline-start: 3px solid color-mix(in srgb, var(--ctp-accent) 55%, transparent);
 }
 
 .ctp-events__item:last-child {
@@ -265,24 +264,24 @@
     flex: 0 0 auto;
     width: 3.25rem;
     padding: 0.4rem 0;
-    border-radius: calc(var(--ctp-radius) * 0.6);
-    background: color-mix(in srgb, var(--ctp-accent) 12%, var(--ctp-color-surface));
+    border-radius: calc(var(--ctp-radius) * 0.45);
+    background: color-mix(in srgb, var(--ctp-accent) 10%, var(--ctp-color-surface));
     text-align: center;
     line-height: 1.1;
 }
 
 .ctp-events__day {
     display: block;
-    font-size: 1.15rem;
+    font-size: 1.18rem;
     font-weight: 700;
 }
 
 .ctp-events__month {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    opacity: 0.75;
+    opacity: 0.8;
 }
 
 .ctp-events__body {
@@ -299,7 +298,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .ctp-events__subtitle {
@@ -315,7 +314,7 @@
     gap: 0.25rem 1rem;
     margin-top: 0.2rem;
     color: var(--ctp-color-muted);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
 }
 
 .ctp-events__meta-item {
@@ -332,22 +331,35 @@
 
 /* ---------- grid layout ---------- */
 
+/*
+ * Container-width-driven instead of viewport-width-driven: the old fixed
+ * breakpoints (2 columns at 480px, --ctp-columns at 780px) keyed off the
+ * *viewport*, so a grid embedded in a narrow column/sidebar still forced
+ * the full column count and squeezed each card, even on a wide screen.
+ * "RAM" pattern instead — auto-fit with a floor per track, so the actual
+ * column count adapts to whatever width the grid really has:
+ *   - calc(...) is the width one of exactly --ctp-columns equal tracks
+ *     would get in the full container (the "target" size at max columns).
+ *   - max(--ctp-card-min, that) never lets a card get narrower than the
+ *     floor, which is what makes auto-fit drop to fewer (wider) columns
+ *     once the container can't fit --ctp-columns tracks at the floor.
+ *   - min(..., 100%) is pure overflow safety for a container narrower
+ *     than --ctp-card-min itself (falls back to one full-width column
+ *     instead of forcing horizontal overflow).
+ */
 .ctp-events--grid .ctp-events__list {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(
+            min(
+                max(var(--ctp-card-min), calc((100% - (var(--ctp-columns) - 1) * var(--ctp-gap)) / var(--ctp-columns))),
+                100%
+            ),
+            1fr
+        )
+    );
     gap: var(--ctp-gap);
-}
-
-@media (min-width: 480px) {
-    .ctp-events--grid .ctp-events__list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (min-width: 780px) {
-    .ctp-events--grid .ctp-events__list {
-        grid-template-columns: repeat(var(--ctp-columns), minmax(0, 1fr));
-    }
 }
 
 .ctp-events__card {
@@ -358,22 +370,21 @@
     overflow: hidden;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
-    /* Calendar-colored top edge, drawn as an inset box-shadow layer (rather
-       than a real border) so it doesn't add to the box's layout size or
-       fight with border-radius clipping on the rounded corners. */
-    box-shadow: inset 0 3px 0 color-mix(in srgb, var(--ctp-accent) 70%, transparent), var(--ctp-shadow);
+    border: 1px solid var(--ctp-color-border);
+    box-shadow: var(--ctp-shadow);
 }
 
 .ctp-events__media {
     order: var(--ctp-order-media);
     position: relative;
+    overflow: hidden;
     /* --ctp-media-aspect-ratio is only ever set inline (CardDesign::styleAttribute())
        when the admin picked something other than "wide" — see its own fallback rule. */
     aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 9);
     background: linear-gradient(
         135deg,
-        color-mix(in srgb, var(--ctp-accent) 55%, transparent),
-        color-mix(in srgb, var(--ctp-accent) 15%, transparent)
+        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 12%, transparent)
     );
 }
 
@@ -382,6 +393,12 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+.ctp-events__card--clickable:hover .ctp-events__media img {
+    transform: scale(1.025);
 }
 
 /* Calendar "Standardbild" fallback (see EventListRenderer::withCalendarMeta())
@@ -399,20 +416,20 @@
     inset: 0;
     background: linear-gradient(
         160deg,
-        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
-        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+        color-mix(in srgb, var(--ctp-accent) 38%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 4%, transparent) 70%
     );
     mix-blend-mode: multiply;
 }
 
 .ctp-events__date-badge {
     position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: calc(var(--ctp-radius) * 0.5);
+    top: 0.85rem;
+    left: 0.85rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: calc(var(--ctp-radius) * 0.55);
     background: var(--ctp-color-surface);
-    box-shadow: var(--ctp-shadow);
+    box-shadow: 0 4px 12px color-mix(in srgb, currentColor 16%, transparent);
     text-align: center;
     line-height: 1.1;
 }
@@ -422,19 +439,19 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 0.35rem;
-    padding: 1rem 1.1rem 1.25rem;
+    gap: 0.4rem;
+    padding: 1.05rem 1.2rem 1.3rem;
 }
 
 .ctp-events__card .ctp-events__title {
-    font-size: 1.05rem;
-    font-weight: 700;
+    font-size: 1.08rem;
+    font-weight: 750;
 }
 
 .ctp-events__card .ctp-events__meta {
     flex-direction: column;
     margin-top: auto;
-    padding-top: 0.5rem;
+    padding-top: 0.55rem;
 }
 
 /* ---------- upcoming layout ---------- */
@@ -448,33 +465,57 @@
     overflow: hidden;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
+    border: 1px solid var(--ctp-color-border);
     box-shadow: var(--ctp-shadow);
 }
 
 @media (min-width: 640px) {
     .ctp-events--upcoming .ctp-events__hero {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
         align-items: stretch;
     }
 }
 
+/*
+ * Image lives on the right at desktop width, shown in full (object-fit:
+ * contain, never cropped) regardless of portrait/landscape source, and lands
+ * at a consistent height because the height comes from the row (stretched to
+ * match hero-body's text-driven height), not from the image's own aspect
+ * ratio — a portrait event photo used to get cropped hard by `cover` against
+ * a landscape box. Mobile (<640px, stacked) falls back to a fixed
+ * aspect-ratio box since there's no sibling row height to stretch to there.
+ */
 .ctp-events--upcoming .ctp-events__hero-media {
     order: var(--ctp-order-media);
     position: relative;
-    /* Same override var as .ctp-events__media above, different fallback ratio. */
+    width: 100%;
     aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 10);
     background: linear-gradient(
         135deg,
-        color-mix(in srgb, var(--ctp-accent) 60%, transparent),
-        color-mix(in srgb, var(--ctp-accent) 18%, transparent)
+        color-mix(in srgb, var(--ctp-accent) 22%, var(--ctp-color-surface)),
+        color-mix(in srgb, var(--ctp-accent) 6%, var(--ctp-color-surface))
     );
+}
+
+@media (min-width: 640px) {
+    .ctp-events--upcoming .ctp-events__hero-media {
+        grid-column: 2;
+        grid-row: 1;
+        aspect-ratio: auto;
+        min-height: 260px;
+    }
+
+    .ctp-events--upcoming .ctp-events__hero-body {
+        grid-column: 1;
+        grid-row: 1;
+    }
 }
 
 .ctp-events--upcoming .ctp-events__hero-media img {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 /* Same calendar-tinted scrim as .ctp-events__media--fallback, for the hero. */
@@ -488,8 +529,8 @@
     inset: 0;
     background: linear-gradient(
         160deg,
-        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
-        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+        color-mix(in srgb, var(--ctp-accent) 38%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 4%, transparent) 70%
     );
     mix-blend-mode: multiply;
 }
@@ -499,14 +540,14 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.6rem;
-    padding: 1.5rem 1.75rem;
+    gap: 0.7rem;
+    padding: 1.85rem 2.1rem;
 }
 
 .ctp-events--upcoming .ctp-events__hero-title {
     order: var(--ctp-order-title);
-    font-size: clamp(1.35rem, 1rem + 1.2vw, 1.9rem);
-    font-weight: 800;
+    font-size: clamp(1.45rem, 1rem + 1.4vw, 2.05rem);
+    font-weight: 750;
     line-height: 1.15;
 }
 
@@ -514,22 +555,22 @@
     order: var(--ctp-order-meta);
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.3rem;
     color: var(--ctp-color-muted);
 }
 
 .ctp-events--upcoming .ctp-events__more-label {
     margin: 0 0 0.5rem;
     color: var(--ctp-color-muted);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
 @media (prefers-reduced-motion: no-preference) {
     .ctp-events__card {
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 }
 
@@ -565,22 +606,26 @@
 @media (prefers-reduced-motion: no-preference) {
     .ctp-events__item--clickable,
     .ctp-events__hero--clickable {
-        transition: box-shadow 0.18s ease;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
 }
 
 .ctp-events__card--clickable:hover,
 .ctp-events__card--clickable:focus-within {
-    box-shadow: inset 0 3px 0 color-mix(in srgb, var(--ctp-accent) 70%, transparent),
-        0 4px 8px color-mix(in srgb, currentColor 10%, transparent),
-        0 32px 56px -18px color-mix(in srgb, var(--ctp-accent) 55%, transparent);
-    transform: translateY(-4px);
+    box-shadow: 0 2px 6px color-mix(in srgb, currentColor 8%, transparent),
+        0 26px 48px -20px color-mix(in srgb, var(--ctp-accent) 40%, transparent);
+    transform: translateY(-3px);
+}
+
+.ctp-events__item--clickable:hover,
+.ctp-events__item--clickable:focus-within {
+    transform: translateY(-1px);
 }
 
 .ctp-events__hero--clickable:hover,
 .ctp-events__hero--clickable:focus-within {
-    box-shadow: 0 4px 8px color-mix(in srgb, currentColor 10%, transparent),
-        0 32px 56px -18px color-mix(in srgb, var(--ctp-accent) 55%, transparent);
+    box-shadow: 0 2px 6px color-mix(in srgb, currentColor 8%, transparent),
+        0 26px 48px -20px color-mix(in srgb, var(--ctp-accent) 40%, transparent);
 }
 
 /* ---------- popup modal (see partials/modal.php, assets/js/frontend.js) ---------- */
@@ -589,7 +634,7 @@
     max-width: min(640px, calc(100vw - 2rem));
     max-height: calc(100vh - 4rem);
     padding: 0;
-    border: none;
+    border: 1px solid var(--ctp-color-border);
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
     color: var(--ctp-color-text);
@@ -597,30 +642,30 @@
 }
 
 .ctp-events__modal::backdrop {
-    background: color-mix(in srgb, black 55%, transparent);
+    background: color-mix(in srgb, black 50%, transparent);
 }
 
 .ctp-events__modal-close {
     all: unset;
     position: absolute;
-    top: 0.5rem;
-    right: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    top: 0.75rem;
+    right: 0.9rem;
+    padding: 0.3rem 0.55rem;
     border-radius: 999px;
     color: var(--ctp-color-muted);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     line-height: 1;
     cursor: pointer;
 }
 
 .ctp-events__modal-close:hover,
 .ctp-events__modal-close:focus-visible {
-    background: color-mix(in srgb, currentColor 10%, transparent);
+    background: color-mix(in srgb, currentColor 8%, transparent);
     color: var(--ctp-color-text);
 }
 
 .ctp-events__modal-body {
-    padding: 1.5rem;
+    padding: 1.8rem;
     overflow-y: auto;
     max-height: calc(100vh - 4rem);
 }
@@ -630,13 +675,13 @@
 .ctp-events__detail {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.8rem;
 }
 
 .ctp-events__detail-media {
     position: relative;
     overflow: hidden;
-    border-radius: calc(var(--ctp-radius) * 0.7);
+    border-radius: calc(var(--ctp-radius) * 0.8);
     box-shadow: var(--ctp-shadow);
 }
 
@@ -656,19 +701,19 @@
     inset: 0;
     background: linear-gradient(
         160deg,
-        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
-        color-mix(in srgb, var(--ctp-accent) 5%, transparent) 70%
+        color-mix(in srgb, var(--ctp-accent) 38%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 4%, transparent) 70%
     );
     mix-blend-mode: multiply;
 }
 
 .ctp-events__detail-title {
     margin: 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 35%, transparent);
-    font-size: 1.5rem;
-    font-weight: 800;
-    line-height: 1.25;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 30%, transparent);
+    font-size: 1.55rem;
+    font-weight: 750;
+    line-height: 1.22;
 }
 
 .ctp-events__detail-description {
