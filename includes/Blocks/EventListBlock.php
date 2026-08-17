@@ -58,7 +58,7 @@ final class EventListBlock
         return (new EventListRenderer())->render([
             'calendar_ids' => SettingsPage::resolveCalendarIds($attributes['calendarIds'] ?? []),
             'layout' => $attributes['layout'] ?? 'list',
-            'limit' => (int) ($attributes['limit'] ?? 10),
+            'limit' => (int) ($attributes['limit'] ?? 0),
             'columns' => (int) ($attributes['columns'] ?? 3),
             // "click" was previously missing here entirely, silently making the
             // block editor's "Klickverhalten" control a no-op — always fixed here
@@ -68,6 +68,8 @@ final class EventListBlock
             'search' => (bool) ($attributes['search'] ?? false),
             'month_dividers' => (bool) ($attributes['monthDividers'] ?? false),
             'eventfinder' => (bool) ($attributes['eventfinder'] ?? false),
+            'months' => (int) ($attributes['months'] ?? 0),
+            'paging' => (bool) ($attributes['paging'] ?? true),
         ]);
     }
 }

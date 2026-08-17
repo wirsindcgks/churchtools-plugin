@@ -20,8 +20,19 @@ const knownCalendars = window.ctpBlockCalendars || [];
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
-		const { calendarIds, layout, limit, columns, click, filter, search, monthDividers, eventfinder } =
-			attributes;
+		const {
+			calendarIds,
+			layout,
+			limit,
+			columns,
+			click,
+			filter,
+			search,
+			monthDividers,
+			eventfinder,
+			months,
+			paging,
+		} = attributes;
 		const blockProps = useBlockProps();
 
 		// Union of the known calendars and any IDs already saved on this block
@@ -82,9 +93,18 @@ registerBlockType(metadata.name, {
 						)}
 						<TextControl
 							type="number"
-							label={__('Anzahl Events', 'churchtools-plugin')}
+							min={0}
+							label={__('Maximale Anzahl Events (0 = unbegrenzt)', 'churchtools-plugin')}
+							help={
+								layout === 'upcoming'
+									? __('Anzahl der Termine inklusive Hero-Kachel.', 'churchtools-plugin')
+									: __(
+											'Nur als Obergrenze pro Nachlade-Schritt. Wie viel angezeigt wird, bestimmt der Zeitraum.',
+											'churchtools-plugin'
+										)
+							}
 							value={limit}
-							onChange={(value) => setAttributes({ limit: parseInt(value, 10) || 10 })}
+							onChange={(value) => setAttributes({ limit: Math.max(0, parseInt(value, 10) || 0) })}
 						/>
 						<SelectControl
 							label={__('Klickverhalten', 'churchtools-plugin')}
@@ -126,6 +146,29 @@ registerBlockType(metadata.name, {
 									label={__('Termine nach Monat gruppieren', 'churchtools-plugin')}
 									checked={monthDividers}
 									onChange={(value) => setAttributes({ monthDividers: value })}
+								/>
+								<ToggleControl
+									label={__('Nachladen-Button anzeigen', 'churchtools-plugin')}
+									help={__(
+										'Lädt jeweils den nächsten Zeitraum nach, ohne die Seite neu zu laden.',
+										'churchtools-plugin'
+									)}
+									checked={paging}
+									onChange={(value) => setAttributes({ paging: value })}
+								/>
+								<TextControl
+									type="number"
+									min={0}
+									max={24}
+									label={__('Zeitraum pro Seite in Monaten (0 = Standard)', 'churchtools-plugin')}
+									help={__(
+										'Überschreibt die globale Einstellung im Plugin-Tab „Design“ nur für diesen Block.',
+										'churchtools-plugin'
+									)}
+									value={months}
+									onChange={(value) =>
+										setAttributes({ months: Math.min(24, Math.max(0, parseInt(value, 10) || 0)) })
+									}
 								/>
 							</Fragment>
 						)}

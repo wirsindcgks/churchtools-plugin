@@ -6,7 +6,7 @@ namespace ChurchToolsPlugin\Db;
 
 final class Installer
 {
-    public const DB_VERSION = '1.3.0';
+    public const DB_VERSION = '1.4.0';
 
     public static function activate(): void
     {
@@ -58,6 +58,13 @@ final class Installer
         // "Mon-Fri"); each occurrence gets its own row here, identified together by
         // (ct_event_id, start_date) — a lone UNIQUE KEY on ct_event_id would collapse
         // every occurrence of a series into a single overwritten row.
+        //
+        // The start_date index (added in DB 1.4.0) backs the frontend's month-window
+        // paging: every list/grid query filters on a start_date range and orders by
+        // start_date (EventRepository::findInWindow()), which would otherwise fall
+        // back to the end_date index plus a filesort. Kept as a PHP comment rather
+        // than an SQL one — dbDelta() parses the CREATE TABLE body line by line and
+        // chokes on "--" comments between column definitions.
         $sql = "CREATE TABLE {$tableName} (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             ct_event_id BIGINT UNSIGNED NOT NULL,
@@ -77,7 +84,8 @@ final class Installer
             PRIMARY KEY  (id),
             UNIQUE KEY ct_event_occurrence (ct_event_id, start_date),
             KEY ct_calendar_id (ct_calendar_id),
-            KEY end_date (end_date)
+            KEY end_date (end_date),
+            KEY start_date (start_date)
         ) {$charsetCollate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';

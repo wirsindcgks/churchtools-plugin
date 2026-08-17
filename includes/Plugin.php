@@ -9,6 +9,7 @@ use ChurchToolsPlugin\Blocks\EventListBlock;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
 use ChurchToolsPlugin\Frontend\EventDetailPage;
+use ChurchToolsPlugin\Frontend\EventsEndpoint;
 use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
 use ChurchToolsPlugin\Sync\RetentionCleanup;
@@ -44,6 +45,7 @@ final class Plugin
 
         (new Shortcode())->register();
         (new Assets())->register();
+        (new EventsEndpoint())->register();
         (new EventListBlock())->register();
         (new WpBakeryIntegration())->register();
 

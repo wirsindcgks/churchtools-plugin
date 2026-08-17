@@ -107,12 +107,51 @@ final class EventRepository
         return $row ?: null;
     }
 
+    /**
+     * Plain "the next N events" query, without a date window — used by the
+     * admin overview and by the count-based "upcoming" layout, which shows a
+     * fixed number of events rather than a time span (see EventListRenderer).
+     */
     public function findUpcoming(array $calendarIds = [], int $limit = 10): array
     {
+        return $this->findInWindow($calendarIds, null, null, $limit);
+    }
+
+    /**
+     * The frontend paging's workhorse: everything still upcoming whose
+     * start_date falls into the half-open [$startFrom, $startBefore) window (see
+     * EventWindow for how those bounds are derived). Both bounds are optional —
+     * null means "unbounded on that side", which is what makes findUpcoming()
+     * above a special case of this method rather than a second query.
+     *
+     * $limit is a cap, not the driver: 0 means "everything in the window", which
+     * is the normal case now that the window decides how much is shown.
+     * MySQL treats LIMIT 0 as "no rows", so it has to be omitted rather than
+     * passed through as a zero — and OFFSET is only valid alongside a LIMIT,
+     * so both are appended together or not at all (with $offset only ever
+     * non-zero when a cap is in play, see EventPager).
+     */
+    public function findInWindow(
+        array $calendarIds = [],
+        ?string $startFrom = null,
+        ?string $startBefore = null,
+        int $limit = 0,
+        int $offset = 0
+    ): array {
         global $wpdb;
 
         $sql = 'SELECT * FROM %i WHERE end_date >= %s';
         $params = [$this->table, current_time('mysql')];
+
+        if ($startFrom !== null) {
+            $sql .= ' AND start_date >= %s';
+            $params[] = $startFrom;
+        }
+
+        if ($startBefore !== null) {
+            $sql .= ' AND start_date < %s';
+            $params[] = $startBefore;
+        }
 
         if ($calendarIds !== []) {
             $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
@@ -120,13 +159,43 @@ final class EventRepository
             array_push($params, ...$calendarIds);
         }
 
-        $sql .= ' ORDER BY start_date ASC LIMIT %d';
-        $params[] = $limit;
+        $sql .= ' ORDER BY start_date ASC';
+
+        if ($limit > 0) {
+            $sql .= ' LIMIT %d OFFSET %d';
+            $params[] = $limit;
+            $params[] = max(0, $offset);
+        }
 
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from string literals plus a dynamically-sized "%d,%d,..." placeholder list (WordPress's own documented pattern for IN clauses with a variable-length array), then passed straight into $wpdb->prepare() with matching positional $params.
         $results = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
 
         return $results ?: [];
+    }
+
+    /**
+     * Whether anything is still upcoming at or after $startFrom — the "is there
+     * another page?" question behind the load-more button. Deliberately a
+     * SELECT 1 ... LIMIT 1 rather than a COUNT(*): the caller only needs the
+     * yes/no, and counting would scan every remaining row of the sync horizon.
+     */
+    public function hasEventsFrom(array $calendarIds, string $startFrom): bool
+    {
+        global $wpdb;
+
+        $sql = 'SELECT 1 FROM %i WHERE end_date >= %s AND start_date >= %s';
+        $params = [$this->table, current_time('mysql'), $startFrom];
+
+        if ($calendarIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
+            $sql .= " AND ct_calendar_id IN ({$placeholders})";
+            array_push($params, ...$calendarIds);
+        }
+
+        $sql .= ' LIMIT 1';
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow() above.
+        return $wpdb->get_var($wpdb->prepare($sql, ...$params)) !== null;
     }
 
     public function deleteOlderThan(DateTimeInterface $cutoff): int

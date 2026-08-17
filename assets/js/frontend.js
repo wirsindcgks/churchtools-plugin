@@ -1,9 +1,14 @@
 /**
- * Client-side calendar filter + search for the list/grid layouts. Runs entirely
- * in the browser (no re-fetch) so it keeps working under full-page caching, which
- * the shortcode's server-rendered output has to support. Event delegation on
- * `document` means it works for every [ctp_events] instance on the page without
- * having to (re-)bind listeners per instance.
+ * Client-side calendar filter + search for the list/grid layouts, plus the
+ * "load more" paging that appends the next time window. The filter/search parts
+ * run entirely in the browser (no re-fetch) so they keep working under full-page
+ * caching, which the shortcode's server-rendered output has to support; paging
+ * is the one place that talks to the server, over a public read-only endpoint
+ * that needs no nonce for exactly that reason (see EventsEndpoint).
+ *
+ * Event delegation on `document` means all of it works for every [ctp_events]
+ * instance on the page — including cards appended after load — without having to
+ * (re-)bind listeners per instance.
  */
 (function () {
 	'use strict';
@@ -224,14 +229,28 @@
 	});
 
 	/**
-	 * "Popup" click behavior: the detail markup for every card is already in the
-	 * page (see the <template class="ctp-events__detail-template"> embedded per
-	 * card by EventListRenderer::withCalendarMeta()/templates) — clicking a
-	 * trigger just clones it into the shared <dialog> and calls showModal(),
-	 * no fetch involved. Scoped per .ctp-events container (like the filter
-	 * above) so multiple shortcode instances on one page don't interfere.
+	 * The remaining click targets inside a .ctp-events container:
+	 *
+	 * - "Weitere Termine laden" (partials/load-more.php) — see loadNextPage().
+	 * - "Popup" click behavior: the detail markup for every card is already in
+	 *   the page (see the <template class="ctp-events__detail-template">
+	 *   embedded per card by EventListRenderer::withCalendarMeta()/templates),
+	 *   so clicking a trigger just clones it into the shared <dialog> and calls
+	 *   showModal(), no fetch involved.
+	 * - Closing that dialog, via its button or a click on the backdrop.
+	 *
+	 * All scoped per .ctp-events container (like the filter above) so multiple
+	 * shortcode instances on one page don't interfere.
 	 */
 	document.addEventListener('click', function (event) {
+		var loadMore = event.target.closest('.ctp-events__load-more');
+
+		if (loadMore) {
+			loadNextPage(loadMore);
+
+			return;
+		}
+
 		var trigger = event.target.closest('.ctp-events__card-trigger');
 
 		if (trigger && trigger.tagName === 'BUTTON') {
@@ -258,6 +277,100 @@
 			event.target.close();
 		}
 	});
+
+	/**
+	 * Fetches the next time window and appends its items to the list. The
+	 * button carries the whole instance configuration (calendars, layout,
+	 * click behavior, ...) in a JSON data attribute, so the appended markup
+	 * is rendered by the same server-side code path as the first page — the
+	 * only thing that changes between clicks is the page index, which gets
+	 * written back into the attribute from the server's response rather than
+	 * counted up here (the server may skip over months without any events).
+	 */
+	function loadNextPage(button) {
+		var container = button.closest('.ctp-events');
+		var list = container ? container.querySelector('.ctp-events__list') : null;
+		var config;
+
+		try {
+			config = JSON.parse(button.getAttribute('data-ctp-paging') || '{}');
+		} catch (error) {
+			return;
+		}
+
+		if (!list || typeof config.page !== 'number') {
+			return;
+		}
+
+		var errorMessage = container.querySelector('.ctp-events__more-error');
+		if (errorMessage) {
+			errorMessage.hidden = true;
+		}
+
+		button.disabled = true;
+		button.setAttribute('aria-busy', 'true');
+
+		// The month the list currently ends in, so the server can continue the
+		// divider sequence instead of repeating a heading — matters when a
+		// "limit" cap splits a single month across two steps.
+		var dividers = list.querySelectorAll('.ctp-events__month-divider');
+		var lastMonth = dividers.length ? dividers[dividers.length - 1].getAttribute('data-ctp-month') : '';
+
+		var params = new URLSearchParams({
+			action: config.action,
+			page: config.page,
+			offset: config.offset || 0,
+			layout: config.layout,
+			columns: config.columns,
+			click: config.click,
+			month_dividers: config.month_dividers,
+			months: config.months,
+			limit: config.limit,
+			calendars: (config.calendars || []).join(','),
+			last_month: lastMonth || '',
+		});
+
+		fetch(config.endpoint + '?' + params.toString(), { credentials: 'same-origin' })
+			.then(function (response) {
+				if (!response.ok) {
+					throw new Error('HTTP ' + response.status);
+				}
+
+				return response.json();
+			})
+			.then(function (payload) {
+				if (!payload || !payload.success || !payload.data) {
+					throw new Error('unexpected response');
+				}
+
+				list.insertAdjacentHTML('beforeend', payload.data.html);
+
+				// null means the server found nothing beyond this window —
+				// the button has done its job and would otherwise sit there
+				// as a control that can only ever no-op.
+				if (typeof payload.data.next_page !== 'number') {
+					button.parentElement.remove();
+				} else {
+					config.page = payload.data.next_page;
+					config.offset = payload.data.next_offset || 0;
+					button.setAttribute('data-ctp-paging', JSON.stringify(config));
+					button.disabled = false;
+					button.removeAttribute('aria-busy');
+				}
+
+				// An active filter or search must apply to the freshly
+				// appended items too, not just to what was there on load.
+				applyToolbarState(container);
+			})
+			.catch(function () {
+				button.disabled = false;
+				button.removeAttribute('aria-busy');
+
+				if (errorMessage) {
+					errorMessage.hidden = false;
+				}
+			});
+	}
 
 	function openDetailModal(trigger) {
 		var unit = trigger.closest('li, .ctp-events__hero');

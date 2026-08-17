@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Frontend\DetailDesign;
+use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\SyncEngine;
@@ -168,6 +169,13 @@ final class SettingsPage
         add_settings_section('ctp_design_detail_order', __('Reihenfolge der Detailansicht', 'churchtools-plugin'), '__return_false', $designDetailPage);
         add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
+        // Third box on the Design tab: neither how a card looks nor what a click
+        // does, but how much of the calendar a list shows at once — see
+        // EventWindow/EventPager for the mechanics.
+        $designListPage = self::PAGE_SLUG . '_design_list';
+        add_settings_section('ctp_design_paging', __('Angezeigter Zeitraum', 'churchtools-plugin'), '__return_false', $designListPage);
+        add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designListPage, 'ctp_design_paging');
+
         $updatesPage = self::PAGE_SLUG . '_updates';
         add_settings_section('ctp_updates', __('Plugin-Updates über GitHub', 'churchtools-plugin'), '__return_false', $updatesPage);
         add_settings_field('github_token', __('GitHub-Token', 'churchtools-plugin'), [$this, 'renderGitHubTokenField'], $updatesPage, 'ctp_updates');
@@ -200,6 +208,7 @@ final class SettingsPage
             'accent_color' => '#2563eb',
             'click_behavior' => 'popup',
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
+            'paging_months' => EventWindow::DEFAULT_MONTHS,
             'github_token' => '',
         ];
     }
@@ -430,6 +439,9 @@ final class SettingsPage
             'detail_element_order' => array_key_exists('detail_element_order', $input)
                 ? self::sanitizeDetailElementOrder((string) $input['detail_element_order'])
                 : $existing['detail_element_order'],
+            'paging_months' => array_key_exists('paging_months', $input)
+                ? EventWindow::sanitizeMonths((int) $input['paging_months'])
+                : $existing['paging_months'],
             'github_token' => $githubToken === '' ? $existing['github_token'] : Crypto::encrypt($githubToken),
         ];
     }
@@ -660,6 +672,30 @@ final class SettingsPage
         );
         echo '<p class="description">'
             . esc_html__('Wie weit im Voraus Termine synchronisiert werden. Betrifft nur den Sync-Zeitraum, nicht die Aufbewahrung vergangener Termine.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
+     * Global default for how much of the calendar one page of a list/grid shows
+     * before the "Weitere Termine laden" button takes over. Individual
+     * shortcodes/blocks/WPBakery elements can override it with months="…",
+     * same relationship the click behavior already has.
+     */
+    public function renderPagingMonthsField(): void
+    {
+        printf(
+            '<input type="number" min="%1$s" max="%2$s" name="%3$s[paging_months]" value="%4$s" class="small-text" /> %5$s',
+            esc_attr((string) EventWindow::MIN_MONTHS),
+            esc_attr((string) EventWindow::MAX_MONTHS),
+            esc_attr(self::OPTION_KEY),
+            esc_attr((string) self::get()['paging_months']),
+            esc_html__('Monate', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Liste und Grid zeigen zunächst den angebrochenen aktuellen Monat plus so viele weitere Monate; ein Klick auf „Weitere Termine laden" hängt jeweils den nächsten Zeitraum an. Kürzere Zeiträume laden schneller. Ohne Termine im Zeitraum springt die Ansicht automatisch zum nächsten Monat mit Terminen.', 'churchtools-plugin')
+            . '</p>';
+        echo '<p class="description">'
+            . esc_html__('Für die Ansicht „Nächster Termin" ohne Wirkung – sie zeigt weiterhin eine feste Anzahl Termine (Attribut „limit").', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1084,8 +1120,8 @@ final class SettingsPage
             [
                 'label' => __('Liste', 'churchtools-plugin'),
                 'code' => $exampleCalendar !== ''
-                    ? sprintf('[ctp_events calendar="%s" layout="list" limit="10"]', $exampleCalendar)
-                    : '[ctp_events layout="list" limit="10"]',
+                    ? sprintf('[ctp_events calendar="%s" layout="list"]', $exampleCalendar)
+                    : '[ctp_events layout="list"]',
             ],
             [
                 'label' => __('Liste mit Filter, Suche & Monatstrennern', 'churchtools-plugin'),
@@ -1097,7 +1133,11 @@ final class SettingsPage
             ],
             [
                 'label' => __('Grid', 'churchtools-plugin'),
-                'code' => '[ctp_events layout="grid" columns="3" limit="8"]',
+                'code' => '[ctp_events layout="grid" columns="3"]',
+            ],
+            [
+                'label' => __('Kurzer Teaser ohne Nachladen', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="grid" limit="3" paging="0"]',
             ],
             [
                 'label' => __('Nächster Termin', 'churchtools-plugin'),
@@ -1132,8 +1172,28 @@ final class SettingsPage
                     </tr>
                     <tr>
                         <td><code>limit</code></td>
-                        <td><?php esc_html_e('Anzahl angezeigter Termine', 'churchtools-plugin'); ?></td>
-                        <td><code>10</code></td>
+                        <td>
+                            <?php esc_html_e('Obergrenze für die Anzahl Termine. 0 = unbegrenzt; bei list/grid entscheidet der Zeitraum, wie viel angezeigt wird, und limit wirkt nur als Deckel pro Nachlade-Schritt. Bei upcoming die Gesamtzahl inkl. Hero-Kachel (0 = 10).', 'churchtools-plugin'); ?>
+                        </td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>months</code></td>
+                        <td>
+                            <?php
+                            printf(
+                                /* translators: %d: globally configured number of months per page. */
+                                esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = globale Einstellung oben (aktuell %d).', 'churchtools-plugin'),
+                                (int) self::get()['paging_months']
+                            );
+                            ?>
+                        </td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>paging</code></td>
+                        <td><?php esc_html_e('Button „Weitere Termine laden" anzeigen (nur list/grid). 0 = nur der erste Zeitraum, ohne Nachladen.', 'churchtools-plugin'); ?></td>
+                        <td><code>1</code></td>
                     </tr>
                     <tr>
                         <td><code>columns</code></td>
@@ -1625,6 +1685,9 @@ final class SettingsPage
                         </div>
                         <div class="ctp-panel">
                             <?php do_settings_sections(self::PAGE_SLUG . '_design_detail'); ?>
+                        </div>
+                        <div class="ctp-panel">
+                            <?php do_settings_sections(self::PAGE_SLUG . '_design_list'); ?>
                             <?php submit_button(); ?>
                         </div>
                     </form>

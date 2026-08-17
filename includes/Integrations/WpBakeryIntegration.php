@@ -51,9 +51,10 @@ final class WpBakeryIntegration
                 ],
                 [
                     'type' => 'textfield',
-                    'heading' => __('Anzahl Events', 'churchtools-plugin'),
+                    'heading' => __('Maximale Anzahl Events (0 = unbegrenzt)', 'churchtools-plugin'),
+                    'description' => __('Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin" die Gesamtzahl inkl. Hero-Kachel.', 'churchtools-plugin'),
                     'param_name' => 'limit',
-                    'value' => '10',
+                    'value' => '0',
                 ],
                 [
                     'type' => 'dropdown',
@@ -96,6 +97,31 @@ final class WpBakeryIntegration
                     'heading' => __('Termine nach Monat gruppieren', 'churchtools-plugin'),
                     'param_name' => 'month_dividers',
                     'value' => [__('Gruppieren', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
+                [
+                    // A dropdown, not a checkbox like the three opt-ins above:
+                    // WPBakery omits an unchecked checkbox from the shortcode
+                    // entirely, which the shortcode reads as "attribute not set"
+                    // — and paging's default is *on*, so unchecking the box
+                    // would silently do nothing. A dropdown always writes a
+                    // value, so both directions actually stick.
+                    'type' => 'dropdown',
+                    'heading' => __('Weitere Termine nachladen', 'churchtools-plugin'),
+                    'description' => __('Lädt jeweils den nächsten Zeitraum nach, ohne die Seite neu zu laden.', 'churchtools-plugin'),
+                    'param_name' => 'paging',
+                    'value' => [
+                        __('Nachladen-Button anzeigen', 'churchtools-plugin') => '1',
+                        __('Aus (nur der erste Zeitraum)', 'churchtools-plugin') => '0',
+                    ],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
+                [
+                    'type' => 'textfield',
+                    'heading' => __('Zeitraum pro Seite in Monaten (0 = Standard)', 'churchtools-plugin'),
+                    'description' => __('Überschreibt die globale Einstellung im Plugin-Tab „Design" nur für dieses Element.', 'churchtools-plugin'),
+                    'param_name' => 'months',
+                    'value' => '0',
                     'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
                 ],
             ],

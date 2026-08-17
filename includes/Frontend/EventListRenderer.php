@@ -14,24 +14,149 @@ final class EventListRenderer
     private const MAX_COLUMNS = 6;
     private const CLICK_BEHAVIORS = ['none', 'popup', 'page'];
 
+    /**
+     * "upcoming" is the one layout that stayed count-based (one hero plus a short
+     * tail — a time window makes no sense for it), so it still needs a number when
+     * no explicit "limit" is given. Kept at the value "limit" defaulted to before
+     * the switch to month windows, so existing [ctp_events layout="upcoming"]
+     * instances render exactly as they did.
+     */
+    private const UPCOMING_FALLBACK_LIMIT = 10;
+
     public function render(array $args): string
+    {
+        $args = $this->prepareArgs($args);
+        $designSettings = SettingsPage::get();
+
+        if ($args['layout'] === 'upcoming') {
+            $limit = $args['limit'] > 0 ? $args['limit'] : self::UPCOMING_FALLBACK_LIMIT;
+            $events = EventQueryCache::findUpcoming($args['calendar_ids'], $limit);
+            $args['next_page'] = null;
+            $args['next_offset'] = 0;
+        } else {
+            $page = EventPager::load($args['calendar_ids'], 0, $args['months'], $args['limit']);
+            $events = $page['events'];
+            $args['next_page'] = $page['next_page'];
+            $args['next_offset'] = $page['next_offset'];
+        }
+
+        $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
+
+        // "upcoming" has a single hero item plus a compact list, not a set of peer
+        // items — filtering/searching it client-side would either leave an empty
+        // hero slot or need JS to re-elect a new hero, so the whole toolbar (filter,
+        // search, month dividers, eventfinder) is scoped to list/grid, same as
+        // before. Paging is scoped out for the same reason: there is no flat list
+        // to append to.
+        $isFilterable = $args['layout'] !== 'upcoming';
+        // Eventfinder is a self-contained guided toolbar (calendar buttons, timeframe
+        // buttons, search) that replaces the plain filter/search toolbar rather than
+        // stacking alongside it — showing both would be redundant UI over the same
+        // underlying filtering, so it wins over "filter"/"search" when both are set.
+        $args['eventfinder'] = $isFilterable && (bool) $args['eventfinder'];
+        $args['search'] = $args['eventfinder'] || ($isFilterable && (bool) $args['search']);
+        $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
+        $args['paging'] = $isFilterable && $args['paging'] && $args['next_page'] !== null;
+        $args['paging_config'] = $args['paging'] ? $this->pagingConfig($args) : [];
+
+        // After $args['paging']/$args['eventfinder'], which filterCalendars()
+        // branches on.
+        $filterCalendars = $isFilterable && ($args['filter'] || $args['eventfinder'])
+            ? $this->filterCalendars($events, $args)
+            : [];
+        $args['show_toolbar'] = $args['eventfinder'] || $args['search'] || $filterCalendars !== [];
+
+        $templateName = "churchtools-plugin/event-{$args['layout']}.php";
+        $template = locate_template($templateName);
+        if ($template === '') {
+            $template = CTP_PLUGIN_DIR . 'includes/Frontend/templates/event-' . $args['layout'] . '.php';
+        }
+
+        ob_start();
+        include $template;
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Renders one further page of list/grid items for the load-more button —
+     * just the <li> elements (plus their month dividers), no container, no
+     * toolbar, since those are already in the page and the JS appends into the
+     * existing <ul>. Called from EventsEndpoint, which has already validated
+     * every value in $args against the same rules render() applies.
+     *
+     * @return array{html: string, next_page: int|null, next_offset: int}
+     */
+    public function renderItems(array $args, int $page, int $offset = 0, ?string $lastMonthKey = null): array
+    {
+        $args = $this->prepareArgs($args);
+
+        if ($args['layout'] === 'upcoming') {
+            return ['html' => '', 'next_page' => null, 'next_offset' => 0];
+        }
+
+        $designSettings = SettingsPage::get();
+        $result = EventPager::load($args['calendar_ids'], $page, $args['months'], $args['limit'], $offset);
+        $events = $this->withCalendarMeta(
+            $result['events'],
+            $args['click_behavior'],
+            $designSettings['detail_element_order']
+        );
+
+        // Divider bookkeeping continues from the last month already rendered in
+        // the browser, which the JS reads off the DOM and sends along. Window
+        // boundaries are month boundaries (see EventWindow), so for a plain
+        // page step this is always a different month and a fresh divider gets
+        // emitted either way — but a capped window continues *inside* one month
+        // (see EventPager's offset), and without this the batch would open with
+        // a second "Oktober 2026" heading right under the first.
+        $currentMonthKey = $lastMonthKey;
+
+        ob_start();
+        require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-' . $args['layout'] . '-items.php';
+
+        return [
+            'html' => (string) ob_get_clean(),
+            'next_page' => $result['next_page'],
+            'next_offset' => $result['next_offset'],
+        ];
+    }
+
+    /**
+     * The argument normalization render() and renderItems() share: layout/column
+     * clamping plus everything derived from the global Design-tab settings, so an
+     * appended page is styled by exactly the same rules as the first one.
+     */
+    private function prepareArgs(array $args): array
     {
         $args = wp_parse_args($args, [
             'calendar_ids' => [],
             'layout' => 'list',
-            'limit' => 10,
+            // 0 = no cap: the month window decides how much is shown. An explicit
+            // limit still works and then acts as a safety cap per page.
+            'limit' => 0,
             'columns' => self::DEFAULT_COLUMNS,
             'click' => 'default',
             'filter' => false,
             'search' => false,
             'month_dividers' => false,
             'eventfinder' => false,
+            // 0 = use the Design tab's global "Zeitraum pro Seite" setting.
+            'months' => 0,
+            'paging' => true,
         ]);
 
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'list';
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
+        $args['limit'] = max(0, (int) $args['limit']);
+        $args['paging'] = (bool) $args['paging'];
 
         $designSettings = SettingsPage::get();
+
+        $args['months'] = EventWindow::sanitizeMonths(
+            (int) $args['months'] > 0 ? (int) $args['months'] : (int) $designSettings['paging_months']
+        );
+
         $args['design_style'] = CardDesign::styleAttribute(
             $designSettings['element_order'],
             $designSettings['corner_style'],
@@ -55,36 +180,38 @@ final class EventListRenderer
             ? $args['click']
             : $designSettings['click_behavior'];
 
-        $events = EventQueryCache::findUpcoming($args['calendar_ids'], $args['limit']);
-        $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
+        return $args;
+    }
 
-        // "upcoming" has a single hero item plus a compact list, not a set of peer
-        // items — filtering/searching it client-side would either leave an empty
-        // hero slot or need JS to re-elect a new hero, so the whole toolbar (filter,
-        // search, month dividers, eventfinder) is scoped to list/grid, same as before.
-        $isFilterable = $args['layout'] !== 'upcoming';
-        // Eventfinder is a self-contained guided toolbar (calendar buttons, timeframe
-        // buttons, search) that replaces the plain filter/search toolbar rather than
-        // stacking alongside it — showing both would be redundant UI over the same
-        // underlying filtering, so it wins over "filter"/"search" when both are set.
-        $args['eventfinder'] = $isFilterable && (bool) $args['eventfinder'];
-        $filterCalendars = $isFilterable && ($args['filter'] || $args['eventfinder'])
-            ? $this->filterCalendars($events)
-            : [];
-        $args['search'] = $args['eventfinder'] || ($isFilterable && (bool) $args['search']);
-        $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
-        $args['show_toolbar'] = $args['eventfinder'] || $args['search'] || $filterCalendars !== [];
-
-        $templateName = "churchtools-plugin/event-{$args['layout']}.php";
-        $template = locate_template($templateName);
-        if ($template === '') {
-            $template = CTP_PLUGIN_DIR . 'includes/Frontend/templates/event-' . $args['layout'] . '.php';
-        }
-
-        ob_start();
-        include $template;
-
-        return (string) ob_get_clean();
+    /**
+     * The instance configuration the load-more button carries as a data
+     * attribute, so the AJAX request can render further pages identically.
+     * Deliberately passes the *resolved* click_behavior rather than the raw
+     * "click" attribute: an instance left on "default" should keep rendering
+     * with the behavior the first page was built with, even if an admin changes
+     * the global Design-tab setting while a visitor has the page open.
+     *
+     * No nonce: the endpoint is public, read-only and returns nothing a visitor
+     * can't already see on the page. A nonce would also be actively harmful
+     * here — this markup is served from full-page caches, where an embedded
+     * nonce goes stale long before the cached HTML does and would break the
+     * button for everyone hitting the cache.
+     */
+    private function pagingConfig(array $args): array
+    {
+        return [
+            'endpoint' => EventsEndpoint::url(),
+            'action' => EventsEndpoint::ACTION,
+            'page' => $args['next_page'],
+            'offset' => $args['next_offset'],
+            'calendars' => array_map('intval', $args['calendar_ids']),
+            'layout' => $args['layout'],
+            'columns' => $args['columns'],
+            'click' => $args['click_behavior'],
+            'month_dividers' => $args['month_dividers'] ? 1 : 0,
+            'months' => $args['months'],
+            'limit' => $args['limit'],
+        ];
     }
 
     /**
@@ -184,13 +311,36 @@ final class EventListRenderer
     }
 
     /**
-     * Builds the options for the frontend filter dropdown from the calendars
-     * actually present among $events (not every enabled calendar in settings) —
-     * showing a filter option with zero matching events would be confusing.
-     * Returns [] when there's nothing to filter (0 or 1 distinct calendar), so
-     * templates can render the filter bar with a plain empty-check.
+     * Builds the options for the frontend filter dropdown. Returns [] when
+     * there's nothing to filter (0 or 1 distinct calendar), so templates can
+     * render the filter bar with a plain empty-check.
+     *
+     * Two sources, depending on whether more pages can still be appended:
+     *   - Paging active: the calendars this instance is *configured* for. The
+     *     rendered events are only the first window, so deriving the options
+     *     from them would produce a dropdown that silently gains entries as the
+     *     visitor loads more — or worse, one that's missing the calendar they
+     *     were looking for.
+     *   - No further pages: the calendars actually present among $events, the
+     *     original behavior — with the full result set in the DOM, an option
+     *     matching zero events would just be noise.
      */
-    private function filterCalendars(array $events): array
+    private function filterCalendars(array $events, array $args): array
+    {
+        $calendars = $args['paging']
+            ? $this->configuredCalendars($args['calendar_ids'])
+            : $this->calendarsAmong($events);
+
+        if (count($calendars) < 2) {
+            return [];
+        }
+
+        usort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+        return $calendars;
+    }
+
+    private function calendarsAmong(array $events): array
     {
         $calendars = [];
 
@@ -203,12 +353,26 @@ final class EventListRenderer
             }
         }
 
-        if (count($calendars) < 2) {
-            return [];
+        return array_values($calendars);
+    }
+
+    /**
+     * The calendars this shortcode/block instance draws from: its explicit
+     * calendar_ids, or — when it was left empty, meaning "all" — every calendar
+     * currently enabled in the settings. Mirrors what EventRepository actually
+     * queries in each case.
+     */
+    private function configuredCalendars(array $calendarIds): array
+    {
+        $known = SettingsPage::get()['calendars'];
+        $ids = $calendarIds !== [] ? array_map('intval', $calendarIds) : SettingsPage::getEnabledCalendarIds();
+        $calendars = [];
+
+        foreach ($ids as $id) {
+            $name = $known[$id]['name'] ?? '';
+            $calendars[$id] = ['id' => $id, 'name' => $name !== '' ? $name : sprintf('#%d', $id)];
         }
 
-        usort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
-
-        return $calendars;
+        return array_values($calendars);
     }
 }

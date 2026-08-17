@@ -5,6 +5,19 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Added
+
+- Monatsweises Nachladen für die List-/Grid-Ansicht: Statt aller synchronisierten Termine auf einmal wird zunächst der angebrochene laufende Monat plus der darauffolgende gerendert; ein Button „Weitere Termine laden“ hängt die jeweils nächsten zwei Monate per AJAX an, ohne die Seite neu zu laden. Zeitraumlänge global im „Design“-Tab einstellbar (neue Einstellung „Zeitraum pro Seite“, Standard 2 Monate) und pro Instanz über das neue `months`-Attribut überschreibbar; der Button lässt sich per `paging="0"` abschalten. Die Grenzen liegen auf Monatsanfängen, passen also zu den Monatstrennern; leere Zeiträume werden serverseitig übersprungen, sodass nie eine leere Liste mit Nachladen-Button erscheint. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine
+- Datenbank-Index auf `start_date` (DB-Version 1.4.0) — jede Frontend-Abfrage filtert jetzt auf einen `start_date`-Bereich und sortiert danach
+
+### Changed
+
+- `limit` ist bei `layout="list"`/`"grid"` nicht mehr die Gesamtzahl der angezeigten Termine, sondern nur noch eine Obergrenze pro Nachlade-Schritt; Standard ist jetzt `0` (unbegrenzt, der Zeitraum entscheidet). Bestehende Shortcodes/Blöcke mit gesetztem `limit` zeigen damit weiterhin höchstens so viele Termine auf einmal, laden über den Button aber weiter nach, statt beim Limit zu enden. Für `layout="upcoming"` unverändert die Gesamtzahl inklusive Hero-Kachel (ohne Angabe: 10 wie bisher)
+- Der Kalenderfilter (bzw. die Eventfinder-Kalender-Buttons) listet bei aktivem Nachladen die konfigurierten Kalender der jeweiligen Instanz statt nur der im ersten Zeitraum tatsächlich vorkommenden — sonst würde das Dropdown beim Nachladen stillschweigend Einträge dazubekommen
+- Die Termin-Zeilen/-Karten liegen jetzt in `partials/event-list-items.php` bzw. `partials/event-grid-items.php`, damit das Nachladen exakt dasselbe Markup erzeugt; Theme-Overrides der Layout-Templates sollten diese Partials einbinden (oder `paging="0"` setzen)
+
 ## [0.4.0] - 2026-08-17
 
 ### Added
