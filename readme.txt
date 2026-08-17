@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -109,6 +109,11 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Changelog ==
+
+= 0.5.0 =
+* Liste und Grid zeigen jetzt einen Zeitraum statt einer festen Anzahl: standardmäßig den laufenden plus den nächsten Monat, weitere Zeiträume per „Weitere Termine laden“ nachladbar – deutlich kleinere erste Seitenauslieferung
+* Neue Attribute `months` und `paging` sowie neue globale Einstellung „Zeitraum pro Seite“ im „Design“-Tab
+* `limit` ist bei Liste/Grid jetzt eine Obergrenze pro Nachlade-Schritt (Standard `0` = unbegrenzt) statt der Gesamtzahl; bei „Nächster Termin“ unverändert die Gesamtzahl
 
 = 0.4.0 =
 * Eventfinder: geführte „Du suchst …“-Werkzeugleiste (Kalender-Buttons, Zeitraum-Buttons, Suche) als Alternative zum Kalenderfilter-Dropdown, per neuem `eventfinder`-Attribut aktivierbar
