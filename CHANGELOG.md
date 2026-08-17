@@ -7,6 +7,10 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- Eventfinder: geführte „Du suchst …“-Werkzeugleiste für List-/Grid-Ansicht mit je eigener, beschrifteter Zeile für „Thema“ (Kalender) und „Zeitraum“ („Diese Woche“/„Dieses Wochenende“/„Diesen Monat“, optisch per Trennlinie unterschieden), plus Suchfeld – Alternative zum bestehenden Kalenderfilter-Dropdown/Suchfeld für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Neues `eventfinder`-Attribut (Shortcode/Gutenberg-Block/WPBakery), standardmäßig aus; ersetzt bei Aktivierung `filter`/`search` statt zusätzlich dazu angezeigt zu werden. Aktive Buttons folgen der bestehenden Design-Tab-Akzentfarbe. Läuft komplett clientseitig (kein Neuladen, cache-kompatibel), wie die bestehende Filter-/Suchleiste
+
 ## [0.3.0] - 2026-08-17
 
 ### Changed

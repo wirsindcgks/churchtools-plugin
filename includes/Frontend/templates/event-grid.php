@@ -22,7 +22,9 @@ if (!defined('ABSPATH')) {
     class="ctp-events ctp-events--grid"
     style="--ctp-columns:<?php echo (int) $args['columns']; ?>;<?php echo esc_attr($args['design_style']); ?>"
 >
-    <?php if ($args['show_toolbar']) : ?>
+    <?php if ($args['eventfinder']) : ?>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/eventfinder.php'; ?>
+    <?php elseif ($args['show_toolbar']) : ?>
         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/toolbar.php'; ?>
     <?php endif; ?>
     <?php if (empty($events)) : ?>
@@ -40,6 +42,7 @@ if (!defined('ABSPATH')) {
                 <li
                     data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
                     data-ctp-search="<?php echo esc_attr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); ?>"
+                    data-ctp-start="<?php echo esc_attr(EventFormatter::dateKey($event['start_date'])); ?>"
                 >
                     <article
                         class="ctp-events__card<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__card--clickable' : ''; ?>"

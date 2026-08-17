@@ -60,6 +60,16 @@ final class EventFormatter
     }
 
     /**
+     * Plain "Y-m-d" for the eventfinder's timeframe buttons (assets/js/frontend.js
+     * parses this per item to bucket by "this week"/"this weekend"/"this month") —
+     * date-only since the timeframe presets operate on calendar days, not times.
+     */
+    public static function dateKey(string $mysqlDate): string
+    {
+        return mysql2date('Y-m-d', $mysqlDate);
+    }
+
+    /**
      * Localized "Month Year" heading text for a month divider, e.g. "August
      * 2026" — uses date_i18n() (not mysql2date()) so the month name itself
      * respects the site's language, not just the date *format*.

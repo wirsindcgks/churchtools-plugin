@@ -67,6 +67,7 @@ final class EventListBlock
             'filter' => (bool) ($attributes['filter'] ?? false),
             'search' => (bool) ($attributes['search'] ?? false),
             'month_dividers' => (bool) ($attributes['monthDividers'] ?? false),
+            'eventfinder' => (bool) ($attributes['eventfinder'] ?? false),
         ]);
     }
 }

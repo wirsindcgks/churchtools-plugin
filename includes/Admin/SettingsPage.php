@@ -861,7 +861,7 @@ final class SettingsPage
             disabled(empty($settings['accent_color_enabled']), true, false)
         );
         echo '<p class="description">'
-            . esc_html__('Ersetzt die vom Theme übernommene Standardfarbe für Icons, Datumsbadges und Ränder. Termine, deren Kalender bereits eine eigene Farbe hat, behalten weiterhin diese Kalenderfarbe.', 'churchtools-plugin')
+            . esc_html__('Ersetzt die vom Theme übernommene Standardfarbe für Icons, Datumsbadges und Ränder sowie die aktiven Buttons des Eventfinders. Termine, deren Kalender bereits eine eigene Farbe hat, behalten weiterhin diese Kalenderfarbe.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1092,6 +1092,10 @@ final class SettingsPage
                 'code' => '[ctp_events layout="list" filter="1" search="1" month_dividers="1"]',
             ],
             [
+                'label' => __('Grid mit Eventfinder', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="grid" eventfinder="1"]',
+            ],
+            [
                 'label' => __('Grid', 'churchtools-plugin'),
                 'code' => '[ctp_events layout="grid" columns="3" limit="8"]',
             ],
@@ -1159,6 +1163,13 @@ final class SettingsPage
                     <tr>
                         <td><code>month_dividers</code></td>
                         <td><?php esc_html_e('Termine nach Monat gruppiert darstellen (nur list/grid)', 'churchtools-plugin'); ?></td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>eventfinder</code></td>
+                        <td>
+                            <?php esc_html_e('Geführte „Du suchst …“-Buttons für Kalender/Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden', 'churchtools-plugin'); ?>
+                        </td>
                         <td><code>0</code></td>
                     </tr>
                 </tbody>

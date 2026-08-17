@@ -24,6 +24,7 @@ final class Shortcode
             'filter' => '0',
             'search' => '0',
             'month_dividers' => '0',
+            'eventfinder' => '0',
         ], $atts, 'ctp_events');
 
         $refs = array_filter(array_map('trim', explode(',', (string) $atts['calendar'])));
@@ -38,6 +39,7 @@ final class Shortcode
             'filter' => (bool) $atts['filter'],
             'search' => (bool) $atts['search'],
             'month_dividers' => (bool) $atts['month_dividers'],
+            'eventfinder' => (bool) $atts['eventfinder'],
         ]);
     }
 }

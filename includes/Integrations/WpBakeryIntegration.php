@@ -68,6 +68,17 @@ final class WpBakeryIntegration
                 ],
                 [
                     'type' => 'checkbox',
+                    'heading' => __('Eventfinder anzeigen', 'churchtools-plugin'),
+                    'description' => __(
+                        '„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten, falls dort ebenfalls angehakt.',
+                        'churchtools-plugin'
+                    ),
+                    'param_name' => 'eventfinder',
+                    'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
+                ],
+                [
+                    'type' => 'checkbox',
                     'heading' => __('Kalenderfilter anzeigen', 'churchtools-plugin'),
                     'param_name' => 'filter',
                     'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],

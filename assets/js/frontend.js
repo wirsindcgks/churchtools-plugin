@@ -9,17 +9,115 @@
 	'use strict';
 
 	/**
-	 * Re-applies both the calendar filter (select) and the search box (if
-	 * present) together — a single pass so an item hidden by either one stays
-	 * hidden, instead of two independent handlers fighting over the same
-	 * `hidden` attribute. Also updates month-divider visibility (a divider
-	 * whose whole month is now empty must disappear too, see
-	 * updateMonthDividers()) and the "nothing found" message.
+	 * Reads the active calendar filter, whichever UI produced it — the plain
+	 * <select> (partials/toolbar.php) or an active eventfinder button
+	 * (partials/eventfinder.php, mutually exclusive with the select, see
+	 * EventListRenderer::render()).
+	 */
+	function activeCalendarId(container) {
+		var select = container.querySelector('.ctp-events__filter');
+		if (select) {
+			return select.value;
+		}
+
+		var activeButton = container.querySelector('[data-ctp-finder-calendar].ctp-events__finder-btn--active');
+
+		return activeButton ? activeButton.getAttribute('data-ctp-finder-calendar') : '';
+	}
+
+	/**
+	 * Reads the active eventfinder timeframe button ("week"/"weekend"/"month"),
+	 * or '' for "Jederzeit"/no eventfinder at all.
+	 */
+	function activeTimeframe(container) {
+		var activeButton = container.querySelector('[data-ctp-finder-timeframe].ctp-events__finder-btn--active');
+
+		return activeButton ? activeButton.getAttribute('data-ctp-finder-timeframe') : '';
+	}
+
+	/**
+	 * Parses a "Y-m-d" date-only string (see EventFormatter::dateKey()) into a
+	 * local-midnight Date. Deliberately not `new Date('Y-m-d')` — per the ES5
+	 * spec, a date-only ISO string parses as UTC midnight, which can shift the
+	 * date by a day once compared against a local "today" west of UTC.
+	 */
+	function parseDateKey(value) {
+		var parts = (value || '').split('-');
+		if (parts.length !== 3) {
+			return null;
+		}
+
+		return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+	}
+
+	function startOfToday() {
+		var today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		return today;
+	}
+
+	/**
+	 * "week"/"weekend"/"month" as [from, to] Date ranges (inclusive, local
+	 * midnight), anchored on today rather than the calendar week/month's own
+	 * start — events are already upcoming-only (EventQueryCache::findUpcoming()),
+	 * so a range reaching back to Monday or the 1st would just match nothing
+	 * extra there.
+	 */
+	function timeframeRange(timeframe) {
+		var today = startOfToday();
+		var day = today.getDay();
+		var monday = new Date(today);
+		monday.setDate(today.getDate() + (day === 0 ? -6 : 1 - day));
+		var sunday = new Date(monday);
+		sunday.setDate(monday.getDate() + 6);
+
+		if (timeframe === 'week') {
+			return { from: today, to: sunday };
+		}
+
+		if (timeframe === 'weekend') {
+			var saturday = new Date(monday);
+			saturday.setDate(monday.getDate() + 5);
+
+			return { from: saturday < today ? today : saturday, to: sunday };
+		}
+
+		if (timeframe === 'month') {
+			var monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+			return { from: today, to: monthEnd };
+		}
+
+		return null;
+	}
+
+	function matchesTimeframe(dateKey, timeframe) {
+		if (timeframe === '') {
+			return true;
+		}
+
+		var date = parseDateKey(dateKey);
+		var range = timeframeRange(timeframe);
+		if (!date || !range) {
+			return true;
+		}
+
+		return date >= range.from && date <= range.to;
+	}
+
+	/**
+	 * Re-applies the calendar filter, timeframe (eventfinder only) and search
+	 * box together — a single pass so an item hidden by one stays hidden,
+	 * instead of independent handlers fighting over the same `hidden`
+	 * attribute. Also updates month-divider visibility (a divider whose whole
+	 * month is now empty must disappear too, see updateMonthDividers()) and
+	 * the "nothing found" message.
 	 */
 	function applyToolbarState(container) {
-		var select = container.querySelector('.ctp-events__filter');
 		var searchInput = container.querySelector('.ctp-events__search-input');
-		var calendarId = select ? select.value : '';
+		var calendarId = activeCalendarId(container);
+		var timeframe = activeTimeframe(container);
 		var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
 		var items = container.querySelectorAll('[data-ctp-calendar]');
@@ -28,7 +126,8 @@
 		items.forEach(function (item) {
 			var matchesCalendar = calendarId === '' || item.getAttribute('data-ctp-calendar') === calendarId;
 			var matchesSearch = query === '' || (item.getAttribute('data-ctp-search') || '').indexOf(query) !== -1;
-			var visible = matchesCalendar && matchesSearch;
+			var matchesRange = matchesTimeframe(item.getAttribute('data-ctp-start'), timeframe);
+			var visible = matchesCalendar && matchesSearch && matchesRange;
 
 			item.hidden = !visible;
 			if (visible) {
@@ -93,6 +192,35 @@
 		if (container) {
 			applyToolbarState(container);
 		}
+	});
+
+	/**
+	 * Eventfinder calendar/timeframe buttons (partials/eventfinder.php): each
+	 * `.ctp-events__finder-group` is a mutually-exclusive toggle group (native
+	 * `<select>` semantics without a `<select>`, so "Du suchst …" buttons can
+	 * carry a label instead of an option), scoped per group so the calendar
+	 * group and the timeframe group don't clear each other.
+	 */
+	document.addEventListener('click', function (event) {
+		var button = event.target.closest('.ctp-events__finder-btn');
+		if (!button) {
+			return;
+		}
+
+		var group = button.closest('.ctp-events__finder-group');
+		var container = button.closest('.ctp-events');
+		if (!group || !container) {
+			return;
+		}
+
+		group.querySelectorAll('.ctp-events__finder-btn').forEach(function (groupButton) {
+			groupButton.classList.remove('ctp-events__finder-btn--active');
+			groupButton.setAttribute('aria-pressed', 'false');
+		});
+		button.classList.add('ctp-events__finder-btn--active');
+		button.setAttribute('aria-pressed', 'true');
+
+		applyToolbarState(container);
 	});
 
 	/**

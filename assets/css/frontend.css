@@ -118,6 +118,85 @@
     font-style: italic;
 }
 
+/* ---------- eventfinder: guided "Du suchst …" toolbar, replaces the plain
+   filter/search toolbar above when opted into (list/grid layouts only, see
+   EventListRenderer::render()) ---------- */
+
+.ctp-events__eventfinder {
+    /* Column instead of .ctp-events__toolbar's row-wrap default — "Thema" and
+       "Zeitraum" are stacked rows here (each with its own label), not items
+       wrapping into the same line. */
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+}
+
+.ctp-events__finder-label {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* One row per filter dimension ("Thema"/"Zeitraum") — a thin top border
+   between consecutive rows (not around the whole block) is the "optical
+   separation" between the two dimensions the toolbar label alone doesn't
+   provide. */
+.ctp-events__finder-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    padding-block-start: 0.65rem;
+    border-block-start: 1px solid var(--ctp-color-border);
+}
+
+.ctp-events__finder-row:first-of-type {
+    padding-block-start: 0;
+    border-block-start: none;
+}
+
+.ctp-events__finder-row-label {
+    flex: 0 0 auto;
+    min-width: 5.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ctp-color-muted);
+}
+
+.ctp-events__finder-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ctp-events__finder-btn {
+    padding: 0.45rem 0.95rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: calc(var(--ctp-radius) * 0.6);
+    background-color: var(--ctp-color-surface);
+    color: var(--ctp-color-text);
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ctp-events__finder-btn:hover {
+    border-color: var(--ctp-accent);
+}
+
+.ctp-events__finder-btn:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 1px;
+}
+
+.ctp-events__finder-btn--active {
+    border-color: var(--ctp-accent);
+    background-color: var(--ctp-accent);
+    color: #fff;
+}
+
 /* ---------- month dividers (list/grid layouts only, opt-in — see EventFormatter::monthLabel()) ---------- */
 
 .ctp-events__month-divider {

@@ -20,7 +20,8 @@ const knownCalendars = window.ctpBlockCalendars || [];
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
-		const { calendarIds, layout, limit, columns, click, filter, search, monthDividers } = attributes;
+		const { calendarIds, layout, limit, columns, click, filter, search, monthDividers, eventfinder } =
+			attributes;
 		const blockProps = useBlockProps();
 
 		// Union of the known calendars and any IDs already saved on this block
@@ -99,15 +100,28 @@ registerBlockType(metadata.name, {
 						{layout !== 'upcoming' && (
 							<Fragment>
 								<ToggleControl
-									label={__('Kalenderfilter anzeigen', 'churchtools-plugin')}
-									checked={filter}
-									onChange={(value) => setAttributes({ filter: value })}
+									label={__('Eventfinder anzeigen', 'churchtools-plugin')}
+									help={__(
+										'„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten.',
+										'churchtools-plugin'
+									)}
+									checked={eventfinder}
+									onChange={(value) => setAttributes({ eventfinder: value })}
 								/>
-								<ToggleControl
-									label={__('Suchleiste anzeigen', 'churchtools-plugin')}
-									checked={search}
-									onChange={(value) => setAttributes({ search: value })}
-								/>
+								{!eventfinder && (
+									<Fragment>
+										<ToggleControl
+											label={__('Kalenderfilter anzeigen', 'churchtools-plugin')}
+											checked={filter}
+											onChange={(value) => setAttributes({ filter: value })}
+										/>
+										<ToggleControl
+											label={__('Suchleiste anzeigen', 'churchtools-plugin')}
+											checked={search}
+											onChange={(value) => setAttributes({ search: value })}
+										/>
+									</Fragment>
+								)}
 								<ToggleControl
 									label={__('Termine nach Monat gruppieren', 'churchtools-plugin')}
 									checked={monthDividers}

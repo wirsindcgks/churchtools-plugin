@@ -25,6 +25,7 @@ final class EventListRenderer
             'filter' => false,
             'search' => false,
             'month_dividers' => false,
+            'eventfinder' => false,
         ]);
 
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'list';
@@ -60,12 +61,19 @@ final class EventListRenderer
         // "upcoming" has a single hero item plus a compact list, not a set of peer
         // items — filtering/searching it client-side would either leave an empty
         // hero slot or need JS to re-elect a new hero, so the whole toolbar (filter,
-        // search, month dividers) is scoped to list/grid, same as before.
+        // search, month dividers, eventfinder) is scoped to list/grid, same as before.
         $isFilterable = $args['layout'] !== 'upcoming';
-        $filterCalendars = $isFilterable && $args['filter'] ? $this->filterCalendars($events) : [];
-        $args['search'] = $isFilterable && (bool) $args['search'];
+        // Eventfinder is a self-contained guided toolbar (calendar buttons, timeframe
+        // buttons, search) that replaces the plain filter/search toolbar rather than
+        // stacking alongside it — showing both would be redundant UI over the same
+        // underlying filtering, so it wins over "filter"/"search" when both are set.
+        $args['eventfinder'] = $isFilterable && (bool) $args['eventfinder'];
+        $filterCalendars = $isFilterable && ($args['filter'] || $args['eventfinder'])
+            ? $this->filterCalendars($events)
+            : [];
+        $args['search'] = $args['eventfinder'] || ($isFilterable && (bool) $args['search']);
         $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
-        $args['show_toolbar'] = $args['search'] || $filterCalendars !== [];
+        $args['show_toolbar'] = $args['eventfinder'] || $args['search'] || $filterCalendars !== [];
 
         $templateName = "churchtools-plugin/event-{$args['layout']}.php";
         $template = locate_template($templateName);
