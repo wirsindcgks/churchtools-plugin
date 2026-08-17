@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -96,6 +96,12 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Changelog ==
+
+= 0.3.0 =
+* Frontend-Design für List/Grid/Upcoming, Werkzeugleiste und Popup/Detailansicht überarbeitet
+* „Nächster Termin"-Ansicht: Bild jetzt rechts, nie mehr beschnitten, konsistente Höhe unabhängig vom Fotoformat
+* Grid-Spaltenzahl passt sich jetzt der tatsächlichen Container-Breite an statt starr die eingestellte Zahl zu erzwingen
+* Bugfix: Terminbild verdeckte in der „Nächster Termin"-Ansicht ab Desktop-Breite Titel und Beschreibung
 
 = 0.2.0 =
 * Drei Frontend-Ansichten (Liste, Grid, „Nächster Termin") mit theme-adaptivem Design, Kalenderfilter, Suchleiste und Monatstrennern

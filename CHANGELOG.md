@@ -7,6 +7,18 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-17
+
+### Changed
+
+- Frontend-Kartendesign für List/Grid/Upcoming, Werkzeugleiste und Popup/Detailansicht überarbeitet: ruhigere Optik mit moderatem Rundungsradius, zurückhaltenderem Schatten, umrandeten statt gefüllten Kalender-Badges und Haarlinien-Trennern zwischen Listenzeilen statt farbiger Akzentkante
+- „Nächster Termin"-Ansicht: Bild sitzt jetzt rechts neben dem Text statt links, wird nie mehr beschnitten (`object-fit: contain` statt `cover`) und behält über verschiedene Termine hinweg eine konsistente Höhe, unabhängig vom Seitenverhältnis des Fotos
+- Grid-Spaltenzahl richtet sich jetzt nach der tatsächlichen Container-Breite statt der Browser-Fensterbreite; die `columns`-Einstellung wirkt als Obergrenze statt als Fixwert, damit Karten in schmaleren Layouts (z. B. normale statt „wide" Blockbreite) nicht zu eng gequetscht werden
+
+### Fixed
+
+- „Nächster Termin"-Ansicht: Sobald der Termin ein Foto hatte, verdeckte das Bild ab Desktop-Breite komplett Titel, Kalender-Tag, Beschreibung und Uhrzeit (CSS-Grid-Verhalten in Zusammenspiel mit `aspect-ratio`) – betraf praktisch jeden Termin mit Bild in dieser Ansicht
+
 ## [0.2.0] - 2026-08-16
 
 ### Added
@@ -83,6 +95,7 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wirsindcgks/churchtools-plugin/releases/tag/v0.1.0
