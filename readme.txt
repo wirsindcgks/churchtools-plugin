@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,9 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Changelog ==
+
+= 0.4.0 =
+* Eventfinder: geführte „Du suchst …“-Werkzeugleiste (Kalender-Buttons, Zeitraum-Buttons, Suche) als Alternative zum Kalenderfilter-Dropdown, per neuem `eventfinder`-Attribut aktivierbar
 
 = 0.3.0 =
 * Frontend-Design für List/Grid/Upcoming, Werkzeugleiste und Popup/Detailansicht überarbeitet
