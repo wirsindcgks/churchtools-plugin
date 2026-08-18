@@ -109,6 +109,11 @@ final class SyncEngine
 
         $repository->deleteOrphans($calendarIds, $from, $keepOccurrenceKeys);
 
+        // Ein in den Einstellungen abgewaehlter Kalender wird vom Sync nicht mehr
+        // besucht - seine Zeilen muessen deshalb hier weg, sonst blieben sie bis
+        // zum Ablauf der Aufbewahrungsfrist *nach* ihrem Termin liegen.
+        $repository->deleteFromCalendarsNotIn($calendarIds);
+
         // Sweeps up imported images nothing references any more (see
         // EventRepository::orphanedAttachmentIds() for how they came to exist).
         // Runs after the image loop above, so an attachment imported in this

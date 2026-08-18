@@ -449,6 +449,40 @@ class EventRepository
         return array_map('intval', $ids ?: []);
     }
 
+    /**
+     * Removes every row belonging to a calendar that is no longer enabled.
+     *
+     * deleteOrphans() cannot do this: it is scoped to the calendars of the run
+     * that just happened, so a calendar switched off in the settings simply
+     * stops being visited and its rows sit there untouched. Retention only ever
+     * caught them once they were in the past, which for a calendar full of
+     * future appointments means up to sync_days_ahead + retention_days - well
+     * over a year at the new defaults - of stale data lingering.
+     *
+     * @param int[] $enabledCalendarIds
+     */
+    public function deleteFromCalendarsNotIn(array $enabledCalendarIds): int
+    {
+        global $wpdb;
+
+        if ($enabledCalendarIds === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($enabledCalendarIds), '%d'));
+        $whereSql = 'ct_calendar_id NOT IN (' . $placeholders . ')';
+        $whereParams = array_map('intval', $enabledCalendarIds);
+
+        $affectedSeries = $this->seriesAttachmentsWhere($whereSql, $whereParams);
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see deleteOrphans().
+        $deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i WHERE ' . $whereSql, $this->table, ...$whereParams));
+
+        $this->deleteOrphanedAttachments($affectedSeries);
+
+        return (int) $deleted;
+    }
+
     public function deleteOlderThan(DateTimeInterface $cutoff): int
     {
         global $wpdb;

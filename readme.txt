@@ -94,6 +94,14 @@ Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `eve
 
 == Frequently Asked Questions ==
 
+= Wie weit im Voraus werden Termine synchronisiert? =
+
+Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation". Der Wert bestimmt zugleich, wie weit „Weitere Termine laden" im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.
+
+= Was passiert, wenn ich einen Kalender wieder deaktiviere? =
+
+Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo kein `calendar`-Attribut gesetzt ist, denn „alle Kalender" bedeutet immer „alle aktiven". Aus der Datenbank werden sie beim nächsten Sync entfernt, samt der zugehörigen importierten Bilder.
+
 = Wie zuverlässig läuft der Sync im eingestellten Intervall? =
 
 Standardmäßig nutzt das Plugin WP-Cron, WordPress' eingebauten Cron-Mechanismus. WP-Cron feuert aber nicht wie ein echter Systemdienst zur genauen Uhrzeit, sondern nur, wenn tatsächlich ein Seitenaufruf stattfindet – auf wenig besuchten Gemeinde-Websites kann ein als „stündlich“ eingestellter Sync dadurch real deutlich seltener laufen (auch der „Jetzt synchronisieren“-Button im „Synchronisation“-Tab löst jederzeit einen sofortigen, manuellen Lauf aus, unabhängig davon).

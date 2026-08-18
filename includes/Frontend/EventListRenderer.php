@@ -167,6 +167,27 @@ final class EventListRenderer
     }
 
     /**
+     * Narrows a requested calendar list down to the ones actually enabled in the
+     * settings; an empty request means "all enabled". Mirrors what
+     * EventsEndpoint::sanitizeCalendarIds() does for the AJAX side, so a first
+     * page and an appended one can never disagree about which calendars they show.
+     *
+     * @return int[]
+     */
+    private static function enabledOnly(array $calendarIds): array
+    {
+        $enabled = SettingsPage::getEnabledCalendarIds();
+
+        if ($calendarIds === []) {
+            return $enabled !== [] ? $enabled : [0];
+        }
+
+        $allowed = array_values(array_intersect(array_map('intval', $calendarIds), $enabled));
+
+        return $allowed !== [] ? $allowed : [0];
+    }
+
+    /**
      * The argument normalization render() and renderItems() share: layout/column
      * clamping plus everything derived from the global Design-tab settings, so an
      * appended page is styled by exactly the same rules as the first one.
@@ -189,6 +210,19 @@ final class EventListRenderer
             'months' => 0,
             'paging' => true,
         ]);
+
+        // "Alle Kalender" hiess bisher woertlich "kein Kalenderfilter" - die
+        // Abfrage lief ohne WHERE ct_calendar_id, gab also auch Termine
+        // deaktivierter Kalender aus. Wer einen Kalender abwaehlt, erwartet das
+        // Gegenteil, und die Detailseite hielt sich mit ihrer eigenen
+        // Enabled-Pruefung bereits daran (EventDetailPage::maybeRenderDetail()) -
+        // Liste und Detailansicht widersprachen sich also.
+        //
+        // Auch explizit genannte IDs werden geschnitten: ein per Shortcode
+        // adressierter, inzwischen deaktivierter Kalender darf nicht die
+        // Hintertuer sein. [0] statt [] als "nichts gefunden"-Sentinel, weil ein
+        // leeres Array wieder "alle" bedeuten wuerde.
+        $args['calendar_ids'] = self::enabledOnly((array) $args['calendar_ids']);
 
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'list';
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
