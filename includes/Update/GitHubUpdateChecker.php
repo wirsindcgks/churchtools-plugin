@@ -34,10 +34,14 @@ final class GitHubUpdateChecker
 
         $updateChecker = PucFactory::buildUpdateChecker(self::REPO_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
 
-        // The repo is private (see plan.md's "Rahmendaten"), so without a token the
-        // library simply can't reach the Releases API — it fails the update check
-        // quietly rather than erroring, so leaving this unset is a safe default for
-        // an admin who hasn't configured a token yet.
+        // The repo is public (see plan.md's "Rahmendaten" — made public on
+        // 2026-08-18 precisely so update checks work without one), so the token is
+        // optional here:
+        // it only raises GitHub's unauthenticated rate limit of 60 requests per hour
+        // per IP, which two update checks a day never come near. It stays supported
+        // for anyone distributing from a private fork — there a missing token means
+        // the library can't reach the Releases API at all and fails the check
+        // quietly, reporting the plugin as up to date.
         $token = SettingsPage::getDecryptedGitHubToken();
         if ($token !== '') {
             $updateChecker->setAuthentication($token);

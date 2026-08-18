@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ChurchTools Events 0.9.1\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-08-18 13:51:08+0000\n"
+"POT-Creation-Date: 2026-08-18 14:06:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -488,7 +488,7 @@ msgid "Optional. Bei einem öffentlichen Repository funktionieren Update-Prüfun
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:1076
-msgid "Ist das Repository privat, ist der Token zwingend – ohne ihn findet WordPress keine neuen Versionen und meldet das Plugin stillschweigend als aktuell."
+msgid "Das Repository dieses Plugins ist öffentlich, hier genügt also kein Token. Wird das Plugin dagegen aus einem privaten Fork verteilt, ist er zwingend – ohne ihn findet WordPress keine neuen Versionen und meldet das Plugin stillschweigend als aktuell."
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:1101

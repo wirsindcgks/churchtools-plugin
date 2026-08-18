@@ -1073,7 +1073,7 @@ final class SettingsPage
             esc_attr(self::OPTION_KEY),
             $hasToken ? esc_attr__('Hinterlegt – zum Ändern neuen Token eingeben', 'churchtools-plugin') : '',
             esc_html__('Optional. Bei einem öffentlichen Repository funktionieren Update-Prüfungen ohne Token; ein Personal Access Token mit Lesezugriff hebt lediglich das GitHub-Rate-Limit an (60 auf 5.000 Anfragen pro Stunde).', 'churchtools-plugin'),
-            esc_html__('Ist das Repository privat, ist der Token zwingend – ohne ihn findet WordPress keine neuen Versionen und meldet das Plugin stillschweigend als aktuell.', 'churchtools-plugin')
+            esc_html__('Das Repository dieses Plugins ist öffentlich, hier genügt also kein Token. Wird das Plugin dagegen aus einem privaten Fork verteilt, ist er zwingend – ohne ihn findet WordPress keine neuen Versionen und meldet das Plugin stillschweigend als aktuell.', 'churchtools-plugin')
         );
     }
 
