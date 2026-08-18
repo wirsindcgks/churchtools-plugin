@@ -82,6 +82,23 @@ final class SyncEngine
         $to = $from->modify("+{$daysAhead} days");
 
         $appointmentEnvelopes = $client->getEvents($calendarIds, $from, $to);
+
+        // Ein leeres Ergebnis ist der einzige Fall, in dem "die API ist die
+        // Wahrheit" gefaehrlich wird. Client::request() liefert [] auch bei
+        // HTTP 200 mit unerwartetem Body zurueck, ohne zu werfen - geaendertes
+        // Response-Format, ein Kalender verliert still die Leseberechtigung,
+        // eine Fehlerseite von einem Proxy dazwischen. deleteOrphans() laesst
+        // bei leerer Keep-Liste seine Schutzbedingung komplett weg und wuerde
+        // dann jeden kuenftigen Termin aller aktiven Kalender loeschen.
+        //
+        // Der Schaden waere nicht dauerhaft - der naechste erfolgreiche Lauf
+        // legt alles wieder an, der Sync ist ein vollstaendiger Spiegel - aber
+        // bis dahin steht auf der Gemeindeseite "Keine anstehenden Termine".
+        // Deshalb: nichts loeschen, Lauf als Fehler sichtbar machen.
+        if (self::looksLikeApiFailure($appointmentEnvelopes, $repository->hasEventsFrom($calendarIds, $from->format('Y-m-d H:i:s')))) {
+            throw new RuntimeException(__('Die ChurchTools-API hat keine Termine zurückgeliefert, obwohl gespeicherte Termine vorliegen. Der Lauf wurde abgebrochen, es wurde nichts gelöscht – bitte Verbindung und Kalender-Berechtigungen prüfen.', 'churchtools-plugin'));
+        }
+
         $keepOccurrenceKeys = [];
 
         // A recurring series has one image shared by every occurrence row, so the
@@ -121,6 +138,24 @@ final class SyncEngine
         foreach ($repository->orphanedAttachmentIds() as $attachmentId) {
             wp_delete_attachment($attachmentId, true);
         }
+    }
+
+    /**
+     * Ausgelagert, damit die Entscheidung ohne Netzwerk testbar ist (siehe
+     * SyncEngineTest). Bewusst nur "gar nichts zurueckgekommen" statt einer
+     * prozentualen Plausibilitaetsschwelle: Ein Kalender, der ueber die Zeit
+     * wirklich schrumpft, wuerde an einer Schwelle dauerhaft haengenbleiben und
+     * genau die Handarbeit erzeugen, die das hier vermeiden soll. Null gegen
+     * nicht-null ist die eine Grenze, die sich nicht falsch kalibrieren laesst.
+     *
+     * Faellt ein *einzelner* Kalender still aus, greift das hier nicht - dann
+     * liefern die uebrigen ja Termine. Das ist Absicht: War der Ausfall
+     * voruebergehend, stellt der naechste Lauf die Zeilen wieder her; war er
+     * dauerhaft (Berechtigung entzogen), ist das Loeschen die richtige Antwort.
+     */
+    private static function looksLikeApiFailure(array $appointmentEnvelopes, bool $hasStoredUpcoming): bool
+    {
+        return $appointmentEnvelopes === [] && $hasStoredUpcoming;
     }
 
     /**

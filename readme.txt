@@ -102,6 +102,12 @@ Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation". Der Wert besti
 
 Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo kein `calendar`-Attribut gesetzt ist, denn „alle Kalender" bedeutet immer „alle aktiven". Aus der Datenbank werden sie beim nächsten Sync entfernt, samt der zugehörigen importierten Bilder.
 
+= Woran merke ich, dass der Sync nicht mehr läuft? =
+
+Das Plugin sagt es von selbst: Schlägt ein Lauf fehl, fehlt der Zeitplan, oder liegt der letzte erfolgreiche Lauf mehr als dreimal so lange zurück wie das eingestellte Intervall, erscheint auf jeder Seite im WordPress-Backend ein Hinweis mit Link zur Übersicht. Ein fehlender Cron-Zeitplan wird beim nächsten Aufruf des Backends zusätzlich automatisch wieder angelegt.
+
+Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl bereits Termine gespeichert sind, bricht das Plugin den Lauf ab und löscht nichts – eine leere Antwort wird als Störung behandelt, nicht als „alle Termine abgesagt".
+
 = Wie zuverlässig läuft der Sync im eingestellten Intervall? =
 
 Standardmäßig nutzt das Plugin WP-Cron, WordPress' eingebauten Cron-Mechanismus. WP-Cron feuert aber nicht wie ein echter Systemdienst zur genauen Uhrzeit, sondern nur, wenn tatsächlich ein Seitenaufruf stattfindet – auf wenig besuchten Gemeinde-Websites kann ein als „stündlich“ eingestellter Sync dadurch real deutlich seltener laufen (auch der „Jetzt synchronisieren“-Button im „Synchronisation“-Tab löst jederzeit einen sofortigen, manuellen Lauf aus, unabhängig davon).

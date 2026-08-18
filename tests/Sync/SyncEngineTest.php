@@ -49,6 +49,45 @@ final class SyncEngineTest extends TestCase
         ], SyncEngine::getLastError());
     }
 
+    /**
+     * Der Fall, der ohne Schutz einen kompletten Jahreskalender leert:
+     * HTTP 200, unerwarteter Body, Client::request() gibt [] zurueck ohne zu
+     * werfen - und deleteOrphans() laesst bei leerer Keep-Liste seine
+     * NOT-IN-Schutzbedingung weg.
+     */
+    public function testEmptyApiResponseWithStoredEventsIsTreatedAsFailure(): void
+    {
+        $this->assertTrue($this->looksLikeApiFailure([], true));
+    }
+
+    /**
+     * Gegenprobe: Eine frische Installation ohne gespeicherte Termine bekommt
+     * legitim nichts zurueck - das darf den Lauf nicht abbrechen, sonst kaeme
+     * eine leere Instanz nie in Gang.
+     */
+    public function testEmptyApiResponseWithoutStoredEventsIsFine(): void
+    {
+        $this->assertFalse($this->looksLikeApiFailure([], false));
+    }
+
+    /**
+     * Und ein Lauf, der Termine liefert, ist nie verdaechtig - auch dann nicht,
+     * wenn er deutlich weniger liefert als gespeichert sind (ein wirklich
+     * schrumpfender Kalender muss sich leeren duerfen).
+     */
+    public function testNonEmptyApiResponseIsNeverTreatedAsFailure(): void
+    {
+        $this->assertFalse($this->looksLikeApiFailure([['appointment' => []]], true));
+    }
+
+    private function looksLikeApiFailure(array $envelopes, bool $hasStored): bool
+    {
+        $method = new ReflectionMethod(SyncEngine::class, 'looksLikeApiFailure');
+        $method->setAccessible(true);
+
+        return $method->invoke(null, $envelopes, $hasStored);
+    }
+
     private function mapOccurrence(array $envelope): ?array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'mapOccurrence');

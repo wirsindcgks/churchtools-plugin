@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Admin\SyncHealthNotice;
 use ChurchToolsPlugin\Blocks\EventListBlock;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
@@ -42,6 +43,7 @@ final class Plugin
 
         if (is_admin()) {
             (new SettingsPage())->register();
+            (new SyncHealthNotice())->register();
         }
 
         (new Shortcode())->register();
