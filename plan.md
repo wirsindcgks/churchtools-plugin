@@ -8,7 +8,7 @@ WordPress-Plugin, das Kalender-Events aus der ChurchTools API synchronisiert, lo
 - **Ziel-Instanz für Tests**: `cg-ks.church.tools` (CG Kraichgau-Stromberg)
 - **PHP**: 8.1+, **WordPress**: 6.4+
 - **Architektur**: Namespace `ChurchToolsPlugin\`, PSR-4 via Composer, eigene DB-Tabelle `wp_ctp_events` (kein Custom Post Type)
-- **Verteilung**: GitHub-first – privates Repo unter [github.com/wirsindcgks/churchtools-plugin](https://github.com/wirsindcgks/churchtools-plugin) (Org-Account, nicht der persönliche `t0bn1k`-Account; lokal via `gh auth switch -u wirsindcgks` umgeschaltet). **Entscheidung (2026-08-15): keine WordPress.org-Veröffentlichung, GitHub reicht.** Updates laufen stattdessen über einen eigenen GitHub-Release-Mechanismus, siehe „GitHub-basierte Plugin-Updates" unten
+- **Verteilung**: GitHub-first – privates Repo unter [github.com/wirsindcgks/churchtools-plugin](https://github.com/wirsindcgks/churchtools-plugin) (Org-Account, nicht der persönliche Account; lokal via `gh auth switch` umgeschaltet). **Entscheidung (2026-08-15): keine WordPress.org-Veröffentlichung, GitHub reicht.** Updates laufen stattdessen über einen eigenen GitHub-Release-Mechanismus, siehe „GitHub-basierte Plugin-Updates" unten
 
 ## Konventionen
 

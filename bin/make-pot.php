@@ -132,7 +132,9 @@ foreach ($files as $rel => $path) {
 
 // Plugin-Header wie make-pot mitnehmen
 $header = file_get_contents($root . '/churchtools-plugin.php');
-foreach (['Plugin Name', 'Description', 'Author'] as $field) {
+// Author bewusst NICHT: ein Kontoname ist nichts, was übersetzt wird -
+// er landete sonst als msgid "wirsindcgks" in der .pot.
+foreach (['Plugin Name', 'Description'] as $field) {
     if (preg_match('/^\s*\*\s*' . preg_quote($field, '/') . ':\s*(.+)$/m', $header, $m)) {
         addEntry($entries, trim($m[1]), 'churchtools-plugin.php:1', $field . ' of the plugin');
     }
