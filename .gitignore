@@ -5,3 +5,8 @@
 .DS_Store
 .phpunit.result.cache
 /dist/
+
+# Persoenliche Claude-Code-Skills, per skills-lock.json aus fremden Repos
+# installiert - lokale Werkzeuge, kein Bestandteil des Plugins.
+/.claude/
+/skills-lock.json

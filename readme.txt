@@ -102,6 +102,12 @@ Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation". Der Wert besti
 
 Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo kein `calendar`-Attribut gesetzt ist, denn „alle Kalender" bedeutet immer „alle aktiven". Aus der Datenbank werden sie beim nächsten Sync entfernt, samt der zugehörigen importierten Bilder.
 
+= Wie werde ich einen Kalender ganz aus der Liste los? =
+
+Gar nicht von Hand – und das ist Absicht: Die Liste im Tab „Kalender" spiegelt, was ChurchTools dem hinterlegten API-Zugang zeigt. Verliert der Zugang die Leseberechtigung für einen Kalender (oder wird der Kalender dort gelöscht), verschwindet er beim nächsten Klick auf „Kalender von ChurchTools laden" von selbst aus der Liste. Bleibt er trotzdem stehen, liefert die API ihn weiterhin aus – dann ist die Berechtigung auf ChurchTools-Seite noch nicht so gesetzt, wie gedacht.
+
+Seine gespeicherten Termine ist ein Kalender schon los, sobald er hier abgewählt ist (siehe die Frage davor) – dafür muss er nicht aus der Liste verschwinden.
+
 = Woran merke ich, dass der Sync nicht mehr läuft? =
 
 Das Plugin sagt es von selbst: Schlägt ein Lauf fehl, fehlt der Zeitplan, oder liegt der letzte erfolgreiche Lauf zu lange zurück, erscheint im WordPress-Backend ein Hinweis mit Link zur Übersicht. „Zu lange" heißt: mehr als das Dreifache des eingestellten Intervalls, mindestens aber 24 Stunden – ein als „stündlich" eingestellter Sync, der über Nacht mangels Besuchern nicht läuft, ist normal (siehe die nächste Frage) und keinen Hinweis wert. Ein fehlender Cron-Zeitplan wird beim nächsten Aufruf des Backends zusätzlich automatisch wieder angelegt.
