@@ -198,7 +198,13 @@ final class SettingsPage
              */
             'calendars' => [],
             'sync_interval' => 'hourly',
-            'sync_days_ahead' => 180,
+            // Ein volles Jahr, nicht ein halbes: Der Gemeindekalender ist ein
+            // Jahreszyklus (Weihnachten, Ostern, Konfirmation, Freizeiten), und
+            // bei 180 Tagen fehlt davon regelmäßig die zweite Hälfte, ohne dass
+            // im Frontend erkennbar wäre, dass da noch etwas käme — die Liste
+            // hört einfach auf. Der Preis ist gering: auf der Referenzinstanz
+            // sind es 156 statt 125 Zeilen.
+            'sync_days_ahead' => 365,
             'retention_days' => 30,
             'keep_data_on_uninstall' => false,
             'element_order' => CardDesign::DEFAULT_ORDER,

@@ -107,7 +107,7 @@ final class SyncEngine
             self::syncSeriesImage($repository, $ctEventId, $imageUrl);
         }
 
-        $repository->deleteOrphans($calendarIds, $from, $to, $keepOccurrenceKeys);
+        $repository->deleteOrphans($calendarIds, $from, $keepOccurrenceKeys);
 
         // Sweeps up imported images nothing references any more (see
         // EventRepository::orphanedAttachmentIds() for how they came to exist).

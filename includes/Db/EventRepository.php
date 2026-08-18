@@ -480,16 +480,25 @@ class EventRepository
     }
 
     /**
-     * Removes rows inside the just-synced window that no longer came back from
-     * ChurchTools — e.g. a single occurrence of a recurring series was cancelled, or
-     * a recurrence rule was shortened. $keepOccurrenceKeys uses the same
-     * "{ct_event_id}:{start_date}" format the sync builds while upserting, so a row
-     * survives exactly when its series+occurrence pair was present in this run.
+     * Removes every row from $from onwards that did not come back from ChurchTools
+     * in this run — a cancelled occurrence of a recurring series, a shortened
+     * recurrence rule, or an appointment deleted outright. $keepOccurrenceKeys uses
+     * the same "{ct_event_id}:{start_date}" format the sync builds while upserting,
+     * so a row survives exactly when its series+occurrence pair was present.
+     *
+     * Deliberately unbounded at the top, where it used to stop at the sync horizon
+     * ($to). Rows *beyond* the horizon were then never refreshed and never removed:
+     * shortening "Sync-Zeitraum" from a year to 180 days left everything past day
+     * 180 frozen in the database forever, still rendered by the frontend (which has
+     * no upper bound either) and no longer tracking ChurchTools. Found live at 31
+     * such rows, among them a wedding 12 months out that no sync had touched since.
+     *
+     * The lower bound stays: past occurrences are the retention job's business
+     * (deleteOlderThan()), not this one's.
      */
     public function deleteOrphans(
         array $calendarIds,
         DateTimeInterface $from,
-        DateTimeInterface $to,
         array $keepOccurrenceKeys
     ): int {
         global $wpdb;
@@ -499,8 +508,8 @@ class EventRepository
         }
 
         $calendarPlaceholders = implode(',', array_fill(0, count($calendarIds), '%d'));
-        $whereSql = 'ct_calendar_id IN (' . $calendarPlaceholders . ') AND start_date BETWEEN %s AND %s';
-        $whereParams = [...$calendarIds, $from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')];
+        $whereSql = 'ct_calendar_id IN (' . $calendarPlaceholders . ') AND start_date >= %s';
+        $whereParams = [...$calendarIds, $from->format('Y-m-d H:i:s')];
 
         if ($keepOccurrenceKeys !== []) {
             $keyPlaceholders = implode(',', array_fill(0, count($keepOccurrenceKeys), '%s'));

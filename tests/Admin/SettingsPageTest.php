@@ -102,11 +102,18 @@ final class SettingsPageTest extends TestCase
         $this->assertSame([32], SettingsPage::resolveCalendarIds(['32', 'Gottesdienst']));
     }
 
-    public function testSanitizeSettingsDefaultsSyncDaysAheadTo180(): void
+    /**
+     * A full year, not half of one: the parish calendar runs on an annual cycle,
+     * and a 180-day horizon silently cut off its second half - the frontend list
+     * simply ended, with nothing to indicate more was coming. Pinned here so
+     * changing it stays a deliberate decision rather than a drive-by edit.
+     */
+    public function testSanitizeSettingsDefaultsSyncDaysAheadToOneYear(): void
     {
         $sanitized = SettingsPage::sanitizeSettings([]);
 
-        $this->assertSame(180, $sanitized['sync_days_ahead']);
+        $this->assertSame(365, $sanitized['sync_days_ahead']);
+        $this->assertSame(SettingsPage::defaults()['sync_days_ahead'], $sanitized['sync_days_ahead']);
     }
 
     public function testSanitizeSettingsAcceptsCustomSyncDaysAhead(): void
