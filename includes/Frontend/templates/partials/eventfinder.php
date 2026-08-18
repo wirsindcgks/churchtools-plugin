@@ -24,16 +24,29 @@ use ChurchToolsPlugin\Frontend\Icons;
 if (!defined('ABSPATH')) {
     exit;
 }
+
+/*
+ * The two section headings ("Thema"/"Zeitraum") double as the accessible name
+ * of the button group under each — aria-labelledby rather than a hard-coded
+ * aria-label, so screen readers announce the same words that are on screen.
+ * IDs come from wp_unique_id() because a page can carry more than one
+ * [ctp_events eventfinder="1"] instance and duplicate IDs would point every
+ * group at the first one's heading.
+ */
+$topicHeadingId = wp_unique_id('ctp-finder-topic-');
+$timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
 ?>
 <div class="ctp-events__toolbar ctp-events__eventfinder">
     <p class="ctp-events__finder-label"><?php esc_html_e('Du suchst …', 'churchtools-plugin'); ?></p>
     <?php if ($filterCalendars !== []) : ?>
         <div class="ctp-events__finder-row">
-            <span class="ctp-events__finder-row-label"><?php esc_html_e('Thema', 'churchtools-plugin'); ?></span>
+            <span class="ctp-events__finder-row-label" id="<?php echo esc_attr($topicHeadingId); ?>">
+                <?php esc_html_e('Thema', 'churchtools-plugin'); ?>
+            </span>
             <div
                 class="ctp-events__finder-group"
                 role="group"
-                aria-label="<?php esc_attr_e('Nach Kalender filtern', 'churchtools-plugin'); ?>"
+                aria-labelledby="<?php echo esc_attr($topicHeadingId); ?>"
             >
                 <button
                     type="button"
@@ -53,11 +66,13 @@ if (!defined('ABSPATH')) {
         </div>
     <?php endif; ?>
     <div class="ctp-events__finder-row">
-        <span class="ctp-events__finder-row-label"><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></span>
+        <span class="ctp-events__finder-row-label" id="<?php echo esc_attr($timeframeHeadingId); ?>">
+            <?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?>
+        </span>
         <div
             class="ctp-events__finder-group"
             role="group"
-            aria-label="<?php esc_attr_e('Nach Zeitraum filtern', 'churchtools-plugin'); ?>"
+            aria-labelledby="<?php echo esc_attr($timeframeHeadingId); ?>"
         >
             <button
                 type="button"

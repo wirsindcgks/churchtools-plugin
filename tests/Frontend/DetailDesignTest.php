@@ -16,29 +16,44 @@ final class DetailDesignTest extends TestCase
 
     public function testIsValidOrderAcceptsAnyPermutation(): void
     {
-        $order = ['description', 'media', 'title', 'calendar', 'meta', 'subtitle'];
+        $order = ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
 
         $this->assertTrue(DetailDesign::isValidOrder($order));
     }
 
     public function testIsValidOrderRejectsMissingElement(): void
     {
-        $order = ['media', 'calendar', 'title', 'subtitle', 'meta'];
+        $order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location'];
 
         $this->assertFalse(DetailDesign::isValidOrder($order));
     }
 
     public function testIsValidOrderRejectsDuplicateElement(): void
     {
-        $order = ['media', 'media', 'title', 'subtitle', 'meta', 'description'];
+        $order = ['media', 'media', 'title', 'subtitle', 'date', 'time', 'location', 'description'];
 
         $this->assertFalse(DetailDesign::isValidOrder($order));
     }
 
     public function testIsValidOrderRejectsUnknownElement(): void
     {
-        $order = ['media', 'calendar', 'title', 'subtitle', 'meta', 'unknown'];
+        $order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'unknown'];
 
         $this->assertFalse(DetailDesign::isValidOrder($order));
+    }
+
+    /**
+     * The detail order is stored separately from the card order, so it can
+     * still arrive on the pre-split key set independently of it.
+     */
+    public function testUpgradeOrderExpandsLegacyMetaKeyInPlace(): void
+    {
+        $upgraded = DetailDesign::upgradeOrder(['media', 'calendar', 'title', 'subtitle', 'meta', 'description']);
+
+        $this->assertSame(
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'],
+            $upgraded
+        );
+        $this->assertTrue(DetailDesign::isValidOrder($upgraded));
     }
 }

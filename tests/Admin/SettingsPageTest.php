@@ -180,8 +180,8 @@ final class SettingsPageTest extends TestCase
     public function testSanitizeElementOrderAcceptsAValidNonDefaultPermutation(): void
     {
         $this->assertSame(
-            ['meta', 'media', 'title', 'calendar', 'subtitle', 'excerpt'],
-            $this->sanitizeElementOrder('meta,media,title,calendar,subtitle,excerpt')
+            ['date', 'time', 'location', 'media', 'title', 'calendar', 'subtitle', 'excerpt'],
+            $this->sanitizeElementOrder('date,time,location,media,title,calendar,subtitle,excerpt')
         );
     }
 
@@ -194,7 +194,7 @@ final class SettingsPageTest extends TestCase
     {
         $this->assertSame(
             CardDesign::DEFAULT_ORDER,
-            $this->sanitizeElementOrder('media,media,title,subtitle,excerpt,meta')
+            $this->sanitizeElementOrder('media,media,title,subtitle,excerpt,date,time,location')
         );
     }
 
@@ -221,14 +221,19 @@ final class SettingsPageTest extends TestCase
 
     /**
      * Any number of admin-inserted spacer- or divider-prefixed entries (see
-     * CardDesign::SEPARATOR_TYPES) may sit anywhere alongside the six fixed
-     * keys — this is what lets the Design tab offer "+ Trennlinie"/"+ Abstand".
+     * CardDesign::SEPARATOR_TYPES) may sit anywhere alongside the fixed keys —
+     * this is what lets the Design tab offer "+ Trennlinie"/"+ Abstand".
      */
     public function testSanitizeElementOrderAcceptsInterspersedSeparators(): void
     {
+        $raw = 'media,calendar,divider-a1b2,title,subtitle,spacer-c3d4,excerpt,date,time,location';
+
         $this->assertSame(
-            ['media', 'calendar', 'divider-a1b2', 'title', 'subtitle', 'spacer-c3d4', 'excerpt', 'meta'],
-            $this->sanitizeElementOrder('media,calendar,divider-a1b2,title,subtitle,spacer-c3d4,excerpt,meta')
+            [
+                'media', 'calendar', 'divider-a1b2', 'title', 'subtitle',
+                'spacer-c3d4', 'excerpt', 'date', 'time', 'location',
+            ],
+            $this->sanitizeElementOrder($raw)
         );
     }
 
@@ -242,8 +247,8 @@ final class SettingsPageTest extends TestCase
     public function testSanitizeElementOrderStripsEntriesWithUnexpectedCharacters(): void
     {
         $this->assertSame(
-            ['meta', 'calendar', 'title', 'subtitle', 'excerpt', 'media'],
-            $this->sanitizeElementOrder('meta,calendar,title,subtitle,excerpt,media,<script>')
+            ['date', 'time', 'location', 'calendar', 'title', 'subtitle', 'excerpt', 'media'],
+            $this->sanitizeElementOrder('date,time,location,calendar,title,subtitle,excerpt,media,<script>')
         );
     }
 
@@ -270,7 +275,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testSanitizeSettingsClearsHiddenElementsOnEmptySubmit(): void
     {
-        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['meta']]);
+        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['time']]);
 
         $sanitized = SettingsPage::sanitizeSettings(['hidden_elements' => []]);
 
@@ -279,11 +284,65 @@ final class SettingsPageTest extends TestCase
 
     public function testSanitizeSettingsKeepsExistingHiddenElementsWhenFieldAbsent(): void
     {
-        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['meta']]);
+        ctp_test_set_option('ctp_settings', ['hidden_elements' => ['subtitle']]);
 
         $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
 
-        $this->assertSame(['meta'], $sanitized['hidden_elements']);
+        $this->assertSame(['subtitle'], $sanitized['hidden_elements']);
+    }
+
+    /**
+     * The pre-split key set has to survive an update without the admin
+     * re-saving the Design tab: get() widens it on read, so a site that had
+     * "meta" stored keeps its layout instead of snapping to the default.
+     */
+    public function testGetWidensStoredOrdersFromThePreSplitKeySet(): void
+    {
+        ctp_test_set_option('ctp_settings', [
+            'element_order' => ['meta', 'media', 'calendar', 'title', 'subtitle', 'excerpt'],
+            'detail_element_order' => ['media', 'calendar', 'title', 'subtitle', 'meta', 'description'],
+            'hidden_elements' => ['meta'],
+        ]);
+
+        $settings = SettingsPage::get();
+
+        $this->assertSame(
+            ['date', 'time', 'location', 'media', 'calendar', 'title', 'subtitle', 'excerpt'],
+            $settings['element_order']
+        );
+        $this->assertSame(
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'],
+            $settings['detail_element_order']
+        );
+        $this->assertSame(['date', 'time', 'location'], $settings['hidden_elements']);
+    }
+
+    public function testSanitizeSettingsDefaultsButtonColorToDisabled(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([]);
+
+        $this->assertFalse($sanitized['button_color_enabled']);
+        $this->assertSame('#111827', $sanitized['button_color']);
+    }
+
+    public function testSanitizeSettingsAcceptsAButtonColor(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([
+            'button_color_enabled' => '1',
+            'button_color' => '#FF8800',
+        ]);
+
+        $this->assertTrue($sanitized['button_color_enabled']);
+        $this->assertSame('#FF8800', $sanitized['button_color']);
+    }
+
+    public function testSanitizeSettingsRejectsAMalformedButtonColor(): void
+    {
+        ctp_test_set_option('ctp_settings', ['button_color' => '#123456']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['button_color' => 'rgb(1,2,3)']);
+
+        $this->assertSame('#123456', $sanitized['button_color']);
     }
 
     public function testSanitizeSettingsDefaultsMediaAspectRatioToWide(): void

@@ -12,6 +12,29 @@
     --ctp-color-surface: var(--wp--preset--color--base, #fdfbf8);
     --ctp-color-border: color-mix(in srgb, currentColor 12%, transparent);
     --ctp-radius: var(--wp--custom--ctp--radius, 14px);
+    /* Radius for the fully rounded bits (calendar/all-day badges, eventfinder
+       buttons, the popup's close button). Its own variable rather than a
+       hard-coded 999px so the Design tab's "Eckig" setting reaches them too:
+       CardDesign::cssVariables() flattens both radius variables at once, which
+       a calc() off --ctp-radius alone can't express ("pill, unless square"). */
+    --ctp-radius-pill: 999px;
+
+    /*
+     * Interactive chrome (eventfinder buttons, "load more", the popup's close
+     * button) draws from its own tokens rather than --ctp-accent. --ctp-accent
+     * is a *calendar's* identity color — every card, item and hero re-sets it
+     * inline from the calendar's configured color — so wiring the controls to
+     * it meant a site could not restyle its buttons without also recoloring
+     * the calendar badges, and vice versa. Defaults are deliberately neutral
+     * (surface with a hairline, inverting to ink on hover/selected), which
+     * drops into most site designs unchanged; a theme overrides these five
+     * without touching anything else.
+     */
+    --ctp-color-button: var(--ctp-color-surface);
+    --ctp-color-button-text: var(--wp--preset--color--contrast, #111827);
+    --ctp-color-button-border: var(--ctp-color-border);
+    --ctp-color-button-strong: var(--wp--preset--color--contrast, #111827);
+    --ctp-color-button-strong-text: var(--ctp-color-surface);
     --ctp-gap: clamp(1.35rem, 1.6vw + 0.7rem, 2.4rem);
     /* Two-layer shadow: a faint contact shadow plus a soft, warm-tinted
        ambient one — restrained rather than heavy, so cards read with a
@@ -29,7 +52,8 @@
      * These just keep behavior sane for a cached page rendered by an older
      * plugin version, or a theme override template that doesn't emit
      * $args['design_style']. Values match CardDesign::DEFAULT_ORDER: media,
-     * then calendar/title/subtitle/excerpt/meta as the content block.
+     * then calendar/title/subtitle/excerpt/date/time/location as the content
+     * block.
      */
     --ctp-order-media: 0;
     --ctp-order-content: 1;
@@ -37,9 +61,35 @@
     --ctp-order-title: 2;
     --ctp-order-subtitle: 3;
     --ctp-order-excerpt: 4;
-    --ctp-order-meta: 5;
+    --ctp-order-date: 5;
+    --ctp-order-time: 6;
+    --ctp-order-location: 7;
+
+    /*
+     * One type scale for everything the component renders. Every text element
+     * below picks a step from it instead of inheriting the theme's body size,
+     * which is what used to drive card and popup apart: the cards carried
+     * explicit rem sizes while the popup's description carried none, so on a
+     * theme with a 21px body font the popup text came out half again as large
+     * as the card text it was opened from. The same mismatch made list-layout
+     * titles (unsized, theme-driven) larger than grid-card titles (1.08rem)
+     * and left the month divider smaller than either.
+     *
+     * All steps derive from --ctp-font-base, so a site that wants the whole
+     * component bigger or smaller overrides that one value rather than
+     * re-tuning a dozen rules.
+     */
+    --ctp-font-base: 1rem;
+    --ctp-font-2xs: calc(var(--ctp-font-base) * 0.7);
+    --ctp-font-xs: calc(var(--ctp-font-base) * 0.78);
+    --ctp-font-sm: calc(var(--ctp-font-base) * 0.875);
+    --ctp-font-md: var(--ctp-font-base);
+    --ctp-font-lg: calc(var(--ctp-font-base) * 1.125);
+    --ctp-font-xl: calc(var(--ctp-font-base) * 1.375);
+    --ctp-font-2xl: calc(var(--ctp-font-base) * 2);
 
     color: var(--ctp-color-text);
+    font-size: var(--ctp-font-md);
     line-height: 1.5;
 }
 
@@ -124,44 +174,46 @@
 
 .ctp-events__eventfinder {
     /* Column instead of .ctp-events__toolbar's row-wrap default — "Thema" and
-       "Zeitraum" are stacked rows here (each with its own label), not items
-       wrapping into the same line. */
+       "Zeitraum" are stacked sections here (each with its own heading), not
+       items wrapping into the same line. */
     flex-direction: column;
     align-items: stretch;
-    gap: 0.65rem;
+    gap: 0;
 }
 
 .ctp-events__finder-label {
-    margin: 0;
-    font-weight: 600;
+    margin: 0 0 0.9rem;
+    font-size: var(--ctp-font-lg);
+    font-weight: 700;
 }
 
-/* One row per filter dimension ("Thema"/"Zeitraum") — a thin top border
-   between consecutive rows (not around the whole block) is the "optical
-   separation" between the two dimensions the toolbar label alone doesn't
-   provide. */
+/* One section per filter dimension ("Thema"/"Zeitraum", plus the search field
+   as a third) — a thin top border between consecutive sections (not around the
+   whole block) is the "optical separation" between the dimensions the toolbar
+   label alone doesn't provide. */
 .ctp-events__finder-row {
+    /* Column, so the heading gets a line of its own and its buttons start on
+       the next one — the heading used to sit inline to the left of them, which
+       read as a form label rather than as the section title it is. */
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem;
-    padding-block-start: 0.65rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    margin-block-start: 0.95rem;
+    padding-block-start: 0.95rem;
     border-block-start: 1px solid var(--ctp-color-border);
 }
 
 .ctp-events__finder-row:first-of-type {
+    margin-block-start: 0;
     padding-block-start: 0;
     border-block-start: none;
 }
 
 .ctp-events__finder-row-label {
-    flex: 0 0 auto;
-    min-width: 5.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--ctp-color-muted);
+    font-size: var(--ctp-font-md);
+    font-weight: 700;
+    color: var(--ctp-color-text);
 }
 
 .ctp-events__finder-group {
@@ -170,31 +222,55 @@
     gap: 0.5rem;
 }
 
+/* Column direction again: flex-basis is a *height* here, so the plain
+   toolbar's "take the whole row" basis has to go, and the message needs its
+   own top margin instead of the row gap it used to sit in. */
+.ctp-events__eventfinder .ctp-events__toolbar-empty {
+    flex-basis: auto;
+    margin-block-start: 0.6rem;
+}
+
+/* The search field is the eventfinder's third section, so it gets the same
+   separator and spacing as the two button rows above it. The flex shorthand
+   .ctp-events__search carries for the plain toolbar has to be undone here:
+   in this column-direction parent its 16rem basis would be read as a *height*
+   and open a large gap under the buttons. */
+.ctp-events__eventfinder .ctp-events__search {
+    flex: 0 0 auto;
+    margin-block-start: 0.95rem;
+    padding-block-start: 0.95rem;
+    border-block-start: 1px solid var(--ctp-color-border);
+}
+
 .ctp-events__finder-btn {
-    padding: 0.45rem 0.95rem;
-    border: 1px solid var(--ctp-color-border);
-    border-radius: calc(var(--ctp-radius) * 0.6);
-    background-color: var(--ctp-color-surface);
-    color: var(--ctp-color-text);
+    padding: 0.45rem 1.05rem;
+    border: 1px solid var(--ctp-color-button-border);
+    border-radius: var(--ctp-radius-pill);
+    background-color: var(--ctp-color-button);
+    color: var(--ctp-color-button-text);
     font: inherit;
-    font-size: 0.9rem;
+    font-size: var(--ctp-font-sm);
+    line-height: 1.35;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .ctp-events__finder-btn:hover {
-    border-color: var(--ctp-accent);
+    border-color: var(--ctp-color-button-strong);
 }
 
+/* Focus rings stay on --ctp-accent rather than the button tokens: the filled
+   state below is the button tokens' own strong color, and a ring in that same
+   color would be invisible exactly when a keyboard user needs it most. */
 .ctp-events__finder-btn:focus-visible {
     outline: 2px solid var(--ctp-accent);
     outline-offset: 1px;
 }
 
 .ctp-events__finder-btn--active {
-    border-color: var(--ctp-accent);
-    background-color: var(--ctp-accent);
-    color: #fff;
+    border-color: var(--ctp-color-button-strong);
+    background-color: var(--ctp-color-button-strong);
+    color: var(--ctp-color-button-strong-text);
 }
 
 /* ---------- "load more" paging (list/grid layouts, see partials/load-more.php) ---------- */
@@ -208,23 +284,26 @@
 }
 
 /* Outlined rather than filled: the button sits directly under the last card and
-   a solid accent block there would out-shout the content it belongs to. */
+   a solid block there would out-shout the content it belongs to. Inverts to the
+   filled "strong" pair on hover, same two-state behavior as the eventfinder
+   buttons and the popup's close button. */
 .ctp-events__load-more {
     padding: 0.7rem 1.6rem;
-    border: 1px solid color-mix(in srgb, var(--ctp-accent) 45%, transparent);
+    border: 1px solid var(--ctp-color-button-border);
     border-radius: calc(var(--ctp-radius) * 0.6);
-    background-color: transparent;
-    color: var(--ctp-accent);
+    background-color: var(--ctp-color-button);
+    color: var(--ctp-color-button-text);
     font: inherit;
     font-weight: 600;
     line-height: 1.2;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .ctp-events__load-more:hover {
-    border-color: var(--ctp-accent);
-    background-color: color-mix(in srgb, var(--ctp-accent) 8%, transparent);
+    border-color: var(--ctp-color-button-strong);
+    background-color: var(--ctp-color-button-strong);
+    color: var(--ctp-color-button-strong-text);
 }
 
 .ctp-events__load-more:focus-visible {
@@ -246,15 +325,21 @@
 .ctp-events__more-error {
     margin: 0;
     color: var(--ctp-color-muted);
-    font-size: 0.9rem;
+    font-size: var(--ctp-font-sm);
 }
 
 /* ---------- month dividers (list/grid layouts only, opt-in — see EventFormatter::monthLabel()) ---------- */
 
+/* Sized as a section label rather than a heading that competes with the card
+   titles under it: one step below them (--ctp-font-md vs --ctp-font-lg), but
+   uppercase and letter-spaced so it still reads as a grouping marker — same
+   idiom .ctp-events__eyebrow and .ctp-events__more-label already use. */
 .ctp-events__month-divider {
     margin-block: calc(var(--ctp-gap) * 0.7) calc(var(--ctp-gap) * 0.35);
-    font-size: 0.85rem;
+    font-size: var(--ctp-font-md);
     font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--ctp-color-text);
 }
 
@@ -302,11 +387,11 @@
     align-self: flex-start;
     gap: 0.4rem;
     padding: 0.2rem 0.65rem;
-    border-radius: 999px;
+    border-radius: var(--ctp-radius-pill);
     border: 1px solid color-mix(in srgb, var(--ctp-accent) 40%, transparent);
     background: color-mix(in srgb, var(--ctp-accent) 8%, transparent);
     color: var(--ctp-accent);
-    font-size: 0.7rem;
+    font-size: var(--ctp-font-xs);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -317,7 +402,7 @@
     order: var(--ctp-order-excerpt);
     margin: 0;
     color: var(--ctp-color-muted);
-    font-size: 0.88rem;
+    font-size: var(--ctp-font-sm);
     line-height: 1.52;
     display: -webkit-box;
     overflow: hidden;
@@ -355,10 +440,10 @@
     display: inline-flex;
     align-items: center;
     padding: 0.18em 0.6em;
-    border-radius: 999px;
+    border-radius: var(--ctp-radius-pill);
     background: color-mix(in srgb, var(--ctp-accent) 14%, transparent);
     color: var(--ctp-accent);
-    font-size: 0.73rem;
+    font-size: var(--ctp-font-2xs);
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -403,13 +488,13 @@
 
 .ctp-events__day {
     display: block;
-    font-size: 1.18rem;
+    font-size: var(--ctp-font-lg);
     font-weight: 700;
 }
 
 .ctp-events__month {
     display: block;
-    font-size: 0.68rem;
+    font-size: var(--ctp-font-2xs);
     letter-spacing: 0.05em;
     text-transform: uppercase;
     opacity: 0.8;
@@ -429,29 +514,47 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+    font-size: var(--ctp-font-lg);
     font-weight: 700;
+    line-height: 1.3;
 }
 
 .ctp-events__subtitle {
     order: var(--ctp-order-subtitle);
     color: var(--ctp-color-muted);
-    font-size: 0.9rem;
+    font-size: var(--ctp-font-sm);
 }
 
-.ctp-events__meta {
-    order: var(--ctp-order-meta);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1rem;
-    margin-top: 0.2rem;
-    color: var(--ctp-color-muted);
-    font-size: 0.88rem;
-}
-
+/*
+ * Date, time and location: one fact per line, each with its own icon, and each
+ * its own placeable element in the Design tab (--ctp-order-date/-time/
+ * -location). They used to be a single "meta" block with one drag handle and
+ * one "20.08.2026 19:30–22:00" string, where the time was the part that got
+ * lost. Identical formatting for all three by design — they are three parts of
+ * the same statement, not a lead plus footnotes.
+ */
 .ctp-events__meta-item {
     display: inline-flex;
     align-items: center;
     gap: 0.35em;
+    /* The detail view renders these as <p> (the card layouts as <span>), so
+       the theme's paragraph margin has to go or the three drift apart. */
+    margin: 0;
+    color: var(--ctp-color-text);
+    font-size: var(--ctp-font-sm);
+    font-weight: 600;
+}
+
+.ctp-events__meta-item--date {
+    order: var(--ctp-order-date);
+}
+
+.ctp-events__meta-item--time {
+    order: var(--ctp-order-time);
+}
+
+.ctp-events__meta-item--location {
+    order: var(--ctp-order-location);
 }
 
 @media (max-width: 480px) {
@@ -574,17 +677,6 @@
     padding: 1.05rem 1.2rem 1.3rem;
 }
 
-.ctp-events__card .ctp-events__title {
-    font-size: 1.08rem;
-    font-weight: 750;
-}
-
-.ctp-events__card .ctp-events__meta {
-    flex-direction: column;
-    margin-top: auto;
-    padding-top: 0.55rem;
-}
-
 /* ---------- upcoming layout ---------- */
 
 .ctp-events--upcoming .ctp-events__hero {
@@ -677,23 +769,15 @@
 
 .ctp-events--upcoming .ctp-events__hero-title {
     order: var(--ctp-order-title);
-    font-size: clamp(1.45rem, 1rem + 1.4vw, 2.05rem);
+    font-size: clamp(var(--ctp-font-xl), 1rem + 1.4vw, var(--ctp-font-2xl));
     font-weight: 750;
     line-height: 1.15;
-}
-
-.ctp-events--upcoming .ctp-events__hero-meta {
-    order: var(--ctp-order-meta);
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    color: var(--ctp-color-muted);
 }
 
 .ctp-events--upcoming .ctp-events__more-label {
     margin: 0 0 0.5rem;
     color: var(--ctp-color-muted);
-    font-size: 0.78rem;
+    font-size: var(--ctp-font-xs);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -776,23 +860,57 @@
     background: color-mix(in srgb, black 50%, transparent);
 }
 
+/* Clicking anywhere in the popup moves focus to the <dialog> itself, and
+   WordPress' generated Global Styles put a 2px ring on anything focused inside
+   .wp-site-blocks — so the whole popup gained an outline on the first click.
+   The dialog is a container, not a control: its focusable children keep their
+   own rings (see .ctp-events__modal-close below), so nothing is lost here. */
+.ctp-events__modal:focus,
+.ctp-events__modal:focus-visible,
+.ctp-events__modal-body:focus,
+.ctp-events__modal-body:focus-visible {
+    outline: none;
+}
+
+/* A bare glyph in muted text vanished against whatever the detail view opens
+   with — and that is an event photo far more often than not, since "media"
+   leads the default detail order. Given its own opaque chip (surface fill,
+   border, shadow) it stays readable over any image, and the 2.25rem box is a
+   real touch target rather than a 20px glyph. */
 .ctp-events__modal-close {
     all: unset;
     position: absolute;
-    top: 0.75rem;
-    right: 0.9rem;
-    padding: 0.3rem 0.55rem;
-    border-radius: 999px;
-    color: var(--ctp-color-muted);
-    font-size: 1.4rem;
+    top: 0.7rem;
+    right: 0.7rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--ctp-color-button-border);
+    border-radius: var(--ctp-radius-pill);
+    background: var(--ctp-color-button);
+    box-shadow: 0 2px 10px color-mix(in srgb, black 25%, transparent);
+    color: var(--ctp-color-button-text);
+    font-size: var(--ctp-font-lg);
     line-height: 1;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.ctp-events__modal-close:hover,
+/* Hover fills, focus only rings. The two used to share the filled state, so
+   the button came up looking pressed as soon as the popup opened. */
+.ctp-events__modal-close:hover {
+    border-color: var(--ctp-color-button-strong);
+    background: var(--ctp-color-button-strong);
+    color: var(--ctp-color-button-strong-text);
+}
+
 .ctp-events__modal-close:focus-visible {
-    background: color-mix(in srgb, currentColor 8%, transparent);
-    color: var(--ctp-color-text);
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 2px;
 }
 
 .ctp-events__modal-body {
@@ -803,30 +921,95 @@
 
 /* ---------- detail view content (partials/event-detail-content.php), shared by the modal body and the "own page" template ---------- */
 
+/*
+ * Row-wrap rather than a plain column: every child claims a full line by
+ * default (the flex-basis below), which reproduces the column stack — but it
+ * lets date, time and location opt out with an auto basis and share one line
+ * while the popup is wide enough for them. A column flex has no equivalent:
+ * its children each own a line, unconditionally.
+ */
 .ctp-events__detail {
     display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+    flex-flow: row wrap;
+    align-items: baseline;
+    column-gap: 1.25rem;
+    row-gap: 0.8rem;
 }
 
+
+
+/*
+ * The detail view emits its elements in the admin-configured order server-side
+ * (see DetailDesign) — but .ctp-events__eyebrow/__subtitle/__meta-item carry a CSS
+ * `order` for the *card* layouts, and this is a flex column too, so that order
+ * was winning here and silently reshuffling the popup: with the default detail
+ * order the calendar badge landed below the description instead of above the
+ * title. Neutralized for direct children of the detail view only, so the card
+ * layouts keep their reordering.
+ *
+ * The flex basis on the same rule is the other half of the row-wrap layout
+ * above: a full line each, which is what the three meta items and the calendar
+ * badge below opt out of.
+ */
+.ctp-events__detail > * {
+    order: 0;
+    flex: 0 0 100%;
+}
+
+/* The calendar badge is a pill — its own line, but hugging its text rather
+   than stretched across the full width by the rule above. */
+.ctp-events .ctp-events__detail > .ctp-events__eyebrow {
+    flex: 0 0 auto;
+}
+
+/* One step up from the size the cards use — a detail view has the room, and
+   the "when and where" is what most visitors opened it for. */
+.ctp-events .ctp-events__detail .ctp-events__meta-item {
+    font-size: var(--ctp-font-md);
+    /* Auto basis instead of the full-line default below, so date, time and
+       location flow onto one line whenever the popup is wide enough for them
+       and drop onto their own lines when it is not. */
+    flex: 0 1 auto;
+}
+
+/* Full-width row; the frame inside it is what hugs the image, so a capped
+   portrait sits centred without a frame stretched across the empty space
+   beside it. */
 .ctp-events__detail-media {
+    display: flex;
+    justify-content: center;
+}
+
+.ctp-events__detail-media-frame {
     position: relative;
+    max-width: 100%;
     overflow: hidden;
     border-radius: calc(var(--ctp-radius) * 0.8);
     box-shadow: var(--ctp-shadow);
 }
 
+/* ChurchTools event flyers are portrait as often as not (4:5 and taller). At
+   the full column width one of those ran well past a screen height on its own,
+   so the detail view opened on nothing but image and pushed title, time and
+   description out of sight — capped here instead, tighter in the popup than on
+   the standalone page, which has a whole screen to spend. */
 .ctp-events__detail-media img {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    max-height: 60vh;
+}
+
+.ctp-events__modal .ctp-events__detail-media img {
+    max-height: min(45vh, 24rem);
 }
 
 /* Same calendar-tinted scrim as .ctp-events__media--fallback, for detail view. */
-.ctp-events__detail-media--fallback img {
+.ctp-events__detail-media-frame--fallback img {
     filter: saturate(0.85);
 }
 
-.ctp-events__detail-media--fallback::after {
+.ctp-events__detail-media-frame--fallback::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -842,13 +1025,17 @@
     margin: 0;
     padding-bottom: 0.55rem;
     border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 30%, transparent);
-    font-size: 1.55rem;
+    font-size: var(--ctp-font-xl);
     font-weight: 750;
     line-height: 1.22;
 }
 
+/* Explicitly sized rather than left to inherit the theme's body font — that
+   inheritance is what made popup body copy visibly larger than the card text
+   it was opened from (see the type scale at the top of this file). */
 .ctp-events__detail-description {
     margin-top: 0.4rem;
+    font-size: var(--ctp-font-md);
     line-height: 1.6;
 }
 

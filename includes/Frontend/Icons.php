@@ -5,13 +5,24 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Frontend;
 
 /**
- * Small inline SVG glyphs for the frontend templates (time/location markers next
- * to the date range). Fixed, hard-coded markup with no request input involved, so
- * templates echo the result directly instead of esc_html()'ing it — same trust
- * boundary as the static HTML templates already echo elsewhere.
+ * Small inline SVG glyphs for the frontend templates (the date/time/location
+ * markers of a meta line, plus the search field's magnifier). Fixed, hard-coded
+ * markup with no request input involved, so templates echo the result directly
+ * instead of esc_html()'ing it — same trust boundary as the static HTML
+ * templates already echo elsewhere.
  */
 final class Icons
 {
+    public static function calendar(): string
+    {
+        return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            . '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect>'
+            . '<line x1="3.5" y1="10" x2="20.5" y2="10"></line>'
+            . '<line x1="8.5" y1="2.75" x2="8.5" y2="6.5"></line>'
+            . '<line x1="15.5" y1="2.75" x2="15.5" y2="6.5"></line></svg>';
+    }
+
     public static function clock(): string
     {
         return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '

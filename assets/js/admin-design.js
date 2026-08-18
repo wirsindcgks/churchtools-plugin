@@ -121,7 +121,7 @@
 	});
 	updateDetailVisibility();
 
-	var ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'excerpt', 'meta'];
+	var ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'excerpt', 'date', 'time', 'location'];
 	var SEPARATOR_TYPES = ['spacer', 'divider'];
 	var labels = window.ctpDesignLabels || { divider: 'Trennlinie', spacer: 'Abstand', remove: 'Entfernen' };
 
@@ -288,13 +288,27 @@
 		preview.style.setProperty('--ctp-order-title', position.title);
 		preview.style.setProperty('--ctp-order-subtitle', position.subtitle);
 		preview.style.setProperty('--ctp-order-excerpt', position.excerpt);
-		preview.style.setProperty('--ctp-order-meta', position.meta);
+		preview.style.setProperty('--ctp-order-date', position.date);
+		preview.style.setProperty('--ctp-order-time', position.time);
+		preview.style.setProperty('--ctp-order-location', position.location);
 
-		if (currentCornerStyle() === 'square') {
-			preview.style.setProperty('--ctp-radius', '0px');
-		} else {
-			preview.style.removeProperty('--ctp-radius');
-		}
+		// Both radius variables, same as CardDesign::cssVariables() — the pill
+		// one drives the calendar/all-day badges, which stay round on their own.
+		// Applied to the detail preview too: its badge and image frame follow
+		// the same setting on the front end.
+		[preview, detailPreview].forEach(function (frame) {
+			if (!frame) {
+				return;
+			}
+
+			if (currentCornerStyle() === 'square') {
+				frame.style.setProperty('--ctp-radius', '0px');
+				frame.style.setProperty('--ctp-radius-pill', '0px');
+			} else {
+				frame.style.removeProperty('--ctp-radius');
+				frame.style.removeProperty('--ctp-radius-pill');
+			}
+		});
 
 		renderPreviewSeparators(order, position);
 	}
@@ -346,6 +360,8 @@
 	var mediaRatioSelect = document.getElementById('ctp-design-media-ratio');
 	var accentEnabledInput = document.getElementById('ctp-design-accent-enabled');
 	var accentColorInput = document.getElementById('ctp-design-accent-color');
+	var buttonEnabledInput = document.getElementById('ctp-design-button-enabled');
+	var buttonColorInput = document.getElementById('ctp-design-button-color');
 
 	// Mirrors CardDesign::MEDIA_ASPECT_RATIOS ("wide" intentionally omitted —
 	// same "default emits nothing" rule as the corner-style handling above).
@@ -400,6 +416,50 @@
 		}
 	}
 
+	/**
+	 * Mirrors CardDesign::readableTextOn() — WCAG relative luminance against
+	 * the 0.179 break-even point, not the "> 0.5" shortcut, which picks the
+	 * wrong side for exactly the mid-range colors brand palettes live in.
+	 */
+	function readableTextOn(hexColor) {
+		var channels = [1, 3, 5].map(function (offset) {
+			var value = parseInt(hexColor.substr(offset, 2), 16) / 255;
+
+			return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+		});
+		var luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+
+		return luminance > 0.179 ? '#111827' : '#ffffff';
+	}
+
+	function updateButtonColor() {
+		var enabled = !!(buttonEnabledInput && buttonEnabledInput.checked);
+
+		// Same three-part control as the accent field above (swatch, hex
+		// field, reset button — see SettingsPage::renderButtonColorField()).
+		if (buttonColorInput) {
+			var field = buttonColorInput.closest('.ctp-color-field');
+			var controls = field ? field.querySelectorAll('input, button') : [buttonColorInput];
+			Array.prototype.forEach.call(controls, function (control) {
+				control.disabled = !enabled;
+			});
+		}
+
+		[preview, detailPreview].forEach(function (frame) {
+			if (!frame) {
+				return;
+			}
+
+			if (enabled && buttonColorInput) {
+				frame.style.setProperty('--ctp-color-button-strong', buttonColorInput.value);
+				frame.style.setProperty('--ctp-color-button-strong-text', readableTextOn(buttonColorInput.value));
+			} else {
+				frame.style.removeProperty('--ctp-color-button-strong');
+				frame.style.removeProperty('--ctp-color-button-strong-text');
+			}
+		});
+	}
+
 	visibilityInputs.forEach(function (input) {
 		input.addEventListener('change', updateVisibility);
 	});
@@ -416,6 +476,14 @@
 		accentColorInput.addEventListener('input', updateAccent);
 	}
 	updateAccent();
+
+	if (buttonEnabledInput) {
+		buttonEnabledInput.addEventListener('change', updateButtonColor);
+	}
+	if (buttonColorInput) {
+		buttonColorInput.addEventListener('input', updateButtonColor);
+	}
+	updateButtonColor();
 
 	/**
 	 * "Standard wiederherstellen" for either order list. Reordering six rows by

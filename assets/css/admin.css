@@ -706,7 +706,13 @@
     box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.ctp-design-preview-block__media {
+/* Explicit width because this placeholder has no content of its own, while
+   .ctp-events__detail-media shrink-wraps around its image on the front end
+   (frontend.css) — without it the block collapses to nothing here. Scoped to
+   the preview's id so it outranks that rule: frontend.css is enqueued after
+   admin.css on this screen, so an equally specific class selector would lose. */
+#ctp-design-detail-preview .ctp-design-preview-block__media {
+    width: 100%;
     aspect-ratio: 16 / 9;
     border-radius: calc(var(--ctp-radius, 14px) * 0.7);
     background: color-mix(in srgb, var(--ctp-accent) 25%, transparent);

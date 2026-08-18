@@ -17,8 +17,23 @@ namespace ChurchToolsPlugin\Frontend;
  */
 final class DetailDesign
 {
-    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'meta', 'description'];
+    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'];
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
+
+    /**
+     * Same widening CardDesign::upgradeOrder() does for the card order, for
+     * the detail view's own key set — date, time and location replaced the
+     * single "meta" entry here too, and both orders are stored per site, so
+     * both can still arrive on the old shape long after an update.
+     *
+     * @param string[] $order
+     *
+     * @return string[]
+     */
+    public static function upgradeOrder(array $order): array
+    {
+        return CardDesign::upgradeOrder($order);
+    }
 
     /**
      * @param string[] $order

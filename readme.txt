@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.10.0
+Stable tag: 0.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.11.0 =
+Überarbeitetes Frontend: Datum, Uhrzeit und Ort lassen sich im Designer einzeln platzieren, die Buttonfarbe ist getrennt von der Akzentfarbe einstellbar, und Schriftgrößen von Kachel, Popup und Monatstrenner sind aufeinander abgestimmt. Behebt außerdem, dass das Popup die eingestellte Feld-Reihenfolge nicht umsetzte. Bestehende Design-Einstellungen wandern automatisch mit, kein Handlungsbedarf.
+
 = 0.10.0 =
 Überarbeitetes Backend: einheitliche Statuszeile auf jedem Tab, Kalenderauswahl als Kachelliste mit Terminzahlen, ausführlicher Changelog im Tab „Updates“. Die Kalenderliste gleicht sich ab jetzt bei jeder Synchronisation automatisch mit ChurchTools ab. Das Feld für den GitHub-Token entfällt – das Repository ist öffentlich, ein bereits gespeicherter Token wird beim Update entfernt. Kein Handlungsbedarf.
 
@@ -174,6 +177,21 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.11.0 =
+* Neu: Datum, Uhrzeit und Ort sind drei einzeln verschiebbare Elemente im Designer statt eines gemeinsamen Eintrags „Datum & Ort“. Bestehende Anordnungen wandern automatisch mit
+* Neu: Eigene Buttonfarbe im Tab „Design“, getrennt von der Akzentfarbe – sie gilt für den gefüllten Zustand von Eventfinder-Knöpfen, „Weitere Termine laden“ und dem Schließknopf des Popups
+* Geändert: „Thema“ und „Zeitraum“ im Eventfinder sind Überschriften mit den Knöpfen darunter, das Suchfeld ist ein eigener Abschnitt
+* Geändert: Alle Schriftgrößen kommen aus einer gemeinsamen Skala – Popup-Text war je nach Theme deutlich größer als der Text der Kachel, aus der er geöffnet wurde
+* Geändert: Die Ecken-Einstellung „Rund/Eckig“ gilt jetzt auch für Kalender-Badge, „Ganztägig“-Badge und die Knöpfe des Eventfinders
+* Geändert: Datum und Uhrzeit stehen getrennt, jeweils mit eigenem Symbol; im Popup nebeneinander, sobald der Platz reicht
+* Geändert: Hochkant-Bilder füllen das Popup nicht mehr allein – die Bildhöhe ist gedeckelt, das Bild sitzt mittig im Rahmen
+* Geändert: Der Schließknopf des Popups ist eine deckende Fläche mit Rand und Schatten statt eines grauen Zeichens auf dem Eventbild
+* Geändert: Der Monatstrenner war kleiner als jeder Kacheltitel unter ihm
+* Fix: Das Popup ignorierte die im Tab „Design“ eingestellte Feld-Reihenfolge – bei der Standardeinstellung stand das Kalender-Badge unter der Beschreibung statt über dem Titel
+* Fix: Über dem Suchfeld des Eventfinders klaffte eine große Lücke
+* Fix: Ein Klick ins Popup zog einen Rahmen darum
+* Fix: Der Schließknopf sah beim Öffnen des Popups aus, als wäre er gedrückt
 
 = 0.10.0 =
 * Neu: Jeder Tab der Einstellungsseite trägt dieselbe Statuszeile – Verbindung, Kalender, Synchronisation, Design und Updates hatten bisher keine

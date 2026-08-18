@@ -19,20 +19,22 @@ final class CardDesignTest extends TestCase
         $this->assertSame(2, $variables['--ctp-order-title']);
         $this->assertSame(3, $variables['--ctp-order-subtitle']);
         $this->assertSame(4, $variables['--ctp-order-excerpt']);
-        $this->assertSame(5, $variables['--ctp-order-meta']);
+        $this->assertSame(5, $variables['--ctp-order-date']);
+        $this->assertSame(6, $variables['--ctp-order-time']);
+        $this->assertSame(7, $variables['--ctp-order-location']);
         $this->assertArrayNotHasKey('--ctp-radius', $variables);
     }
 
     /**
-     * Media is one flex item; the other five elements are flex items inside a
+     * Media is one flex item; the other elements are flex items inside a
      * single sibling "content" item, so the content block's own order can
-     * only reflect the earliest of those five positions — this pins that
+     * only reflect the earliest of those positions — this pins that
      * derivation down for a non-default order.
      */
     public function testContentOrderIsTheMinimumOfTheNonMediaElements(): void
     {
         $variables = CardDesign::cssVariables(
-            ['title', 'media', 'calendar', 'subtitle', 'excerpt', 'meta'],
+            ['title', 'media', 'calendar', 'subtitle', 'excerpt', 'date', 'time', 'location'],
             'rounded'
         );
 
@@ -42,7 +44,85 @@ final class CardDesignTest extends TestCase
         $this->assertSame(2, $variables['--ctp-order-calendar']);
         $this->assertSame(3, $variables['--ctp-order-subtitle']);
         $this->assertSame(4, $variables['--ctp-order-excerpt']);
-        $this->assertSame(5, $variables['--ctp-order-meta']);
+        $this->assertSame(5, $variables['--ctp-order-date']);
+        $this->assertSame(6, $variables['--ctp-order-time']);
+        $this->assertSame(7, $variables['--ctp-order-location']);
+    }
+
+    /**
+     * Date, time and location replaced a single "meta" element. An order
+     * stored before that split has to keep meaning what it meant — the three
+     * land where "meta" stood, and nothing else moves.
+     */
+    public function testUpgradeOrderExpandsLegacyMetaKeyInPlace(): void
+    {
+        $upgraded = CardDesign::upgradeOrder(['meta', 'media', 'calendar', 'title', 'subtitle', 'excerpt']);
+
+        $this->assertSame(
+            ['date', 'time', 'location', 'media', 'calendar', 'title', 'subtitle', 'excerpt'],
+            $upgraded
+        );
+        $this->assertTrue(CardDesign::isValidOrder($upgraded));
+    }
+
+    public function testUpgradeOrderLeavesCurrentOrdersUntouched(): void
+    {
+        $this->assertSame(CardDesign::DEFAULT_ORDER, CardDesign::upgradeOrder(CardDesign::DEFAULT_ORDER));
+    }
+
+    public function testUpgradeOrderKeepsSeparators(): void
+    {
+        $upgraded = CardDesign::upgradeOrder(['media', 'divider-a1', 'title', 'subtitle', 'excerpt', 'calendar', 'meta']);
+
+        $this->assertSame(
+            ['media', 'divider-a1', 'title', 'subtitle', 'excerpt', 'calendar', 'date', 'time', 'location'],
+            $upgraded
+        );
+    }
+
+    /**
+     * A site that had the whole meta line switched off must not suddenly see
+     * three fields it deliberately hid.
+     */
+    public function testUpgradeHiddenElementsExpandsLegacyMetaKey(): void
+    {
+        $upgraded = CardDesign::upgradeHiddenElements(['media', 'meta']);
+
+        $this->assertSame(['media', 'date', 'time', 'location'], $upgraded);
+    }
+
+    public function testUpgradeHiddenElementsLeavesOtherListsAlone(): void
+    {
+        $this->assertSame(['media', 'excerpt'], CardDesign::upgradeHiddenElements(['media', 'excerpt']));
+    }
+
+    /**
+     * The button color's label is derived, not configured — a dark brand color
+     * has to get white text and a pale one black, or the admin picks a color
+     * and gets an unreadable button.
+     */
+    public function testReadableTextOnPicksTheHigherContrastLabel(): void
+    {
+        $this->assertSame('#ffffff', CardDesign::readableTextOn('#111827'));
+        $this->assertSame('#ffffff', CardDesign::readableTextOn('#2563eb'));
+        $this->assertSame('#111827', CardDesign::readableTextOn('#ffffff'));
+        $this->assertSame('#111827', CardDesign::readableTextOn('#fbbf24'));
+    }
+
+    public function testButtonColorEmitsBothStrongVariables(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded', 'wide', '', '#2563eb');
+
+        $this->assertSame('#2563eb', $variables['--ctp-color-button-strong']);
+        $this->assertSame('#ffffff', $variables['--ctp-color-button-strong-text']);
+    }
+
+    public function testNoButtonColorLeavesTheNeutralDefaultInPlace(): void
+    {
+        $variables = CardDesign::cssVariables(CardDesign::DEFAULT_ORDER, 'rounded');
+
+        $this->assertArrayNotHasKey('--ctp-color-button-strong', $variables);
+        $this->assertArrayNotHasKey('--ctp-color-button-strong-text', $variables);
     }
 
     public function testSquareCornerStyleOverridesRadius(): void
@@ -83,13 +163,18 @@ final class CardDesignTest extends TestCase
         $this->assertStringContainsString('--ctp-order-title:2;', $style);
         $this->assertStringContainsString('--ctp-order-subtitle:3;', $style);
         $this->assertStringContainsString('--ctp-order-excerpt:4;', $style);
-        $this->assertStringContainsString('--ctp-order-meta:5;', $style);
+        $this->assertStringContainsString('--ctp-order-date:5;', $style);
+        $this->assertStringContainsString('--ctp-order-time:6;', $style);
+        $this->assertStringContainsString('--ctp-order-location:7;', $style);
         $this->assertStringContainsString('--ctp-radius:0px;', $style);
     }
 
     public function testIsValidOrderAcceptsAnyNumberOfSeparators(): void
     {
-        $order = ['media', 'calendar', 'divider-a1', 'title', 'spacer-b2', 'subtitle', 'excerpt', 'meta'];
+        $order = [
+            'media', 'calendar', 'divider-a1', 'title', 'spacer-b2',
+            'subtitle', 'excerpt', 'date', 'time', 'location',
+        ];
 
         $this->assertTrue(CardDesign::isValidOrder($order));
     }
@@ -103,14 +188,17 @@ final class CardDesignTest extends TestCase
 
     public function testIsValidOrderRejectsMissingFixedElement(): void
     {
-        $order = ['media', 'calendar', 'title', 'subtitle', 'meta'];
+        $order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location'];
 
         $this->assertFalse(CardDesign::isValidOrder($order));
     }
 
     public function testRenderSeparatorsOutputsDividerAndSpacerWithPositionalOrder(): void
     {
-        $order = ['media', 'calendar', 'divider-a1', 'title', 'subtitle', 'spacer-b2', 'excerpt', 'meta'];
+        $order = [
+            'media', 'calendar', 'divider-a1', 'title', 'subtitle',
+            'spacer-b2', 'excerpt', 'date', 'time', 'location',
+        ];
 
         $html = CardDesign::renderSeparators($order);
 
@@ -190,8 +278,8 @@ final class CardDesignTest extends TestCase
     public function testSanitizeHiddenElementsKeepsOnlyToggleableKeys(): void
     {
         $this->assertSame(
-            ['media', 'meta'],
-            CardDesign::sanitizeHiddenElements(['media', 'title', 'meta', 'unknown'])
+            ['media', 'time'],
+            CardDesign::sanitizeHiddenElements(['media', 'title', 'time', 'unknown'])
         );
     }
 

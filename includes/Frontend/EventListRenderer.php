@@ -239,7 +239,8 @@ final class EventListRenderer
             $designSettings['element_order'],
             $designSettings['corner_style'],
             $designSettings['media_aspect_ratio'],
-            $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : ''
+            $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : '',
+            $designSettings['button_color_enabled'] ? $designSettings['button_color'] : ''
         );
         // Same value for every card in the loop below (element order is a global
         // design setting, not per-event), so it's computed once here rather than

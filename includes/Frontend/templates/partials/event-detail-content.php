@@ -31,8 +31,18 @@ if (!defined('ABSPATH')) {
             case 'media':
                 ?>
                 <?php if ($event['image_url'] !== '') : ?>
-                    <div class="ctp-events__detail-media<?php echo $event['image_is_fallback'] ? ' ctp-events__detail-media--fallback' : ''; ?>">
-                        <img src="<?php echo esc_url($event['image_url']); ?>" alt="" />
+                    <?php
+                    // The outer element is the full-width row the detail view's
+                    // flex layout gives it; the inner frame is what shrink-wraps
+                    // the (possibly portrait) image and carries radius, shadow
+                    // and the fallback scrim. Splitting the two is what lets a
+                    // narrow image sit centred without a full-width frame
+                    // around empty space beside it.
+                    ?>
+                    <div class="ctp-events__detail-media">
+                        <div class="ctp-events__detail-media-frame<?php echo $event['image_is_fallback'] ? ' ctp-events__detail-media-frame--fallback' : ''; ?>">
+                            <img src="<?php echo esc_url($event['image_url']); ?>" alt="" />
+                        </div>
                     </div>
                 <?php endif; ?>
                 <?php
@@ -72,22 +82,37 @@ if (!defined('ABSPATH')) {
                 <?php
                 break;
 
-            case 'meta':
+            case 'date':
                 ?>
-                <p class="ctp-events__meta">
-                    <span class="ctp-events__meta-item">
-                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input, same trust boundary as the rest of this template's static HTML (see Icons.php docblock). ?>
-                        <?php echo Icons::clock(); ?>
-                        <?php echo esc_html(EventFormatter::dateRange($event)); ?>
-                    </span>
-                    <?php if ($event['location'] !== '') : ?>
-                        <span class="ctp-events__meta-item">
-                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                            <?php echo Icons::location(); ?>
-                            <?php echo esc_html($event['location']); ?>
-                        </span>
-                    <?php endif; ?>
+                <p class="ctp-events__meta-item ctp-events__meta-item--date">
+                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input, same trust boundary as the rest of this template's static HTML (see Icons.php docblock). ?>
+                    <?php echo Icons::calendar(); ?>
+                    <?php echo esc_html(EventFormatter::dateOnly($event)); ?>
                 </p>
+                <?php
+                break;
+
+            case 'time':
+                ?>
+                <?php if (EventFormatter::timeRange($event) !== '') : ?>
+                    <p class="ctp-events__meta-item ctp-events__meta-item--time">
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                        <?php echo Icons::clock(); ?>
+                        <?php echo esc_html(EventFormatter::timeRange($event)); ?>
+                    </p>
+                <?php endif; ?>
+                <?php
+                break;
+
+            case 'location':
+                ?>
+                <?php if ($event['location'] !== '') : ?>
+                    <p class="ctp-events__meta-item ctp-events__meta-item--location">
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                        <?php echo Icons::location(); ?>
+                        <?php echo esc_html($event['location']); ?>
+                    </p>
+                <?php endif; ?>
                 <?php
                 break;
 

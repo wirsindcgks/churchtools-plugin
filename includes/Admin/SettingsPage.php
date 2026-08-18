@@ -206,6 +206,7 @@ final class SettingsPage
         add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designGlobalPage, 'ctp_design_global');
+        add_settings_field('button_color', __('Buttonfarbe', 'churchtools-plugin'), [$this, 'renderButtonColorField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designGlobalPage, 'ctp_design_global');
     }
 
@@ -240,15 +241,32 @@ final class SettingsPage
             // picker starts on the value that's already visually in effect
             // rather than on an arbitrary, surprising default.
             'accent_color' => '#2563eb',
+            'button_color_enabled' => false,
+            // Matches frontend.css's own --ctp-color-button-strong fallback,
+            // same "start on the value already in effect" rule as accent_color.
+            'button_color' => '#111827',
             'click_behavior' => 'popup',
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
         ];
     }
 
+    /**
+     * Widens both stored element orders (and the hidden-field list) from the
+     * pre-split key set on every read — date, time and location used to be one
+     * "meta" element. Doing it here rather than in a one-shot upgrade means a
+     * site that never re-saves its Design tab still renders correctly; the
+     * migrated value is written back the next time anything saves.
+     */
     public static function get(): array
     {
-        return wp_parse_args(get_option(self::OPTION_KEY, []), self::defaults());
+        $settings = wp_parse_args(get_option(self::OPTION_KEY, []), self::defaults());
+
+        $settings['element_order'] = CardDesign::upgradeOrder((array) $settings['element_order']);
+        $settings['detail_element_order'] = DetailDesign::upgradeOrder((array) $settings['detail_element_order']);
+        $settings['hidden_elements'] = CardDesign::upgradeHiddenElements((array) $settings['hidden_elements']);
+
+        return $settings;
     }
 
     public static function getBaseUrl(): string
@@ -420,6 +438,14 @@ final class SettingsPage
             }
         }
 
+        $buttonColor = $existing['button_color'];
+        if (array_key_exists('button_color', $input)) {
+            $sanitizedButtonColor = sanitize_hex_color((string) $input['button_color']);
+            if (!empty($sanitizedButtonColor)) {
+                $buttonColor = $sanitizedButtonColor;
+            }
+        }
+
         return [
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
@@ -454,6 +480,10 @@ final class SettingsPage
                 ? (bool) $input['accent_color_enabled']
                 : $existing['accent_color_enabled'],
             'accent_color' => $accentColor,
+            'button_color_enabled' => array_key_exists('button_color_enabled', $input)
+                ? (bool) $input['button_color_enabled']
+                : $existing['button_color_enabled'],
+            'button_color' => $buttonColor,
             'click_behavior' => $clickBehavior,
             'detail_element_order' => array_key_exists('detail_element_order', $input)
                 ? self::sanitizeDetailElementOrder((string) $input['detail_element_order'])
@@ -465,7 +495,7 @@ final class SettingsPage
     }
 
     /**
-     * The Design tab's hidden input submits the drag&drop order (the six fixed
+     * The Design tab's hidden input submits the drag&drop order (the fixed
      * CardDesign::ELEMENT_KEYS plus any admin-inserted spacer-/divider-prefixed
      * separators, see renderElementOrderField()) as a comma-separated string.
      * Unlike every other field in this method, an invalid value here does NOT
@@ -494,7 +524,7 @@ final class SettingsPage
     /**
      * Same "present but malformed value snaps to the default, absent value falls
      * back to $existing" rule as sanitizeElementOrder() above, for the detail
-     * view's own (separator-free) six-key order.
+     * view's own (separator-free) key set.
      */
     private static function sanitizeDetailElementOrder(string $raw): array
     {
@@ -936,12 +966,14 @@ final class SettingsPage
     private static function elementOrderLabels(): array
     {
         return [
-            'media' => __('Bild / Datum', 'churchtools-plugin'),
+            'media' => __('Bild (mit Datumsbadge)', 'churchtools-plugin'),
             'calendar' => __('Kalendername', 'churchtools-plugin'),
             'title' => __('Titel', 'churchtools-plugin'),
             'subtitle' => __('Untertitel', 'churchtools-plugin'),
             'excerpt' => __('Beschreibungsauszug', 'churchtools-plugin'),
-            'meta' => __('Datum & Ort', 'churchtools-plugin'),
+            'date' => __('Datum', 'churchtools-plugin'),
+            'time' => __('Uhrzeit', 'churchtools-plugin'),
+            'location' => __('Ort', 'churchtools-plugin'),
         ];
     }
 
@@ -1021,7 +1053,7 @@ final class SettingsPage
             <li><?php esc_html_e('Ziehen funktioniert mit Maus und Trackpad – Sortieren per Touch wird derzeit nicht unterstützt.', 'churchtools-plugin'); ?></li>
             <li><?php esc_html_e('Die Bild-Position legt nur fest, ob das Bild über oder unter dem Textblock steht – nicht zwischen einzelnen Textzeilen.', 'churchtools-plugin'); ?></li>
             <li><?php esc_html_e('Trennlinien und Abstände lassen sich beliebig oft einfügen und wie jedes andere Element verschieben.', 'churchtools-plugin'); ?></li>
-            <li><?php esc_html_e('Das „×“ an einer Trennlinie oder einem Abstand entfernt sie wieder; die sechs festen Elemente bleiben immer erhalten.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Das „×“ an einer Trennlinie oder einem Abstand entfernt sie wieder; die festen Elemente bleiben immer erhalten.', 'churchtools-plugin'); ?></li>
         </ul>
         <?php
     }
@@ -1165,6 +1197,42 @@ final class SettingsPage
             . '</p>';
     }
 
+    /**
+     * Sibling of renderAccentColorField() above, for the one thing the accent
+     * deliberately no longer controls: the interactive chrome. The two are
+     * separate settings because --ctp-accent doubles as a *calendar's*
+     * identity color (each card re-sets it inline), so it could never be a
+     * reliable button color — see frontend.css's --ctp-color-button-* block.
+     */
+    public function renderButtonColorField(): void
+    {
+        $settings = self::get();
+        printf('<input type="hidden" name="%1$s[button_color_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" id="ctp-design-button-enabled" name="%1$s[button_color_enabled]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty($settings['button_color_enabled']), true, false),
+            esc_html__('Eigene Buttonfarbe verwenden', 'churchtools-plugin')
+        );
+        printf(
+            '<p class="ctp-color-field">'
+            . '<input type="color" id="ctp-design-button-color" class="ctp-color-input" name="%1$s[button_color]" value="%2$s" aria-label="%3$s" %5$s />'
+            . '<input type="text" class="ctp-color-hex" value="%2$s" maxlength="7" spellcheck="false" autocomplete="off" aria-label="%4$s" %5$s />'
+            . '<button type="button" class="button-link ctp-color-reset" data-default-color="%6$s" %5$s>%7$s</button>'
+            . '</p>',
+            esc_attr(self::OPTION_KEY),
+            esc_attr($settings['button_color']),
+            esc_attr__('Buttonfarbe wählen', 'churchtools-plugin'),
+            esc_attr__('Buttonfarbe als Hex-Code', 'churchtools-plugin'),
+            disabled(empty($settings['button_color_enabled']), true, false),
+            esc_attr(self::defaults()['button_color']),
+            esc_html__('Zurücksetzen', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Gilt für die Buttons des Eventfinders, „Weitere Termine laden“ und den Schließen-Knopf des Popups – und zwar für deren gefüllten Zustand: ausgewählt beziehungsweise unter dem Mauszeiger. Im Ruhezustand bleiben sie hell mit dünnem Rand. Die Schriftfarbe auf der gefüllten Fläche wird automatisch auf Schwarz oder Weiß gesetzt, je nachdem, was besser lesbar ist.', 'churchtools-plugin')
+            . '</p>';
+    }
+
     public function renderClickBehaviorField(): void
     {
         $current = self::get()['click_behavior'];
@@ -1201,7 +1269,9 @@ final class SettingsPage
             'calendar' => __('Kalendername', 'churchtools-plugin'),
             'title' => __('Titel', 'churchtools-plugin'),
             'subtitle' => __('Untertitel', 'churchtools-plugin'),
-            'meta' => __('Datum & Ort', 'churchtools-plugin'),
+            'date' => __('Datum', 'churchtools-plugin'),
+            'time' => __('Uhrzeit', 'churchtools-plugin'),
+            'location' => __('Ort', 'churchtools-plugin'),
             'description' => __('Beschreibung', 'churchtools-plugin'),
         ];
     }
@@ -1256,7 +1326,8 @@ final class SettingsPage
             $settings['element_order'],
             $settings['corner_style'],
             $settings['media_aspect_ratio'],
-            $settings['accent_color_enabled'] ? $settings['accent_color'] : ''
+            $settings['accent_color_enabled'] ? $settings['accent_color'] : '',
+            $settings['button_color_enabled'] ? $settings['button_color'] : ''
         );
         $hidden = $settings['hidden_elements'];
         ?>
@@ -1286,17 +1357,20 @@ final class SettingsPage
                                 <span class="ctp-events__subtitle" data-key="subtitle" <?php echo in_array('subtitle', $hidden, true) ? 'hidden' : ''; ?>>
                                     <?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?>
                                 </span>
-                                <span class="ctp-events__meta" data-key="meta" <?php echo in_array('meta', $hidden, true) ? 'hidden' : ''; ?>>
-                                    <span class="ctp-events__meta-item">
-                                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
-                                        <?php echo Icons::clock(); ?>
-                                        24.12.2026, 18:00
-                                    </span>
-                                    <span class="ctp-events__meta-item">
-                                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                                        <?php echo Icons::location(); ?>
-                                        <?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?>
-                                    </span>
+                                <span class="ctp-events__meta-item ctp-events__meta-item--date" data-key="date" <?php echo in_array('date', $hidden, true) ? 'hidden' : ''; ?>>
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
+                                    <?php echo Icons::calendar(); ?>
+                                    24.12.2026
+                                </span>
+                                <span class="ctp-events__meta-item ctp-events__meta-item--time" data-key="time" <?php echo in_array('time', $hidden, true) ? 'hidden' : ''; ?>>
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                                    <?php echo Icons::clock(); ?>
+                                    18:00–20:00
+                                </span>
+                                <span class="ctp-events__meta-item ctp-events__meta-item--location" data-key="location" <?php echo in_array('location', $hidden, true) ? 'hidden' : ''; ?>>
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                                    <?php echo Icons::location(); ?>
+                                    <?php esc_html_e('Gemeindehaus', 'churchtools-plugin'); ?>
                                 </span>
                                 <p class="ctp-events__excerpt" data-key="excerpt" <?php echo in_array('excerpt', $hidden, true) ? 'hidden' : ''; ?>>
                                     <?php esc_html_e('Kurzer Auszug aus der Terminbeschreibung, wie er auf der Kachel erscheint …', 'churchtools-plugin'); ?>
@@ -1326,15 +1400,31 @@ final class SettingsPage
         $order = DetailDesign::isValidOrder($settings['detail_element_order'])
             ? $settings['detail_element_order']
             : DetailDesign::DEFAULT_ORDER;
+        // Only the corner style is legible in this preview (element order is
+        // server-rendered here, see the docblock), but it's the same style
+        // attribute the card preview gets — cheaper than a second code path,
+        // and admin-design.js keeps both frames in sync on change.
+        $style = CardDesign::styleAttribute(
+            $settings['element_order'],
+            $settings['corner_style'],
+            $settings['media_aspect_ratio'],
+            $settings['accent_color_enabled'] ? $settings['accent_color'] : '',
+            $settings['button_color_enabled'] ? $settings['button_color'] : ''
+        );
 
         $blocks = [
-            'media' => '<div class="ctp-events__detail-media ctp-design-preview-block__media" aria-hidden="true"></div>',
+            'media' => '<div class="ctp-events__detail-media" aria-hidden="true">'
+                . '<div class="ctp-events__detail-media-frame ctp-design-preview-block__media"></div></div>',
             'calendar' => '<span class="ctp-events__eyebrow"><span class="ctp-events__color-dot" aria-hidden="true"></span>'
                 . esc_html__('Beispiel-Kalender', 'churchtools-plugin') . '</span>',
             'title' => '<h2 class="ctp-events__detail-title">' . esc_html__('Beispiel-Termin', 'churchtools-plugin') . '</h2>',
             'subtitle' => '<p class="ctp-events__subtitle">' . esc_html__('Untertitel-Beispiel', 'churchtools-plugin') . '</p>',
-            'meta' => '<p class="ctp-events__meta"><span class="ctp-events__meta-item">' . Icons::clock() . ' 24.12.2026, 18:00</span>'
-                . '<span class="ctp-events__meta-item">' . Icons::location() . ' ' . esc_html__('Gemeindehaus', 'churchtools-plugin') . '</span></p>',
+            'date' => '<p class="ctp-events__meta-item ctp-events__meta-item--date">'
+                . Icons::calendar() . ' 24.12.2026</p>',
+            'time' => '<p class="ctp-events__meta-item ctp-events__meta-item--time">'
+                . Icons::clock() . ' 18:00–20:00</p>',
+            'location' => '<p class="ctp-events__meta-item ctp-events__meta-item--location">'
+                . Icons::location() . ' ' . esc_html__('Gemeindehaus', 'churchtools-plugin') . '</p>',
             'description' => '<div class="ctp-events__detail-description"><p>'
                 . esc_html__('Vollständige Terminbeschreibung, wie sie in Popup und eigener Seite erscheint …', 'churchtools-plugin') . '</p></div>',
         ];
@@ -1345,7 +1435,11 @@ final class SettingsPage
                 <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine“ steht.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-design-preview-backdrop">
-                <div class="ctp-events ctp-events__detail ctp-design-preview-frame" id="ctp-design-detail-preview">
+                <div
+                    class="ctp-events ctp-events__detail ctp-design-preview-frame"
+                    id="ctp-design-detail-preview"
+                    style="<?php echo esc_attr($style); ?>"
+                >
                     <?php foreach ($order as $key) : ?>
                         <div data-key="<?php echo esc_attr($key); ?>">
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>

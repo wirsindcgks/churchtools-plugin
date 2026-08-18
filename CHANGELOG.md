@@ -5,6 +5,38 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.11.0] - 2026-08-19
+
+Ein Release über das Frontend, entstanden aus einem Durchgang durch die
+Ansichten mit der Frage, was beim Lesen stört. Die meiste Arbeit steckt in
+Dingen, die einzeln als Kleinigkeit durchgehen und zusammen den Unterschied
+machen: Schriftgrößen, die zueinander passen, eine Uhrzeit, die man findet,
+und ein Popup, das nicht mit einem bildschirmhohen Bild aufmacht.
+
+### Added
+
+- **Datum, Uhrzeit und Ort sind drei eigene Elemente im Designer.** Bisher waren sie ein einziger Eintrag „Datum & Ort“ mit einem Ziehgriff — wer die Uhrzeit über den Titel holen wollte, nahm den Ort zwangsläufig mit. Jetzt stehen sie einzeln in beiden Reihenfolge-Listen und in „Ausgeblendete Felder“, mit identischer Formatierung, weil sie drei Teile derselben Aussage sind und nicht ein Hauptsatz mit zwei Fußnoten. Bestehende Anordnungen wandern beim ersten Lesen von selbst auf die drei neuen Schlüssel, an genau die Stelle, an der „Datum & Ort“ stand — sichtbar ändert sich dadurch nichts
+- **Eine eigene Buttonfarbe im Tab „Design“.** Sie gilt für den gefüllten Zustand der Bedienelemente: den ausgewählten Knopf des Eventfinders, „Weitere Termine laden“ unter dem Mauszeiger und den Schließknopf des Popups. Im Ruhezustand bleiben sie hell mit dünnem Rand — eine Markenfarbe soll bei einer Auswahl aufleuchten und nicht ein Dutzend Filterknöpfe gleichzeitig einfärben. Die Schriftfarbe darauf ist nicht einstellbar, sondern wird aus der Helligkeit der gewählten Farbe berechnet, sonst wäre eine helle Markenfarbe mit weißer Schrift unlesbar
+
+### Changed
+
+- **Der Eventfinder hat Überschriften.** „Thema“ und „Zeitraum“ standen als kleine graue Versalien links neben ihren Knöpfen und lasen sich damit wie Formularbeschriftungen, nicht wie die Abschnittsüberschriften, die sie sind. Jetzt stehen sie in Textfarbe auf einer eigenen Zeile, die Knöpfe darunter. Das Suchfeld ist der dritte Abschnitt und bekommt dieselbe Trennlinie. Nebenbei benennen die Überschriften ihre Knopfgruppe jetzt auch für Screenreader
+- **Alle Schriftgrößen kommen aus einer gemeinsamen Skala.** Sie waren vorher teils fest in `rem` gesetzt, teils vom Theme geerbt — auf einem Theme mit großer Grundschrift war der Popup-Text darum die Hälfte größer als der Kacheltext, aus dem er geöffnet wurde, und Titel in der Listenansicht größer als die im Grid. Alles zieht jetzt aus einer Skala, die an `--ctp-font-base` hängt; wer das Modul insgesamt größer oder kleiner will, überschreibt diesen einen Wert
+- **Die Ecken-Einstellung „Rund/Eckig“ greift auf alles.** Kalender-Badge, „Ganztägig“-Badge, die Knöpfe des Eventfinders und der Schließknopf des Popups hingen an einem fest verdrahteten Wert und blieben rund, auch wenn überall sonst „Eckig“ eingestellt war. „Rund“ macht die Eventfinder-Knöpfe jetzt zu Pillen, „Eckig“ macht sie kantig — die Einstellung ist damit im Eventfinder überhaupt erst sichtbar
+- **Datum und Uhrzeit stehen getrennt, jeweils mit eigenem Symbol.** Sie waren eine einzige Zeile („20.08.2026 19:30–22:00“) in gedämpfter Schrift, in der die Uhrzeit — das, wonach die meisten suchen — in der Mitte verschwand. Bei ganztägigen Terminen entfällt die Uhrzeit-Zeile ganz, statt „00:00“ zu behaupten; bei mehrtägigen trägt die Datumszeile die Spanne, damit das Enddatum nicht verlorengeht
+- **Im Popup stehen Datum, Uhrzeit und Ort nebeneinander, sobald der Platz reicht,** und rutschen auf schmalen Bildschirmen untereinander
+- **Der Monatstrenner ist kein Kleingedrucktes mehr.** Mit 13,6 px war er kleiner als jeder Kacheltitel unter ihm, obwohl er die Gruppe darüberstellt. Jetzt eine Stufe unter den Titeln, dafür in Versalien mit Sperrung — erkennbar als Gruppenmarke, ohne mit den Titeln zu konkurrieren
+- **Hochkant-Bilder machen das Popup nicht mehr bildschirmhoch.** ChurchTools-Flyer sind oft im Format 4:5 oder höher; auf volle Spaltenbreite gezogen füllte so eines das Popup allein und schob Titel, Uhrzeit und Beschreibung aus dem Sichtfeld. Die Höhe ist jetzt gedeckelt, das Bild sitzt mittig, und der Rahmen legt sich um das Bild statt um die leere Fläche daneben
+- **Der Schließknopf des Popups ist ein eigener Knopf.** Als graues Zeichen auf dem Eventbild — und ein Bild ist das Erste, was die Detailansicht zeigt — war er praktisch unsichtbar. Jetzt eine deckende Fläche mit Rand und Schatten, groß genug zum Treffen mit dem Finger
+- **Die Bedienelemente hängen nicht mehr an der Akzentfarbe.** Das war nie eine verlässliche Buttonfarbe: `--ctp-accent` wird pro Kachel aus der Farbe des jeweiligen Kalenders neu gesetzt. Beide sind jetzt getrennt einstellbar (siehe oben), was auch das Einfügen in ein bestehendes Seitendesign vereinfacht
+
+### Fixed
+
+- **Das Popup hielt sich nicht an die eingestellte Feld-Reihenfolge.** Kalendername, Untertitel und die Datumszeile tragen für die Kachelansichten eine CSS-Reihenfolge, und weil die Detailansicht ebenfalls eine Flex-Spalte ist, gewann diese gegen die serverseitig gebaute Reihenfolge: Bei der Standardeinstellung landete das Kalender-Badge unter der Beschreibung statt über dem Titel. Der Tab „Design“ zeigte die ganze Zeit die richtige Anordnung an, das Popup setzte eine andere um
+- **Über dem Suchfeld des Eventfinders klaffte eine große Lücke.** Das Feld erbte aus der einfachen Werkzeugleiste eine Breitenangabe von 16 rem, die in der Spaltenanordnung des Eventfinders als *Höhe* gelesen wurde
+- **Ein Klick ins Popup zog einen Rahmen darum.** Der Klick gibt dem Dialogfenster selbst den Fokus, und WordPress' eigene Global Styles legen einen 2-px-Ring um alles Fokussierte im Seiteninhalt. Der Ring ist für das Fenster jetzt aus; seine Knöpfe behalten ihren
+- **Der Schließknopf sah beim Öffnen des Popups aus, als wäre er gedrückt.** Der Fokus sprang beim Öffnen automatisch auf ihn, und er stellte Fokus und Mauszeiger gleich dar. Der Fokus landet jetzt im Inhalt — was auch Screenreader beim Termin beginnen lässt statt bei „Schließen“ — und nur der Mauszeiger füllt den Knopf
+
 ## [0.10.0] - 2026-08-18
 
 Ein Release über das Backend. Die Einstellungsseite war über sieben Tabs

@@ -16,6 +16,12 @@ namespace ChurchToolsPlugin\Frontend;
  */
 final class EventFormatter
 {
+    /**
+     * The whole "when" as one string. No longer used by the bundled templates,
+     * which split it across dateOnly()/timeRange() to give date and time a line
+     * and an icon each — kept because event-{layout}.php is theme-overridable
+     * (see EventListRenderer::render()) and a copied override still calls it.
+     */
     public static function dateRange(array $event): string
     {
         if (!empty($event['all_day'])) {
@@ -23,15 +29,62 @@ final class EventFormatter
         }
 
         $dateTimeFormat = get_option('date_format') . ' ' . get_option('time_format');
-        $sameDay = mysql2date('Y-m-d', $event['start_date']) === mysql2date('Y-m-d', $event['end_date']);
 
-        if ($sameDay) {
+        if (self::isSameDay($event)) {
             return mysql2date($dateTimeFormat, $event['start_date'])
                 . '–' . mysql2date(get_option('time_format'), $event['end_date']);
         }
 
         return mysql2date($dateTimeFormat, $event['start_date'])
             . ' – ' . mysql2date($dateTimeFormat, $event['end_date']);
+    }
+
+    /**
+     * The date half of the "when", for the calendar-icon line the layout
+     * templates pair with timeRange() below — the two used to be one
+     * dateRange() string on a single line, which buried the time in the
+     * middle of it.
+     *
+     * A single date for a same-day event, the start–end span for one running
+     * over several days (where the span belongs on the *date* line, not the
+     * time one: "20.08. – 22.08." plus "19:30 – 22:00" reads as one stretch,
+     * while a bare "20.08." would drop the end date entirely).
+     */
+    public static function dateOnly(array $event): string
+    {
+        $format = get_option('date_format');
+        $start = mysql2date($format, $event['start_date']);
+
+        if (self::isSameDay($event)) {
+            return $start;
+        }
+
+        return $start . ' – ' . mysql2date($format, $event['end_date']);
+    }
+
+    /**
+     * The time half, for the clock-icon line. Empty for all-day events —
+     * their start timestamp carries no meaningful time, and templates then
+     * omit the line entirely rather than printing a misleading "00:00"
+     * (the "Ganztägig" badge next to the title already states the case).
+     */
+    public static function timeRange(array $event): string
+    {
+        if (!empty($event['all_day'])) {
+            return '';
+        }
+
+        $format = get_option('time_format');
+        $separator = self::isSameDay($event) ? '–' : ' – ';
+
+        return mysql2date($format, $event['start_date'])
+            . $separator
+            . mysql2date($format, $event['end_date']);
+    }
+
+    private static function isSameDay(array $event): bool
+    {
+        return mysql2date('Y-m-d', $event['start_date']) === mysql2date('Y-m-d', $event['end_date']);
     }
 
     public static function shortDate(string $mysqlDate): string
