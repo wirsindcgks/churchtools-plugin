@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.2] - 2026-08-18
+
+Ein kleiner Release mit genau einer Änderung am Plugin selbst: Das Repository
+ist jetzt öffentlich, und der Hinweis im Tab „Updates" sagt das auch. Der Rest
+der Arbeit dieses Tages betraf die Projektdokumentation im Repo, die nicht
+mitausgeliefert wird.
+
+### Changed
+
+- **Der GitHub-Token ist hier keine Voraussetzung mehr, und der Updates-Tab sagt es.** Das Repository, aus dem dieses Plugin seine Updates bezieht, ist öffentlich – der Token hebt damit nur noch GitHubs Rate-Limit für nicht angemeldete Anfragen an (60 auf 5.000 Anfragen pro Stunde), was zwei Update-Prüfungen am Tag ohnehin nie erreichen. Bisher stand dort „Ist das Repository privat, ist der Token zwingend"; wer das auf einer frischen Installation las, musste schließen, dass Updates ohne Token nicht funktionieren. Für ein privates Fork gilt der Satz weiterhin und steht deshalb in dieser Form weiter da
+
 ## [0.9.1] - 2026-08-18
 
 Nachtrag zu 0.9.0: Alles hier entstand in zwei Review-Runden auf die

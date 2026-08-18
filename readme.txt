@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.9.2 =
+Nur ein korrigierter Hinweistext im Tab „Updates": Das Repository ist öffentlich, ein GitHub-Token ist für Update-Prüfungen also nicht nötig. Kein Handlungsbedarf.
+
 = 0.9.1 =
 Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts vorhanden" missverstanden wurden – im schlimmsten Fall hätte das die gespeicherten Termine oder die Kalenderliste geleert. Enthält außerdem einen Hinweis im Backend, wenn die Synchronisation klemmt. Kein Handlungsbedarf nach dem Update.
 
@@ -168,6 +171,9 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden" wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation" gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.9.2 =
+* Der Hinweis zum GitHub-Token im Tab „Updates" beschreibt jetzt den tatsächlichen Fall: Das Repository ist öffentlich, ein Token hebt nur das Rate-Limit an und ist keine Voraussetzung für Update-Prüfungen
 
 = 0.9.1 =
 * Fix: Antwortete die ChurchTools-API mit HTTP 200, aber unerwartetem Inhalt (Fehlerseite eines Proxys, Wartungsseite), galt das als „keine Termine vorhanden" – im Sync die Vorstufe zum Leeren der Termintabelle, im Verbindungstest ein falsches „Verbindung erfolgreich"
