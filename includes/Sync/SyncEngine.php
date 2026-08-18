@@ -35,7 +35,26 @@ final class SyncEngine
         $settings = SettingsPage::get();
         $calendarIds = SettingsPage::getEnabledCalendarIds();
 
-        if ($settings['instance'] === '' || $settings['api_key'] === '' || $calendarIds === []) {
+        if ($settings['instance'] === '' || $settings['api_key'] === '') {
+            return;
+        }
+
+        if ($calendarIds === []) {
+            // Unter demselben Schutz wie der Abgleich darunter, aus demselben
+            // Grund: Auch dieser Zweig laeuft unbeaufsichtigt per WP-Cron.
+            //
+            // Ein noch gespeicherter Fehler wird dabei abgeraeumt wie nach
+            // einem gelungenen Abgleich: Er beschreibt einen Lauf, den es so
+            // nicht mehr gibt - und stehen bleiben duerfte er nur, wenn ihn
+            // noch jemand wiederholen koennte. Wird spaeter wieder ein
+            // Kalender aktiviert, meldet ihn der naechste Lauf ohnehin erneut.
+            try {
+                self::cleanUpAfterLastCalendar();
+                delete_option(self::OPTION_LAST_SYNC_ERROR);
+            } catch (Throwable $exception) {
+                self::rememberError($exception);
+            }
+
             return;
         }
 
@@ -52,21 +71,77 @@ final class SyncEngine
             update_option('ctp_last_sync', current_time('mysql'));
             EventQueryCache::flush();
         } catch (Throwable $exception) {
-            update_option(self::OPTION_LAST_SYNC_ERROR, [
-                'time' => current_time('mysql'),
-                'message' => $exception->getMessage(),
-            ]);
+            self::rememberError($exception);
+        }
+    }
+
+    private static function rememberError(Throwable $exception): void
+    {
+        update_option(self::OPTION_LAST_SYNC_ERROR, [
+            'time' => current_time('mysql'),
+            'message' => $exception->getMessage(),
+        ]);
+    }
+
+    /**
+     * Wer den letzten aktiven Kalender abwaehlt, hat bisher dessen Termine
+     * behalten: Dieser Lauf stieg vorher sofort aus, und
+     * deleteFromCalendarsNotIn([]) loescht per eigener Schutzbedingung nichts.
+     * Im Frontend waren sie damit zwar unsichtbar ("alle Kalender" heisst
+     * alle *aktiven*), in der Datenbank und im Admin-Tab "Events" aber
+     * weiterhin da - ohne dass es dafuer eine Bedienung gab. Die
+     * Aufbewahrungsfrist haette sie erst abgeraeumt, nachdem sie vergangen
+     * sind.
+     *
+     * Kein Fall fuer den Leer-Antwort-Schutz weiter unten: Der schuetzt vor
+     * einer Antwort der API, die nicht stimmt. Hier hat niemand die API
+     * gefragt, hier steht eine Einstellung, die jemand von Hand gesetzt hat.
+     */
+    private static function cleanUpAfterLastCalendar(): void
+    {
+        $repository = new EventRepository();
+
+        if ($repository->count() > 0) {
+            $repository->deleteAll();
+            EventQueryCache::flush();
+        }
+
+        // Der Kehraus fuer importierte Bilder, die keine Zeile mehr
+        // referenziert - hier besonders, weil doRun() ihn nicht mehr ausfuehrt,
+        // solange kein Kalender aktiv ist, und weil nach deleteAll() jedes
+        // Bild aus einem frueheren Rueckstand endgueltig unreferenziert ist.
+        // Pro Lauf gedeckelt (siehe orphanedAttachmentIds()), ein groesserer
+        // Rueckstand wird also ueber mehrere Laeufe abgearbeitet - deshalb
+        // steht das hier ausserhalb der Bedingung darueber.
+        foreach ($repository->orphanedAttachmentIds() as $attachmentId) {
+            wp_delete_attachment($attachmentId, true);
         }
     }
 
     /**
+     * Geprueft wird die Form, nicht nur der Typ: is_array() allein sagt nichts
+     * ueber die Schluessel, und die drei Aufrufer greifen alle direkt auf
+     * 'time' bzw. 'message' zu (SettingsPage::renderStatusTab(),
+     * SettingsPage::ajaxRunSync(), SyncHealthNotice::problem()). Ohne diese
+     * Pruefung braeuchte jeder von ihnen sein eigenes ?? '' - und ein
+     * vergessenes waere eine Warnung auf einer Admin-Seite. In der Option kann
+     * durchaus etwas anderes liegen: ein Wert aus einer aelteren Version, ein
+     * teilweise eingespieltes Backup, ein fremdes Plugin.
+     *
      * @return array{time: string, message: string}|null
      */
     public static function getLastError(): ?array
     {
         $error = get_option(self::OPTION_LAST_SYNC_ERROR, null);
 
-        return is_array($error) ? $error : null;
+        if (!is_array($error) || !is_scalar($error['time'] ?? null) || !is_scalar($error['message'] ?? null)) {
+            return null;
+        }
+
+        return [
+            'time' => (string) $error['time'],
+            'message' => (string) $error['message'],
+        ];
     }
 
     private static function doRun(array $settings, array $calendarIds): void

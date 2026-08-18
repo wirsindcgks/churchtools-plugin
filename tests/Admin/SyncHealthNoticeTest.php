@@ -78,6 +78,46 @@ final class SyncHealthNoticeTest extends TestCase
         $this->assertNull($this->state(self::NOW - self::ALLOWED, self::NOW + HOUR_IN_SECONDS));
     }
 
+    /**
+     * Die Untergrenze selbst, an der die Fehlalarm-Reparatur haengt: Bei der
+     * Vorgabe "stuendlich" waeren drei Intervalle drei Stunden - weniger als
+     * eine Nacht ohne Besucher, und damit jeden Morgen ein Hinweis auf einer
+     * gesunden Installation. Der Test darunter (state()) prueft nur den
+     * Vergleich gegen diese Zahl, nicht ihr Zustandekommen.
+     */
+    public function testHourlyIntervalIsHeldUpByTheFloor(): void
+    {
+        $this->assertSame(DAY_IN_SECONDS, $this->threshold(HOUR_IN_SECONDS));
+    }
+
+    /**
+     * Ab einem laengeren Intervall entscheidet wieder der Faktor - sonst
+     * meldete "taeglich" schon nach einem einzigen ausgefallenen Lauf.
+     */
+    public function testLongerIntervalsAreRuledByTheFactor(): void
+    {
+        $this->assertSame(3 * DAY_IN_SECONDS, $this->threshold(DAY_IN_SECONDS));
+        $this->assertSame(36 * HOUR_IN_SECONDS, $this->threshold(12 * HOUR_IN_SECONDS));
+    }
+
+    /**
+     * Genau auf dem Wechsel zwischen beiden: Acht Stunden mal drei sind der
+     * Tag, den die Untergrenze fordert - keiner der beiden darf hier ueber das
+     * Ziel hinausschiessen.
+     */
+    public function testAtTheCrossoverBothAgree(): void
+    {
+        $this->assertSame(DAY_IN_SECONDS, $this->threshold(8 * HOUR_IN_SECONDS));
+    }
+
+    private function threshold(int $intervalSeconds): int
+    {
+        $method = new ReflectionMethod(SyncHealthNotice::class, 'staleThreshold');
+        $method->setAccessible(true);
+
+        return $method->invoke(null, $intervalSeconds);
+    }
+
     private function state(?int $lastSync, int $nextRun): ?string
     {
         $method = new ReflectionMethod(SyncHealthNotice::class, 'stalenessState');

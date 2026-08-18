@@ -1398,7 +1398,7 @@ final class SettingsPage
                             // davor aber noch eine komplette HTML-Fehlerseite
                             // liegen, und die schoebe diesen Kasten ueber die
                             // ganze Seite.
-                            esc_html(wp_html_excerpt((string) ($lastError['message'] ?? ''), 600, '…'))
+                            esc_html(wp_html_excerpt($lastError['message'], 600, '…'))
                         );
                         ?>
                     </p>
@@ -2451,6 +2451,22 @@ final class SettingsPage
             $settings = self::get();
             $merged = self::mergeCalendars($settings['calendars'], $client->getCalendars());
 
+            // Dieselbe Klasse Gefahr, gegen die sich der Sync seit 0.9.0 wehrt,
+            // nur an der anderen Stelle: mergeCalendars() baut die Liste
+            // ausschliesslich aus der Antwort neu auf, eine leere Antwort
+            // loescht sie also samt eingestellter Farben und Standardbilder.
+            // Ein kaputter Body wirft inzwischen in Client::request(), ein
+            // wohlgeformtes data: [] kaeme aber weiterhin bis hierher.
+            // Anders als der Sync muss das hier nicht ueber die Zeit
+            // entschieden werden: Es ist eine Handlung mit einem Menschen
+            // davor, der die Meldung sofort liest und es erneut versuchen
+            // kann. Sind die Kalender wirklich alle weg, bleiben sie
+            // abwaehlbar in der Liste stehen - ihre Termine raeumt der Sync
+            // ueber seinen eigenen Schutz ab.
+            if ($merged === [] && $settings['calendars'] !== []) {
+                wp_send_json_error(['message' => __('ChurchTools hat keine Kalender zurückgeliefert. Die gespeicherte Kalenderliste bleibt deshalb unverändert, damit eingestellte Farben und Standardbilder nicht verloren gehen – bitte die Berechtigungen des API-Keys prüfen. Sind die Kalender dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin')]);
+            }
+
             // register_setting() hooks sanitize_option_{option} onto every
             // update_option() call for this option, not just Settings API form
             // submissions — without removing it here, sanitizeSettings() would run
@@ -2478,8 +2494,32 @@ final class SettingsPage
         $settings = self::get();
         $calendarIds = self::getEnabledCalendarIds();
 
-        if ($settings['instance'] === '' || $settings['api_key'] === '' || $calendarIds === []) {
-            wp_send_json_error(['message' => __('Bitte zuerst Verbindung und mindestens einen aktiven Kalender einrichten.', 'churchtools-plugin')]);
+        if ($settings['instance'] === '' || $settings['api_key'] === '') {
+            wp_send_json_error(['message' => __('Bitte zuerst die Verbindung zu ChurchTools einrichten.', 'churchtools-plugin')]);
+        }
+
+        // Ohne aktiven Kalender ist dieser Lauf kein Abgleich mehr, sondern ein
+        // Aufraeumen (siehe SyncEngine::run()) - und genau dafuer ist diese
+        // Schaltflaeche die Bedienung. Vorher stand hier eine Fehlermeldung,
+        // wodurch die Termine des zuletzt abgewaehlten Kalenders bis zum
+        // naechsten planmaessigen Lauf im Tab "Events" stehen blieben, ohne
+        // dass sich daran etwas machen liess.
+        if ($calendarIds === []) {
+            SyncEngine::run();
+
+            // Auch das Aufraeumen meldet einen Fehler nicht mehr durch eine
+            // Ausnahme, sondern ueber die Option (siehe unten).
+            $cleanUpError = SyncEngine::getLastError();
+
+            if ($cleanUpError !== null) {
+                wp_send_json_error(['message' => $cleanUpError['message']]);
+            }
+
+            wp_send_json_success([
+                'message' => __('Kein Kalender ist aktiv – die gespeicherten Termine wurden entfernt.', 'churchtools-plugin'),
+                'count' => (new EventRepository())->count(),
+                'last_sync' => mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) get_option('ctp_last_sync', '')),
+            ]);
         }
 
         // SyncEngine::run() catches its own exceptions and persists them (see its
@@ -2503,7 +2543,12 @@ final class SettingsPage
     /**
      * Keeps enabled/color/default_image_id for calendars that still exist remotely,
      * seeds new ones as disabled with ChurchTools' own color, and drops ones that
-     * were removed on the ChurchTools side. `default_color` is always overwritten
+     * were removed on the ChurchTools side — that a *single* calendar disappearing
+     * takes its settings with it is deliberate: from here a revoked read permission
+     * and a deleted calendar look identical, and "verschwindet aus der Liste" is the
+     * right answer to both. Only the all-or-nothing case is guarded, by the caller
+     * (see ajaxFetchCalendars()), because there the same ambiguity costs every
+     * calendar at once. `default_color` is always overwritten
      * with ChurchTools' current value (never carried over from $existing) so the
      * "Auf Standardfarbe zurücksetzen" button (renderCalendarRow()) keeps pointing
      * at ChurchTools' actual color even if it changed there since the last fetch.

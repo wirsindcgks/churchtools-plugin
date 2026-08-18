@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// Die Testklassen selbst laedt PHPUnit ueber die Verzeichnisliste in
+// phpunit.xml.dist; Helfer wie dieser stehen in keiner solchen Liste und
+// haben keinen autoload-dev-Eintrag, also von Hand.
+require __DIR__ . '/Support/SqliteWpdb.php';
+
 // Crypto::key() derives its encryption key from AUTH_KEY when defined, so a fixed
 // test value keeps encrypt()/decrypt() deterministic without needing wp_salt().
 define('AUTH_KEY', 'phpunit-test-auth-key-do-not-use-in-production');
@@ -187,4 +192,42 @@ function wp_strip_all_tags(string $text, bool $removeBreaks = false): string
     $text = strip_tags($text);
 
     return trim($text);
+}
+
+/**
+ * EventRepository fordert Ergebniszeilen als assoziative Arrays an - in
+ * WordPress eine Konstante, hier eine, damit die Aufrufe nicht auf einen
+ * undefinierten Bezeichner laufen.
+ */
+define('ARRAY_A', 'ARRAY_A');
+
+/**
+ * EventRepository::hasEventsFrom() fragt damit nach "jetzt". Fest verdrahtet,
+ * damit die Fenstertests (tests/Db/) eine Uhrzeit haben, gegen die sich ihre
+ * Testdaten sinnvoll legen lassen - ctp_test_set_current_time() verschiebt sie,
+ * wo ein Test das braucht.
+ */
+$GLOBALS['ctp_test_current_time'] = '2026-08-18 12:00:00';
+
+function current_time(string $type, $gmt = 0)
+{
+    return $GLOBALS['ctp_test_current_time'];
+}
+
+function ctp_test_set_current_time(string $mysqlDate): void
+{
+    $GLOBALS['ctp_test_current_time'] = $mysqlDate;
+}
+
+/**
+ * Setzt eine leere SQLite-Datenbank als $wpdb ein und gibt sie zurueck, damit
+ * der Test seine Zeilen anlegen kann. Siehe SqliteWpdb fuer den Grund, warum
+ * es diesen Ersatz ueberhaupt gibt.
+ */
+function ctp_test_install_wpdb(): \ChurchToolsPlugin\Tests\Support\SqliteWpdb
+{
+    $wpdb = new \ChurchToolsPlugin\Tests\Support\SqliteWpdb();
+    $GLOBALS['wpdb'] = $wpdb;
+
+    return $wpdb;
 }

@@ -97,7 +97,7 @@ final class SyncHealthNotice
                 'message' => sprintf(
                     /* translators: %s: error message from the last failed sync */
                     __('Die letzte Synchronisation ist fehlgeschlagen: %s', 'churchtools-plugin'),
-                    self::shorten((string) ($lastError['message'] ?? ''))
+                    self::shorten($lastError['message'])
                 ),
             ];
         }
@@ -111,10 +111,7 @@ final class SyncHealthNotice
         }
 
         $lastSync = self::timestamp((string) get_option('ctp_last_sync', ''));
-        $allowed = max(
-            Installer::intervalSeconds($settings['sync_interval']) * self::STALE_FACTOR,
-            self::MIN_STALE_SECONDS
-        );
+        $allowed = self::staleThreshold(Installer::intervalSeconds($settings['sync_interval']));
 
         switch (self::stalenessState($lastSync, (int) $nextRun, time(), $allowed)) {
             case 'never':
@@ -135,6 +132,19 @@ final class SyncHealthNotice
         }
 
         return null;
+    }
+
+    /**
+     * Ab wann ein Lauf als ueberfaellig gilt: das Intervall mal STALE_FACTOR,
+     * aber nie weniger als MIN_STALE_SECONDS. Ausgelagert aus demselben Grund
+     * wie stalenessState() darunter - der Rest von problem() braucht ein
+     * laufendes WordPress, diese Zeile ist aber der eigentliche Schutz gegen
+     * den taeglichen Fehlalarm bei der Vorgabe "stuendlich" und soll deshalb
+     * einzeln pruefbar sein (siehe SyncHealthNoticeTest).
+     */
+    private static function staleThreshold(int $intervalSeconds): int
+    {
+        return max($intervalSeconds * self::STALE_FACTOR, self::MIN_STALE_SECONDS);
     }
 
     /**

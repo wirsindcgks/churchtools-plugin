@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.9.0
+Stable tag: 0.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,10 +161,21 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.9.1 =
+Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts vorhanden" missverstanden wurden – im schlimmsten Fall hätte das die gespeicherten Termine oder die Kalenderliste geleert. Enthält außerdem einen Hinweis im Backend, wenn die Synchronisation klemmt. Kein Handlungsbedarf nach dem Update.
+
 = 0.9.0 =
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden" wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation" gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.9.1 =
+* Fix: Antwortete die ChurchTools-API mit HTTP 200, aber unerwartetem Inhalt (Fehlerseite eines Proxys, Wartungsseite), galt das als „keine Termine vorhanden" – im Sync die Vorstufe zum Leeren der Termintabelle, im Verbindungstest ein falsches „Verbindung erfolgreich"
+* Fix: Kommen keine Termine zurück, obwohl welche gespeichert sind, bricht der Sync ab und löscht nichts. Bleibt die Antwort über mehrere planmäßige Läufe hinweg leer, gilt sie als richtig
+* Fix: „Kalender von ChurchTools laden" leert die gespeicherte Kalenderliste nicht mehr, wenn die API keine Kalender zurückliefert – eingestellte Farben und Standardbilder bleiben erhalten
+* Fix: Wer den letzten aktiven Kalender abwählt, behielt dessen Termine dauerhaft in der Datenbank. Sie werden jetzt beim nächsten Lauf entfernt, „Jetzt synchronisieren" räumt sofort auf
+* Neu: Hinweis auf jeder Backend-Seite, wenn die letzte Synchronisation fehlgeschlagen ist, kein Zeitplan hinterlegt ist oder der letzte erfolgreiche Lauf zu lange zurückliegt
+* Fix: Eine HTML-Fehlerseite als Fehlermeldung füllt nicht mehr die halbe Backend-Seite
 
 = 0.9.0 =
 * Fix: „Kalender von ChurchTools laden" brach mit einem JavaScript-Fehler ab und blieb auf „Lade…" stehen, weil die Instanz-/API-Key-Felder auf einem anderen Tab liegen

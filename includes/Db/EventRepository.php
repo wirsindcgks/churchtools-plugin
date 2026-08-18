@@ -516,6 +516,30 @@ class EventRepository
         return (int) $deleted;
     }
 
+    /**
+     * Raeumt die Tabelle komplett ab - der Weg zurueck, wenn *kein* Kalender
+     * mehr aktiv ist (siehe SyncEngine::run()).
+     *
+     * Bewusst eine eigene Methode statt deleteFromCalendarsNotIn([]): dort ist
+     * die leere Liste der Fehlerfall, den die Schutzbedingung abfaengt - ohne
+     * sie waere "NOT IN ()" ungueltiges SQL und die naheliegende Reparatur
+     * ("dann eben alles loeschen") genau die Falle, in die ein leerer
+     * Kalenderparameter aus Versehen laufen soll. Hier ist das Loeschen die
+     * Absicht, und das soll am Namen zu sehen sein.
+     */
+    public function deleteAll(): int
+    {
+        global $wpdb;
+
+        $affectedSeries = $this->seriesAttachmentsWhere('1=1', []);
+
+        $deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i', $this->table));
+
+        $this->deleteOrphanedAttachments($affectedSeries);
+
+        return (int) $deleted;
+    }
+
     public function deleteOlderThan(DateTimeInterface $cutoff): int
     {
         global $wpdb;

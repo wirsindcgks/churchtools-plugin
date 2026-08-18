@@ -55,6 +55,48 @@ final class SyncEngineTest extends TestCase
     }
 
     /**
+     * Alles, was nicht die vereinbarte Form hat, gilt als "kein Fehler" statt
+     * als halber - in der Option kann ein Wert aus einer aelteren Version, ein
+     * teilweise eingespieltes Backup oder etwas von fremder Hand liegen. Ohne
+     * diese Pruefung braeuchte jeder der drei Aufrufer sein eigenes ?? '',
+     * und ein vergessenes waere eine PHP-Warnung mitten auf einer Admin-Seite.
+     *
+     * @dataProvider malformedStoredErrors
+     *
+     * @param mixed $stored
+     */
+    public function testMalformedStoredErrorIsReportedAsNoError($stored): void
+    {
+        ctp_test_set_option('ctp_last_sync_error', $stored);
+
+        $this->assertNull(SyncEngine::getLastError());
+    }
+
+    public function malformedStoredErrors(): array
+    {
+        return [
+            'kein Array' => ['irgendein String'],
+            'leeres Array' => [[]],
+            'ohne message' => [['time' => '2026-08-15 12:00:00']],
+            'ohne time' => [['message' => 'Fehler']],
+            'message ist ein Array' => [['time' => '2026-08-15 12:00:00', 'message' => ['Fehler']]],
+            'time ist ein Array' => [['time' => [], 'message' => 'Fehler']],
+        ];
+    }
+
+    /**
+     * Die Gegenprobe zur Formpruefung: Ein Zeitstempel, der als Zahl in der
+     * Option gelandet ist, ist noch ein brauchbarer Fehler - nur eben einer,
+     * den die Aufrufer als Zeichenkette weiterreichen duerfen muessen.
+     */
+    public function testScalarValuesAreNormalisedToStrings(): void
+    {
+        ctp_test_set_option('ctp_last_sync_error', ['time' => 1_800_000_000, 'message' => 404]);
+
+        $this->assertSame(['time' => '1800000000', 'message' => '404'], SyncEngine::getLastError());
+    }
+
+    /**
      * Der Fall, der ohne Schutz einen kompletten Jahreskalender leert:
      * HTTP 200, unerwarteter Body, Client::request() gibt [] zurueck ohne zu
      * werfen - und deleteOrphans() laesst bei leerer Keep-Liste seine
