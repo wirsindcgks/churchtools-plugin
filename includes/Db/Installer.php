@@ -4,22 +4,91 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Db;
 
+use ChurchToolsPlugin\Admin\SettingsPage;
+
 final class Installer
 {
     public const DB_VERSION = '1.4.0';
+
+    /**
+     * The three recurrences the "Sync-Intervall" select offers — kept here
+     * rather than in SettingsPage because this class is what actually hands
+     * them to wp_schedule_event(); the select's own whitelist in
+     * sanitizeSettings() validates against this same list.
+     */
+    public const SYNC_INTERVALS = ['hourly', 'twicedaily', 'daily'];
+
+    public static function registerHooks(): void
+    {
+        // The Sync tab's interval select only writes an option — WP-Cron keeps
+        // running on whatever recurrence the event was originally scheduled
+        // with until something actually reschedules it. Without this the
+        // select silently did nothing at all (every install stayed on the
+        // "hourly" activate() picked), which is exactly the kind of setting
+        // that looks like it works.
+        add_action('update_option_ctp_settings', [self::class, 'onSettingsUpdated'], 10, 2);
+
+        // Self-heal on any admin page load: a cron event can go missing
+        // entirely (a plugin that flushes the cron array, a partially restored
+        // DB backup, a migration between hosts), and a sync that silently
+        // never runs again is the worst failure mode this plugin has.
+        // Admin-only so a frontend request never pays for it.
+        add_action('admin_init', [self::class, 'ensureSchedules']);
+    }
 
     public static function activate(): void
     {
         self::createTables();
         update_option('ctp_db_version', self::DB_VERSION);
+        self::ensureSchedules();
+    }
 
-        if (!wp_next_scheduled('ctp_run_sync')) {
-            wp_schedule_event(time(), 'hourly', 'ctp_run_sync');
+    /**
+     * @param mixed $oldValue
+     * @param mixed $newValue
+     */
+    public static function onSettingsUpdated($oldValue, $newValue): void
+    {
+        $previous = is_array($oldValue) ? ($oldValue['sync_interval'] ?? null) : null;
+        $current = is_array($newValue) ? ($newValue['sync_interval'] ?? null) : null;
+
+        if ($previous !== $current) {
+            self::ensureSchedules();
+        }
+    }
+
+    /**
+     * Makes both cron events exist with the recurrence they're supposed to
+     * have, rescheduling only when something actually differs — wp_schedule_event()
+     * is a DB write, so this must not fire on every admin page load.
+     */
+    public static function ensureSchedules(): void
+    {
+        $interval = SettingsPage::get()['sync_interval'];
+        if (!in_array($interval, self::SYNC_INTERVALS, true)) {
+            $interval = 'hourly';
         }
 
-        if (!wp_next_scheduled('ctp_run_retention_cleanup')) {
-            wp_schedule_event(time(), 'daily', 'ctp_run_retention_cleanup');
+        self::scheduleIfNeeded('ctp_run_sync', $interval);
+        self::scheduleIfNeeded('ctp_run_retention_cleanup', 'daily');
+    }
+
+    private static function scheduleIfNeeded(string $hook, string $recurrence): void
+    {
+        $event = wp_get_scheduled_event($hook);
+
+        if ($event !== false && $event->schedule === $recurrence) {
+            return;
         }
+
+        if ($event !== false) {
+            wp_clear_scheduled_hook($hook);
+        }
+
+        // A minute out rather than time(): rescheduling happens right after a
+        // settings save, and firing a full sync inside that same request would
+        // stall the redirect back to the settings page.
+        wp_schedule_event(time() + MINUTE_IN_SECONDS, $recurrence, $hook);
     }
 
     public static function deactivate(): void

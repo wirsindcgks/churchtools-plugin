@@ -6,7 +6,14 @@ namespace ChurchToolsPlugin\Db;
 
 use DateTimeInterface;
 
-final class EventRepository
+/**
+ * Not `final` solely so PHPUnit can double it: SyncEngine::syncSeriesImage()
+ * takes this class directly, and tests/Sync/SeriesImageTest.php asserts which
+ * repository calls that method makes for a given series state — behavior that
+ * caused a live data bug (see that test's docblock) and is worth pinning down.
+ * Nothing subclasses it in production.
+ */
+class EventRepository
 {
     private string $table;
 
@@ -70,8 +77,15 @@ final class EventRepository
     {
         global $wpdb;
 
+        // "AND attachment_id IS NOT NULL" is load-bearing, not a tidiness filter:
+        // a recurring series grows new occurrence rows on every sync, and
+        // upsert() INSERTs those without an attachment_id (the image import runs
+        // afterwards, per series). An unqualified LIMIT 1 therefore returns
+        // whichever row the storage engine happens to hand back first - often a
+        // brand-new NULL one - even though the series has a perfectly good
+        // attachment, which made this method report "never imported" at random.
         $attachmentId = $wpdb->get_var($wpdb->prepare(
-            'SELECT attachment_id FROM %i WHERE ct_event_id = %d LIMIT 1',
+            'SELECT attachment_id FROM %i WHERE ct_event_id = %d AND attachment_id IS NOT NULL LIMIT 1',
             $this->table,
             $ctEventId
         ));
@@ -196,6 +210,243 @@ final class EventRepository
 
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow() above.
         return $wpdb->get_var($wpdb->prepare($sql, ...$params)) !== null;
+    }
+
+    /**
+     * Backs the admin "Events" tab, which — unlike every frontend query — has
+     * to be able to look at past occurrences and at all calendars regardless
+     * of what's enabled, and to narrow that down by hand.
+     *
+     * @param array{calendar_id?: int, search?: string, scope?: string} $filters
+     *        scope: 'upcoming' (default) | 'past' | 'all'.
+     */
+    public function findForAdmin(array $filters, int $limit = 25, int $offset = 0): array
+    {
+        global $wpdb;
+
+        [$where, $params] = $this->adminWhere($filters);
+        $direction = ($filters['scope'] ?? 'upcoming') === 'past' ? 'DESC' : 'ASC';
+
+        $sql = 'SELECT * FROM %i WHERE ' . $where . ' ORDER BY start_date ' . $direction . ' LIMIT %d OFFSET %d';
+        array_push($params, max(1, $limit), max(0, $offset));
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from string literals plus the placeholder list adminWhere() returns alongside its matching params, then passed straight into $wpdb->prepare().
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $this->table, ...$params), ARRAY_A);
+
+        return $rows ?: [];
+    }
+
+    /**
+     * Total matching findForAdmin()'s filters, for the pager. Counted rather
+     * than derived from the returned page, since the page is capped.
+     *
+     * @param array{calendar_id?: int, search?: string, scope?: string} $filters
+     */
+    public function countForAdmin(array $filters): int
+    {
+        global $wpdb;
+
+        [$where, $params] = $this->adminWhere($filters);
+        $sql = 'SELECT COUNT(*) FROM %i WHERE ' . $where;
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findForAdmin().
+        return (int) $wpdb->get_var($wpdb->prepare($sql, $this->table, ...$params));
+    }
+
+    /**
+     * One row per ChurchTools series instead of one per occurrence — the same
+     * filters, collapsed. A parish with a handful of weekly series turns 155
+     * occurrence rows into 43 series rows, which is the difference between
+     * scrolling and actually finding something.
+     *
+     * Grouped by ct_event_id plus the fields that are constant within a series
+     * anyway, so the aggregate stays valid under ONLY_FULL_GROUP_BY.
+     *
+     * @param array{calendar_id?: int, search?: string, scope?: string} $filters
+     */
+    public function findSeriesForAdmin(array $filters, int $limit = 25, int $offset = 0): array
+    {
+        global $wpdb;
+
+        [$where, $params] = $this->adminWhere($filters);
+        $direction = ($filters['scope'] ?? 'upcoming') === 'past' ? 'DESC' : 'ASC';
+
+        $sql = 'SELECT ct_event_id, ct_calendar_id, title, subtitle,
+                       COUNT(*) AS occurrences,
+                       MIN(start_date) AS first_start,
+                       MAX(start_date) AS last_start,
+                       MAX(attachment_id) AS attachment_id,
+                       MIN(id) AS sample_id
+                FROM %i WHERE ' . $where . '
+                GROUP BY ct_event_id, ct_calendar_id, title, subtitle
+                ORDER BY first_start ' . $direction . ' LIMIT %d OFFSET %d';
+        array_push($params, max(1, $limit), max(0, $offset));
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findForAdmin().
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $this->table, ...$params), ARRAY_A);
+
+        return $rows ?: [];
+    }
+
+    /**
+     * @param array{calendar_id?: int, search?: string, scope?: string} $filters
+     */
+    public function countSeriesForAdmin(array $filters): int
+    {
+        global $wpdb;
+
+        [$where, $params] = $this->adminWhere($filters);
+        $sql = 'SELECT COUNT(*) FROM (SELECT 1 FROM %i WHERE ' . $where . ' GROUP BY ct_event_id) AS series';
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findForAdmin().
+        return (int) $wpdb->get_var($wpdb->prepare($sql, $this->table, ...$params));
+    }
+
+    /**
+     * Frontend search across the *entire* synced horizon, not just the month
+     * window a page happens to have loaded (see EventWindow). The client-side
+     * filter in assets/js/frontend.js can only ever match what is already in
+     * the DOM, so searching "Taufe" on a list showing August/September silently
+     * missed one in November — the single biggest findability gap in the
+     * frontend.
+     *
+     * Hard-capped: this is reachable from a public endpoint, and a LIKE with a
+     * leading wildcard cannot use an index.
+     */
+    public function searchUpcoming(array $calendarIds, string $search, int $limit = 100): array
+    {
+        global $wpdb;
+
+        $search = trim($search);
+        if ($search === '') {
+            return [];
+        }
+
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $sql = 'SELECT * FROM %i WHERE end_date >= %s AND (title LIKE %s OR subtitle LIKE %s OR location LIKE %s)';
+        $params = [current_time('mysql'), $like, $like, $like];
+
+        if ($calendarIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
+            $sql .= " AND ct_calendar_id IN ({$placeholders})";
+            array_push($params, ...$calendarIds);
+        }
+
+        $sql .= ' ORDER BY start_date ASC LIMIT %d';
+        $params[] = max(1, min(200, $limit));
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow().
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $this->table, ...$params), ARRAY_A);
+
+        return $rows ?: [];
+    }
+
+    /**
+     * The four headline numbers on the Events tab. One grouped query rather
+     * than four COUNT(*)s — the admin screen shows them together, and the
+     * table is small enough that a single pass is cheaper than four scans.
+     *
+     * @return array{total: int, upcoming: int, past: int, with_image: int}
+     */
+    public function stats(): array
+    {
+        global $wpdb;
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            'SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN end_date >= %s THEN 1 ELSE 0 END) AS upcoming,
+                SUM(CASE WHEN end_date < %s THEN 1 ELSE 0 END) AS past,
+                SUM(CASE WHEN attachment_id IS NOT NULL THEN 1 ELSE 0 END) AS with_image
+             FROM %i',
+            current_time('mysql'),
+            current_time('mysql'),
+            $this->table
+        ), ARRAY_A);
+
+        return [
+            'total' => (int) ($row['total'] ?? 0),
+            'upcoming' => (int) ($row['upcoming'] ?? 0),
+            'past' => (int) ($row['past'] ?? 0),
+            'with_image' => (int) ($row['with_image'] ?? 0),
+        ];
+    }
+
+    /**
+     * Shared WHERE fragment for the two admin queries above, so the list and
+     * its own row count can never disagree about what "matching" means.
+     *
+     * @param array{calendar_id?: int, search?: string, scope?: string} $filters
+     *
+     * @return array{0: string, 1: array}
+     */
+    private function adminWhere(array $filters): array
+    {
+        global $wpdb;
+
+        $clauses = ['1=1'];
+        $params = [];
+
+        $scope = $filters['scope'] ?? 'upcoming';
+        if ($scope === 'upcoming') {
+            $clauses[] = 'end_date >= %s';
+            $params[] = current_time('mysql');
+        } elseif ($scope === 'past') {
+            $clauses[] = 'end_date < %s';
+            $params[] = current_time('mysql');
+        }
+
+        $calendarId = (int) ($filters['calendar_id'] ?? 0);
+        if ($calendarId > 0) {
+            $clauses[] = 'ct_calendar_id = %d';
+            $params[] = $calendarId;
+        }
+
+        $search = trim((string) ($filters['search'] ?? ''));
+        if ($search !== '') {
+            // esc_like() before the wildcards, so a literal "%" or "_" typed
+            // into the search box matches itself instead of acting as one.
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $clauses[] = '(title LIKE %s OR subtitle LIKE %s OR location LIKE %s)';
+            array_push($params, $like, $like, $like);
+        }
+
+        return [implode(' AND ', $clauses), $params];
+    }
+
+    /**
+     * Attachments this plugin imported that no event row points at any more.
+     *
+     * These are debris, not normal operation: every other path already deletes
+     * an attachment at the moment it becomes unreferenced (image changed,
+     * series removed, retention cutoff). They accumulated because
+     * getSeriesAttachmentId() used to report "never imported" at random for a
+     * series that did have an attachment (see its docblock) - the image was
+     * then downloaded a second time and the first copy left behind, unreferenced
+     * and invisible except as a duplicate in the media library. Found live at
+     * 34 orphans against 36 genuinely used attachments.
+     *
+     * Scoped by the '_ctp_source_image_url' postmeta, so only attachments this
+     * plugin created itself are ever considered. Capped per run: a large
+     * backlog gets worked off over several syncs rather than turning one cron
+     * request into hundreds of file deletions.
+     *
+     * @return int[]
+     */
+    public function orphanedAttachmentIds(int $limit = 50): array
+    {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->postmeta is a WordPress-provided table name, not request input; every value below goes through prepare().
+        $sql = "SELECT post_id FROM {$wpdb->postmeta}
+                WHERE meta_key = %s
+                  AND post_id NOT IN (SELECT attachment_id FROM %i WHERE attachment_id IS NOT NULL)
+                LIMIT %d";
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see above.
+        $ids = $wpdb->get_col($wpdb->prepare($sql, '_ctp_source_image_url', $this->table, max(1, $limit)));
+
+        return array_map('intval', $ids ?: []);
     }
 
     public function deleteOlderThan(DateTimeInterface $cutoff): int

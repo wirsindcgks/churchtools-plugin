@@ -2,9 +2,9 @@
 Contributors: wirsindcgks
 Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
-Tested up to: 6.6
+Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,17 +12,27 @@ Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und 
 
 == Description ==
 
-* Synchronisiert Events ausgewählter ChurchTools-Kalender per WP-Cron.
-* Entfernt vergangene Events nach einstellbarer Aufbewahrungszeit automatisch aus der Datenbank.
-* Filterung nach Kalender.
-* Anzeige per Shortcode, Gutenberg-Block oder WPBakery-Element (gemeinsame Rendering-Basis).
-* Theme-überschreibbare Templates.
+Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an – ohne dass jemand Termine doppelt pflegen muss.
+
+* **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
+* **Drei Ansichten**: Liste, Grid und „Nächster Termin" – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
+* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
+* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL.
+* **Design-Tab** mit Live-Vorschau: Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
+* **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
+* **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
+* **Theme-überschreibbare Templates** und Anlehnung an die Global Styles des aktiven Themes.
+* **Automatische Updates** über GitHub Releases, direkt aus der WordPress-Plugin-Übersicht.
 
 == Installation ==
 
 1. Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` hochladen.
 2. Plugin aktivieren.
-3. Unter Einstellungen → ChurchTools Events den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen.
+3. Im Menü „ChurchTools" → Tab „Verbindung" den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen".
+4. Im Tab „Kalender" auf „Kalender von ChurchTools laden" klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen).
+5. Im Tab „Übersicht" einmal „Jetzt synchronisieren" auslösen – danach übernimmt WP-Cron.
+6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Design").
 
 == Verwendung ==
 
@@ -38,7 +48,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `columns` – Nur bei `layout="grid"` relevant: Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3). Auf schmaleren Bildschirmen wird automatisch reduziert (1 Spalte auf Smartphones, 2 auf Tablets), unabhängig vom gewählten Wert.
 * `click` – Klickverhalten pro Kachel: `default` (Standard, folgt der Design-Tab-Einstellung), `none`, `popup` oder `page`.
 * `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
-* `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
+* `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
 * `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
 * `eventfinder` – Geführte „Du suchst …“-Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
 * `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung im „Design“-Tab, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
@@ -94,6 +104,27 @@ Wer verlässlichere Zeitabstände braucht, kann WP-Cron über die Konstante `DIS
 
 `wp-cron.php` prüft bei jedem Aufruf selbst, welche fälligen Termine (u. a. der Plugin-eigene `ctp_run_sync`) tatsächlich anstehen, ein häufigerer Aufruf löst also keine unnötigen zusätzlichen Syncs aus.
 
+= Kann das Plugin mehrere ChurchTools-Instanzen anbinden? =
+
+Nein, bewusst nicht: Vorgesehen ist genau eine ChurchTools-Instanz pro WordPress-Installation. Kalender-IDs sind nur innerhalb einer Instanz eindeutig, weshalb Mehrfach-Instanzen das Datenbankschema, die Einstellungen und jede Shortcode-Option betreffen würden. Wer mehrere Standorte abbilden will, betreibt sie als getrennte WordPress-Installationen.
+
+= Läuft das Plugin in einer WordPress-Multisite? =
+
+Ungetestet. Technisch legt es seine Tabelle mit dem Tabellenpräfix der jeweiligen Site an, es gäbe also pro Site eigene Termine und eigene Einstellungen -- eine netzwerkweite Aktivierung erzeugt die Tabellen aber nicht automatisch für alle bestehenden Sites. Für den Einsatz in einer Multisite gibt es derzeit weder Tests noch Support.
+
+= Was passiert bei einem Serverumzug oder einer Änderung der WordPress-Salts? =
+
+Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es im Tab „Übersicht“ ausdrücklich; der Key muss dann im Tab „Verbindung“ einmal neu eingegeben werden. Dasselbe gilt für den optionalen GitHub-Token.
+
+= Was kann das Plugin bewusst nicht? =
+
+* Mehrere ChurchTools-Instanzen (siehe oben)
+* WordPress-Multisite (ungetestet, siehe oben)
+* Eine Monatskalender-/Rasteransicht – es gibt Liste, Grid und „Nächster Termin"
+* Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
+* Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
+* Die Drag-and-drop-Sortierung im Tab „Design" funktioniert mit Maus oder Trackpad, nicht per Touch
+
 == Datenschutz ==
 
 = Welche Daten werden gespeichert? =
@@ -108,7 +139,25 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
+== Upgrade Notice ==
+
+= 0.9.0 =
+Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden" wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation" gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
+
 == Changelog ==
+
+= 0.9.0 =
+* Fix: „Kalender von ChurchTools laden" brach mit einem JavaScript-Fehler ab und blieb auf „Lade…" stehen, weil die Instanz-/API-Key-Felder auf einem anderen Tab liegen
+* Fix: Das eingestellte Sync-Intervall wurde nie an WP-Cron weitergegeben – jede Installation synchronisierte unabhängig von der Auswahl stündlich. Der Zeitplan wird jetzt beim Speichern umgestellt und bei Bedarf selbst repariert
+* Fix: Die intern verwendete Versionsnummer hing auf 0.2.0 fest, wodurch Browser nach einem Update veraltete CSS-/JS-Dateien weiterverwendeten und die Übersicht die falsche installierte Version anzeigte
+* Farben lassen sich jetzt zusätzlich als Hex-Code eingeben (Kalenderfarben und Akzentfarbe), nicht mehr nur über den Farbwähler
+* Events-Tab überarbeitet: Kennzahlen, Filter nach Zeitraum/Kalender, Freitext-Suche, Gruppierung nach Monat und Blätterfunktion statt einer starren Liste der nächsten 200 Termine; Termine werden standardmäßig nach Serie zusammengefasst
+* Frontend-Suche findet jetzt auch Termine außerhalb des gerade angezeigten Zeitraums
+* Design-Tab neu geordnet: Drag&Drop-Editor und zugehörige Vorschau stehen nebeneinander, globale Einstellungen gesammelt darunter
+* Verwaiste Bild-Kopien in der Mediathek werden beim Sync automatisch aufgeräumt
+* Übersicht zeigt jetzt auch die nächste geplante Synchronisation samt Intervall und weist auf ein deaktiviertes WP-Cron hin
+* Design-Tab: „Standard wiederherstellen" für beide Reihenfolge-Listen, die Vorschau scrollt mit
+* Der GitHub-Token im Updates-Tab ist jetzt als optional beschrieben (nötig nur bei privatem Repository)
 
 = 0.5.0 =
 * Liste und Grid zeigen jetzt einen Zeitraum statt einer festen Anzahl: standardmäßig den laufenden plus den nächsten Monat, weitere Zeiträume per „Weitere Termine laden“ nachladbar – deutlich kleinere erste Seitenauslieferung

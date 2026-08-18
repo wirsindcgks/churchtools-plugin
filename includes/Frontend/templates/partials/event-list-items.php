@@ -95,9 +95,9 @@ if (!defined('ABSPATH')) {
                 </span>
             <?php endif; ?>
             <?php if (!in_array('excerpt', $args['hidden_elements'], true) && $event['description'] !== '') : ?>
-                <p class="ctp-events__excerpt">
+                <span class="ctp-events__excerpt">
                     <?php echo esc_html(EventFormatter::excerpt($event['description'])); ?>
-                </p>
+                </span>
             <?php endif; ?>
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup, same trust boundary as $args['design_style'] above. ?>
             <?php echo $args['design_separators']; ?>

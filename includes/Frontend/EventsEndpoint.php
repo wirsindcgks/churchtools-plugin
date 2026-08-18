@@ -35,6 +35,16 @@ final class EventsEndpoint
      */
     private const MAX_OFFSET = 5000;
 
+    /**
+     * Below two characters a search matches most of the calendar, which is both
+     * useless to the visitor and the most expensive query this endpoint can
+     * run. The JS applies the same floor before firing a request.
+     */
+    private const MIN_SEARCH_LENGTH = 2;
+
+    /** Truncated rather than rejected — a pasted paragraph is a typo, not an attack. */
+    private const MAX_SEARCH_LENGTH = 100;
+
     public function register(): void
     {
         add_action('wp_ajax_' . self::ACTION, [$this, 'handle']);
@@ -59,10 +69,33 @@ final class EventsEndpoint
         $limit = isset($_GET['limit']) ? absint($_GET['limit']) : 0;
         $monthDividers = !empty($_GET['month_dividers']);
         $lastMonth = isset($_GET['last_month']) ? sanitize_text_field(wp_unslash($_GET['last_month'])) : '';
+        $search = isset($_GET['search']) ? sanitize_text_field(wp_unslash($_GET['search'])) : '';
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if (!in_array($layout, self::LAYOUTS, true)) {
             wp_send_json_error(['message' => 'invalid layout'], 400);
+        }
+
+        $search = trim($search);
+
+        // A search request answers a different question than a paging request
+        // ("everything matching, anywhere in the horizon" vs "the next window"),
+        // so it returns early with its own payload shape rather than trying to
+        // carry a cursor it has no use for.
+        if ($search !== '') {
+            if (mb_strlen($search) < self::MIN_SEARCH_LENGTH) {
+                wp_send_json_error(['message' => 'search too short'], 400);
+            }
+
+            $result = (new EventListRenderer())->renderSearchResults([
+                'calendar_ids' => $this->sanitizeCalendarIds($rawCalendars),
+                'layout' => $layout,
+                'columns' => $columns,
+                'click' => in_array($click, self::CLICK_BEHAVIORS, true) ? $click : 'none',
+                'paging' => false,
+            ], mb_substr($search, 0, self::MAX_SEARCH_LENGTH));
+
+            wp_send_json_success($result);
         }
 
         $result = (new EventListRenderer())->renderItems([

@@ -108,6 +108,14 @@ final class SyncEngine
         }
 
         $repository->deleteOrphans($calendarIds, $from, $to, $keepOccurrenceKeys);
+
+        // Sweeps up imported images nothing references any more (see
+        // EventRepository::orphanedAttachmentIds() for how they came to exist).
+        // Runs after the image loop above, so an attachment imported in this
+        // very run has already been written to its series' rows.
+        foreach ($repository->orphanedAttachmentIds() as $attachmentId) {
+            wp_delete_attachment($attachmentId, true);
+        }
     }
 
     /**
@@ -181,6 +189,15 @@ final class SyncEngine
             : null;
 
         if ($importedUrl === $newImageUrl) {
+            // Image unchanged - but occurrences added since the last import were
+            // INSERTed with a NULL attachment_id (see EventRepository::upsert()),
+            // and returning here used to leave them that way permanently: nothing
+            // ever revisits a series whose image didn't change. Those rows then
+            // fell back to the raw ChurchTools image_url in the frontend, i.e.
+            // hotlinked exactly what importing the image exists to avoid.
+            // Re-stamping the series is a single cheap UPDATE.
+            $repository->setSeriesAttachment($ctEventId, $previousAttachmentId);
+
             return;
         }
 

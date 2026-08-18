@@ -376,9 +376,20 @@
 	}
 
 	function updateAccent() {
+		var enabled = !!(accentEnabledInput && accentEnabledInput.checked);
+
+		// The accent color is a three-part control (swatch, hex field, reset
+		// button — see SettingsPage::renderAccentColorField()), so the
+		// "Eigene Akzentfarbe verwenden" checkbox has to disable all three,
+		// not just the swatch it used to know about.
 		if (accentColorInput) {
-			accentColorInput.disabled = !(accentEnabledInput && accentEnabledInput.checked);
+			var field = accentColorInput.closest('.ctp-color-field');
+			var controls = field ? field.querySelectorAll('input, button') : [accentColorInput];
+			Array.prototype.forEach.call(controls, function (control) {
+				control.disabled = !enabled;
+			});
 		}
+
 		if (!preview) {
 			return;
 		}
@@ -405,4 +416,53 @@
 		accentColorInput.addEventListener('input', updateAccent);
 	}
 	updateAccent();
+
+	/**
+	 * "Standard wiederherstellen" for either order list. Reordering six rows by
+	 * hand — and deleting every inserted separator one by one — was the only way
+	 * back to the shipped layout after experimenting with the drag&drop.
+	 *
+	 * Reorders the existing <li>s rather than rebuilding the list from scratch:
+	 * their labels are rendered (and translated) server-side, so recreating them
+	 * here would mean duplicating every label in JS. Separators are simply
+	 * dropped, since the default order contains none by definition.
+	 */
+	document.addEventListener('click', function (event) {
+		var button = event.target.closest ? event.target.closest('.ctp-order-reset') : null;
+		if (!button) {
+			return;
+		}
+
+		event.preventDefault();
+
+		var targetList = document.getElementById(button.getAttribute('data-target'));
+		if (!targetList) {
+			return;
+		}
+
+		var defaultOrder = (targetList.getAttribute('data-default-order') || '').split(',').filter(Boolean);
+
+		Array.prototype.forEach.call(targetList.querySelectorAll('li[data-key]'), function (item) {
+			if (isSeparator(item.getAttribute('data-key'))) {
+				item.remove();
+			}
+		});
+
+		defaultOrder.forEach(function (key) {
+			var item = targetList.querySelector('li[data-key="' + key + '"]');
+			if (item) {
+				// appendChild() on an already-attached node moves it, so
+				// walking the default order front to back sorts the list.
+				targetList.appendChild(item);
+			}
+		});
+
+		if (targetList === list) {
+			syncOrderInput();
+			updatePreview();
+		} else {
+			syncDetailOrderInput();
+			updateDetailPreview();
+		}
+	});
 })();

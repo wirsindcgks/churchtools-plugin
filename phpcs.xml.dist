@@ -7,6 +7,10 @@
     <exclude-pattern>/node_modules/*</exclude-pattern>
     <exclude-pattern>/blocks/*/build/*</exclude-pattern>
     <exclude-pattern>/tests/*</exclude-pattern>
+    <!-- Build-Werkzeug, kein Plugin-Code: läuft über die CLI, nicht in WordPress,
+         und wird deshalb nicht an den WordPress-Sniffs gemessen (kein ABSPATH-Guard,
+         Top-Level-Konstanten, shell_exec für die Plural-/Kontext-Sperre). -->
+    <exclude-pattern>/bin/*</exclude-pattern>
 
     <arg value="sp"/>
     <arg name="basepath" value="."/>

@@ -91,6 +91,7 @@ if (!defined('ABSPATH')) {
         <input
             type="search"
             class="ctp-events__search-input"
+            data-ctp-search-config="<?php echo esc_attr((string) wp_json_encode($args['search_config'])); ?>"
             placeholder="<?php esc_attr_e('Termine durchsuchen …', 'churchtools-plugin'); ?>"
             aria-label="<?php esc_attr_e('Termine durchsuchen', 'churchtools-plugin'); ?>"
         />

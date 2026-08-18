@@ -5,6 +5,45 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.0] - 2026-08-18
+
+Release-Kandidat vor 1.0.0. Vier Fehler behoben, die im Alltag echten Schaden
+angerichtet haben, plus Feinschliff an den Stellen, an denen das Backend
+gewachsen statt gestaltet war.
+
+Bewusst **nicht** 1.0.0: Die WPBakery-Integration ist bis heute nur strukturell
+gegen die `vc_map`-API geprüft, nie gegen eine echte WPBakery-Installation - und
+das ist die Umgebung der Zielseite. Verifiziert ist alles gegen genau eine
+ChurchTools-Instanz mit einem Datensatz. 1.0.0 folgt, wenn das Plugin auf der
+Zielseite im Betrieb war.
+
+### Fixed
+
+- **„Kalender von ChurchTools laden" war funktionslos**: Der Klick-Handler las die Instanz- und API-Key-Felder per `getElementById(...).value`, obwohl beide auf dem Tab „Verbindung" liegen und der Button auf dem Tab „Kalender" – auf dem Kalender-Tab war das Ergebnis `null`, der Handler brach mit einem TypeError ab, es ging keine Anfrage raus und der Button blieb dauerhaft deaktiviert auf „Lade…" stehen. Beide Felder sind ohnehin optional (`effectiveConnection()` fällt auf die gespeicherten Werte zurück), sie werden jetzt defensiv gelesen
+- **Das Sync-Intervall wurde nie angewendet**: `Installer::activate()` hat `ctp_run_sync` fest mit `hourly` eingeplant, und nichts hat den WP-Cron-Termin je wieder angefasst – die Auswahl „Stündlich/Zweimal täglich/Täglich" im Tab „Synchronisation" wurde zwar gespeichert, blieb aber vollständig wirkungslos. Neu: `Installer::ensureSchedules()` plant den Termin beim Speichern der Einstellungen um (Hook `update_option_ctp_settings`) und legt ihn auf `admin_init` wieder an, falls er ganz fehlt (etwa nach einem Server-Umzug oder einem unvollständig eingespielten Datenbank-Backup) – ein stillschweigend nie wieder laufender Sync ist das folgenschwerste Versagensmuster dieses Plugins
+- **`CTP_VERSION` hing auf `0.2.0` fest**, während der Plugin-Header schon `0.5.0` auswies. Die Konstante ist der Cache-Buster hinter `assets/css/*.css` und `assets/js/*.js`: Browser haben über drei Releases hinweg die alten Dateien weiterbenutzt. Außerdem meldete der Übersicht-Tab die falsche installierte Version, inklusive des daraus abgeleiteten Update-Vergleichs. Neuer `tests/Release/VersionConsistencyTest.php` prüft jetzt, dass Plugin-Header, `CTP_VERSION`, `Stable tag` in `readme.txt` und der oberste `CHANGELOG.md`-Eintrag übereinstimmen
+- **Wiederkehrende Serien verloren ihr importiertes Bild und hotlinkten wieder auf ChurchTools**: Jeder Sync fügt die Vorkommnisse ein, die neu in den Sync-Zeitraum gerutscht sind; `upsert()` schreibt dabei bewusst keine `attachment_id` (sonst würde sie beim erneuten Upsert überschrieben), diese Zeilen starten also mit `NULL`. `syncSeriesImage()` stellte anschließend fest, dass sich das Bild nicht geändert hat, und kehrte sofort zurück – wodurch genau diese Zeilen dauerhaft ohne Bildverweis blieben, denn eine Serie mit unverändertem Bild wird nie wieder angefasst. Im Frontend fielen sie auf die rohe ChurchTools-URL zurück und banden das Bild von `church.tools` ein – exakt das, was der Medienimport laut Datenschutz-Abschnitt verhindern soll. Zusätzlich lieferte `getSeriesAttachmentId()` per `LIMIT 1` ohne Filter zufällig eine dieser `NULL`-Zeilen zurück und meldete damit sporadisch „nie importiert". In der lokalen Testumgebung betraf das 13 der 14 Vorkommnisse einer wöchentlichen Gottesdienst-Serie und 20 Bilder auf einer einzigen Frontend-Seite. Abgedeckt durch `tests/Sync/SeriesImageTest.php`
+- Ungültiges Markup: Der Beschreibungsauszug wurde in der Listen-Ansicht und im Kompakt-Teil der „Nächster Termin"-Ansicht als `<p>` innerhalb eines `<span>` ausgegeben
+
+### Added
+
+- **Farben als Hex-Code**: Kalenderfarben (Tab „Kalender") und die Akzentfarbe (Tab „Design") haben neben dem Farbwähler jetzt ein Textfeld für den Hex-Code, in beide Richtungen synchronisiert. Ein aus einem Styleguide kopierter Wert lässt sich damit direkt einsetzen, statt ihn im Systemdialog des Betriebssystems nachmischen zu müssen
+- **Events-Tab überarbeitet**: Kennzahlen (gesamt / kommend / vergangen / mit importiertem Bild), Filterleiste für Zeitraum und Kalender, Freitext-Suche über Titel, Untertitel und Ort, Gruppierung nach Monat sowie echtes Blättern. Bisher war das eine flache Liste der nächsten 200 kommenden Termine – bei ein paar wöchentlichen Serien schlicht nicht mehr durchsuchbar, ohne Zugriff auf vergangene Zeilen und mit einer Fußzeile, die *alle* gespeicherten Termine zählte, während die Tabelle nur kommende zeigte
+- **Übersicht**: neue Kachel „Nächste Synchronisation" samt eingestelltem Intervall, plus ein Hinweis, wenn WP-Cron per `DISABLE_WP_CRON` abgeschaltet ist
+- **Design-Tab**: „Standard wiederherstellen" für die Kartenelement- und die Detailansicht-Reihenfolge (bisher hieß das: sechs Zeilen von Hand zurücksortieren und jede eingefügte Trennlinie einzeln löschen); die Vorschau bleibt beim Scrollen des Formulars stehen
+
+- **Frontend-Suche findet jetzt Termine im gesamten synchronisierten Zeitraum**, nicht mehr nur im gerade geladenen Monatsfenster. Bisher filterte die Suche rein clientseitig über das, was im DOM stand - eine Suche nach „Hochzeit" blieb auf einer Liste mit August/September ergebnislos, obwohl der Termin im Mai 2027 vorhanden war. Getippt wird weiterhin sofort clientseitig gefiltert (funktioniert unter Full-Page-Caching); parallel holt eine entdrosselte Anfrage alle Treffer vom Server und tauscht sie ein. Leeren des Feldes stellt die vorherige Liste inklusive bereits nachgeladener Termine wieder her
+- **Events-Tab fasst Serien zusammen** (neue Standardansicht): 155 Einzelvorkommnisse werden zu 42 Serienzeilen mit Anzahl und Zeitspanne, umschaltbar auf „Einzeltermine". Eine Suche nach „Gottesdienst" liefert damit 19 statt 75 Zeilen
+- **Design-Tab neu geordnet**: Jeder Drag&Drop-Editor steht jetzt in derselben Rasterzeile wie die Vorschau, die er steuert - vorher lagen fünf globale Stil-Einstellungen zwischen Kachel- und Detail-Editor, sodass die Detail-Vorschau weit oberhalb ihres Editors stand und Live-Änderungen nicht beobachtbar waren. Ecken, sichtbare Felder, Bildformat, Akzentfarbe und Zeitraum pro Seite sind jetzt in einem Block „Globale Darstellung" darunter zusammengefasst
+- Verwaiste Bild-Attachments werden beim Sync automatisch entfernt. In der Testumgebung lagen 34 verwaiste neben 36 tatsächlich genutzten - Rückstände desselben `getSeriesAttachmentId()`-Fehlers, der oben behoben wurde: das Bild wurde ein zweites Mal heruntergeladen und die erste Kopie nie gelöscht
+- Der Kalender-Tab war der einzige ohne Sektionsüberschrift (`add_settings_section()` mit leerem Titel) und sah dadurch anders aus als alle übrigen Tabs
+
+### Changed
+
+- Der GitHub-Token im Tab „Updates" ist jetzt korrekt als optional beschrieben. Die alte Formulierung („Nur nötig, da das GitHub-Repository privat ist") wird falsch, sobald das Repository veröffentlicht wird
+- `README.md` beschrieb das Plugin noch als „frühe Entwicklungsphase (Grundgerüst)" mit einer Liste offener Punkte, die längst umgesetzt sind – ersetzt durch eine Architektur- und Entwicklerdoku
+- `readme.txt`: Funktionsbeschreibung auf den tatsächlichen Stand gebracht, Installationsanleitung um die Schritte nach dem Aktivieren ergänzt, `Tested up to` aktualisiert
+
 ## [0.5.0] - 2026-08-18
 
 ### Added
@@ -112,7 +151,10 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.5.0...v0.9.0
+[0.5.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wirsindcgks/churchtools-plugin/releases/tag/v0.1.0

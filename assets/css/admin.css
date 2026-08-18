@@ -121,31 +121,19 @@
     margin: 20px 0;
 }
 
-.ctp-design-layout > .ctp-design-form,
-.ctp-design-layout > .ctp-design-previews {
+
+/* Every direct child of the grid is a panel, and they are emitted in pairs
+ * (editor, its preview) so each row shows a drag&drop list next to the
+ * rendering it drives — that adjacency is the whole point of the tab. */
+.ctp-design-layout > .ctp-panel {
     max-width: none;
     margin: 0;
 }
 
-/* Design tab settings form: two stacked panels (Kachel / Popup & eigene Seite)
- * instead of one long form, so the two concerns line up visually with their
- * matching preview panel on the right (see .ctp-design-previews below). */
-.ctp-design-form {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.ctp-design-previews {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.ctp-design-form > .ctp-panel,
-.ctp-design-previews > .ctp-panel {
-    max-width: none;
-    margin: 0;
+/* Global styling settings sit below the pairs at full width: they apply to
+ * both previews at once, so pinning them to either column would be arbitrary. */
+.ctp-design-global {
+    max-width: 1400px;
 }
 
 @media (max-width: 960px) {
@@ -273,9 +261,10 @@
     width: 60px;
 }
 
+/* Wide enough for swatch + "#rrggbb" field + "Zurücksetzen" on one line. */
 .ctp-calendars-table th.ctp-col-color,
 .ctp-calendars-table td:nth-child(3) {
-    width: 140px;
+    width: 270px;
 }
 
 .ctp-calendars-table th.ctp-col-image,
@@ -291,17 +280,46 @@
     opacity: 0.6;
 }
 
-/* .ctp-color-field/.ctp-image-field are <td> elements — deliberately NOT flexed
- * (display:flex on a table cell drops it out of table layout and breaks row
- * alignment with its siblings). Plain inline flow + vertical-align instead, same
- * approach the image cell's thumbnail/buttons already relied on. */
+/* .ctp-color-field is a <td> in the calendars table and a <p> on the Design tab
+ * (accent color) — deliberately NOT flexed, because display:flex on a table cell
+ * drops it out of table layout and breaks row alignment with its siblings. Plain
+ * inline flow + vertical-align instead, same approach the image cell's
+ * thumbnail/buttons already relied on, and it works identically in both hosts. */
 .ctp-color-field .ctp-color-input {
     vertical-align: middle;
+    /* Firefox renders the native swatch at its own intrinsic size; pinning it
+     * keeps the swatch and the hex field the same height in every browser. */
+    width: 36px;
+    height: 30px;
+    padding: 2px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: 4px;
+    background: var(--ctp-admin-surface);
+    cursor: pointer;
+}
+
+/* Monospace so the six hex digits line up column-wise down the calendar table
+ * and a typo is easy to spot; width is sized to exactly "#rrggbb". */
+.ctp-color-field .ctp-color-hex {
+    width: 8.5em;
+    margin-left: 6px;
+    padding: 3px 8px;
+    vertical-align: middle;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 12px;
+    text-transform: lowercase;
 }
 
 .ctp-color-field .ctp-color-reset {
     margin-left: 8px;
     vertical-align: middle;
+}
+
+.ctp-color-field .ctp-color-input:disabled,
+.ctp-color-field .ctp-color-hex:disabled,
+.ctp-color-field .ctp-color-reset:disabled {
+    opacity: 0.5;
+    cursor: default;
 }
 
 .ctp-image-field .ctp-image-select,
@@ -323,8 +341,15 @@
 }
 
 /* Design tab */
+/* The preview card itself stays card-sized; its panel fills the grid cell. */
 .ctp-design-preview-frame {
     max-width: 280px;
+}
+
+/* Keeps a preview visually anchored to the editor in the same row even when
+ * the editor is the taller of the two. */
+.ctp-design-layout > .ctp-panel {
+    align-self: stretch;
 }
 
 /* frontend.css defaults .ctp-events__list to a grid for multi-item layouts; this
@@ -417,8 +442,21 @@
 
 .ctp-order-actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 0.5em;
     margin: 0.75em 0;
+}
+
+/* Deliberately a .button-link, not a .button: restoring the default is a
+ * destructive-ish escape hatch, not a peer of "+ Trennlinie einfügen". */
+.ctp-order-reset {
+    margin-left: auto;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-order-reset:hover {
+    color: #b32d2e;
 }
 
 .ctp-radio-inline {
@@ -487,6 +525,63 @@
 }
 
 /* Events tab */
+
+/* Filter bar above the table (Zeitraum / Kalender / Suche). A plain GET form,
+ * so it lays out like wp-admin's own tablenav rather than needing its own
+ * control chrome. */
+.ctp-events-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 12px;
+}
+
+.ctp-events-filters input[type='search'] {
+    min-width: 220px;
+}
+
+/* Month grouping inside the table body: a full-width subheading row rather
+ * than a separate table per month, so the three columns stay aligned across
+ * month boundaries. */
+.ctp-events-table__month th {
+    padding-top: 14px;
+    background: color-mix(in srgb, var(--ctp-admin-accent) 5%, var(--ctp-admin-surface));
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ctp-admin-muted);
+}
+
+/* Only reachable via the "Vergangene"/"Alle" filter — dimmed so a mixed list
+ * still reads as "these are behind us" at a glance. */
+.ctp-events-table__row--past td {
+    opacity: 0.65;
+}
+
+.ctp-row-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: text-bottom;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-events-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.ctp-events-pager__links {
+    display: inline-flex;
+    gap: 6px;
+}
+
 .ctp-cal-dot {
     display: inline-block;
     width: 0.7em;

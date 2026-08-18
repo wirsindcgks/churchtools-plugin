@@ -38,6 +38,7 @@ final class Plugin
         );
 
         Installer::maybeUpgrade();
+        Installer::registerHooks();
 
         if (is_admin()) {
             (new SettingsPage())->register();

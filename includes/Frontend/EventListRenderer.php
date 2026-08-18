@@ -23,6 +23,13 @@ final class EventListRenderer
      */
     private const UPCOMING_FALLBACK_LIMIT = 10;
 
+    /**
+     * Cap on how many hits one search returns. Generous enough that a realistic
+     * query never truncates, low enough that "e" doesn't try to render the
+     * entire synced calendar into one response.
+     */
+    private const SEARCH_LIMIT = 100;
+
     public function render(array $args): string
     {
         $args = $this->prepareArgs($args);
@@ -58,6 +65,10 @@ final class EventListRenderer
         $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
         $args['paging'] = $isFilterable && $args['paging'] && $args['next_page'] !== null;
         $args['paging_config'] = $args['paging'] ? $this->pagingConfig($args) : [];
+        // Carried on the search input itself rather than on the load-more
+        // button: search has to work with paging="0" too, where no button
+        // exists to hang a config off.
+        $args['search_config'] = $args['search'] ? $this->searchConfig($args) : [];
 
         // After $args['paging']/$args['eventfinder'], which filterCalendars()
         // branches on.
@@ -120,6 +131,39 @@ final class EventListRenderer
             'next_page' => $result['next_page'],
             'next_offset' => $result['next_offset'],
         ];
+    }
+
+    /**
+     * Renders the items for a full-horizon search, in the same markup as a
+     * normal page so the frontend JS can swap them into the existing <ul>.
+     * Unlike renderItems() there is no window, no cursor and no "load more":
+     * a search returns its (capped) matches in one go, which is what makes it
+     * able to reach past the month window the page is currently showing.
+     *
+     * @return array{html: string, count: int}
+     */
+    public function renderSearchResults(array $args, string $search): array
+    {
+        $args = $this->prepareArgs($args);
+
+        if ($args['layout'] === 'upcoming') {
+            return ['html' => '', 'count' => 0];
+        }
+
+        $designSettings = SettingsPage::get();
+        $events = EventQueryCache::searchUpcoming($args['calendar_ids'], $search, self::SEARCH_LIMIT);
+        $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
+
+        // Month dividers stay off for search results: hits are scattered across
+        // the whole horizon, so grouping them by month would produce a heading
+        // per result rather than a grouping.
+        $args['month_dividers'] = false;
+        $currentMonthKey = null;
+
+        ob_start();
+        require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-' . $args['layout'] . '-items.php';
+
+        return ['html' => (string) ob_get_clean(), 'count' => count($events)];
     }
 
     /**
@@ -211,6 +255,24 @@ final class EventListRenderer
             'month_dividers' => $args['month_dividers'] ? 1 : 0,
             'months' => $args['months'],
             'limit' => $args['limit'],
+        ];
+    }
+
+    /**
+     * What the search box needs to ask the server for matches beyond the
+     * currently loaded window. Deliberately a subset of pagingConfig(): no
+     * cursor, no month dividers, because a search result set has neither.
+     */
+    private function searchConfig(array $args): array
+    {
+        return [
+            'endpoint' => EventsEndpoint::url(),
+            'action' => EventsEndpoint::ACTION,
+            'calendars' => array_map('intval', $args['calendar_ids']),
+            'layout' => $args['layout'],
+            'columns' => $args['columns'],
+            'click' => $args['click_behavior'],
+            'min' => 2,
         ];
     }
 

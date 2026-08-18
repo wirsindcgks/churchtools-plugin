@@ -125,3 +125,49 @@ function sanitize_hex_color(string $color): ?string
 
     return (bool) preg_match('/^#([A-Fa-f0-9]{3}){1,2}$/', $color) ? $color : null;
 }
+
+/**
+ * SyncEngine::syncSeriesImage() reads the "_ctp_source_image_url" postmeta it
+ * stamped onto an imported attachment to decide whether the image changed.
+ * Tests seed it via ctp_test_set_post_meta().
+ */
+$GLOBALS['ctp_test_post_meta'] = [];
+
+function ctp_test_set_post_meta(int $postId, string $key, $value): void
+{
+    $GLOBALS['ctp_test_post_meta'][$postId][$key] = $value;
+}
+
+function ctp_test_reset_post_meta(): void
+{
+    $GLOBALS['ctp_test_post_meta'] = [];
+}
+
+function get_post_meta(int $postId, string $key = '', bool $single = false)
+{
+    return $GLOBALS['ctp_test_post_meta'][$postId][$key] ?? '';
+}
+
+/**
+ * syncSeriesImage() deletes the attachment of a series whose image disappeared
+ * on the ChurchTools side. Records the calls so tests can assert on them without
+ * a media library.
+ */
+$GLOBALS['ctp_test_deleted_attachments'] = [];
+
+function wp_delete_attachment(int $attachmentId, bool $force = false)
+{
+    $GLOBALS['ctp_test_deleted_attachments'][] = $attachmentId;
+
+    return true;
+}
+
+function ctp_test_deleted_attachments(): array
+{
+    return $GLOBALS['ctp_test_deleted_attachments'];
+}
+
+function ctp_test_reset_deleted_attachments(): void
+{
+    $GLOBALS['ctp_test_deleted_attachments'] = [];
+}

@@ -14,3 +14,4 @@ plan.md
 README.md
 Start.txt
 .DS_Store
+bin/

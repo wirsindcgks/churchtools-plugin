@@ -186,6 +186,20 @@
 		}
 	});
 
+	/*
+	 * Search is two-stage. Typing filters what is already in the DOM instantly
+	 * (no request, works under full-page caching) — but the DOM only holds the
+	 * month window the page loaded, so a match further out would never show up.
+	 * A debounced request therefore also asks the server for every match across
+	 * the whole synced horizon and swaps those in.
+	 *
+	 * Original markup is stashed on first search and restored when the box is
+	 * cleared, so clearing always returns to the exact paged list the visitor
+	 * had — including anything they had already loaded via "Weitere Termine".
+	 */
+	var searchTimers = new WeakMap();
+	var stashedLists = new WeakMap();
+
 	document.addEventListener('input', function (event) {
 		var input = event.target;
 
@@ -194,10 +208,102 @@
 		}
 
 		var container = input.closest('.ctp-events');
-		if (container) {
-			applyToolbarState(container);
+		if (!container) {
+			return;
 		}
+
+		applyToolbarState(container);
+
+		var config;
+		try {
+			config = JSON.parse(input.getAttribute('data-ctp-search-config') || '{}');
+		} catch (error) {
+			return;
+		}
+
+		if (!config.endpoint) {
+			return;
+		}
+
+		clearTimeout(searchTimers.get(input));
+		searchTimers.set(input, setTimeout(function () {
+			runServerSearch(container, input, config);
+		}, 300));
 	});
+
+	function runServerSearch(container, input, config) {
+		var list = container.querySelector('.ctp-events__list');
+		var query = input.value.trim();
+		if (!list) {
+			return;
+		}
+
+		if (query.length < (config.min || 2)) {
+			restoreStashedList(container, list);
+
+			return;
+		}
+
+		if (!stashedLists.has(container)) {
+			stashedLists.set(container, list.innerHTML);
+		}
+
+		var params = new URLSearchParams({
+			action: config.action,
+			search: query,
+			layout: config.layout,
+			columns: config.columns,
+			click: config.click,
+			calendars: (config.calendars || []).join(','),
+		});
+
+		fetch(config.endpoint + '?' + params.toString(), { credentials: 'same-origin' })
+			.then(function (response) {
+				return response.json();
+			})
+			.then(function (payload) {
+				// The box may have been typed in further (or cleared) while this
+				// request was in flight — a stale response must not overwrite a
+				// newer state.
+				if (input.value.trim() !== query) {
+					return;
+				}
+				if (!payload || !payload.success || !payload.data) {
+					return;
+				}
+
+				list.innerHTML = payload.data.html;
+				setSearchMode(container, true);
+				applyToolbarState(container);
+			})
+			.catch(function () {
+				// Leave the client-side filtered list in place: it is a valid,
+				// if narrower, answer to the same query.
+			});
+	}
+
+	function restoreStashedList(container, list) {
+		if (stashedLists.has(container)) {
+			list.innerHTML = stashedLists.get(container);
+			stashedLists.delete(container);
+		}
+		setSearchMode(container, false);
+		applyToolbarState(container);
+	}
+
+	/**
+	 * While server results are shown, the load-more button would page the
+	 * *window*, not the search — appending unrelated events under a list of
+	 * matches. Hidden rather than removed so clearing the box brings it back.
+	 */
+	function setSearchMode(container, active) {
+		container.classList.toggle('ctp-events--searching', active);
+
+		var more = container.querySelector('.ctp-events__more');
+		if (more) {
+			more.hidden = active;
+		}
+	}
 
 	/**
 	 * Eventfinder calendar/timeframe buttons (partials/eventfinder.php): each

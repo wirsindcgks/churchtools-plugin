@@ -72,6 +72,29 @@ final class EventQueryCache
     }
 
     /**
+     * Cached frontend search across the whole sync horizon. Search terms are
+     * unbounded user input, so the key is a hash of the term — bounded in
+     * practice by how many distinct things visitors actually type, and each
+     * entry expires on the same short TTL as everything else here. Without a
+     * cache this would be an uncapped public endpoint running a leading-wildcard
+     * LIKE on every keystroke-triggered request.
+     */
+    public static function searchUpcoming(array $calendarIds, string $search, int $limit): array
+    {
+        $key = self::cacheKey($calendarIds, $limit, md5($search), null, 'events_search');
+        $cached = get_transient($key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $events = (new EventRepository())->searchUpcoming($calendarIds, $search, $limit);
+        set_transient($key, $events, self::TTL);
+
+        return $events;
+    }
+
+    /**
      * Called by SyncEngine::run() after a successful sync. Bumps a version counter
      * rather than deleting transients directly: the read methods above are called
      * with a different calendar_ids/limit/window combination per shortcode/block/
