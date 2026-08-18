@@ -73,6 +73,26 @@ final class Installer
         self::scheduleIfNeeded('ctp_run_retention_cleanup', 'daily');
     }
 
+    /**
+     * Die Laenge eines Intervalls in Sekunden - einmal hier, weil diese Klasse
+     * die Zeitplaene anlegt und SYNC_INTERVALS besitzt. Gefragt wird von zwei
+     * Seiten: SyncHealthNotice, um zu entscheiden, ab wann ein Lauf ueberfaellig
+     * ist, und SyncEngine, um zu entscheiden, ueber wie viel Zeit sich leere
+     * Antworten erstrecken muessen, bevor sie als richtig gelten.
+     *
+     * Der Rueckfall auf HOUR_IN_SECONDS greift, wenn ein Intervall aus
+     * wp_get_schedules() verschwindet (ein Plugin filtert es weg) - dann lieber
+     * die kuerzeste Vorgabe als 0, das waere in beiden Rechnungen oben eine
+     * Division durch nichts.
+     */
+    public static function intervalSeconds(string $interval): int
+    {
+        $schedules = wp_get_schedules();
+        $seconds = (int) ($schedules[$interval]['interval'] ?? 0);
+
+        return $seconds > 0 ? $seconds : HOUR_IN_SECONDS;
+    }
+
     private static function scheduleIfNeeded(string $hook, string $recurrence): void
     {
         $event = wp_get_scheduled_event($hook);
@@ -95,6 +115,13 @@ final class Installer
     {
         wp_clear_scheduled_hook('ctp_run_sync');
         wp_clear_scheduled_hook('ctp_run_retention_cleanup');
+
+        // Der Streak leerer API-Antworten zaehlt *beobachtete* Laeufe. Waehrend
+        // das Plugin aus war, ist keiner gelaufen - bliebe der Zaehler stehen,
+        // koennte die erste leere Antwort nach dem Reaktivieren sofort loeschen
+        // (drei Laeufe von damals, dazwischen Monate). Siehe
+        // SyncEngine::looksLikeApiFailure().
+        delete_option('ctp_empty_sync_runs');
     }
 
     /**

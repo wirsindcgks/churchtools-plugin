@@ -213,6 +213,39 @@ class EventRepository
     }
 
     /**
+     * Ob im *abgefragten* Zeitfenster gespeicherte Termine liegen - die Frage
+     * hinter dem Leer-Antwort-Schutz in SyncEngine::doRun().
+     *
+     * Bewusst nicht hasEventsFrom(): das beantwortet die Frage der
+     * Load-more-Schaltflaeche ("kommt noch etwas?") und passt hier an beiden
+     * Enden nicht. Oben fehlt ihm die Grenze, sodass Zeilen jenseits des
+     * Sync-Horizonts (nach einem verkuerzten Zeitraum) eine berechtigt leere
+     * Antwort zur Stoerung machen wuerden; unten zaehlt es mit end_date >= jetzt
+     * die heute bereits beendeten Termine nicht mit - die deleteOrphans() aber
+     * sehr wohl loescht, weil dessen Untergrenze start_date ist.
+     *
+     * @param int[] $calendarIds
+     */
+    public function hasEventsBetween(array $calendarIds, string $from, string $to): bool
+    {
+        global $wpdb;
+
+        $sql = 'SELECT 1 FROM %i WHERE start_date >= %s AND start_date <= %s';
+        $params = [$this->table, $from, $to];
+
+        if ($calendarIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
+            $sql .= " AND ct_calendar_id IN ({$placeholders})";
+            array_push($params, ...$calendarIds);
+        }
+
+        $sql .= ' LIMIT 1';
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow() above.
+        return $wpdb->get_var($wpdb->prepare($sql, ...$params)) !== null;
+    }
+
+    /**
      * Backs the admin "Events" tab, which — unlike every frontend query — has
      * to be able to look at past occurrences and at all calendars regardless
      * of what's enabled, and to narrow that down by hand.

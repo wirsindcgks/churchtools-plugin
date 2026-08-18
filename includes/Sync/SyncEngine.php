@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Sync;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
 use DateTimeImmutable;
 use RuntimeException;
@@ -20,6 +21,14 @@ final class SyncEngine
     }
 
     private const OPTION_LAST_SYNC_ERROR = 'ctp_last_sync_error';
+    private const OPTION_EMPTY_RUNS = 'ctp_empty_sync_runs';
+
+    /**
+     * Nach wie vielen leeren Antworten in Folge eine leere Antwort als richtig
+     * gilt und geloescht werden darf - zusammen mit einer Mindestdauer, ueber
+     * die sie sich erstrecken muessen. Siehe looksLikeApiFailure().
+     */
+    private const EMPTY_RUNS_BEFORE_DELETE = 3;
 
     public static function run(): void
     {
@@ -84,19 +93,49 @@ final class SyncEngine
         $appointmentEnvelopes = $client->getEvents($calendarIds, $from, $to);
 
         // Ein leeres Ergebnis ist der einzige Fall, in dem "die API ist die
-        // Wahrheit" gefaehrlich wird. Client::request() liefert [] auch bei
-        // HTTP 200 mit unerwartetem Body zurueck, ohne zu werfen - geaendertes
-        // Response-Format, ein Kalender verliert still die Leseberechtigung,
-        // eine Fehlerseite von einem Proxy dazwischen. deleteOrphans() laesst
-        // bei leerer Keep-Liste seine Schutzbedingung komplett weg und wuerde
-        // dann jeden kuenftigen Termin aller aktiven Kalender loeschen.
+        // Wahrheit" gefaehrlich wird: deleteOrphans() laesst bei leerer
+        // Keep-Liste seine Schutzbedingung komplett weg und wuerde dann jeden
+        // kuenftigen Termin aller aktiven Kalender loeschen.
         //
-        // Der Schaden waere nicht dauerhaft - der naechste erfolgreiche Lauf
-        // legt alles wieder an, der Sync ist ein vollstaendiger Spiegel - aber
-        // bis dahin steht auf der Gemeindeseite "Keine anstehenden Termine".
-        // Deshalb: nichts loeschen, Lauf als Fehler sichtbar machen.
-        if (self::looksLikeApiFailure($appointmentEnvelopes, $repository->hasEventsFrom($calendarIds, $from->format('Y-m-d H:i:s')))) {
-            throw new RuntimeException(__('Die ChurchTools-API hat keine Termine zurückgeliefert, obwohl gespeicherte Termine vorliegen. Der Lauf wurde abgebrochen, es wurde nichts gelöscht – bitte Verbindung und Kalender-Berechtigungen prüfen.', 'churchtools-plugin'));
+        // Ein kaputter Body kommt hier nicht mehr an - den wirft
+        // Client::request() inzwischen selbst. Uebrig bleibt die wohlgeformt
+        // leere Antwort, und die ist entweder echt (der Kalender wurde geleert)
+        // oder eine still entzogene Leseberechtigung. Beide sehen identisch aus,
+        // deshalb nicht dauerhaft blockieren, sondern verzoegern: Erst wenn die
+        // Antwort ueber mehrere Laeufe *und* ueber die Zeit mehrerer planmaessiger
+        // Laeufe hinweg leer bleibt, gilt sie als richtig (siehe
+        // looksLikeApiFailure()). Eine voruebergehende Stoerung ist bis dahin
+        // vorbei, ein wirklich geleerter Kalender kommt von selbst durch - ohne
+        // diesen Ausweg bliebe der Sync fuer immer stehen, weil die
+        // Fehlermeldung nur ein erfolgreicher Lauf wieder abraeumt.
+        //
+        // Das Fenster der Rueckfrage ist genau das der API-Abfrage: oben bis
+        // $to, damit Zeilen jenseits des Horizonts (nach einem verkuerzten
+        // Zeitraum) keine berechtigt leere Antwort zur Stoerung machen; unten ab
+        // $from ohne "laeuft noch", weil deleteOrphans() ab da loescht. Gefragt
+        // wird nur bei leerer Antwort - sonst entscheidet sie nichts.
+        $hasStoredInWindow = $appointmentEnvelopes === [] && $repository->hasEventsBetween(
+            $calendarIds,
+            $from->format('Y-m-d H:i:s'),
+            $to->setTime(23, 59, 59)->format('Y-m-d H:i:s')
+        );
+
+        $emptyStreak = $hasStoredInWindow ? self::recordEmptyRun() : self::forgetEmptyRuns();
+
+        $apiFailure = self::looksLikeApiFailure(
+            $appointmentEnvelopes,
+            $hasStoredInWindow,
+            $emptyStreak,
+            time(),
+            Installer::intervalSeconds($settings['sync_interval'])
+        );
+
+        if ($apiFailure) {
+            throw new RuntimeException(sprintf(
+                /* translators: %d: number of consecutive empty responses so far */
+                __('Die ChurchTools-API hat keine Termine zurückgeliefert, obwohl für diesen Zeitraum welche gespeichert sind (%d. Lauf ohne Ergebnis). Es wurde nichts gelöscht – bitte Verbindung und Kalender-Berechtigungen prüfen. Bleibt die Antwort über mehrere planmäßige Läufe hinweg leer, gilt sie als richtig und die gespeicherten Termine werden entfernt.', 'churchtools-plugin'),
+                $emptyStreak['runs']
+            ));
         }
 
         $keepOccurrenceKeys = [];
@@ -146,16 +185,87 @@ final class SyncEngine
      * prozentualen Plausibilitaetsschwelle: Ein Kalender, der ueber die Zeit
      * wirklich schrumpft, wuerde an einer Schwelle dauerhaft haengenbleiben und
      * genau die Handarbeit erzeugen, die das hier vermeiden soll. Null gegen
-     * nicht-null ist die eine Grenze, die sich nicht falsch kalibrieren laesst.
+     * nicht-null ist die eine Grenze, die sich nicht falsch kalibrieren laesst -
+     * $consecutiveEmptyRuns sorgt dafuer, dass sie trotzdem nachgibt, wenn die
+     * Null bestehen bleibt.
      *
      * Faellt ein *einzelner* Kalender still aus, greift das hier nicht - dann
      * liefern die uebrigen ja Termine. Das ist Absicht: War der Ausfall
      * voruebergehend, stellt der naechste Lauf die Zeilen wieder her; war er
      * dauerhaft (Berechtigung entzogen), ist das Loeschen die richtige Antwort.
      */
-    private static function looksLikeApiFailure(array $appointmentEnvelopes, bool $hasStoredUpcoming): bool
+    private static function looksLikeApiFailure(
+        array $appointmentEnvelopes,
+        bool $hasStoredInWindow,
+        array $emptyStreak,
+        int $now,
+        int $intervalSeconds
+    ): bool {
+        if ($appointmentEnvelopes !== [] || !$hasStoredInWindow) {
+            return false;
+        }
+
+        // Drei Laeufe - aber auch die Zeit, die drei planmaessige Laeufe
+        // brauchen. Ohne die zweite Bedingung waere der Ausweg ueber den Knopf
+        // "Jetzt synchronisieren" in Sekunden erreichbar: ajaxRunSync() ruft
+        // run() direkt auf, drei Klicks eines ratlosen Admins waeren drei
+        // Laeufe - und geloescht wuerde ausgerechnet dann, wenn jemand gerade
+        // *wegen* der Stoerung am Suchen ist. Die Begruendung fuer das
+        // Nachgeben ist "die Stoerung war offensichtlich keine
+        // voruebergehende", und das ist eine Aussage ueber Zeit, nicht ueber
+        // Klicks. Fuer WP-Cron aendert die Bedingung nichts: Drei Laeufe
+        // dauern dort ohnehin laenger als zwei Intervalle.
+        $spreadRequired = (self::EMPTY_RUNS_BEFORE_DELETE - 1) * $intervalSeconds;
+
+        return $emptyStreak['runs'] < self::EMPTY_RUNS_BEFORE_DELETE
+            || ($now - $emptyStreak['since']) < $spreadRequired;
+    }
+
+    /**
+     * Zaehlt den laufenden Streak leerer Antworten hoch und merkt sich, wann er
+     * begonnen hat. Wird vor dem Werfen geschrieben, damit der naechste Lauf ihn
+     * auch dann sieht, wenn dieser hier als Fehler endet.
+     *
+     * @return array{runs: int, since: int}
+     */
+    private static function recordEmptyRun(): array
     {
-        return $appointmentEnvelopes === [] && $hasStoredUpcoming;
+        $streak = self::emptyStreak();
+        $streak['runs']++;
+        update_option(self::OPTION_EMPTY_RUNS, $streak);
+
+        return $streak;
+    }
+
+    /**
+     * Eine Antwort mit Terminen (oder nichts Gespeichertes, das zu schuetzen
+     * waere) setzt den Streak zurueck - nur *aufeinanderfolgende* leere
+     * Antworten duerfen sich zum Loeschen aufsummieren. Der Vergleich davor
+     * spart den Schreibzugriff im Normalfall.
+     *
+     * @return array{runs: int, since: int}
+     */
+    private static function forgetEmptyRuns(): array
+    {
+        if (get_option(self::OPTION_EMPTY_RUNS, null) !== null) {
+            delete_option(self::OPTION_EMPTY_RUNS);
+        }
+
+        return ['runs' => 0, 'since' => time()];
+    }
+
+    /**
+     * @return array{runs: int, since: int}
+     */
+    private static function emptyStreak(): array
+    {
+        $stored = get_option(self::OPTION_EMPTY_RUNS, null);
+
+        if (!is_array($stored) || !isset($stored['runs'], $stored['since'])) {
+            return ['runs' => 0, 'since' => time()];
+        }
+
+        return ['runs' => (int) $stored['runs'], 'since' => (int) $stored['since']];
     }
 
     /**

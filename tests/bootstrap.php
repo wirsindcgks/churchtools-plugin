@@ -83,8 +83,12 @@ function wp_timezone(): DateTimeZone
     return new DateTimeZone('Europe/Berlin');
 }
 
-// EventQueryCache::TTL is computed from this WP core constant at class-load time.
+// WP-Kernkonstanten, die hier zur Klassenladezeit gebraucht werden:
+// EventQueryCache::TTL rechnet mit der ersten, SyncHealthNotice::MIN_STALE_SECONDS
+// mit der dritten, und Installer::intervalSeconds() faellt auf die zweite zurueck.
 define('MINUTE_IN_SECONDS', 60);
+define('HOUR_IN_SECONDS', 3600);
+define('DAY_IN_SECONDS', 86400);
 
 /**
  * In-memory stand-in for transients, only as deep as EventQueryCacheTest needs:
@@ -170,4 +174,17 @@ function ctp_test_deleted_attachments(): array
 function ctp_test_reset_deleted_attachments(): void
 {
     $GLOBALS['ctp_test_deleted_attachments'] = [];
+}
+
+/**
+ * Client::excerpt() streift Markup ab, bevor es einen Fehlerkörper kürzt — sonst
+ * bliebe von einer HTML-Fehlerseite nur Markup in der Meldung übrig. Grob
+ * derselbe Ablauf wie in WordPress: Script-/Style-Inhalte raus, dann Tags.
+ */
+function wp_strip_all_tags(string $text, bool $removeBreaks = false): string
+{
+    $text = (string) preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', $text);
+    $text = strip_tags($text);
+
+    return trim($text);
 }

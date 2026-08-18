@@ -19,6 +19,11 @@ use ReflectionMethod;
  */
 final class SyncEngineTest extends TestCase
 {
+    private const NOW = 1_800_000_000;
+
+    /** Sekunden des Vorgabe-Intervalls "stuendlich". */
+    private const INTERVAL = 3600;
+
     protected function setUp(): void
     {
         ctp_test_reset_options();
@@ -80,12 +85,115 @@ final class SyncEngineTest extends TestCase
         $this->assertFalse($this->looksLikeApiFailure([['appointment' => []]], true));
     }
 
-    private function looksLikeApiFailure(array $envelopes, bool $hasStored): bool
+    /**
+     * Der zweite leere Lauf in Folge blockiert noch - eine voruebergehende
+     * Stoerung soll die gespeicherten Termine ueberleben.
+     */
+    public function testSecondConsecutiveEmptyResponseStillBlocks(): void
+    {
+        $this->assertTrue($this->looksLikeApiFailure([], true, 2, 2 * self::INTERVAL));
+    }
+
+    /**
+     * Der dritte laesst die leere Antwort gelten. Ohne diesen Ausweg bliebe ein
+     * wirklich geleerter Kalender fuer immer stehen: Die Fehlermeldung raeumt
+     * nur ein erfolgreicher Lauf ab, und erfolgreich wird der Lauf nie, solange
+     * die - korrekte - leere Antwort als Stoerung gilt.
+     */
+    public function testThirdConsecutiveEmptyResponseIsAllowedThrough(): void
+    {
+        $this->assertFalse($this->looksLikeApiFailure([], true, 3, 3 * self::INTERVAL));
+    }
+
+    /**
+     * Und die Bedingung, ohne die der Ausweg ein Loch waere: Drei Klicks auf
+     * "Jetzt synchronisieren" sind drei Laeufe in einer halben Minute -
+     * ajaxRunSync() ruft SyncEngine::run() direkt auf. Geloescht wuerde dann
+     * ausgerechnet, waehrend jemand wegen der Stoerung am Suchen ist. Die
+     * Begruendung fuer das Nachgeben ist "offensichtlich keine voruebergehende
+     * Stoerung", und das ist eine Aussage ueber Zeit, nicht ueber Klicks.
+     */
+    public function testThreeManualRunsInQuickSuccessionStillBlock(): void
+    {
+        $this->assertTrue($this->looksLikeApiFailure([], true, 3, 30));
+    }
+
+    /**
+     * Genau auf der Grenze wird durchgelassen - gefordert ist die Zeit, die
+     * drei planmaessige Laeufe brauchen, nicht mehr.
+     */
+    public function testExactlyTheRequiredSpreadIsAllowedThrough(): void
+    {
+        $this->assertFalse($this->looksLikeApiFailure([], true, 3, 2 * self::INTERVAL));
+    }
+
+    /**
+     * Die Invariante, auf der die Zeitbedingung ueberhaupt steht: "since" ist
+     * der *erste* leere Lauf und darf beim Hochzaehlen nicht mitwandern. Wuerde
+     * es das, waere der Abstand immer null und die Bedingung wirkungslos.
+     */
+    public function testStreakKeepsTheTimestampOfTheFirstEmptyRun(): void
+    {
+        ctp_test_set_option('ctp_empty_sync_runs', ['runs' => 1, 'since' => self::NOW - 3 * self::INTERVAL]);
+
+        $streak = $this->recordEmptyRun();
+
+        $this->assertSame(2, $streak['runs']);
+        $this->assertSame(self::NOW - 3 * self::INTERVAL, $streak['since']);
+    }
+
+    /**
+     * Ein Lauf mit Terminen raeumt den Zaehler weg - nur *aufeinanderfolgende*
+     * leere Antworten duerfen sich aufsummieren.
+     */
+    public function testASuccessfulRunClearsTheStreak(): void
+    {
+        ctp_test_set_option('ctp_empty_sync_runs', ['runs' => 2, 'since' => self::NOW]);
+
+        $this->assertSame(0, $this->forgetEmptyRuns()['runs']);
+        $this->assertNull(get_option('ctp_empty_sync_runs', null));
+    }
+
+    /**
+     * Ein kaputter oder aelterer Optionswert faengt bei null an, statt beim
+     * Hochzaehlen an einem fehlenden Schluessel zu scheitern.
+     */
+    public function testCorruptStoredStreakStartsOver(): void
+    {
+        ctp_test_set_option('ctp_empty_sync_runs', 'kaputt');
+
+        $this->assertSame(1, $this->recordEmptyRun()['runs']);
+    }
+
+    private function recordEmptyRun(): array
+    {
+        $method = new ReflectionMethod(SyncEngine::class, 'recordEmptyRun');
+        $method->setAccessible(true);
+
+        return $method->invoke(null);
+    }
+
+    private function forgetEmptyRuns(): array
+    {
+        $method = new ReflectionMethod(SyncEngine::class, 'forgetEmptyRuns');
+        $method->setAccessible(true);
+
+        return $method->invoke(null);
+    }
+
+    private function looksLikeApiFailure(array $envelopes, bool $hasStored, int $runs = 1, int $spread = 0): bool
     {
         $method = new ReflectionMethod(SyncEngine::class, 'looksLikeApiFailure');
         $method->setAccessible(true);
 
-        return $method->invoke(null, $envelopes, $hasStored);
+        return $method->invoke(
+            null,
+            $envelopes,
+            $hasStored,
+            ['runs' => $runs, 'since' => self::NOW - $spread],
+            self::NOW,
+            self::INTERVAL
+        );
     }
 
     private function mapOccurrence(array $envelope): ?array

@@ -1364,6 +1364,12 @@ final class SettingsPage
         $enabledCalendars = array_filter($calendars, static fn (array $calendar): bool => !empty($calendar['enabled']));
         $lastSync = get_option('ctp_last_sync', '');
         $lastError = SyncEngine::getLastError();
+
+        // Derselbe Befund, den SyncHealthNotice auf jeder anderen Admin-Seite
+        // meldet - hier, weil dieser Tab das Ziel seines Links ist und der
+        // Hinweis sich dort ausblendet. Ohne das waere die Uebersicht die eine
+        // Seite, auf der ein stehengebliebener Sync unerwaehnt bleibt.
+        $health = SyncHealthNotice::problem($settings);
         $eventCount = (new EventRepository())->count();
         $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
 
@@ -1387,7 +1393,12 @@ final class SettingsPage
                             /* translators: 1: date/time the sync last failed, 2: error message */
                             esc_html__('Letzter Sync-Fehler (%1$s): %2$s', 'churchtools-plugin'),
                             esc_html(mysql2date($dateFormat, $lastError['time'])),
-                            esc_html($lastError['message'])
+                            // Client::excerpt() kuerzt neue Meldungen bereits an
+                            // der Quelle; in ctp_last_sync_error kann aus der Zeit
+                            // davor aber noch eine komplette HTML-Fehlerseite
+                            // liegen, und die schoebe diesen Kasten ueber die
+                            // ganze Seite.
+                            esc_html(wp_html_excerpt((string) ($lastError['message'] ?? ''), 600, '…'))
                         );
                         ?>
                     </p>
@@ -1404,6 +1415,10 @@ final class SettingsPage
                         );
                         ?>
                     </p>
+                </div>
+            <?php elseif ($health !== null) : ?>
+                <div class="notice notice-<?php echo esc_attr($health['type']); ?> inline">
+                    <p><?php echo esc_html($health['message']); ?></p>
                 </div>
             <?php endif; ?>
             <div class="ctp-stat-grid">

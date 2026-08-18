@@ -17,6 +17,13 @@ use RuntimeException;
  */
 final class Client
 {
+    /**
+     * Zeichen, die von einem Fehlerkoerper in die persistierte Fehlermeldung
+     * uebernommen werden - genug fuer jede echte Meldung dieser API, zu wenig
+     * fuer eine komplette HTML-Fehlerseite.
+     */
+    private const MAX_ERROR_LENGTH = 300;
+
     public function __construct(
         private readonly string $baseUrl,
         private readonly string $apiKey,
@@ -80,7 +87,22 @@ final class Client
             ));
         }
 
-        return is_array($body['data'] ?? null) ? $body['data'] : [];
+        // Jede Antwort dieser API steckt in einem "data"-Feld (verifiziert gegen
+        // die OpenAPI-Spec fuer /whoami, /calendars und /calendars/appointments).
+        // Fehlt es, ist die Antwort keine Antwort dieser API: die Fehlerseite
+        // eines Proxys mit HTTP 200, eine Wartungsseite, ein geaendertes
+        // Response-Format. Das frueher hier zurueckgegebene [] machte daraus ein
+        // "es gibt eben nichts" - im Sync die Vorstufe zum Leerraeumen der
+        // Termintabelle, im Verbindungstest ein falsches "Verbindung erfolgreich".
+        if (!is_array($body) || !is_array($body['data'] ?? null)) {
+            throw new RuntimeException(sprintf(
+                /* translators: %s: shortened beginning of the unexpected response body */
+                __('Unerwartete Antwort der ChurchTools-API (kein „data“-Feld): %s', 'churchtools-plugin'),
+                self::excerpt($rawBody)
+            ));
+        }
+
+        return $body['data'];
     }
 
     /**
@@ -110,16 +132,33 @@ final class Client
     {
         if (is_array($decoded)) {
             if (!empty($decoded['errors'][0]['message'])) {
-                return (string) $decoded['errors'][0]['message'];
+                return self::excerpt((string) $decoded['errors'][0]['message']);
             }
 
             if (!empty($decoded['message'])) {
-                return (string) $decoded['message'];
+                return self::excerpt((string) $decoded['message']);
             }
         }
 
-        $trimmed = trim($rawBody);
+        return self::excerpt($rawBody);
+    }
 
-        return $trimmed !== '' ? $trimmed : 'unknown';
+    /**
+     * Die Fehlerkoerper dieser API sind kurz ("Session expired!"), der Ernstfall
+     * ist es nicht: eine 502-Seite von einem Proxy oder eine Wartungsseite sind
+     * schnell einige zehn Kilobyte HTML. Ungekuerzt landet das als
+     * Exception-Nachricht in der Option ctp_last_sync_error - und von dort seit
+     * SyncHealthNotice auf *jeder* Admin-Seite. Tags raus (von einer HTML-Seite
+     * bliebe sonst nur Markup uebrig), Whitespace zusammenfalten, harte Grenze.
+     */
+    private static function excerpt(string $rawBody): string
+    {
+        $text = trim((string) preg_replace('/\s+/', ' ', wp_strip_all_tags($rawBody)));
+
+        if ($text === '') {
+            return 'unknown';
+        }
+
+        return mb_strimwidth($text, 0, self::MAX_ERROR_LENGTH, '…');
     }
 }
