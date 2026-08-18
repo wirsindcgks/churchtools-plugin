@@ -43,7 +43,7 @@ final class CardDesign
 
     /**
      * Which of the six ELEMENT_KEYS can be hidden entirely from the card via
-     * the "Sichtbare Felder" admin field — "title" is deliberately excluded,
+     * the "Ausgeblendete Felder" admin field — "title" is deliberately excluded,
      * since a card with no title at all isn't a supported/tested state.
      */
     public const TOGGLEABLE_KEYS = ['media', 'calendar', 'subtitle', 'excerpt', 'meta'];

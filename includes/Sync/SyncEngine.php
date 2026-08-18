@@ -30,14 +30,28 @@ final class SyncEngine
      */
     private const EMPTY_RUNS_BEFORE_DELETE = 3;
 
+    /**
+     * Was beim Abgleich der Kalenderliste schiefging - getrennt vom
+     * Sync-Fehler, weil ein Fehlschlag hier den Terminabgleich weder aufhaelt
+     * noch entwertet (siehe refreshCalendarList()).
+     */
+    private const OPTION_CALENDARS_ERROR = 'ctp_calendars_sync_error';
+
     public static function run(): void
     {
         $settings = SettingsPage::get();
-        $calendarIds = SettingsPage::getEnabledCalendarIds();
 
         if ($settings['instance'] === '' || $settings['api_key'] === '') {
             return;
         }
+
+        // Erst die Kalenderliste, dann die Termine - und in dieser Reihenfolge,
+        // damit ein in ChurchTools geloeschter Kalender nicht gleich danach
+        // noch einmal abgefragt wird und ein dort neu angelegter sofort in der
+        // Auswahl auftaucht.
+        self::refreshCalendarList();
+
+        $calendarIds = SettingsPage::getEnabledCalendarIds();
 
         if ($calendarIds === []) {
             // Unter demselben Schutz wie der Abgleich darunter, aus demselben
@@ -73,6 +87,66 @@ final class SyncEngine
         } catch (Throwable $exception) {
             self::rememberError($exception);
         }
+    }
+
+    /**
+     * Zieht die Kalenderliste bei jedem Lauf mit nach.
+     *
+     * Bewusst nicht toedlich: Der Terminabgleich ist die Aufgabe dieses Laufs,
+     * und ein API-Key, der Termine lesen darf, aber die Kalenderliste nicht,
+     * wuerde sonst einen bis dahin funktionierenden Sync zum Erliegen bringen.
+     * Der Fehlschlag verschwindet trotzdem nicht still: er landet in einer
+     * eigenen Option, die der Tab „Kalender“ als Hinweis anzeigt, und der
+     * Zeitstempel „zuletzt geladen“ bleibt stehen.
+     */
+    private static function refreshCalendarList(): void
+    {
+        try {
+            $client = new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey());
+            $result = SettingsPage::refreshCalendars($client);
+
+            if ($result['status'] === 'empty') {
+                update_option(self::OPTION_CALENDARS_ERROR, [
+                    'time' => current_time('mysql'),
+                    'message' => $result['message'],
+                ]);
+
+                return;
+            }
+
+            delete_option(self::OPTION_CALENDARS_ERROR);
+
+            // Name und Farbe eines Kalenders stehen auf jeder Kachel im
+            // Frontend - aendert sich die Liste, ist das Gerenderte veraltet.
+            if ($result['changed']) {
+                EventQueryCache::flush();
+            }
+        } catch (Throwable $exception) {
+            update_option(self::OPTION_CALENDARS_ERROR, [
+                'time' => current_time('mysql'),
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Gleiche Form und gleiche Pruefung wie getLastError(), fuer den
+     * Kalenderabgleich - der Tab „Kalender“ liest ihn.
+     *
+     * @return array{time: string, message: string}|null
+     */
+    public static function getLastCalendarError(): ?array
+    {
+        $error = get_option(self::OPTION_CALENDARS_ERROR, null);
+
+        if (!is_array($error) || !is_scalar($error['time'] ?? null) || !is_scalar($error['message'] ?? null)) {
+            return null;
+        }
+
+        return [
+            'time' => (string) $error['time'],
+            'message' => (string) $error['message'],
+        ];
     }
 
     private static function rememberError(Throwable $exception): void
@@ -121,7 +195,7 @@ final class SyncEngine
     /**
      * Geprueft wird die Form, nicht nur der Typ: is_array() allein sagt nichts
      * ueber die Schluessel, und die drei Aufrufer greifen alle direkt auf
-     * 'time' bzw. 'message' zu (SettingsPage::renderStatusTab(),
+     * 'time' bzw. 'message' zu (SettingsPage::renderStatusOverview(),
      * SettingsPage::ajaxRunSync(), SyncHealthNotice::problem()). Ohne diese
      * Pruefung braeuchte jeder von ihnen sein eigenes ?? '' - und ein
      * vergessenes waere eine Warnung auf einer Admin-Seite. In der Option kann

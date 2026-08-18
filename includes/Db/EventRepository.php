@@ -112,6 +112,43 @@ class EventRepository
         return (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $this->table));
     }
 
+    /**
+     * Gespeicherte Termine je Kalender, aufgeschluesselt nach "kommend" und
+     * "gesamt" - die Zahl, die im Tab „Kalender“ neben jedem Eintrag steht.
+     * Ohne sie sieht eine Kalenderliste, in der ein Kalender seit Monaten
+     * nichts mehr liefert, genauso aus wie eine gesunde.
+     *
+     * Eine Abfrage fuer alle Kalender statt einer pro Zeile: die Liste hat so
+     * viele Zeilen, wie ChurchTools Kalender kennt, und das kann zweistellig
+     * werden.
+     *
+     * @return array<int, array{total: int, upcoming: int}>
+     */
+    public function countsByCalendar(): array
+    {
+        global $wpdb;
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            'SELECT ct_calendar_id,
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN end_date >= %s THEN 1 ELSE 0 END) AS upcoming
+             FROM %i
+             GROUP BY ct_calendar_id',
+            current_time('mysql'),
+            $this->table
+        ), ARRAY_A);
+
+        $counts = [];
+        foreach ((array) $rows as $row) {
+            $counts[(int) $row['ct_calendar_id']] = [
+                'total' => (int) $row['total'],
+                'upcoming' => (int) $row['upcoming'],
+            ];
+        }
+
+        return $counts;
+    }
+
     public function find(int $id): ?array
     {
         global $wpdb;

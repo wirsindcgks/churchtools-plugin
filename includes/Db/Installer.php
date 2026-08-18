@@ -8,7 +8,7 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 
 final class Installer
 {
-    public const DB_VERSION = '1.4.0';
+    public const DB_VERSION = '1.5.0';
 
     /**
      * The three recurrences the "Sync-Intervall" select offers — kept here
@@ -135,7 +135,39 @@ final class Installer
         }
 
         self::createTables();
+        self::dropRetiredSettings();
         update_option('ctp_db_version', self::DB_VERSION);
+    }
+
+    /**
+     * Raeumt Einstellungen weg, die es nicht mehr gibt.
+     *
+     * Anlass ist `github_token`: das Feld ist mit 1.5.0 entfallen (das
+     * Repository ist oeffentlich, siehe GitHubUpdateChecker), aber auf
+     * bestehenden Installationen liegt der verschluesselte Wert weiter in
+     * ctp_settings. sanitizeSettings() gibt den Schluessel nicht mehr zurueck,
+     * er verschwaende also spaetestens beim naechsten Speichern von selbst -
+     * bis dahin bliebe ein Geheimnis in der Datenbank stehen, das niemand mehr
+     * liest und deshalb auch niemand mehr zurueckziehen kann.
+     *
+     * Bewusst am Settings-Array vorbei geschrieben, ohne den Sanitizer:
+     * dieselbe Ueberlegung wie in SettingsPage::refreshCalendars() - der
+     * Sanitizer wuerde hier bereits geprueften Bestand ein zweites Mal durch
+     * seine Allowlists schicken.
+     */
+    private static function dropRetiredSettings(): void
+    {
+        $settings = get_option('ctp_settings', []);
+
+        if (!is_array($settings) || !array_key_exists('github_token', $settings)) {
+            return;
+        }
+
+        unset($settings['github_token']);
+
+        remove_filter('sanitize_option_ctp_settings', [SettingsPage::class, 'sanitizeSettings']);
+        update_option('ctp_settings', $settings);
+        add_filter('sanitize_option_ctp_settings', [SettingsPage::class, 'sanitizeSettings']);
     }
 
     private static function createTables(): void

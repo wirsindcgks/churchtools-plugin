@@ -20,7 +20,9 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
     delete_option('ctp_settings');
     delete_option('ctp_last_sync');
+    delete_option('ctp_calendars_fetched');
     delete_option('ctp_last_sync_error');
+    delete_option('ctp_calendars_sync_error');
     delete_option('ctp_empty_sync_runs');
     delete_option('ctp_db_version');
     delete_option('ctp_events_cache_version');

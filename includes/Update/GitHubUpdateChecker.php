@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Update;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 /**
@@ -20,6 +19,11 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
  */
 final class GitHubUpdateChecker
 {
+    /**
+     * Steht auch in SettingsPage::REPO_URL - dort verlinkt der Tab „Updates“
+     * dieselbe Quelle, aus der hier die Releases geholt werden. Wer das
+     * Plugin aus einem Fork verteilt, aendert beide.
+     */
     private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
 
     public static function register(): void
@@ -34,19 +38,16 @@ final class GitHubUpdateChecker
 
         $updateChecker = PucFactory::buildUpdateChecker(self::REPO_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
 
-        // The repo is public (see plan.md's "Rahmendaten" — made public on
-        // 2026-08-18 precisely so update checks work without one), so the token is
-        // optional here:
-        // it only raises GitHub's unauthenticated rate limit of 60 requests per hour
-        // per IP, which two update checks a day never come near. It stays supported
-        // for anyone distributing from a private fork — there a missing token means
-        // the library can't reach the Releases API at all and fails the check
-        // quietly, reporting the plugin as up to date.
-        $token = SettingsPage::getDecryptedGitHubToken();
-        if ($token !== '') {
-            $updateChecker->setAuthentication($token);
-        }
-
+        // Kein Zugangstoken mehr. Das Repository ist seit dem 2026-08-18
+        // oeffentlich und bleibt es (siehe plan.md, „Rahmendaten“) - damit
+        // greift GitHubs Rate-Limit fuer nicht angemeldete Anfragen, 60 pro
+        // Stunde und IP, und zwei Update-Pruefungen am Tag kommen dem nie
+        // nahe. Ein Eingabefeld dafuer gab es trotzdem, und es kostete mehr,
+        // als es einbrachte: ein verschluesselt gespeichertes Geheimnis, das
+        // niemand braucht, plus eine Erklaerung im Backend, warum man es nicht
+        // ausfuellen muss. Wer aus einem privaten Fork verteilt, aendert
+        // REPO_URL hier ohnehin und kann an derselben Stelle
+        // setAuthentication() ergaenzen.
         $updateChecker->getVcsApi()->enableReleaseAssets('/\.zip($|[?&#])/i');
     }
 }

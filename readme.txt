@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.9.2
+Stable tag: 0.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,25 +14,25 @@ Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und 
 
 Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an – ohne dass jemand Termine doppelt pflegen muss.
 
-* **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
-* **Drei Ansichten**: Liste, Grid und „Nächster Termin" – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
-* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
+* **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
+* **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
+* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …“-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL.
 * **Design-Tab** mit Live-Vorschau: Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
 * **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
 * **Theme-überschreibbare Templates** und Anlehnung an die Global Styles des aktiven Themes.
-* **Automatische Updates** über GitHub Releases, direkt aus der WordPress-Plugin-Übersicht.
+* **Automatische Updates** über GitHub Releases, direkt aus der WordPress-Plugin-Übersicht – ohne Zugangstoken, das Repository ist öffentlich.
 
 == Installation ==
 
 1. Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` hochladen.
 2. Plugin aktivieren.
-3. Im Menü „ChurchTools" → Tab „Verbindung" den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen".
-4. Im Tab „Kalender" auf „Kalender von ChurchTools laden" klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen).
-5. Im Tab „Übersicht" einmal „Jetzt synchronisieren" auslösen – danach übernimmt WP-Cron.
-6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Design").
+3. Im Menü „ChurchTools“ → Tab „Verbindung“ den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
+4. Im Tab „Kalender“ auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
+5. Im Tab „Übersicht“ einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
+6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Design“).
 
 == Verwendung ==
 
@@ -96,23 +96,23 @@ Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `eve
 
 = Wie weit im Voraus werden Termine synchronisiert? =
 
-Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation". Der Wert bestimmt zugleich, wie weit „Weitere Termine laden" im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.
+Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation“. Der Wert bestimmt zugleich, wie weit „Weitere Termine laden“ im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.
 
 = Was passiert, wenn ich einen Kalender wieder deaktiviere? =
 
-Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo kein `calendar`-Attribut gesetzt ist, denn „alle Kalender" bedeutet immer „alle aktiven". Aus der Datenbank werden sie beim nächsten Sync entfernt, samt der zugehörigen importierten Bilder.
+Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo kein `calendar`-Attribut gesetzt ist, denn „alle Kalender“ bedeutet immer „alle aktiven“. Aus der Datenbank werden sie beim nächsten Sync entfernt, samt der zugehörigen importierten Bilder.
 
 = Wie werde ich einen Kalender ganz aus der Liste los? =
 
-Gar nicht von Hand – und das ist Absicht: Die Liste im Tab „Kalender" spiegelt, was ChurchTools dem hinterlegten API-Zugang zeigt. Verliert der Zugang die Leseberechtigung für einen Kalender (oder wird der Kalender dort gelöscht), verschwindet er beim nächsten Klick auf „Kalender von ChurchTools laden" von selbst aus der Liste. Bleibt er trotzdem stehen, liefert die API ihn weiterhin aus – dann ist die Berechtigung auf ChurchTools-Seite noch nicht so gesetzt, wie gedacht.
+Gar nicht von Hand – und das ist Absicht: Die Liste im Tab „Kalender“ spiegelt, was ChurchTools dem hinterlegten API-Zugang zeigt. Jede Synchronisation gleicht sie automatisch mit ab, ein Klick auf „Kalender von ChurchTools laden“ holt sie sofort. Verliert der Zugang die Leseberechtigung für einen Kalender (oder wird der Kalender dort gelöscht), verschwindet er damit von selbst aus der Liste; ein dort neu angelegter Kalender taucht ebenso von selbst auf (zunächst deaktiviert). Bleibt er trotzdem stehen, liefert die API ihn weiterhin aus – dann ist die Berechtigung auf ChurchTools-Seite noch nicht so gesetzt, wie gedacht.
 
 Seine gespeicherten Termine ist ein Kalender schon los, sobald er hier abgewählt ist (siehe die Frage davor) – dafür muss er nicht aus der Liste verschwinden.
 
 = Woran merke ich, dass der Sync nicht mehr läuft? =
 
-Das Plugin sagt es von selbst: Schlägt ein Lauf fehl, fehlt der Zeitplan, oder liegt der letzte erfolgreiche Lauf zu lange zurück, erscheint im WordPress-Backend ein Hinweis mit Link zur Übersicht. „Zu lange" heißt: mehr als das Dreifache des eingestellten Intervalls, mindestens aber 24 Stunden – ein als „stündlich" eingestellter Sync, der über Nacht mangels Besuchern nicht läuft, ist normal (siehe die nächste Frage) und keinen Hinweis wert. Ein fehlender Cron-Zeitplan wird beim nächsten Aufruf des Backends zusätzlich automatisch wieder angelegt.
+Das Plugin sagt es von selbst: Schlägt ein Lauf fehl, fehlt der Zeitplan, oder liegt der letzte erfolgreiche Lauf zu lange zurück, erscheint im WordPress-Backend ein Hinweis mit Link zur Übersicht. „Zu lange“ heißt: mehr als das Dreifache des eingestellten Intervalls, mindestens aber 24 Stunden – ein als „stündlich“ eingestellter Sync, der über Nacht mangels Besuchern nicht läuft, ist normal (siehe die nächste Frage) und keinen Hinweis wert. Ein fehlender Cron-Zeitplan wird beim nächsten Aufruf des Backends zusätzlich automatisch wieder angelegt.
 
-Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl für den abgefragten Zeitraum bereits Termine gespeichert sind, bricht das Plugin den Lauf ab und löscht nichts – eine leere Antwort wird zunächst als Störung behandelt, nicht als „alle Termine abgesagt". Bleibt sie leer, gilt sie ab dem dritten Lauf in Folge als richtig, und die gespeicherten Termine werden entfernt: Ein Kalender, der wirklich geleert wurde, soll nicht dauerhaft alte Termine auf der Website stehen lassen. Gezählt wird dabei die Zeit dreier planmäßiger Läufe – wer den Knopf „Jetzt synchronisieren“ dreimal hintereinander drückt, löst das Löschen nicht vorzeitig aus.
+Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl für den abgefragten Zeitraum bereits Termine gespeichert sind, bricht das Plugin den Lauf ab und löscht nichts – eine leere Antwort wird zunächst als Störung behandelt, nicht als „alle Termine abgesagt“. Bleibt sie leer, gilt sie ab dem dritten Lauf in Folge als richtig, und die gespeicherten Termine werden entfernt: Ein Kalender, der wirklich geleert wurde, soll nicht dauerhaft alte Termine auf der Website stehen lassen. Gezählt wird dabei die Zeit dreier planmäßiger Läufe – wer den Knopf „Jetzt synchronisieren“ dreimal hintereinander drückt, löst das Löschen nicht vorzeitig aus.
 
 = Wie zuverlässig läuft der Sync im eingestellten Intervall? =
 
@@ -134,16 +134,16 @@ Ungetestet. Technisch legt es seine Tabelle mit dem Tabellenpräfix der jeweilig
 
 = Was passiert bei einem Serverumzug oder einer Änderung der WordPress-Salts? =
 
-Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es im Tab „Übersicht“ ausdrücklich; der Key muss dann im Tab „Verbindung“ einmal neu eingegeben werden. Dasselbe gilt für den optionalen GitHub-Token.
+Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es im Tab „Übersicht“ ausdrücklich; der Key muss dann im Tab „Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
 
 = Was kann das Plugin bewusst nicht? =
 
 * Mehrere ChurchTools-Instanzen (siehe oben)
 * WordPress-Multisite (ungetestet, siehe oben)
-* Eine Monatskalender-/Rasteransicht – es gibt Liste, Grid und „Nächster Termin"
+* Eine Monatskalender-/Rasteransicht – es gibt Liste, Grid und „Nächster Termin“
 * Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
 * Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
-* Die Drag-and-drop-Sortierung im Tab „Design" funktioniert mit Maus oder Trackpad, nicht per Touch
+* Die Drag-and-drop-Sortierung im Tab „Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
 
 == Datenschutz ==
 
@@ -161,30 +161,48 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.10.0 =
+Überarbeitetes Backend: einheitliche Statuszeile auf jedem Tab, Kalenderauswahl als Kachelliste mit Terminzahlen, ausführlicher Changelog im Tab „Updates“. Die Kalenderliste gleicht sich ab jetzt bei jeder Synchronisation automatisch mit ChurchTools ab. Das Feld für den GitHub-Token entfällt – das Repository ist öffentlich, ein bereits gespeicherter Token wird beim Update entfernt. Kein Handlungsbedarf.
+
 = 0.9.2 =
-Nur ein korrigierter Hinweistext im Tab „Updates": Das Repository ist öffentlich, ein GitHub-Token ist für Update-Prüfungen also nicht nötig. Kein Handlungsbedarf.
+Nur ein korrigierter Hinweistext im Tab „Updates“: Das Repository ist öffentlich, ein GitHub-Token ist für Update-Prüfungen also nicht nötig. Kein Handlungsbedarf.
 
 = 0.9.1 =
-Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts vorhanden" missverstanden wurden – im schlimmsten Fall hätte das die gespeicherten Termine oder die Kalenderliste geleert. Enthält außerdem einen Hinweis im Backend, wenn die Synchronisation klemmt. Kein Handlungsbedarf nach dem Update.
+Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts vorhanden“ missverstanden wurden – im schlimmsten Fall hätte das die gespeicherten Termine oder die Kalenderliste geleert. Enthält außerdem einen Hinweis im Backend, wenn die Synchronisation klemmt. Kein Handlungsbedarf nach dem Update.
 
 = 0.9.0 =
-Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden" wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation" gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
+Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
 
+= 0.10.0 =
+* Neu: Jeder Tab der Einstellungsseite trägt dieselbe Statuszeile – Verbindung, Kalender, Synchronisation, Design und Updates hatten bisher keine
+* Neu: Die Kalenderliste wird bei jeder Synchronisation automatisch mit ChurchTools abgeglichen. Umbenannte Kalender, geänderte Farben und neu angelegte Kalender kommen damit von selbst an, statt erst beim nächsten Klick auf „Kalender von ChurchTools laden“
+* Neu: Jede Kalenderkachel nennt die Zahl ihrer gespeicherten und kommenden Termine – ein Kalender, der nichts mehr liefert, fällt damit auf
+* Neu: Der Tab „Updates“ zeigt die Änderungen der letzten drei Versionen, verlinkt Repository und Releases und bietet einen Knopf „Jetzt auf Updates prüfen“
+* Neu: „Jetzt synchronisieren“ gibt es auch im Tab „Synchronisation“, direkt bei den Einstellungen, die man gerade geändert hat
+* Geändert: Die Kalenderauswahl ist eine Kachelliste – die Kalenderfarbe ist der farbige Balken der Kachel, inaktive Kalender sind gedimmt, dazu Suche, „Alle aktivieren/deaktivieren“ und ein kopierbarer Shortcode je Kalender
+* Geändert: Das Feld für den GitHub-Token entfällt. Das Repository ist öffentlich, ein Token war dafür nie nötig; ein bereits gespeicherter wird beim Update aus der Datenbank entfernt
+* Geändert: Aktionen sitzen überall an derselben Stelle und ihre Rückmeldung ist als Erfolg oder Fehler erkennbar
+* Geändert: Alle Reiter sind gleich breit, Tabellen und Kachellisten nutzen die Seitenbreite, Formulare bleiben schmal
+* Geändert: „Sichtbare Felder“ heißt jetzt „Ausgeblendete Felder“ – angehakt bedeutet dort ausgeblendet
+* Fix: Die drei Optionen unter „Bei Klick auf eine Kachel“ liefen als Fließtext in einer Zeile ineinander
+* Fix: Zahlreiche Beschreibungstexte im Backend – falsche schließende Anführungszeichen, ein Hinweis mit falscher Wegbeschreibung, ein Satz zum GitHub-Token, der das Gegenteil des Gemeinten sagte, und zwei Absätze, die als Liste lesbar sind
+* Fix: Die Medienbibliothek wurde auf jedem Tab geladen, obwohl nur die Kalenderauswahl einen Medien-Dialog öffnet
+
 = 0.9.2 =
-* Der Hinweis zum GitHub-Token im Tab „Updates" beschreibt jetzt den tatsächlichen Fall: Das Repository ist öffentlich, ein Token hebt nur das Rate-Limit an und ist keine Voraussetzung für Update-Prüfungen
+* Der Hinweis zum GitHub-Token im Tab „Updates“ beschreibt jetzt den tatsächlichen Fall: Das Repository ist öffentlich, ein Token hebt nur das Rate-Limit an und ist keine Voraussetzung für Update-Prüfungen
 
 = 0.9.1 =
-* Fix: Antwortete die ChurchTools-API mit HTTP 200, aber unerwartetem Inhalt (Fehlerseite eines Proxys, Wartungsseite), galt das als „keine Termine vorhanden" – im Sync die Vorstufe zum Leeren der Termintabelle, im Verbindungstest ein falsches „Verbindung erfolgreich"
+* Fix: Antwortete die ChurchTools-API mit HTTP 200, aber unerwartetem Inhalt (Fehlerseite eines Proxys, Wartungsseite), galt das als „keine Termine vorhanden“ – im Sync die Vorstufe zum Leeren der Termintabelle, im Verbindungstest ein falsches „Verbindung erfolgreich“
 * Fix: Kommen keine Termine zurück, obwohl welche gespeichert sind, bricht der Sync ab und löscht nichts. Bleibt die Antwort über mehrere planmäßige Läufe hinweg leer, gilt sie als richtig
-* Fix: „Kalender von ChurchTools laden" leert die gespeicherte Kalenderliste nicht mehr, wenn die API keine Kalender zurückliefert – eingestellte Farben und Standardbilder bleiben erhalten
-* Fix: Wer den letzten aktiven Kalender abwählt, behielt dessen Termine dauerhaft in der Datenbank. Sie werden jetzt beim nächsten Lauf entfernt, „Jetzt synchronisieren" räumt sofort auf
+* Fix: „Kalender von ChurchTools laden“ leert die gespeicherte Kalenderliste nicht mehr, wenn die API keine Kalender zurückliefert – eingestellte Farben und Standardbilder bleiben erhalten
+* Fix: Wer den letzten aktiven Kalender abwählt, behielt dessen Termine dauerhaft in der Datenbank. Sie werden jetzt beim nächsten Lauf entfernt, „Jetzt synchronisieren“ räumt sofort auf
 * Neu: Hinweis auf jeder Backend-Seite, wenn die letzte Synchronisation fehlgeschlagen ist, kein Zeitplan hinterlegt ist oder der letzte erfolgreiche Lauf zu lange zurückliegt
 * Fix: Eine HTML-Fehlerseite als Fehlermeldung füllt nicht mehr die halbe Backend-Seite
 
 = 0.9.0 =
-* Fix: „Kalender von ChurchTools laden" brach mit einem JavaScript-Fehler ab und blieb auf „Lade…" stehen, weil die Instanz-/API-Key-Felder auf einem anderen Tab liegen
+* Fix: „Kalender von ChurchTools laden“ brach mit einem JavaScript-Fehler ab und blieb auf „Lade…“ stehen, weil die Instanz-/API-Key-Felder auf einem anderen Tab liegen
 * Fix: Das eingestellte Sync-Intervall wurde nie an WP-Cron weitergegeben – jede Installation synchronisierte unabhängig von der Auswahl stündlich. Der Zeitplan wird jetzt beim Speichern umgestellt und bei Bedarf selbst repariert
 * Fix: Die intern verwendete Versionsnummer hing auf 0.2.0 fest, wodurch Browser nach einem Update veraltete CSS-/JS-Dateien weiterverwendeten und die Übersicht die falsche installierte Version anzeigte
 * Farben lassen sich jetzt zusätzlich als Hex-Code eingeben (Kalenderfarben und Akzentfarbe), nicht mehr nur über den Farbwähler
@@ -193,7 +211,7 @@ Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von C
 * Design-Tab neu geordnet: Drag&Drop-Editor und zugehörige Vorschau stehen nebeneinander, globale Einstellungen gesammelt darunter
 * Verwaiste Bild-Kopien in der Mediathek werden beim Sync automatisch aufgeräumt
 * Übersicht zeigt jetzt auch die nächste geplante Synchronisation samt Intervall und weist auf ein deaktiviertes WP-Cron hin
-* Design-Tab: „Standard wiederherstellen" für beide Reihenfolge-Listen, die Vorschau scrollt mit
+* Design-Tab: „Standard wiederherstellen“ für beide Reihenfolge-Listen, die Vorschau scrollt mit
 * Der GitHub-Token im Updates-Tab ist jetzt als optional beschrieben (nötig nur bei privatem Repository)
 
 = 0.5.0 =
@@ -206,18 +224,18 @@ Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von C
 
 = 0.3.0 =
 * Frontend-Design für List/Grid/Upcoming, Werkzeugleiste und Popup/Detailansicht überarbeitet
-* „Nächster Termin"-Ansicht: Bild jetzt rechts, nie mehr beschnitten, konsistente Höhe unabhängig vom Fotoformat
+* „Nächster Termin“-Ansicht: Bild jetzt rechts, nie mehr beschnitten, konsistente Höhe unabhängig vom Fotoformat
 * Grid-Spaltenzahl passt sich jetzt der tatsächlichen Container-Breite an statt starr die eingestellte Zahl zu erzwingen
-* Bugfix: Terminbild verdeckte in der „Nächster Termin"-Ansicht ab Desktop-Breite Titel und Beschreibung
+* Bugfix: Terminbild verdeckte in der „Nächster Termin“-Ansicht ab Desktop-Breite Titel und Beschreibung
 
 = 0.2.0 =
-* Drei Frontend-Ansichten (Liste, Grid, „Nächster Termin") mit theme-adaptivem Design, Kalenderfilter, Suchleiste und Monatstrennern
+* Drei Frontend-Ansichten (Liste, Grid, „Nächster Termin“) mit theme-adaptivem Design, Kalenderfilter, Suchleiste und Monatstrennern
 * Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt (Datenschutz)
 * Klickbare Terminkacheln: Popup oder eigene Termin-Seite, global oder pro Shortcode/Block/WPBakery einstellbar
 * Design-Tab: Reihenfolge und Sichtbarkeit der Kartenelemente, Eckenstil, Bild-Seitenverhältnis und Akzentfarbe per Drag&Drop bzw. Live-Vorschau
 * Gutenberg-Block mit echter Live-Vorschau im Editor und Kalender-Checkbox-Liste statt Textfeld
 * Automatische Plugin-Updates über GitHub Releases
-* Admin-Oberfläche überarbeitet: einheitliches Panel-Design, neuer „Übersicht"-Dashboard-Tab, Events-Übersicht mit Detailansicht
+* Admin-Oberfläche überarbeitet: einheitliches Panel-Design, neuer „Übersicht“-Dashboard-Tab, Events-Übersicht mit Detailansicht
 * Sync-Zuverlässigkeit: sichtbare Sync-Fehler, AUTH_KEY-Rotation-Erkennung, konfigurierbarer Sync-Zeitraum, Frontend-Query-Caching
 * Datenschutz-Dokumentation, optionales Datenerhalt beim Deinstallieren, erste `.pot`-Übersetzungsvorlage
 * Erste PHPUnit-Testsuite, PSR-12-Lint in der CI

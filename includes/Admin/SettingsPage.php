@@ -18,7 +18,24 @@ use Throwable;
 final class SettingsPage
 {
     private const OPTION_KEY = 'ctp_settings';
+
+    /**
+     * Wann die Kalenderliste zuletzt von ChurchTools geholt wurde. Steht in der
+     * Statuszeile des Tabs „Kalender“ - ohne sie sieht eine Liste, die seit
+     * einem halben Jahr niemand mehr aktualisiert hat, genauso aus wie eine
+     * gerade eben geladene.
+     */
+    private const OPTION_CALENDARS_FETCHED = 'ctp_calendars_fetched';
+
     private const PAGE_SLUG = 'churchtools-plugin';
+
+    /**
+     * Muss mit GitHubUpdateChecker::REPO_URL uebereinstimmen - dort holt das
+     * Plugin seine Updates her, hier verlinkt der Tab „Updates“ dieselbe
+     * Quelle. Der abschliessende Schraegstrich gehoert dazu, die Links haengen
+     * ihre Pfade direkt an.
+     */
+    private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
     private const DEFAULT_TAB = 'status';
 
     private string $pageHook = '';
@@ -31,6 +48,7 @@ final class SettingsPage
         add_action('wp_ajax_ctp_test_connection', [$this, 'ajaxTestConnection']);
         add_action('wp_ajax_ctp_fetch_calendars', [$this, 'ajaxFetchCalendars']);
         add_action('wp_ajax_ctp_run_sync', [$this, 'ajaxRunSync']);
+        add_action('wp_ajax_ctp_check_updates', [$this, 'ajaxCheckUpdates']);
     }
 
     public function addMenuPage(): void
@@ -94,7 +112,13 @@ final class SettingsPage
             return;
         }
 
-        wp_enqueue_media();
+        // Nur der Tab „Kalender“ oeffnet einen Medien-Dialog (Standardbild je
+        // Kalender) - auf allen uebrigen Tabs waren das bisher rund ein Dutzend
+        // Skripte und Stylesheets, die niemand aufruft.
+        if (self::currentTab() === 'calendars') {
+            wp_enqueue_media();
+        }
+
         wp_enqueue_style('ctp-admin', CTP_PLUGIN_URL . 'assets/css/admin.css', [], CTP_VERSION);
 
         // Own handle rather than reusing Assets::STYLE_HANDLE — that class'
@@ -125,7 +149,11 @@ final class SettingsPage
         ]);
 
         $connectionPage = self::PAGE_SLUG . '_connection';
-        $calendarsPage = self::PAGE_SLUG . '_calendars';
+        // Kein $calendarsPage mehr: der Tab „Kalender“ rendert seine Auswahl
+        // selbst (siehe renderCalendarsTab()), weil die Settings-API-Tabelle
+        // sie in eine Formularzelle gepresst hat, in der weder die
+        // Kalenderfarbe noch die Terminzahl Platz fand. Die Feldnamen sind
+        // dieselben geblieben, sanitizeCalendars() merkt davon nichts.
         $syncPage = self::PAGE_SLUG . '_sync';
 
         add_settings_section('ctp_instance', __('ChurchTools-Instanz', 'churchtools-plugin'), '__return_false', $connectionPage);
@@ -134,10 +162,10 @@ final class SettingsPage
         add_settings_section('ctp_api', __('API-Key & Verbindungstest', 'churchtools-plugin'), '__return_false', $connectionPage);
         add_settings_field('api_key', __('API-Key', 'churchtools-plugin'), [$this, 'renderApiKeyField'], $connectionPage, 'ctp_api');
 
-        add_settings_section('ctp_calendars', __('Kalenderauswahl', 'churchtools-plugin'), '__return_false', $calendarsPage);
-        add_settings_field('calendars', __('Kalender', 'churchtools-plugin'), [$this, 'renderCalendarsField'], $calendarsPage, 'ctp_calendars');
-
-        add_settings_section('ctp_sync', __('Sync-Einstellungen', 'churchtools-plugin'), '__return_false', $syncPage);
+        // Section-Callback statt '__return_false': er rendert genau zwischen
+        // Ueberschrift und Feldtabelle - die Stelle, an der die Aktionsleiste
+        // auf jedem anderen Tab auch steht (siehe renderActionBar()).
+        add_settings_section('ctp_sync', __('Sync-Einstellungen', 'churchtools-plugin'), [self::class, 'renderSyncIntro'], $syncPage);
         add_settings_field('sync_interval', __('Sync-Intervall', 'churchtools-plugin'), [$this, 'renderSyncIntervalField'], $syncPage, 'ctp_sync');
         add_settings_field('sync_days_ahead', __('Sync-Zeitraum (Tage in die Zukunft)', 'churchtools-plugin'), [$this, 'renderSyncDaysAheadField'], $syncPage, 'ctp_sync');
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
@@ -175,14 +203,10 @@ final class SettingsPage
         $designGlobalPage = self::PAGE_SLUG . '_design_global';
         add_settings_section('ctp_design_global', __('Globale Darstellung', 'churchtools-plugin'), [self::class, 'renderGlobalDesignIntro'], $designGlobalPage);
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('hidden_elements', __('Sichtbare Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
+        add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designGlobalPage, 'ctp_design_global');
-
-        $updatesPage = self::PAGE_SLUG . '_updates';
-        add_settings_section('ctp_updates', __('Plugin-Updates über GitHub', 'churchtools-plugin'), '__return_false', $updatesPage);
-        add_settings_field('github_token', __('GitHub-Token', 'churchtools-plugin'), [$this, 'renderGitHubTokenField'], $updatesPage, 'ctp_updates');
     }
 
     public static function defaults(): array
@@ -193,7 +217,7 @@ final class SettingsPage
             /**
              * Keyed by ChurchTools calendar ID:
              * [ 'name' => string, 'enabled' => bool, 'color' => '#rrggbb',
-             *   'default_color' => '#rrggbb' (ChurchTools' own color, for the "reset" button, see renderCalendarRow()),
+             *   'default_color' => '#rrggbb' (ChurchTools' own color, for the "reset" button, see renderCalendarCard()),
              *   'default_image_id' => int (attachment ID) ]
              */
             'calendars' => [],
@@ -219,7 +243,6 @@ final class SettingsPage
             'click_behavior' => 'popup',
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
-            'github_token' => '',
         ];
     }
 
@@ -281,19 +304,6 @@ final class SettingsPage
     }
 
     /**
-     * Unlike getDecryptedApiKey(), no "plausible token" check: a GitHub token going
-     * missing after an AUTH_KEY rotation just means update checks silently stop
-     * finding updates, not a broken sync — much lower stakes than a wrong
-     * Authorization header reaching the ChurchTools API on every hourly cron run.
-     */
-    public static function getDecryptedGitHubToken(): string
-    {
-        $stored = self::get()['github_token'];
-
-        return $stored === '' ? '' : Crypto::decrypt($stored);
-    }
-
-    /**
      * Detects a stored, encrypted API key that no longer decrypts to a plausible
      * token — the symptom of an AUTH_KEY rotation (salt change, server move,
      * secrets-management switch), which silently breaks Crypto::decrypt() since the
@@ -321,7 +331,7 @@ final class SettingsPage
 
     public static function apiKeyDecryptionErrorMessage(): string
     {
-        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte im Tab „Verbindung" neu eingeben.', 'churchtools-plugin');
+        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte im Tab „Verbindung“ neu eingeben.', 'churchtools-plugin');
     }
 
     public static function getEnabledCalendarIds(): array
@@ -381,7 +391,6 @@ final class SettingsPage
         $input ??= [];
         $existing = self::get();
         $apiKey = trim((string) ($input['api_key'] ?? ''));
-        $githubToken = trim((string) ($input['github_token'] ?? ''));
 
         $syncInterval = $existing['sync_interval'];
         if (array_key_exists('sync_interval', $input) && in_array($input['sync_interval'], Installer::SYNC_INTERVALS, true)) {
@@ -452,7 +461,6 @@ final class SettingsPage
             'paging_months' => array_key_exists('paging_months', $input)
                 ? EventWindow::sanitizeMonths((int) $input['paging_months'])
                 : $existing['paging_months'],
-            'github_token' => $githubToken === '' ? $existing['github_token'] : Crypto::encrypt($githubToken),
         ];
     }
 
@@ -567,79 +575,201 @@ final class SettingsPage
     {
         $hasKey = self::get()['api_key'] !== '';
 
+        // „Verbindung testen“ bleibt bewusst am Feld statt in der
+        // Aktionsleiste unter der Ueberschrift: der Knopf prueft genau das,
+        // was gerade in diesen beiden Feldern steht - auch ungespeichert
+        // (siehe effectiveConnection()). Die Rueckmeldung nutzt trotzdem
+        // dasselbe .ctp-inline-status-Bauteil wie jede andere Aktion im
+        // Backend.
         printf(
             '<span class="ctp-field-with-button">'
             . '<input type="password" id="ctp-api-key" name="%1$s[api_key]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
             . '<button type="button" class="button" id="ctp-test-connection">%3$s</button>'
-            . '<span id="ctp-test-connection-result"></span>'
-            . '</span>',
+            . '<span class="ctp-inline-status" id="ctp-test-connection-result" role="status" aria-live="polite"></span>'
+            . '</span>'
+            . '<p class="description">%4$s</p>',
             esc_attr(self::OPTION_KEY),
             $hasKey ? esc_attr__('Hinterlegt – zum Ändern neuen Key eingeben', 'churchtools-plugin') : '',
-            esc_html__('Verbindung testen', 'churchtools-plugin')
+            esc_html__('Verbindung testen', 'churchtools-plugin'),
+            esc_html__('Der Test fragt ChurchTools mit Instanz und Key aus den Feldern oben ab – auch ungespeichert. Leere Felder greifen dabei auf die gespeicherten Werte zurück.', 'churchtools-plugin')
         );
     }
 
-    public function renderCalendarsField(): void
+    /**
+     * Der Tab „Kalender“ - eine Kachelliste statt der bisherigen Tabelle.
+     *
+     * Vorher steckte die ganze Kalenderauswahl als *ein* Settings-API-Feld in
+     * einer .form-table. Das kostete links rund 200 Pixel fuer eine
+     * Beschriftung („Kalender“), die nur die Ueberschrift darueber
+     * wiederholte, und presste vier Spalten - Haken, Name, Farbe, Standardbild -
+     * in den Rest. Die Farbe war ein 36px-Kaestchen zwischen zwei
+     * Bedienelementen, und woran man einen Kalender ueberhaupt erkennt,
+     * naemlich wie viele Termine er liefert, stand nirgends.
+     *
+     * Die Kachelliste dreht das um:
+     *   - Die Kalenderfarbe ist der farbige Balken der Kachel, also das, was
+     *     man zuerst sieht - nicht mehr ein Kaestchen in Spalte drei.
+     *   - Jede Kachel nennt ihre Termine (kommend/gesamt, siehe
+     *     EventRepository::countsByCalendar()). Ein Kalender, der seit Monaten
+     *     nichts liefert, faellt damit auf.
+     *   - Inaktive Kalender sind sichtbar gedimmt, statt sich nur durch einen
+     *     leeren Haken ganz links von den aktiven zu unterscheiden.
+     *   - Suche und „Alle aktivieren/deaktivieren“ machen die Liste auch bei
+     *     zwei Dutzend Kalendern noch bedienbar.
+     *   - Jede Kachel liefert den fertigen Shortcode fuer genau diesen
+     *     Kalender zum Kopieren - dieselbe Schaltflaeche wie in der
+     *     Shortcode-Referenz im Tab „Design“.
+     *
+     * Kein Settings-API-Abschnitt mehr, sondern direkt gerendert: die
+     * Feldnamen sind unveraendert (ctp_settings[calendars][ID][...]), also
+     * greifen settings_fields() und sanitizeCalendars() genau wie zuvor.
+     */
+    private function renderCalendarsTab(): void
     {
         $calendars = self::get()['calendars'];
         uasort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+        $counts = self::calendarEventCounts();
         ?>
-        <p>
-            <button type="button" class="button" id="ctp-fetch-calendars">
-                <?php esc_html_e('Kalender von ChurchTools laden', 'churchtools-plugin'); ?>
-            </button>
-            <span id="ctp-fetch-calendars-result"></span>
-        </p>
-        <?php if ($calendars === []) : ?>
-            <p class="ctp-empty-state"><?php esc_html_e('Noch keine Kalender geladen.', 'churchtools-plugin'); ?></p>
-        <?php else : ?>
-            <table class="widefat striped ctp-calendars-table ctp-borderless">
-                <thead>
-                    <tr>
-                        <th class="ctp-col-active"><?php esc_html_e('Aktiv', 'churchtools-plugin'); ?></th>
-                        <th><?php esc_html_e('Kalender', 'churchtools-plugin'); ?></th>
-                        <th class="ctp-col-color"><?php esc_html_e('Farbe', 'churchtools-plugin'); ?></th>
-                        <th class="ctp-col-image"><?php esc_html_e('Standardbild', 'churchtools-plugin'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
+        <form method="post" action="options.php" class="ctp-panel ctp-panel--wide">
+            <?php settings_fields(self::PAGE_SLUG); ?>
+            <h2><?php esc_html_e('Kalenderauswahl', 'churchtools-plugin'); ?></h2>
+            <?php
+            self::renderActionBar(
+                'ctp-fetch-calendars',
+                __('Kalender von ChurchTools laden', 'churchtools-plugin'),
+                __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Knopf holt sie sofort. Eingestellte Farben und Standardbilder bleiben dabei erhalten.', 'churchtools-plugin')
+            );
+            ?>
+
+            <?php $calendarError = SyncEngine::getLastCalendarError(); ?>
+            <?php if ($calendarError !== null) : ?>
+                <?php
+                /*
+                 * Der Sync zieht die Kalenderliste inzwischen bei jedem Lauf
+                 * mit nach (siehe SyncEngine::refreshCalendarList()). Scheitert
+                 * das, laeuft der Terminabgleich trotzdem weiter - dieser
+                 * Hinweis ist die einzige Stelle, an der es auffaellt.
+                 */
+                ?>
+                <div class="notice notice-warning inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: 1: date/time the calendar refresh last failed, 2: error message */
+                            esc_html__('Der automatische Kalenderabgleich ist zuletzt fehlgeschlagen (%1$s): %2$s', 'churchtools-plugin'),
+                            esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $calendarError['time'])),
+                            esc_html(wp_html_excerpt($calendarError['message'], 400, '…'))
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($calendars === []) : ?>
+                <p class="ctp-empty-state"><?php esc_html_e('Noch keine Kalender geladen.', 'churchtools-plugin'); ?></p>
+            <?php else : ?>
+                <div class="ctp-toolbar ctp-toolbar--secondary">
+                    <label class="screen-reader-text" for="ctp-calendar-search">
+                        <?php esc_html_e('Kalender filtern', 'churchtools-plugin'); ?>
+                    </label>
+                    <input
+                        type="search"
+                        id="ctp-calendar-search"
+                        class="ctp-calendar-search"
+                        placeholder="<?php esc_attr_e('Kalender filtern …', 'churchtools-plugin'); ?>"
+                    />
+                    <span class="ctp-toolbar__spacer"></span>
+                    <button type="button" class="button ctp-calendar-bulk" data-enable="1">
+                        <?php esc_html_e('Alle aktivieren', 'churchtools-plugin'); ?>
+                    </button>
+                    <button type="button" class="button ctp-calendar-bulk" data-enable="0">
+                        <?php esc_html_e('Alle deaktivieren', 'churchtools-plugin'); ?>
+                    </button>
+                </div>
+
+                <ul class="ctp-calendar-grid" id="ctp-calendar-grid">
                     <?php foreach ($calendars as $id => $calendar) : ?>
-                        <?php $this->renderCalendarRow((int) $id, $calendar); ?>
+                        <?php $this->renderCalendarCard((int) $id, $calendar, $counts[(int) $id] ?? ['total' => 0, 'upcoming' => 0]); ?>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-            <p class="description">
-                <?php esc_html_e('Aktive Kalender werden synchronisiert. Ansprechbar im Shortcode per ID oder Name, z. B.', 'churchtools-plugin'); ?>
-                <code>[ctp_events calendar="<?php echo esc_html((string) array_key_first($calendars)); ?>,<?php echo esc_html(reset($calendars)['name']); ?>"]</code>
-            </p>
-            <p class="description">
-                <?php esc_html_e('Das Standardbild wird angezeigt, sobald ein Termin dieses Kalenders kein eigenes Bild hat.', 'churchtools-plugin'); ?>
-            </p>
-        <?php endif; ?>
+                </ul>
+                <p class="ctp-empty-state" id="ctp-calendar-no-match" hidden>
+                    <?php esc_html_e('Kein Kalender passt zu diesem Suchbegriff.', 'churchtools-plugin'); ?>
+                </p>
+
+                <p class="description">
+                    <?php esc_html_e('Nur aktive Kalender werden synchronisiert. Termine eines gerade deaktivierten Kalenders entfernt der nächste Sync.', 'churchtools-plugin'); ?>
+                </p>
+                <p class="description">
+                    <?php esc_html_e('Das Standardbild erscheint überall dort, wo ein Termin dieses Kalenders kein eigenes Bild mitbringt.', 'churchtools-plugin'); ?>
+                </p>
+            <?php endif; ?>
+
+            <?php submit_button(); ?>
+        </form>
         <?php
     }
 
-    private function renderCalendarRow(int $id, array $calendar): void
+    /**
+     * Eine Kalenderkachel. Der farbige Balken oben traegt die Kalenderfarbe,
+     * damit sie ohne Umweg ueber ein Bedienelement sichtbar ist; das
+     * Farbfeld darunter ist dasselbe Paar aus Farbwaehler und Hex-Feld wie
+     * zuvor (siehe .ctp-color-field und den geteilten Inline-Skript-Block in
+     * renderPage()).
+     *
+     * @param array{total: int, upcoming: int} $count
+     */
+    private function renderCalendarCard(int $id, array $calendar, array $count): void
     {
         $fieldBase = sprintf('%s[calendars][%d]', self::OPTION_KEY, $id);
         $imageId = (int) $calendar['default_image_id'];
         $imageUrl = $imageId ? (string) wp_get_attachment_image_url($imageId, 'thumbnail') : '';
+        $enabled = !empty($calendar['enabled']);
+        $shortcode = sprintf('[ctp_events calendar="%s"]', $calendar['name']);
+        $checkboxId = sprintf('ctp-calendar-enabled-%d', $id);
         ?>
-        <tr>
-            <td>
-                <input type="checkbox" name="<?php echo esc_attr($fieldBase); ?>[enabled]" value="1" <?php checked(!empty($calendar['enabled'])); ?> />
-            </td>
-            <td>
-                <?php echo esc_html($calendar['name']); ?>
-                <br /><code class="ctp-muted-code">ID: <?php echo (int) $id; ?></code>
-            </td>
-            <td class="ctp-color-field">
+        <li
+            class="ctp-calendar-card<?php echo $enabled ? '' : ' is-disabled'; ?>"
+            data-name="<?php echo esc_attr(mb_strtolower($calendar['name'])); ?>"
+            data-id="<?php echo esc_attr((string) $id); ?>"
+        >
+            <span class="ctp-calendar-card__bar" style="background-color:<?php echo esc_attr($calendar['color']); ?>" aria-hidden="true"></span>
+
+            <div class="ctp-calendar-card__head">
+                <input
+                    type="checkbox"
+                    id="<?php echo esc_attr($checkboxId); ?>"
+                    class="ctp-calendar-enabled"
+                    name="<?php echo esc_attr($fieldBase); ?>[enabled]"
+                    value="1"
+                    <?php checked($enabled); ?>
+                />
+                <label class="ctp-calendar-card__name" for="<?php echo esc_attr($checkboxId); ?>">
+                    <?php echo esc_html($calendar['name']); ?>
+                </label>
+            </div>
+
+            <p class="ctp-calendar-card__facts">
+                <code class="ctp-muted-code">ID <?php echo (int) $id; ?></code>
+                <span aria-hidden="true">·</span>
                 <?php
-                // Swatch + hex field are one control: only the <input type="color">
-                // carries a name and gets submitted, the text field is a mirror the
-                // inline script in renderPage() keeps in sync both ways. Designers
-                // work from hex codes in a style guide, and a native color picker
-                // offers no way to type one in.
+                printf(
+                    /* translators: 1: number of upcoming events, 2: total number of stored events */
+                    esc_html__('%1$d kommend von %2$d gespeicherten Terminen', 'churchtools-plugin'),
+                    (int) $count['upcoming'],
+                    (int) $count['total']
+                );
+                ?>
+            </p>
+
+            <div class="ctp-calendar-card__row ctp-color-field">
+                <span class="ctp-calendar-card__row-label"><?php esc_html_e('Farbe', 'churchtools-plugin'); ?></span>
+                <?php
+                // Farbwaehler und Hex-Feld sind ein Bedienelement: nur das
+                // <input type="color"> traegt einen Namen und wird abgeschickt,
+                // das Textfeld ist ein Spiegel, den das Inline-Skript in
+                // renderPage() in beide Richtungen nachfuehrt. Wer nach einem
+                // Styleguide arbeitet, hat den Hex-Code, und ein nativer
+                // Farbwaehler bietet keine Moeglichkeit, ihn einzutippen.
                 ?>
                 <input
                     type="color"
@@ -657,19 +787,40 @@ final class SettingsPage
                     autocomplete="off"
                     aria-label="<?php esc_attr_e('Farbe als Hex-Code', 'churchtools-plugin'); ?>"
                 />
-                <button type="button" class="button-link ctp-color-reset" data-default-color="<?php echo esc_attr($calendar['default_color'] ?? $calendar['color']); ?>" title="<?php esc_attr_e('Auf ChurchTools-Standardfarbe zurücksetzen', 'churchtools-plugin'); ?>">
+                <button
+                    type="button"
+                    class="button-link ctp-color-reset"
+                    data-default-color="<?php echo esc_attr($calendar['default_color'] ?? $calendar['color']); ?>"
+                    title="<?php esc_attr_e('Auf die Farbe zurücksetzen, die dieser Kalender in ChurchTools hat', 'churchtools-plugin'); ?>"
+                >
                     <?php esc_html_e('Zurücksetzen', 'churchtools-plugin'); ?>
                 </button>
-            </td>
-            <td class="ctp-image-field">
+            </div>
+
+            <div class="ctp-calendar-card__row ctp-image-field">
+                <span class="ctp-calendar-card__row-label"><?php esc_html_e('Standardbild', 'churchtools-plugin'); ?></span>
                 <input type="hidden" class="ctp-image-id" name="<?php echo esc_attr($fieldBase); ?>[default_image_id]" value="<?php echo esc_attr((string) $imageId); ?>" />
                 <img class="ctp-image-preview" src="<?php echo esc_url($imageUrl); ?>" alt="" <?php echo $imageUrl ? '' : 'hidden'; ?> />
-                <button type="button" class="button ctp-image-select"><?php esc_html_e('Bild wählen', 'churchtools-plugin'); ?></button>
+                <button type="button" class="button button-small ctp-image-select">
+                    <?php echo $imageUrl ? esc_html__('Ersetzen', 'churchtools-plugin') : esc_html__('Bild wählen', 'churchtools-plugin'); ?>
+                </button>
                 <button type="button" class="button-link ctp-image-remove" <?php echo $imageUrl ? '' : 'hidden'; ?>>
                     <?php esc_html_e('Entfernen', 'churchtools-plugin'); ?>
                 </button>
-            </td>
-        </tr>
+            </div>
+
+            <div class="ctp-calendar-card__row ctp-calendar-card__row--shortcode">
+                <code><?php echo esc_html($shortcode); ?></code>
+                <button
+                    type="button"
+                    class="button button-small ctp-copy-shortcode"
+                    data-shortcode="<?php echo esc_attr($shortcode); ?>"
+                    title="<?php esc_attr_e('Shortcode für genau diesen Kalender kopieren', 'churchtools-plugin'); ?>"
+                >
+                    <?php esc_html_e('Kopieren', 'churchtools-plugin'); ?>
+                </button>
+            </div>
+        </li>
         <?php
     }
 
@@ -736,11 +887,13 @@ final class SettingsPage
             esc_html__('Monate', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Liste und Grid zeigen zunächst den angebrochenen aktuellen Monat plus so viele weitere Monate; ein Klick auf „Weitere Termine laden" hängt jeweils den nächsten Zeitraum an. Kürzere Zeiträume laden schneller. Ohne Termine im Zeitraum springt die Ansicht automatisch zum nächsten Monat mit Terminen.', 'churchtools-plugin')
+            . esc_html__('Liste und Grid zeigen zunächst den angebrochenen aktuellen Monat plus so viele weitere Monate.', 'churchtools-plugin')
             . '</p>';
-        echo '<p class="description">'
-            . esc_html__('Für die Ansicht „Nächster Termin" ohne Wirkung – sie zeigt weiterhin eine feste Anzahl Termine (Attribut „limit").', 'churchtools-plugin')
-            . '</p>';
+        echo '<ul class="description ctp-hint-list">'
+            . '<li>' . esc_html__('„Weitere Termine laden“ hängt jeweils den nächsten Zeitraum an; kürzere Zeiträume laden schneller.', 'churchtools-plugin') . '</li>'
+            . '<li>' . esc_html__('Liegt im Zeitraum kein Termin, springt die Ansicht automatisch zum nächsten Monat mit Terminen.', 'churchtools-plugin') . '</li>'
+            . '<li>' . esc_html__('Ohne Wirkung auf „Nächster Termin“ – diese Ansicht zeigt weiterhin eine feste Anzahl Termine (Attribut „limit“).', 'churchtools-plugin') . '</li>'
+            . '</ul>';
     }
 
     public function renderRetentionField(): void
@@ -751,6 +904,9 @@ final class SettingsPage
             esc_attr((string) self::get()['retention_days']),
             esc_html__('Tage', 'churchtools-plugin')
         );
+        echo '<p class="description">'
+            . esc_html__('Wie lange bereits vergangene Termine noch gespeichert bleiben, bevor der Sync sie entfernt. 0 = sofort nach Ende des Termins löschen.', 'churchtools-plugin')
+            . '</p>';
     }
 
     /**
@@ -852,10 +1008,39 @@ final class SettingsPage
                 <?php esc_html_e('Standard wiederherstellen', 'churchtools-plugin'); ?>
             </button>
         </p>
-        <p class="description">
-            <?php esc_html_e('Reihenfolge per Drag&Drop ändern (Maus/Trackpad – Touch-Sortierung wird derzeit nicht unterstützt). Die Bild-Position bestimmt nur, ob das Bild über oder unter dem Textblock erscheint, nicht zwischen einzelnen Textzeilen. Trennlinien und Abstände lassen sich beliebig oft einfügen und wie jedes andere Element per Drag&Drop verschieben oder über das „×“ wieder entfernen.', 'churchtools-plugin'); ?>
-        </p>
         <?php
+        /*
+         * Vier Aussagen, die vorher als ein einziger Absatz unter dem Feld
+         * standen und dort niemand zu Ende gelesen hat. Als Liste ist jede
+         * Regel einzeln auffindbar - der Satz, den man gerade braucht, steht
+         * in seiner eigenen Zeile.
+         */
+        ?>
+        <p class="description"><?php esc_html_e('Reihenfolge per Drag&Drop ändern:', 'churchtools-plugin'); ?></p>
+        <ul class="description ctp-hint-list">
+            <li><?php esc_html_e('Ziehen funktioniert mit Maus und Trackpad – Sortieren per Touch wird derzeit nicht unterstützt.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Die Bild-Position legt nur fest, ob das Bild über oder unter dem Textblock steht – nicht zwischen einzelnen Textzeilen.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Trennlinien und Abstände lassen sich beliebig oft einfügen und wie jedes andere Element verschieben.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Das „×“ an einer Trennlinie oder einem Abstand entfernt sie wieder; die sechs festen Elemente bleiben immer erhalten.', 'churchtools-plugin'); ?></li>
+        </ul>
+        <?php
+    }
+
+    /**
+     * Kopf des Sync-Tabs: dieselbe Aktionsleiste wie auf der Uebersicht und im
+     * Tab „Kalender“.
+     *
+     * „Jetzt synchronisieren“ gab es bisher nur auf der Uebersicht. Wer hier
+     * gerade Intervall oder Zeitraum geaendert hat, will das Ergebnis sofort
+     * sehen und musste dafuer den Tab wechseln.
+     */
+    public static function renderSyncIntro(): void
+    {
+        self::renderActionBar(
+            'ctp-run-sync',
+            __('Jetzt synchronisieren', 'churchtools-plugin'),
+            __('Läuft sofort, unabhängig vom Intervall. Änderungen unten vorher speichern.', 'churchtools-plugin')
+        );
     }
 
     /**
@@ -866,7 +1051,7 @@ final class SettingsPage
     public static function renderGlobalDesignIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Diese Einstellungen gelten für alle Ansichten (Liste, Grid, „Nächster Termin") und für jeden Shortcode, Block und WPBakery-Eintrag. Die beiden Vorschauen oben übernehmen sie unmittelbar.', 'churchtools-plugin')
+            . esc_html__('Diese Einstellungen gelten für alle Ansichten (Liste, Grid, „Nächster Termin“) und für jeden Shortcode, Block und WPBakery-Eintrag. Die beiden Vorschauen oben übernehmen sie unmittelbar.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -911,7 +1096,7 @@ final class SettingsPage
             );
         }
         echo '<p class="description">'
-            . esc_html__('Angehakte Felder werden auf der Kachel nicht mehr angezeigt. Der Titel bleibt immer sichtbar. Gilt nur für die Kachel, nicht für Popup/eigene Seite (dort weiterhin über die Reihenfolge unten steuerbar).', 'churchtools-plugin')
+            . esc_html__('Angehakt heißt ausgeblendet: Dieses Feld erscheint dann nicht mehr auf der Kachel. Der Titel bleibt immer sichtbar. Popup und eigene Seite bleiben davon unberührt – dort bestimmt „Aufbau der Detailansicht“, welche Felder erscheinen.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -935,7 +1120,7 @@ final class SettingsPage
         }
         echo '</select>';
         echo '<p class="description">'
-            . esc_html__('Seitenverhältnis des Bildes in Grid-Kachel und Hero („Nächster Termin"). Ohne Wirkung in der Listenansicht, die kein Bild zeigt.', 'churchtools-plugin')
+            . esc_html__('Seitenverhältnis des Bildes in Grid-Kachel und Hero („Nächster Termin“). Ohne Wirkung in der Listenansicht, die kein Bild zeigt.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -959,7 +1144,7 @@ final class SettingsPage
             esc_html__('Eigene Akzentfarbe verwenden', 'churchtools-plugin')
         );
         // Same swatch + hex-field pair as the calendar rows (see
-        // renderCalendarRow()), wrapped in the .ctp-color-field the shared
+        // renderCalendarCard()), wrapped in the .ctp-color-field the shared
         // inline script keys its two-way sync off.
         printf(
             '<p class="ctp-color-field">'
@@ -1056,28 +1241,6 @@ final class SettingsPage
     }
 
     /**
-     * The token is optional and stays optional whether the repo is public or
-     * private — the previous wording ("Nur nötig, da das GitHub-Repository
-     * privat ist") hard-codes an assumption that stops being true the moment
-     * the repository is published, and an admin reading it on a public repo
-     * would reasonably conclude updates are broken without one.
-     */
-    public function renderGitHubTokenField(): void
-    {
-        $hasToken = self::get()['github_token'] !== '';
-
-        printf(
-            '<input type="password" name="%1$s[github_token]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
-            . '<p class="description">%3$s</p>'
-            . '<p class="description">%4$s</p>',
-            esc_attr(self::OPTION_KEY),
-            $hasToken ? esc_attr__('Hinterlegt – zum Ändern neuen Token eingeben', 'churchtools-plugin') : '',
-            esc_html__('Optional. Bei einem öffentlichen Repository funktionieren Update-Prüfungen ohne Token; ein Personal Access Token mit Lesezugriff hebt lediglich das GitHub-Rate-Limit an (60 auf 5.000 Anfragen pro Stunde).', 'churchtools-plugin'),
-            esc_html__('Das Repository dieses Plugins ist öffentlich, hier genügt also kein Token. Wird das Plugin dagegen aus einem privaten Fork verteilt, ist er zwingend – ohne ihn findet WordPress keine neuen Versionen und meldet das Plugin stillschweigend als aktuell.', 'churchtools-plugin')
-        );
-    }
-
-    /**
      * Reuses the real grid-card markup/classes with placeholder content, so
      * the preview reflects the actual rendering rules instead of a
      * hand-drawn approximation. Accent/surface colors fall back to this
@@ -1100,7 +1263,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Vorschau als Grid-Kachel – die Einstellung gilt gleichermaßen für Grid, Liste und „Nächster Termin".', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Vorschau als Grid-Kachel – die Einstellung gilt gleichermaßen für Grid, Liste und „Nächster Termin“.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-events ctp-events--grid ctp-design-preview-frame" id="ctp-design-preview" style="<?php echo esc_attr($style); ?>">
                 <ul class="ctp-events__list">
@@ -1179,7 +1342,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine" steht.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine“ steht.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-design-preview-backdrop">
                 <div class="ctp-events ctp-events__detail ctp-design-preview-frame" id="ctp-design-detail-preview">
@@ -1242,10 +1405,10 @@ final class SettingsPage
             ],
         ];
         ?>
-        <div class="ctp-panel">
+        <div class="ctp-panel ctp-panel--wide">
             <h2><?php esc_html_e('Verwendung: Shortcode', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Termine per Shortcode in eine Seite oder einen Beitrag einbinden – dieselbe Rendering-Basis wie der Gutenberg-Block „ChurchTools Events" und das WPBakery-Element. Die Kartengestaltung oben (Reihenfolge, Eckenstil) gilt automatisch für jeden Shortcode, ohne zusätzliches Attribut.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Termine per Shortcode in eine Seite oder einen Beitrag einbinden – dieselbe Rendering-Basis wie der Gutenberg-Block „ChurchTools Events“ und das WPBakery-Element. Die Kartengestaltung oben (Reihenfolge, Eckenstil) gilt automatisch für jeden Shortcode, ohne zusätzliches Attribut.', 'churchtools-plugin'); ?>
             </p>
 
             <table class="widefat striped ctp-borderless">
@@ -1289,7 +1452,7 @@ final class SettingsPage
                     </tr>
                     <tr>
                         <td><code>paging</code></td>
-                        <td><?php esc_html_e('Button „Weitere Termine laden" anzeigen (nur list/grid). 0 = nur der erste Zeitraum, ohne Nachladen.', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Button „Weitere Termine laden“ anzeigen (nur list/grid). 0 = nur der erste Zeitraum, ohne Nachladen.', 'churchtools-plugin'); ?></td>
                         <td><code>1</code></td>
                     </tr>
                     <tr>
@@ -1352,17 +1515,602 @@ final class SettingsPage
     }
 
     /**
+     * Die Zahlen, aus denen jede Statuszeile im Backend gebaut wird - einmal
+     * an einer Stelle berechnet, damit „Letzte Synchronisation“ auf der
+     * Uebersicht, im Tab „Verbindung“ und im Tab „Synchronisation“ nicht drei
+     * verschiedene Antworten geben kann. Vorher stand dieselbe Rechnung nur in
+     * renderStatusOverview(), und jeder weitere Tab haette sie kopieren
+     * muessen.
+     *
+     * @return array<string, mixed>
+     */
+    private static function statusFacts(): array
+    {
+        $settings = self::get();
+        $calendars = $settings['calendars'];
+        $enabled = array_filter($calendars, static fn (array $calendar): bool => !empty($calendar['enabled']));
+        $lastSync = (string) get_option('ctp_last_sync', '');
+        $nextSync = wp_next_scheduled('ctp_run_sync');
+        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
+
+        $apiKey = self::getDecryptedApiKey();
+
+        return [
+            'settings' => $settings,
+            'calendars' => $calendars,
+            'calendar_count' => count($calendars),
+            'enabled_count' => count($enabled),
+            'configured' => $settings['instance'] !== '' && $apiKey !== '',
+            // Hinterlegt, aber nicht mehr lesbar - der Befund nach einer
+            // AUTH_KEY-Rotation (siehe apiKeyDecryptionFailed()). Hier aus dem
+            // bereits entschluesselten Wert abgeleitet, statt ein zweites Mal
+            // durch Crypto::decrypt() zu gehen.
+            'api_key_broken' => $settings['api_key'] !== '' && $apiKey === '',
+            'last_sync' => $lastSync,
+            'last_sync_label' => $lastSync !== ''
+                ? (string) mysql2date($dateFormat, $lastSync)
+                : __('noch nie', 'churchtools-plugin'),
+            // wp_date(), nicht mysql2date(): wp_next_scheduled() liefert einen
+            // UTC-Zeitstempel, und wp_date() ist die Funktion, die so einen
+            // Zeitstempel in der Zeitzone der Seite ausgibt.
+            'next_sync_label' => $nextSync !== false
+                ? (string) wp_date($dateFormat, $nextSync)
+                : __('nicht geplant', 'churchtools-plugin'),
+            'next_sync_scheduled' => $nextSync !== false,
+            'date_format' => $dateFormat,
+        ];
+    }
+
+    /**
+     * Termine je Kalender, einmal pro Seitenaufbau. Der Tab „Kalender“ braucht
+     * dieselbe Auskunft zweimal - fuer die Statuszeile oben und fuer die Zahl
+     * auf jeder Kachel -, und ohne diesen Zwischenspeicher liefe dafuer
+     * zweimal dieselbe Abfrage.
+     *
+     * @return array<int, array{total: int, upcoming: int}>
+     */
+    private static function calendarEventCounts(): array
+    {
+        static $counts = null;
+
+        if ($counts === null) {
+            $counts = (new EventRepository())->countsByCalendar();
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Liest die von WordPress selbst gepflegte Update-Pruefung (befuellt vom
+     * GitHubUpdateChecker, siehe includes/Update/) statt bei jedem Aufruf einer
+     * Admin-Seite eine frische Anfrage an GitHub zu schicken.
+     *
+     * @return array{version: ?string, checked: int}
+     */
+    private static function updateStatus(): array
+    {
+        $pluginFile = plugin_basename(CTP_PLUGIN_FILE);
+        $updatePlugins = get_site_transient('update_plugins');
+
+        return [
+            'version' => is_object($updatePlugins) && isset($updatePlugins->response[$pluginFile]->new_version)
+                ? (string) $updatePlugins->response[$pluginFile]->new_version
+                : null,
+            'checked' => is_object($updatePlugins) && isset($updatePlugins->last_checked)
+                ? (int) $updatePlugins->last_checked
+                : 0,
+        ];
+    }
+
+    /**
+     * Die eine Statuszeile, die auf jedem Tab gleich aussieht.
+     *
+     * Vorher gab es dieses Kachelraster zweimal wortgleich im Quelltext (Tab
+     * „Uebersicht“ und Tab „Events“) und auf allen uebrigen Tabs gar nicht -
+     * wer im Tab „Kalender“ oder „Synchronisation“ wissen wollte, wann zuletzt
+     * etwas importiert wurde, musste dafuer den Tab wechseln. Jetzt baut jeder
+     * Tab, an dem Daten aus ChurchTools hereinkommen, seine Zeile aus derselben
+     * Funktion, und sie steht ueberall an derselben Stelle: direkt unter der
+     * Tab-Navigation, ueber dem eigentlichen Inhalt.
+     *
+     * $wide entscheidet ueber die Breite, und die richtet sich nach dem Panel
+     * *darunter*: die Zeile soll mit der Kachel darunter buendig abschliessen,
+     * nicht ueber sie hinausragen. Tabs mit Spalteninhalt (Uebersicht,
+     * Kalender, Events, Updates) sind breit, reine Formulare (Verbindung,
+     * Synchronisation) bleiben schmal - siehe .ctp-status-strip in admin.css.
+     *
+     * `swatch` ersetzt bei Bedarf das Dashicon durch einen Farbpunkt; die
+     * Akzentfarbe im Tab „Design“ ist als Hex-Code allein nicht ablesbar.
+     *
+     * @param array<int, array{icon: string, value: string, label: string, tone?: string, swatch?: string}> $cards
+     */
+    private static function renderStatStrip(array $cards, bool $wide = true): void
+    {
+        if ($cards === []) {
+            return;
+        }
+        ?>
+        <div class="ctp-status-strip<?php echo $wide ? ' ctp-status-strip--wide' : ''; ?>">
+            <div class="ctp-stat-grid">
+                <?php foreach ($cards as $card) : ?>
+                    <?php $tone = $card['tone'] ?? ''; ?>
+                    <div class="ctp-stat-card<?php echo $tone !== '' ? ' ctp-stat-card--' . esc_attr($tone) : ''; ?>">
+                        <?php if (!empty($card['swatch'])) : ?>
+                            <span class="ctp-stat-card__swatch" style="background-color:<?php echo esc_attr($card['swatch']); ?>" aria-hidden="true"></span>
+                        <?php else : ?>
+                            <span class="dashicons dashicons-<?php echo esc_attr($card['icon']); ?>" aria-hidden="true"></span>
+                        <?php endif; ?>
+                        <span class="ctp-stat-card__value"><?php echo esc_html($card['value']); ?></span>
+                        <span class="ctp-stat-card__label"><?php echo esc_html($card['label']); ?></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Statuszeile fuer den Tab, auf dem sie gerade gebraucht wird. Ein Schalter
+     * statt fuenf Aufrufstellen, damit renderPage() nicht fuer jeden Tab eine
+     * eigene Zeile Sonderbehandlung bekommt und ein neuer Tab hier automatisch
+     * mitgedacht wird.
+     */
+    private static function renderTabStatus(string $tab): void
+    {
+        $facts = self::statusFacts();
+        $settings = $facts['settings'];
+
+        switch ($tab) {
+            case 'status':
+                self::renderStatStrip(self::statusCardsOverview($facts));
+
+                return;
+            case 'connection':
+                self::renderStatStrip([
+                    [
+                        'icon' => 'admin-links',
+                        'value' => $settings['instance'] !== '' ? $settings['instance'] : '—',
+                        'label' => __('Instanz', 'churchtools-plugin'),
+                        'tone' => $settings['instance'] !== '' ? 'ok' : 'warn',
+                    ],
+                    [
+                        'icon' => 'lock',
+                        'value' => $facts['api_key_broken']
+                            ? __('nicht lesbar', 'churchtools-plugin')
+                            : ($settings['api_key'] !== ''
+                                ? __('hinterlegt', 'churchtools-plugin')
+                                : __('fehlt', 'churchtools-plugin')),
+                        'label' => __('API-Key', 'churchtools-plugin'),
+                        'tone' => $facts['api_key_broken']
+                            ? 'error'
+                            : ($settings['api_key'] !== '' ? 'ok' : 'warn'),
+                    ],
+                    [
+                        'icon' => 'calendar-alt',
+                        'value' => sprintf(
+                            /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                            __('%1$d von %2$d', 'churchtools-plugin'),
+                            $facts['enabled_count'],
+                            $facts['calendar_count']
+                        ),
+                        'label' => __('Aktive Kalender', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'update',
+                        'value' => $facts['last_sync_label'],
+                        'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                    ],
+                // Schmal: darunter steht das Verbindungsformular, kein
+                // Spalteninhalt.
+                ], false);
+
+                return;
+            case 'calendars':
+                $counts = self::calendarEventCounts();
+                $fetched = (string) get_option(self::OPTION_CALENDARS_FETCHED, '');
+                $enabledIds = self::getEnabledCalendarIds();
+                $eventsFromEnabled = 0;
+                foreach ($enabledIds as $enabledId) {
+                    $eventsFromEnabled += $counts[$enabledId]['total'] ?? 0;
+                }
+
+                self::renderStatStrip([
+                    [
+                        'icon' => 'calendar-alt',
+                        'value' => (string) $facts['calendar_count'],
+                        'label' => __('Bekannte Kalender', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'yes-alt',
+                        'value' => sprintf(
+                            /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                            __('%1$d von %2$d', 'churchtools-plugin'),
+                            $facts['enabled_count'],
+                            $facts['calendar_count']
+                        ),
+                        'label' => __('Zur Synchronisation aktiviert', 'churchtools-plugin'),
+                        'tone' => $facts['enabled_count'] > 0 ? 'ok' : 'warn',
+                    ],
+                    [
+                        'icon' => 'list-view',
+                        'value' => (string) $eventsFromEnabled,
+                        'label' => __('Termine aus aktiven Kalendern', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'download',
+                        'value' => $fetched !== ''
+                            ? (string) mysql2date($facts['date_format'], $fetched)
+                            : __('noch nie', 'churchtools-plugin'),
+                        'label' => __('Kalenderliste zuletzt geladen', 'churchtools-plugin'),
+                    ],
+                ]);
+
+                return;
+            case 'sync':
+                self::renderStatStrip([
+                    [
+                        'icon' => 'update',
+                        'value' => $facts['last_sync_label'],
+                        'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'clock',
+                        'value' => $facts['next_sync_label'],
+                        'label' => sprintf(
+                            /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
+                            __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
+                            self::syncIntervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval']
+                        ),
+                        'tone' => $facts['next_sync_scheduled'] ? '' : 'error',
+                    ],
+                    [
+                        'icon' => 'list-view',
+                        'value' => (string) (new EventRepository())->count(),
+                        'label' => __('Gespeicherte Termine', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'calendar-alt',
+                        'value' => self::dayCountLabel((int) $settings['sync_days_ahead']),
+                        'label' => __('Sync-Zeitraum', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'backup',
+                        'value' => (int) $settings['retention_days'] === 0
+                            ? __('sofort löschen', 'churchtools-plugin')
+                            : self::dayCountLabel((int) $settings['retention_days']),
+                        'label' => __('Aufbewahrung nach Event-Ende', 'churchtools-plugin'),
+                    ],
+                // Schmal, wie das Sync-Formular darunter.
+                ], false);
+
+                return;
+            case 'updates':
+                $update = self::updateStatus();
+                $hasUpdate = $update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>');
+
+                self::renderStatStrip([
+                    [
+                        'icon' => 'admin-plugins',
+                        'value' => CTP_VERSION,
+                        'label' => __('Installierte Version', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'cloud-upload',
+                        'value' => $hasUpdate ? (string) $update['version'] : __('aktuell', 'churchtools-plugin'),
+                        'label' => __('Verfügbare Version', 'churchtools-plugin'),
+                        'tone' => $hasUpdate ? 'warn' : 'ok',
+                    ],
+                    [
+                        'icon' => 'clock',
+                        'value' => $update['checked'] > 0
+                            ? (string) wp_date($facts['date_format'], $update['checked'])
+                            : __('noch nie', 'churchtools-plugin'),
+                        'label' => __('Letzte Update-Prüfung', 'churchtools-plugin'),
+                    ],
+                    [
+                        'icon' => 'randomize',
+                        'value' => __('GitHub Releases', 'churchtools-plugin'),
+                        'label' => __('Bezugsquelle', 'churchtools-plugin'),
+                    ],
+                ]);
+
+                return;
+            case 'design':
+                self::renderStatStrip(self::statusCardsDesign($settings));
+
+                return;
+        }
+    }
+
+    /**
+     * Die vier Entscheidungen, die auf dem Design-Tab gelten, als Statuszeile -
+     * in derselben Form wie auf jedem anderen Tab.
+     *
+     * Sie beantwortet die Frage, die man beim Aufschlagen des Tabs hat: was
+     * ist hier gerade eingestellt? Vorher stand die Antwort verstreut in vier
+     * Bedienelementen, von denen drei erst nach dem Scrollen an den Fuss der
+     * Seite sichtbar waren.
+     *
+     * @param array<string, mixed> $settings
+     *
+     * @return array<int, array{icon: string, value: string, label: string, tone?: string, swatch?: string}>
+     */
+    private static function statusCardsDesign(array $settings): array
+    {
+        $clickLabels = [
+            'none' => __('Keine', 'churchtools-plugin'),
+            'popup' => __('Popup', 'churchtools-plugin'),
+            'page' => __('Eigene Seite', 'churchtools-plugin'),
+        ];
+        $cornerLabels = [
+            'rounded' => __('Rund', 'churchtools-plugin'),
+            'square' => __('Eckig', 'churchtools-plugin'),
+        ];
+        $ratioLabels = [
+            'wide' => __('Breit · 16:9', 'churchtools-plugin'),
+            'square' => __('Quadratisch · 1:1', 'churchtools-plugin'),
+            'tall' => __('Hoch · 4:5', 'churchtools-plugin'),
+        ];
+        $accentEnabled = !empty($settings['accent_color_enabled']);
+
+        return [
+            [
+                'icon' => 'admin-links',
+                'value' => $clickLabels[$settings['click_behavior']] ?? $settings['click_behavior'],
+                'label' => __('Klickverhalten', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'grid-view',
+                'value' => $cornerLabels[$settings['corner_style']] ?? $settings['corner_style'],
+                'label' => __('Ecken', 'churchtools-plugin'),
+            ],
+            [
+                // Farbpunkt statt Dashicon, sobald eine eigene Farbe gesetzt
+                // ist - ein Hex-Code allein sagt niemandem, welche Farbe das
+                // ist. Ohne eigene Farbe gibt es nichts zu zeigen, dann bleibt
+                // es beim Symbol.
+                'icon' => 'art',
+                'swatch' => $accentEnabled ? (string) $settings['accent_color'] : '',
+                'value' => $accentEnabled
+                    ? (string) $settings['accent_color']
+                    : __('vom Theme', 'churchtools-plugin'),
+                'label' => __('Akzentfarbe', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'format-image',
+                'value' => $ratioLabels[$settings['media_aspect_ratio']] ?? $settings['media_aspect_ratio'],
+                'label' => __('Bild-Seitenverhältnis', 'churchtools-plugin'),
+            ],
+        ];
+    }
+
+    /**
+     * Die fuenf Kacheln der Uebersicht - als eigene Funktion, weil
+     * renderTabStatus() sie nur durchreicht und die Liste sonst den
+     * switch-Block ueberwuchern wuerde.
+     *
+     * @param array<string, mixed> $facts
+     *
+     * @return array<int, array{icon: string, value: string, label: string, tone?: string}>
+     */
+    private static function statusCardsOverview(array $facts): array
+    {
+        $settings = $facts['settings'];
+
+        return [
+            [
+                'icon' => 'admin-links',
+                'value' => $settings['instance'] !== '' ? $settings['instance'] : '—',
+                'label' => __('Instanz', 'churchtools-plugin'),
+                'tone' => $facts['configured'] ? 'ok' : 'warn',
+            ],
+            [
+                'icon' => 'calendar-alt',
+                'value' => sprintf(
+                    /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                    __('%1$d von %2$d', 'churchtools-plugin'),
+                    $facts['enabled_count'],
+                    $facts['calendar_count']
+                ),
+                'label' => __('Aktive Kalender', 'churchtools-plugin'),
+                'tone' => $facts['enabled_count'] > 0 ? '' : 'warn',
+            ],
+            [
+                'icon' => 'update',
+                'value' => $facts['last_sync_label'],
+                'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'list-view',
+                'value' => (string) (new EventRepository())->count(),
+                'label' => __('Gespeicherte Termine', 'churchtools-plugin'),
+            ],
+            [
+                // „Letzte Synchronisation“ allein kann „lief vor einer Stunde,
+                // die naechste steht gleich an“ nicht von „der Cron-Eintrag ist
+                // verschwunden, diese Zahl bewegt sich nie wieder“ unterscheiden -
+                // und genau das ist der Ausfall, dem dieses Plugin am staerksten
+                // ausgesetzt ist (siehe WP-Cron-Hinweis in der readme.txt).
+                'icon' => 'clock',
+                'value' => $facts['next_sync_label'],
+                'label' => sprintf(
+                    /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
+                    __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
+                    self::syncIntervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval']
+                ),
+                'tone' => $facts['next_sync_scheduled'] ? '' : 'error',
+            ],
+        ];
+    }
+
+    /**
+     * „1 Tag“ statt „1 Tage“, ohne die Plural-Funktion von WordPress: der
+     * Extraktor in bin/make-pot.php kennt nur __()/esc_html__() und bricht bei
+     * Plural- oder Kontextaufrufen ausdruecklich ab (siehe seine eigene
+     * Fehlermeldung). Deutsch braucht genau diese eine Unterscheidung, also
+     * kostet der Verzicht hier nichts.
+     */
+    private static function dayCountLabel(int $days): string
+    {
+        if ($days === 1) {
+            return __('1 Tag', 'churchtools-plugin');
+        }
+
+        return sprintf(
+            /* translators: %d: number of days */
+            __('%d Tage', 'churchtools-plugin'),
+            $days
+        );
+    }
+
+    /**
+     * Aktionsleiste unter einer Panel-Ueberschrift: genau ein Knopf plus die
+     * Statuszeile, in der seine AJAX-Antwort landet.
+     *
+     * Vorher stand jeder dieser Knoepfe woanders - „Jetzt synchronisieren“ ganz
+     * unten im Panel der Uebersicht, „Kalender laden“ oben in einer
+     * Formularzelle, und die Rueckmeldung war jedes Mal ein nackter
+     * <span> ohne erkennbaren Erfolgs- oder Fehlerzustand. Jetzt sitzt die
+     * Leiste ueberall an derselben Stelle (direkt unter der Ueberschrift, ueber
+     * dem Inhalt, den sie veraendert) und die Rueckmeldung ist ueberall
+     * dasselbe Bauteil (.ctp-inline-status, siehe ctpSetStatus() in
+     * renderPage()).
+     */
+    private static function renderActionBar(string $buttonId, string $label, string $hint = ''): void
+    {
+        ?>
+        <div class="ctp-toolbar">
+            <button type="button" class="button button-primary" id="<?php echo esc_attr($buttonId); ?>">
+                <?php echo esc_html($label); ?>
+            </button>
+            <span class="ctp-inline-status" id="<?php echo esc_attr($buttonId); ?>-result" role="status" aria-live="polite"></span>
+            <?php if ($hint !== '') : ?>
+                <span class="ctp-toolbar__hint"><?php echo esc_html($hint); ?></span>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Der Tab „Updates“ - seit dem Wegfall des GitHub-Tokens ohne eine einzige
+     * Einstellung, dafuer mit der Auskunft, fuer die man ihn tatsaechlich
+     * aufsucht: Steht ein Update an, wann wurde zuletzt nachgesehen, und was
+     * hat sich in den letzten Versionen geaendert.
+     *
+     * Der Changelog stand vorher nur als fuenfzeiliger Auszug der *einen*
+     * aktuellen Version auf der Uebersicht. Wer nach einem Update wissen
+     * wollte, was zwei Versionen zurueck passiert ist, musste dafuer die
+     * CHANGELOG.md im Repository aufmachen.
+     */
+    private function renderUpdatesTab(): void
+    {
+        $update = self::updateStatus();
+        $hasUpdate = $update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>');
+        $releases = self::changelogReleases();
+        ?>
+        <div class="ctp-panel ctp-panel--wide">
+            <h2><?php esc_html_e('Plugin-Updates über GitHub', 'churchtools-plugin'); ?></h2>
+            <?php
+            self::renderActionBar(
+                'ctp-check-updates',
+                __('Jetzt auf Updates prüfen', 'churchtools-plugin'),
+                __('Verwirft die zwischengespeicherte Update-Prüfung von WordPress und fragt GitHub sofort neu.', 'churchtools-plugin')
+            );
+            ?>
+
+            <?php if ($hasUpdate) : ?>
+                <div class="notice notice-warning inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: %s: newer version number available via GitHub */
+                            esc_html__('Version %s steht bereit. Einspielen lässt sie sich über die Plugins-Übersicht von WordPress.', 'churchtools-plugin'),
+                            esc_html((string) $update['version'])
+                        );
+                        ?>
+                        <a href="<?php echo esc_url(admin_url('plugins.php')); ?>">
+                            <?php esc_html_e('Zur Plugins-Übersicht', 'churchtools-plugin'); ?>
+                        </a>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <p class="description">
+                <?php
+                printf(
+                    /* translators: %s: link to the plugin's GitHub repository */
+                    esc_html__('Dieses Plugin liegt nicht auf WordPress.org, sondern bezieht seine Updates aus den GitHub-Releases von %s. Das Repository ist öffentlich – es ist kein Zugangstoken nötig.', 'churchtools-plugin'),
+                    '<a href="' . esc_url(self::REPO_URL) . '" target="_blank" rel="noopener noreferrer">wirsindcgks/churchtools-plugin</a>'
+                );
+                ?>
+            </p>
+
+            <p class="ctp-quicklinks">
+                <a href="<?php echo esc_url(self::REPO_URL); ?>" target="_blank" rel="noopener noreferrer">
+                    <span class="dashicons dashicons-randomize" aria-hidden="true"></span>
+                    <?php esc_html_e('Repository auf GitHub', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(self::REPO_URL . 'releases'); ?>" target="_blank" rel="noopener noreferrer">
+                    <span class="dashicons dashicons-media-archive" aria-hidden="true"></span>
+                    <?php esc_html_e('Alle Releases', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(self::REPO_URL . 'blob/main/CHANGELOG.md'); ?>" target="_blank" rel="noopener noreferrer">
+                    <span class="dashicons dashicons-media-text" aria-hidden="true"></span>
+                    <?php esc_html_e('Vollständiger Changelog', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(self::REPO_URL . 'issues'); ?>" target="_blank" rel="noopener noreferrer">
+                    <span class="dashicons dashicons-sos" aria-hidden="true"></span>
+                    <?php esc_html_e('Problem melden', 'churchtools-plugin'); ?>
+                </a>
+            </p>
+        </div>
+
+        <?php if ($releases !== []) : ?>
+            <div class="ctp-panel ctp-panel--wide">
+                <h2><?php esc_html_e('Änderungen der letzten Versionen', 'churchtools-plugin'); ?></h2>
+                <?php foreach ($releases as $release) : ?>
+                    <div class="ctp-release">
+                        <h3 class="ctp-release__head">
+                            <span class="ctp-release__version">
+                                <?php echo esc_html($release['version']); ?>
+                            </span>
+                            <?php if ($release['version'] === CTP_VERSION) : ?>
+                                <span class="ctp-release__badge"><?php esc_html_e('installiert', 'churchtools-plugin'); ?></span>
+                            <?php endif; ?>
+                            <?php if ($release['date'] !== '') : ?>
+                                <span class="ctp-release__date"><?php echo esc_html($release['date']); ?></span>
+                            <?php endif; ?>
+                        </h3>
+                        <?php if ($release['items'] === []) : ?>
+                            <p class="ctp-empty-state"><?php esc_html_e('Keine Stichpunkte hinterlegt.', 'churchtools-plugin'); ?></p>
+                        <?php else : ?>
+                            <ul class="ctp-changelog-excerpt ctp-changelog-excerpt--full">
+                                <?php foreach ($release['items'] as $item) : ?>
+                                    <li>
+                                        <strong><?php echo esc_html($item['lead']); ?></strong>
+                                        <?php if ($item['text'] !== '') : ?>
+                                            <span class="ctp-release__detail"><?php echo esc_html($item['text']); ?></span>
+                                        <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        <?php
+    }
+
+    /**
      * Landing tab (see DEFAULT_TAB): bundles what was previously scattered
      * across the Verbindung/Sync/Updates tabs into a single at-a-glance
      * overview, per the "Welcome/Status-Seite"-idea in plan.md.
      */
     private function renderStatusOverview(): void
     {
-        $settings = self::get();
-        $configured = $settings['instance'] !== '' && self::getDecryptedApiKey() !== '';
-        $calendars = $settings['calendars'];
-        $enabledCalendars = array_filter($calendars, static fn (array $calendar): bool => !empty($calendar['enabled']));
-        $lastSync = get_option('ctp_last_sync', '');
+        $facts = self::statusFacts();
+        $settings = $facts['settings'];
         $lastError = SyncEngine::getLastError();
 
         // Derselbe Befund, den SyncHealthNotice auf jeder anderen Admin-Seite
@@ -1370,21 +2118,23 @@ final class SettingsPage
         // Hinweis sich dort ausblendet. Ohne das waere die Uebersicht die eine
         // Seite, auf der ein stehengebliebener Sync unerwaehnt bleibt.
         $health = SyncHealthNotice::problem($settings);
-        $eventCount = (new EventRepository())->count();
-        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
-
-        // Reads WP's own update-check cache (populated by GitHubUpdateChecker
-        // via plugin-update-checker, see includes/Update/) instead of forcing
-        // a fresh remote request on every admin page load.
-        $pluginFile = plugin_basename(CTP_PLUGIN_FILE);
-        $updatePlugins = get_site_transient('update_plugins');
-        $availableVersion = null;
-        if (is_object($updatePlugins) && isset($updatePlugins->response[$pluginFile]->new_version)) {
-            $availableVersion = $updatePlugins->response[$pluginFile]->new_version;
-        }
+        $update = self::updateStatus();
         ?>
-        <div class="ctp-panel">
+        <div class="ctp-panel ctp-panel--wide">
             <h2><?php esc_html_e('Verbindung & Betrieb', 'churchtools-plugin'); ?></h2>
+            <?php
+            /*
+             * Aktionsleiste direkt unter der Ueberschrift, nicht mehr am Fuss
+             * des Panels: dieselbe Position, an der auch die Tabs „Kalender“
+             * und „Synchronisation“ ihre Aktion anbieten (siehe
+             * renderActionBar()).
+             */
+            self::renderActionBar(
+                'ctp-run-sync',
+                __('Jetzt synchronisieren', 'churchtools-plugin'),
+                __('Holt die Termine aller aktiven Kalender sofort, unabhängig vom eingestellten Intervall.', 'churchtools-plugin')
+            );
+            ?>
             <?php if ($lastError !== null) : ?>
                 <div class="notice notice-error inline">
                     <p>
@@ -1392,7 +2142,7 @@ final class SettingsPage
                         printf(
                             /* translators: 1: date/time the sync last failed, 2: error message */
                             esc_html__('Letzter Sync-Fehler (%1$s): %2$s', 'churchtools-plugin'),
-                            esc_html(mysql2date($dateFormat, $lastError['time'])),
+                            esc_html(mysql2date($facts['date_format'], $lastError['time'])),
                             // Client::excerpt() kuerzt neue Meldungen bereits an
                             // der Quelle; in ctp_last_sync_error kann aus der Zeit
                             // davor aber noch eine komplette HTML-Fehlerseite
@@ -1403,7 +2153,7 @@ final class SettingsPage
                         ?>
                     </p>
                 </div>
-            <?php elseif (!$configured) : ?>
+            <?php elseif (!$facts['configured']) : ?>
                 <div class="notice notice-warning inline">
                     <p>
                         <?php
@@ -1421,73 +2171,6 @@ final class SettingsPage
                     <p><?php echo esc_html($health['message']); ?></p>
                 </div>
             <?php endif; ?>
-            <div class="ctp-stat-grid">
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-admin-links" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo $settings['instance'] !== '' ? esc_html($settings['instance']) : '—'; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Instanz', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value">
-                        <?php
-                        printf(
-                            /* translators: 1: number of enabled calendars, 2: total number of known calendars */
-                            esc_html__('%1$d von %2$d', 'churchtools-plugin'),
-                            count($enabledCalendars),
-                            count($calendars)
-                        );
-                        ?>
-                    </span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Aktive Kalender', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-update" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value">
-                        <?php
-                        echo $lastSync !== ''
-                            ? esc_html(mysql2date($dateFormat, $lastSync))
-                            : esc_html__('noch nie', 'churchtools-plugin');
-                        ?>
-                    </span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Letzte Synchronisation', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo (int) $eventCount; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></span>
-                </div>
-                <?php
-                // "Letzte Synchronisation" alone can't distinguish "ran an hour
-                // ago, next one due shortly" from "cron event vanished, this
-                // number will never move again" — which is precisely the
-                // failure this plugin is most exposed to (see the WP-Cron
-                // caveat in readme.txt).
-                $nextSync = wp_next_scheduled('ctp_run_sync');
-                ?>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-clock" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value">
-                        <?php
-                        // wp_date(), not mysql2date(): wp_next_scheduled()
-                        // returns a UTC timestamp, and wp_date() is the one
-                        // that renders such a timestamp in the site's timezone.
-                        echo $nextSync !== false
-                            ? esc_html((string) wp_date($dateFormat, $nextSync))
-                            : esc_html__('nicht geplant', 'churchtools-plugin');
-                        ?>
-                    </span>
-                    <span class="ctp-stat-card__label">
-                        <?php
-                        printf(
-                            /* translators: %s: configured sync recurrence, e.g. "stündlich" */
-                            esc_html__('Nächste Synchronisation (%s)', 'churchtools-plugin'),
-                            esc_html(self::syncIntervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval'])
-                        );
-                        ?>
-                    </span>
-                </div>
-            </div>
             <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) : ?>
                 <div class="notice notice-info inline">
                     <p>
@@ -1495,17 +2178,36 @@ final class SettingsPage
                     </p>
                 </div>
             <?php endif; ?>
-            <p class="ctp-status-actions">
-                <button type="button" class="button button-primary" id="ctp-run-sync">
-                    <?php esc_html_e('Jetzt synchronisieren', 'churchtools-plugin'); ?>
-                </button>
-                <span id="ctp-run-sync-result"></span>
+            <?php
+            /*
+             * Die naechsten Handgriffe als Linkzeile statt als Fliesstext: von
+             * der Uebersicht aus fuehrt jeder Weg ohnehin in einen anderen Tab,
+             * und der Weg dorthin war bisher nur der Tab-Reiter selbst.
+             */
+            ?>
+            <p class="ctp-quicklinks">
+                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'calendars'], admin_url('admin.php'))); ?>">
+                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                    <?php esc_html_e('Kalender auswählen', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'sync'], admin_url('admin.php'))); ?>">
+                    <span class="dashicons dashicons-update" aria-hidden="true"></span>
+                    <?php esc_html_e('Sync-Einstellungen', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(self::eventsOverviewUrl()); ?>">
+                    <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
+                    <?php esc_html_e('Gespeicherte Termine ansehen', 'churchtools-plugin'); ?>
+                </a>
+                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'design'], admin_url('admin.php'))); ?>">
+                    <span class="dashicons dashicons-admin-appearance" aria-hidden="true"></span>
+                    <?php esc_html_e('Darstellung anpassen', 'churchtools-plugin'); ?>
+                </a>
             </p>
         </div>
 
-        <div class="ctp-panel">
+        <div class="ctp-panel ctp-panel--wide">
             <h2><?php esc_html_e('Version', 'churchtools-plugin'); ?></h2>
-            <table class="widefat striped ctp-status-table">
+            <table class="widefat striped ctp-borderless ctp-keyvalue-table">
                 <tbody>
                     <tr>
                         <th><?php esc_html_e('Installiert', 'churchtools-plugin'); ?></th>
@@ -1514,12 +2216,12 @@ final class SettingsPage
                     <tr>
                         <th><?php esc_html_e('Verfügbar', 'churchtools-plugin'); ?></th>
                         <td>
-                            <?php if ($availableVersion !== null && version_compare($availableVersion, CTP_VERSION, '>')) : ?>
+                            <?php if ($update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>')) : ?>
                                 <?php
                                 printf(
                                     /* translators: %s: newer version number available via GitHub */
                                     esc_html__('%s (Update über die Plugins-Übersicht einspielen)', 'churchtools-plugin'),
-                                    esc_html($availableVersion)
+                                    esc_html($update['version'])
                                 );
                                 ?>
                             <?php else : ?>
@@ -1529,28 +2231,42 @@ final class SettingsPage
                     </tr>
                 </tbody>
             </table>
-            <?php $changelog = self::changelogExcerpt(); ?>
-            <?php if ($changelog !== []) : ?>
+            <?php $latest = self::changelogReleases(1, 5); ?>
+            <?php if ($latest !== []) : ?>
                 <h3><?php esc_html_e('Letzte Änderungen', 'churchtools-plugin'); ?></h3>
+                <?php // Nur die Kurzfassung - die Erklaerung dazu steht im Tab „Updates“. ?>
                 <ul class="ctp-changelog-excerpt">
-                    <?php foreach ($changelog as $item) : ?>
-                        <li><?php echo esc_html($item); ?></li>
+                    <?php foreach ($latest[0]['items'] as $item) : ?>
+                        <li><?php echo esc_html($item['lead']); ?></li>
                     <?php endforeach; ?>
                 </ul>
+                <p class="description">
+                    <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'updates'], admin_url('admin.php'))); ?>">
+                        <?php esc_html_e('Alle Änderungen im Tab „Updates“', 'churchtools-plugin'); ?>
+                    </a>
+                </p>
             <?php endif; ?>
         </div>
         <?php
     }
 
     /**
-     * Reads the first release block of CHANGELOG.md (bundled with the plugin,
-     * not excluded from the release zip — see .github/release-excludes.txt)
-     * and returns its top-level bullet items as plain text. A lightweight
-     * excerpt for the status page, not a markdown renderer.
+     * Liest die obersten Release-Bloecke der CHANGELOG.md (liegt im
+     * Release-Zip, siehe .github/release-excludes.txt) und gibt sie als
+     * Version, Datum und Stichpunkte zurueck.
      *
-     * @return string[]
+     * Kein Markdown-Betrachter, sondern genau so viel Auswertung, wie die
+     * beiden Ansichten brauchen: die Uebersicht zeigt den obersten Block als
+     * kurze Liste, der Tab „Updates“ die letzten drei Versionen mit
+     * Ueberschrift. Erwartete Ueberschriftform ist die von Keep a Changelog,
+     * die diese Datei durchgehend benutzt: `## [0.9.2] - 2026-08-18`.
+     * Die `### Added`/`### Changed`-Zwischenueberschriften werden bewusst
+     * uebergangen - im Backend interessiert, *was* sich geaendert hat, nicht
+     * in welche Kategorie es faellt.
+     *
+     * @return array<int, array{version: string, date: string, items: array<int, array{lead: string, text: string}>}>
      */
-    private static function changelogExcerpt(int $maxItems = 5): array
+    private static function changelogReleases(int $maxReleases = 3, int $maxItems = 6): array
     {
         $path = CTP_PLUGIN_DIR . 'CHANGELOG.md';
         if (!is_readable($path)) {
@@ -1562,25 +2278,85 @@ final class SettingsPage
             return [];
         }
 
-        $items = [];
-        $inFirstRelease = false;
+        $releases = [];
+        $current = null;
+
         foreach ($lines as $line) {
             if (str_starts_with($line, '## ')) {
-                if ($inFirstRelease) {
-                    break;
+                if ($current !== null) {
+                    $releases[] = $current;
+
+                    if (count($releases) >= $maxReleases) {
+                        return $releases;
+                    }
                 }
-                $inFirstRelease = true;
+
+                preg_match('/^## \[?([^\]\s]+)\]?(?:\s*[-–]\s*(.+))?$/u', $line, $matches);
+                $current = [
+                    'version' => trim($matches[1] ?? ''),
+                    'date' => trim($matches[2] ?? ''),
+                    'items' => [],
+                ];
+
                 continue;
             }
-            if ($inFirstRelease && str_starts_with($line, '- ')) {
-                $items[] = substr($line, 2);
-                if (count($items) >= $maxItems) {
-                    break;
-                }
+
+            if ($current !== null && str_starts_with($line, '- ') && count($current['items']) < $maxItems) {
+                $current['items'][] = self::splitChangelogLine(substr($line, 2));
             }
         }
 
-        return $items;
+        if ($current !== null) {
+            $releases[] = $current;
+        }
+
+        return $releases;
+    }
+
+    /**
+     * Zerlegt eine Changelog-Zeile in Kurzfassung und Erklaerung.
+     *
+     * Jeder Eintrag in der CHANGELOG.md ist nach demselben Muster gebaut:
+     * ein fett gesetzter Satz, der sagt was sich geaendert hat, dann der
+     * Absatz, der sagt warum. Genau an dieser Naht wird hier getrennt - die
+     * Uebersicht zeigt nur die Kurzfassung, der Tab „Updates“ beides.
+     *
+     * Vorher lief beides als eine Zeichenkette durch: die Sternchen und
+     * Backticks standen roh im Text, und weil ein einzelner Eintrag einen
+     * ganzen Absatz lang sein kann, musste hart nach 160 Zeichen abgeschnitten
+     * werden - womit auf beiden Seiten die Haelfte fehlte.
+     *
+     * Zwei Schreibweisen kommen in der Datei vor, der Punkt innerhalb der
+     * Fettung (`**… sagt es.**`) und der Doppelpunkt danach
+     * (`**… funktionslos**:`); die Trennstelle liegt in beiden Faellen an den
+     * schliessenden Sternchen.
+     *
+     * @return array{lead: string, text: string}
+     */
+    private static function splitChangelogLine(string $line): array
+    {
+        // Backticks weg: Markdown-Code-Auszeichnung, die im Backend nichts
+        // auszeichnet, sondern nur als Zeichen dasteht.
+        $line = trim((string) preg_replace('/`(.+?)`/u', '$1', $line));
+
+        if (preg_match('/^\*\*(.+?)\*\*(.*)$/us', $line, $matches) !== 1) {
+            return ['lead' => mb_strimwidth($line, 0, 200, '…'), 'text' => ''];
+        }
+
+        $lead = trim($matches[1]);
+        // Fuehrende Satzzeichen des Uebergangs (":" oder ",") gehoeren zur
+        // Naht, nicht zum Folgesatz.
+        $text = trim((string) preg_replace('/^[\s:,–-]+/u', '', $matches[2]));
+        // Weitere Fettungen mitten im Text tragen im Backend nichts bei.
+        $text = (string) preg_replace('/\*\*(.+?)\*\*/u', '$1', $text);
+
+        // Der fette Satz endet in der Datei mal mit Punkt, mal ohne - hier
+        // immer mit, damit die Kurzfassungen untereinander gleich aussehen.
+        if ($lead !== '' && !preg_match('/[.!?:]$/u', $lead)) {
+            $lead .= '.';
+        }
+
+        return ['lead' => $lead, 'text' => $text];
     }
 
     /** Rows per page in the Events tab's table (see renderEventsOverview()). */
@@ -1652,32 +2428,34 @@ final class SettingsPage
         $events = $isSeriesView
             ? $repository->findSeriesForAdmin($filters, self::EVENTS_PER_PAGE, $offset)
             : $repository->findForAdmin($filters, self::EVENTS_PER_PAGE, $offset);
-        ?>
-        <div class="ctp-panel">
-            <h2><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></h2>
-            <div class="ctp-stat-grid">
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-database" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo (int) $stats['total']; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Gesamt', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo (int) $stats['upcoming']; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Kommend', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-backup" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo (int) $stats['past']; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Vergangen (in Aufbewahrung)', 'churchtools-plugin'); ?></span>
-                </div>
-                <div class="ctp-stat-card">
-                    <span class="dashicons dashicons-format-image" aria-hidden="true"></span>
-                    <span class="ctp-stat-card__value"><?php echo (int) $stats['with_image']; ?></span>
-                    <span class="ctp-stat-card__label"><?php esc_html_e('Mit importiertem Bild', 'churchtools-plugin'); ?></span>
-                </div>
-            </div>
 
+        // Dieselbe Statuszeile wie auf jedem anderen Tab, aus derselben
+        // Funktion und an derselben Stelle: ueber dem Panel, nicht darin.
+        self::renderStatStrip([
+            [
+                'icon' => 'database',
+                'value' => (string) $stats['total'],
+                'label' => __('Gesamt', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'calendar-alt',
+                'value' => (string) $stats['upcoming'],
+                'label' => __('Kommend', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'backup',
+                'value' => (string) $stats['past'],
+                'label' => __('Vergangen (in Aufbewahrung)', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'format-image',
+                'value' => (string) $stats['with_image'],
+                'label' => __('Mit importiertem Bild', 'churchtools-plugin'),
+            ],
+        ]);
+        ?>
+        <div class="ctp-panel ctp-panel--wide">
+            <h2><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></h2>
             <?php $this->renderEventsFilterBar($filters, $calendars); ?>
 
             <?php if ($events === []) : ?>
@@ -1976,7 +2754,7 @@ final class SettingsPage
         if ($event === null) {
             printf('<div class="ctp-panel"><p>%s</p>', esc_html__('Termin nicht gefunden.', 'churchtools-plugin'));
             printf(
-                '<p><a class="ctp-back-link" href="%s">&larr; %s</a></p></div>',
+                '<p class="ctp-back-link"><a href="%s"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>%s</a></p></div>',
                 esc_url($backUrl),
                 esc_html__('Zurück zur Übersicht', 'churchtools-plugin')
             );
@@ -1996,7 +2774,12 @@ final class SettingsPage
             $displayImageUrl = $event['image_url'];
         }
         ?>
-        <p><a class="ctp-back-link" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?></a></p>
+        <p class="ctp-back-link">
+            <a href="<?php echo esc_url($backUrl); ?>">
+                <span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
+                <?php esc_html_e('Zurück zur Übersicht', 'churchtools-plugin'); ?>
+            </a>
+        </p>
         <div class="ctp-panel">
             <h2 class="ctp-event-detail-title">
                 <?php echo esc_html($event['title']); ?>
@@ -2017,7 +2800,7 @@ final class SettingsPage
                 </p>
             <?php endif; ?>
 
-            <table class="form-table">
+            <table class="widefat striped ctp-borderless ctp-keyvalue-table">
                 <tbody>
                     <tr>
                         <th><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></th>
@@ -2085,28 +2868,65 @@ final class SettingsPage
             <p class="ctp-admin-tagline">
                 <?php esc_html_e('Kalender-Events aus ChurchTools synchronisieren, gestalten und anzeigen.', 'churchtools-plugin'); ?>
             </p>
+            <?php
+            /*
+             * Die Reiter liegen in einem eigenen Raster innerhalb des
+             * nav-tab-wrapper, statt direkt darin: das Raster gibt allen
+             * Reitern die Breite des breitesten („Synchronisation“), waehrend
+             * der Wrapper seine durchgehende Linie ueber die volle Seite
+             * behaelt. Vorher richtete sich jeder Reiter nach seiner
+             * Beschriftung, und die Reihe sah aus wie ein Flickenteppich -
+             * „Design“ halb so breit wie sein Nachbar. Siehe .ctp-tabs in
+             * admin.css.
+             */
+            ?>
             <nav class="nav-tab-wrapper">
-                <?php foreach (self::tabs() as $tabSlug => $label) : ?>
-                    <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => $tabSlug], admin_url('admin.php'))); ?>"
-                        class="nav-tab <?php echo $tab === $tabSlug ? 'nav-tab-active' : ''; ?>">
-                        <span class="dashicons dashicons-<?php echo esc_attr($icons[$tabSlug] ?? 'admin-generic'); ?>" aria-hidden="true"></span>
-                        <?php echo esc_html($label); ?>
-                    </a>
-                <?php endforeach; ?>
+                <div class="ctp-tabs">
+                    <?php foreach (self::tabs() as $tabSlug => $label) : ?>
+                        <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => $tabSlug], admin_url('admin.php'))); ?>"
+                            class="nav-tab <?php echo $tab === $tabSlug ? 'nav-tab-active' : ''; ?>">
+                            <span class="dashicons dashicons-<?php echo esc_attr($icons[$tabSlug] ?? 'admin-generic'); ?>" aria-hidden="true"></span>
+                            <?php echo esc_html($label); ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
             </nav>
+
+            <?php
+            /*
+             * Die Statuszeile steht auf jedem Tab, an dem Daten aus ChurchTools
+             * hereinkommen, an genau derselben Stelle: zwischen Tab-Navigation
+             * und Inhalt. renderTabStatus() entscheidet, welche Kacheln der
+             * jeweilige Tab braucht.
+             *
+             * Der Tab „Events“ ist ausgenommen, weil er seine Zeile aus den
+             * Zahlen baut, die er fuer die Tabelle ohnehin schon geladen hat
+             * (siehe renderEventsOverview()) - und der Detailblick auf einen
+             * einzelnen Termin bekommt gar keine: dort geht es um eine Zeile,
+             * nicht um den Bestand.
+             */
+            if ($tab !== 'events') {
+                self::renderTabStatus($tab);
+            }
+
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which event to display), not a state change; same pattern as currentTab()'s $_GET['tab'] read above.
+            $eventId = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+            ?>
 
             <?php if ($tab === 'status') : ?>
                 <?php $this->renderStatusOverview(); ?>
             <?php elseif ($tab === 'events') : ?>
                 <?php
-                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which event to display), not a state change; same pattern as currentTab()'s $_GET['tab'] read above.
-                $eventId = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
                 if ($eventId > 0) {
                     $this->renderEventDetail($eventId);
                 } else {
                     $this->renderEventsOverview();
                 }
                 ?>
+            <?php elseif ($tab === 'calendars') : ?>
+                <?php $this->renderCalendarsTab(); ?>
+            <?php elseif ($tab === 'updates') : ?>
+                <?php $this->renderUpdatesTab(); ?>
             <?php elseif ($tab === 'design') : ?>
                 <?php
                 /*
@@ -2160,9 +2980,26 @@ final class SettingsPage
             return field ? field.value : '';
         }
 
+        /*
+         * Die eine Rueckmeldung, die jede Aktion im Backend benutzt. Vorher
+         * setzte jeder der drei Knoepfe nur .textContent auf einem nackten
+         * <span>: „Verbindung erfolgreich“ und „Verbindung fehlgeschlagen“
+         * sahen identisch aus, und ob gerade noch etwas laeuft, war nur am
+         * Wortlaut zu erkennen. state ist '', 'busy', 'success' oder 'error'
+         * und steuert Farbe und Symbol (siehe .ctp-inline-status in admin.css).
+         */
+        function ctpSetStatus(element, state, message) {
+            if (!element) {
+                return;
+            }
+
+            element.className = 'ctp-inline-status' + (state ? ' is-' + state : '');
+            element.textContent = message;
+        }
+
         document.getElementById('ctp-test-connection')?.addEventListener('click', function () {
             var result = document.getElementById('ctp-test-connection-result');
-            result.textContent = '<?php echo esc_js(__('Prüfe…', 'churchtools-plugin')); ?>';
+            ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Prüfe…', 'churchtools-plugin')); ?>');
 
             fetch(ajaxurl, {
                 method: 'POST',
@@ -2181,7 +3018,11 @@ final class SettingsPage
                         ? '<?php echo esc_js(__('Verbindung erfolgreich', 'churchtools-plugin')); ?>'
                         : '<?php echo esc_js(__('Verbindung fehlgeschlagen', 'churchtools-plugin')); ?>';
 
-                    result.textContent = (data.data && data.data.message) ? data.data.message : fallback;
+                    ctpSetStatus(
+                        result,
+                        data.success ? 'success' : 'error',
+                        (data.data && data.data.message) ? data.data.message : fallback
+                    );
                 });
         });
 
@@ -2189,7 +3030,7 @@ final class SettingsPage
             var button = this;
             var result = document.getElementById('ctp-fetch-calendars-result');
             button.disabled = true;
-            result.textContent = '<?php echo esc_js(__('Lade…', 'churchtools-plugin')); ?>';
+            ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Lade…', 'churchtools-plugin')); ?>');
 
             fetch(ajaxurl, {
                 method: 'POST',
@@ -2209,9 +3050,9 @@ final class SettingsPage
                         return;
                     }
                     button.disabled = false;
-                    result.textContent = (data.data && data.data.message)
+                    ctpSetStatus(result, 'error', (data.data && data.data.message)
                         ? data.data.message
-                        : '<?php echo esc_js(__('Laden fehlgeschlagen', 'churchtools-plugin')); ?>';
+                        : '<?php echo esc_js(__('Laden fehlgeschlagen', 'churchtools-plugin')); ?>');
                 });
         });
 
@@ -2219,7 +3060,7 @@ final class SettingsPage
             var button = this;
             var result = document.getElementById('ctp-run-sync-result');
             button.disabled = true;
-            result.textContent = '<?php echo esc_js(__('Synchronisiere…', 'churchtools-plugin')); ?>';
+            ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Synchronisiere…', 'churchtools-plugin')); ?>');
 
             fetch(ajaxurl, {
                 method: 'POST',
@@ -2237,9 +3078,9 @@ final class SettingsPage
                         window.location.reload();
                         return;
                     }
-                    result.textContent = (data.data && data.data.message)
+                    ctpSetStatus(result, 'error', (data.data && data.data.message)
                         ? data.data.message
-                        : '<?php echo esc_js(__('Synchronisation fehlgeschlagen', 'churchtools-plugin')); ?>';
+                        : '<?php echo esc_js(__('Synchronisation fehlgeschlagen', 'churchtools-plugin')); ?>');
                 });
         });
 
@@ -2353,6 +3194,7 @@ final class SettingsPage
                     preview.src = (attachment.sizes && attachment.sizes.thumbnail) ? attachment.sizes.thumbnail.url : attachment.url;
                     preview.hidden = false;
                     removeButton.hidden = false;
+                    button.textContent = '<?php echo esc_js(__('Ersetzen', 'churchtools-plugin')); ?>';
                 });
 
                 frame.open();
@@ -2369,7 +3211,101 @@ final class SettingsPage
                 preview.hidden = true;
                 preview.src = '';
                 button.hidden = true;
+
+                var selectButton = cell.querySelector('.ctp-image-select');
+                if (selectButton) {
+                    selectButton.textContent = '<?php echo esc_js(__('Bild wählen', 'churchtools-plugin')); ?>';
+                }
             });
+        });
+
+        document.getElementById('ctp-check-updates')?.addEventListener('click', function () {
+            var button = this;
+            var result = document.getElementById('ctp-check-updates-result');
+            button.disabled = true;
+            ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Prüfe…', 'churchtools-plugin')); ?>');
+
+            fetch(ajaxurl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action: 'ctp_check_updates',
+                    nonce: '<?php echo esc_js(wp_create_nonce('ctp_check_updates')); ?>',
+                }),
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    button.disabled = false;
+                    ctpSetStatus(
+                        result,
+                        data.success ? 'success' : 'error',
+                        (data.data && data.data.message)
+                            ? data.data.message
+                            : '<?php echo esc_js(__('Prüfung fehlgeschlagen', 'churchtools-plugin')); ?>'
+                    );
+                    // Neu laden, damit Statuszeile und Hinweis oben denselben
+                    // Stand zeigen wie die eben eingeholte Auskunft - aber erst,
+                    // nachdem die Meldung kurz lesbar war.
+                    if (data.success) {
+                        setTimeout(function () { window.location.reload(); }, 1200);
+                    }
+                });
+        });
+
+        /*
+         * Kalenderkacheln (Tab „Kalender“): der gedimmte Zustand einer
+         * inaktiven Kachel wird beim Klick sofort mitgezogen, statt erst nach
+         * dem Speichern zu erscheinen. Delegiert am Dokument, damit dieselbe
+         * Zeile auch fuer die Sammelschalter unten gilt.
+         */
+        function ctpSyncCalendarCard(checkbox) {
+            var card = checkbox.closest('.ctp-calendar-card');
+            if (card) {
+                card.classList.toggle('is-disabled', !checkbox.checked);
+            }
+        }
+
+        document.addEventListener('change', function (event) {
+            if (event.target.classList && event.target.classList.contains('ctp-calendar-enabled')) {
+                ctpSyncCalendarCard(event.target);
+            }
+        });
+
+        document.querySelectorAll('.ctp-calendar-bulk').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var enable = button.dataset.enable === '1';
+                // Nur was gerade sichtbar ist: steht ein Suchbegriff im Filter,
+                // bedeutet „Alle aktivieren“ die gefilterte Auswahl - sonst
+                // veraendert ein Klick stillschweigend auch Kalender, die man
+                // in diesem Moment gar nicht vor sich hat.
+                document.querySelectorAll('.ctp-calendar-card:not([hidden]) .ctp-calendar-enabled').forEach(function (checkbox) {
+                    checkbox.checked = enable;
+                    ctpSyncCalendarCard(checkbox);
+                });
+            });
+        });
+
+        document.getElementById('ctp-calendar-search')?.addEventListener('input', function () {
+            var needle = this.value.trim().toLowerCase();
+            var emptyHint = document.getElementById('ctp-calendar-no-match');
+            var visible = 0;
+
+            document.querySelectorAll('.ctp-calendar-card').forEach(function (card) {
+                // Name *oder* ID: die ID steht im Shortcode und in
+                // Fehlermeldungen, danach sucht man genauso.
+                var match = needle === ''
+                    || card.dataset.name.indexOf(needle) !== -1
+                    || card.dataset.id.indexOf(needle) !== -1;
+                card.hidden = !match;
+                if (match) {
+                    visible++;
+                }
+            });
+
+            if (emptyHint) {
+                emptyHint.hidden = visible !== 0;
+            }
         });
 
         document.querySelectorAll('.ctp-copy-shortcode').forEach(function (button) {
@@ -2447,26 +3383,66 @@ final class SettingsPage
         }
 
         try {
-            $client = new Client($connection['base_url'], $connection['api_key']);
-            $settings = self::get();
-            $merged = self::mergeCalendars($settings['calendars'], $client->getCalendars());
+            $result = self::refreshCalendars(new Client($connection['base_url'], $connection['api_key']));
+        } catch (Throwable $exception) {
+            wp_send_json_error(['message' => $exception->getMessage()]);
 
-            // Dieselbe Klasse Gefahr, gegen die sich der Sync seit 0.9.0 wehrt,
-            // nur an der anderen Stelle: mergeCalendars() baut die Liste
-            // ausschliesslich aus der Antwort neu auf, eine leere Antwort
-            // loescht sie also samt eingestellter Farben und Standardbilder.
-            // Ein kaputter Body wirft inzwischen in Client::request(), ein
-            // wohlgeformtes data: [] kaeme aber weiterhin bis hierher.
-            // Anders als der Sync muss das hier nicht ueber die Zeit
-            // entschieden werden: Es ist eine Handlung mit einem Menschen
-            // davor, der die Meldung sofort liest und es erneut versuchen
-            // kann. Sind die Kalender wirklich alle weg, bleiben sie
-            // abwaehlbar in der Liste stehen - ihre Termine raeumt der Sync
-            // ueber seinen eigenen Schutz ab.
-            if ($merged === [] && $settings['calendars'] !== []) {
-                wp_send_json_error(['message' => __('ChurchTools hat keine Kalender zurückgeliefert. Die gespeicherte Kalenderliste bleibt deshalb unverändert, damit eingestellte Farben und Standardbilder nicht verloren gehen – bitte die Berechtigungen des API-Keys prüfen. Sind die Kalender dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin')]);
-            }
+            return;
+        }
 
+        if ($result['status'] === 'empty') {
+            wp_send_json_error(['message' => $result['message']]);
+        }
+
+        wp_send_json_success(['count' => $result['count']]);
+    }
+
+    /**
+     * Holt die Kalenderliste von ChurchTools und schreibt sie zurueck - der
+     * eine Weg fuer beide Aufrufer: den Knopf „Kalender von ChurchTools laden“
+     * und den planmaessigen Sync (siehe SyncEngine::run()).
+     *
+     * Vorher lag diese Logik nur im AJAX-Handler, und die Kalenderliste
+     * veraenderte sich damit ausschliesslich dann, wenn ein Mensch daran
+     * dachte. Ein in ChurchTools umbenannter Kalender behielt im Plugin
+     * monatelang seinen alten Namen, eine dort geaenderte Farbe kam nie an,
+     * und ein neu angelegter Kalender tauchte in der Auswahl gar nicht erst
+     * auf - waehrend der Sync daneben stuendlich lief.
+     *
+     * Wirft nur, was der Client wirft (Netz, HTTP-Fehler, unerwartete
+     * Antwort). Die leere Antwort ist kein Fehler, sondern ein eigener
+     * Zustand: mergeCalendars() baut die Liste ausschliesslich aus der Antwort
+     * neu auf, eine leere Antwort loeschte sie also samt eingestellter Farben
+     * und Standardbilder. Ein kaputter Body wirft inzwischen in
+     * Client::request(), ein wohlgeformtes data: [] kaeme aber weiterhin bis
+     * hierher. Sind die Kalender wirklich alle weg, bleiben sie abwaehlbar in
+     * der Liste stehen - ihre Termine raeumt der Sync ueber seinen eigenen
+     * Schutz ab.
+     *
+     * @return array{status: 'updated'|'empty', count: int, changed: bool, message: string}
+     */
+    public static function refreshCalendars(Client $client): array
+    {
+        $settings = self::get();
+        $merged = self::mergeCalendars($settings['calendars'], $client->getCalendars());
+
+        if ($merged === [] && $settings['calendars'] !== []) {
+            return [
+                'status' => 'empty',
+                'count' => 0,
+                'changed' => false,
+                'message' => __('ChurchTools hat keine Kalender zurückgeliefert. Die gespeicherte Kalenderliste bleibt deshalb unverändert, damit eingestellte Farben und Standardbilder nicht verloren gehen – bitte die Berechtigungen des API-Keys prüfen. Sind die Kalender dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin'),
+            ];
+        }
+
+        // Nur bei echter Aenderung schreiben. Der Sync ruft das jetzt
+        // stuendlich auf, und ein update_option() mit unveraendertem Inhalt
+        // waere zwar folgenlos, aber onSettingsUpdated() haengt an diesem
+        // Hook - und der Frontend-Cache unten soll nicht stuendlich ohne Grund
+        // verworfen werden.
+        $changed = $merged !== $settings['calendars'];
+
+        if ($changed) {
             // register_setting() hooks sanitize_option_{option} onto every
             // update_option() call for this option, not just Settings API form
             // submissions — without removing it here, sanitizeSettings() would run
@@ -2476,11 +3452,54 @@ final class SettingsPage
             remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
             update_option(self::OPTION_KEY, array_merge($settings, ['calendars' => $merged]));
             add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-
-            wp_send_json_success(['count' => count($merged)]);
-        } catch (Throwable $exception) {
-            wp_send_json_error(['message' => $exception->getMessage()]);
         }
+
+        // Auch ohne Aenderung: der Zeitstempel beantwortet „wann wurde zuletzt
+        // nachgesehen“, nicht „wann hat sich zuletzt etwas geaendert“.
+        update_option(self::OPTION_CALENDARS_FETCHED, current_time('mysql'));
+
+        return [
+            'status' => 'updated',
+            'count' => count($merged),
+            'changed' => $changed,
+            'message' => '',
+        ];
+    }
+
+    /**
+     * Zwingt WordPress zu einer frischen Update-Pruefung.
+     *
+     * Ohne diesen Knopf haengt der Tab „Updates“ am Zwischenspeicher von
+     * WordPress (`update_plugins`, ueblicherweise zwoelf Stunden alt) - wer
+     * gerade ein Release veroeffentlicht hat und nachsehen will, ob es
+     * ankommt, konnte nur warten. Geloescht wird nur der Zwischenspeicher;
+     * die Pruefung selbst macht wp_update_plugins(), und den GitHub-Teil
+     * daran haengt der GitHubUpdateChecker ein.
+     */
+    public function ajaxCheckUpdates(): void
+    {
+        check_ajax_referer('ctp_check_updates', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Keine Berechtigung.', 'churchtools-plugin')], 403);
+        }
+
+        delete_site_transient('update_plugins');
+        wp_update_plugins();
+
+        $update = self::updateStatus();
+
+        if ($update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>')) {
+            wp_send_json_success([
+                'message' => sprintf(
+                    /* translators: %s: newer version number available via GitHub */
+                    __('Version %s steht bereit.', 'churchtools-plugin'),
+                    $update['version']
+                ),
+            ]);
+        }
+
+        wp_send_json_success(['message' => __('Das Plugin ist auf dem aktuellen Stand.', 'churchtools-plugin')]);
     }
 
     public function ajaxRunSync(): void
@@ -2550,7 +3569,7 @@ final class SettingsPage
      * (see ajaxFetchCalendars()), because there the same ambiguity costs every
      * calendar at once. `default_color` is always overwritten
      * with ChurchTools' current value (never carried over from $existing) so the
-     * "Auf Standardfarbe zurücksetzen" button (renderCalendarRow()) keeps pointing
+     * "Auf Standardfarbe zurücksetzen" button (renderCalendarCard()) keeps pointing
      * at ChurchTools' actual color even if it changed there since the last fetch.
      */
     private static function mergeCalendars(array $existing, array $remoteCalendars): array

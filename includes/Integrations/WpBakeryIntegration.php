@@ -52,7 +52,7 @@ final class WpBakeryIntegration
                 [
                     'type' => 'textfield',
                     'heading' => __('Maximale Anzahl Events (0 = unbegrenzt)', 'churchtools-plugin'),
-                    'description' => __('Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin" die Gesamtzahl inkl. Hero-Kachel.', 'churchtools-plugin'),
+                    'description' => __('Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin“ die Gesamtzahl inkl. Hero-Kachel.', 'churchtools-plugin'),
                     'param_name' => 'limit',
                     'value' => '0',
                 ],
@@ -119,7 +119,7 @@ final class WpBakeryIntegration
                 [
                     'type' => 'textfield',
                     'heading' => __('Zeitraum pro Seite in Monaten (0 = Standard)', 'churchtools-plugin'),
-                    'description' => __('Überschreibt die globale Einstellung im Plugin-Tab „Design" nur für dieses Element.', 'churchtools-plugin'),
+                    'description' => __('Überschreibt die globale Einstellung im Plugin-Tab „Design“ nur für dieses Element.', 'churchtools-plugin'),
                     'param_name' => 'months',
                     'value' => '0',
                     'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],

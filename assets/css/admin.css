@@ -17,7 +17,21 @@
     --ctp-admin-muted: #646970;
     --ctp-admin-radius: 8px;
     --ctp-admin-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    /* Zwei Breiten, und nur zwei: Formulare bleiben schmal, weil eine
+     * Beschriftung neben einem Eingabefeld ab einer gewissen Zeilenlaenge
+     * nicht besser, sondern nur weiter auseinander steht. Alles, was Spalten
+     * hat - Statuszeile, Terminliste, Kalenderkacheln, Attributtabelle des
+     * Shortcodes, die Design-Vorschauen - bekommt die breite Variante, weil
+     * dort jede zusaetzliche Spalte echten Platz braucht. Vorher war der
+     * Design-Tab als einziger 1400px breit und alles andere 960px, ohne dass
+     * die Aufteilung einer Regel gefolgt waere. */
     --ctp-admin-max-width: 960px;
+    --ctp-admin-max-width-wide: 1400px;
+    /* Rueckmeldungen (siehe .ctp-inline-status) - dieselben Toene, die
+     * wp-admin fuer seine eigenen Notices verwendet. */
+    --ctp-admin-ok: #007017;
+    --ctp-admin-warn: #8a6100;
+    --ctp-admin-error: #b32d2e;
     /* The plugin's own signature color — deliberately distinct from both the
      * default wp-admin blue (#2271b1) and the frontend's default accent
      * (#2563eb), so the two "belong to different systems" at a glance.
@@ -68,10 +82,43 @@
     margin-bottom: 4px;
 }
 
+/* Alle Reiter so breit wie der breiteste.
+ *
+ * `grid-auto-columns: 1fr` macht die Spalten gleich breit, und `width:
+ * fit-content` sorgt dafuer, dass das Raster nicht die ganze Seite ausfuellt,
+ * sondern seine max-content-Breite annimmt - bei gleich breiten Spalten also
+ * genau (Anzahl x breitester Reiter). Die durchgehende Linie unter den Reitern
+ * gehoert weiterhin dem .nav-tab-wrapper darum herum und laeuft deshalb
+ * unveraendert ueber die volle Seitenbreite. */
+.ctp-admin .ctp-tabs {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+}
+
 .ctp-admin .nav-tab {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    /* Der Raster-Abstand oben setzt die Zwischenraeume; core's margin-left
+     * wuerde sich addieren und die erste Spalte schmaler wirken lassen. */
+    margin-left: 0;
+    margin-right: 0;
+    text-align: center;
+}
+
+/* Unter der Breite, ab der sieben gleich breite Reiter nicht mehr
+ * nebeneinander passen, ist Umbruch wichtiger als gleiche Breite. */
+@media (max-width: 960px) {
+    .ctp-admin .ctp-tabs {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        width: auto;
+    }
 }
 
 .ctp-admin .nav-tab .dashicons {
@@ -108,6 +155,29 @@
     margin-top: 0;
 }
 
+/* Panels mit Spalteninhalt: Terminliste, Kalenderkacheln, Shortcode-Referenz,
+ * die Panels der Uebersicht. Siehe --ctp-admin-max-width-wide. */
+.ctp-panel--wide {
+    max-width: var(--ctp-admin-max-width-wide);
+}
+
+/* Die Statuszeile steht ausserhalb der Panels, direkt unter der
+ * Tab-Navigation, und ist auf jedem Tab dasselbe Bauteil (siehe
+ * SettingsPage::renderStatStrip()).
+ *
+ * Ihre Breite ist die des Panels darunter, damit beide auf derselben rechten
+ * Kante enden: schmal ueber einem Formular, breit ueber Tabellen und Kacheln.
+ * Vorher war sie immer 1400px und ragte ueber die 960px breiten
+ * Formularpanels der Tabs „Verbindung“ und „Synchronisation“ hinaus. */
+.ctp-status-strip {
+    max-width: var(--ctp-admin-max-width);
+    margin: 20px 0 0;
+}
+
+.ctp-status-strip--wide {
+    max-width: var(--ctp-admin-max-width-wide);
+}
+
 /* Design tab only: settings form (left) and live preview (right) side by side
  * instead of stacked — the two panels lose their own max-width/margin here so
  * the grid columns are what sizes them, same panel chrome otherwise. Falls
@@ -117,7 +187,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: 24px;
-    max-width: 1400px;
+    max-width: var(--ctp-admin-max-width-wide);
     margin: 20px 0;
 }
 
@@ -133,7 +203,7 @@
 /* Global styling settings sit below the pairs at full width: they apply to
  * both previews at once, so pinning them to either column would be arbitrary. */
 .ctp-design-global {
-    max-width: 1400px;
+    max-width: var(--ctp-admin-max-width-wide);
 }
 
 @media (max-width: 960px) {
@@ -191,11 +261,16 @@
 /* Übersicht/dashboard tab (renderStatusOverview()) — the four/five key metrics
  * as scannable tiles instead of a plain key-value table, so the landing tab
  * reads as a dashboard rather than a form. */
+/* 170px ist die Untergrenze, bei der auch fuenf Kacheln in die schmale
+ * Statuszeile (960px, Tab „Synchronisation“) nebeneinander passen - bei 200px
+ * fiel die fuenfte in eine eigene Zeile und stand dort als einzelner Kasten
+ * am linken Rand. `auto-fit` laesst leere Spuren zusammenfallen, in der
+ * breiten Zeile teilen sich vier Kacheln also weiterhin die volle Breite. */
 .ctp-stat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 12px;
-    margin: 16px 0;
+    margin: 0;
 }
 
 .ctp-stat-card {
@@ -215,6 +290,17 @@
     height: 20px;
 }
 
+/* Tritt an die Stelle des Dashicons, wo der Wert selbst eine Farbe ist
+ * (Akzentfarbe im Tab „Design“) - gleiche Kantenlaenge, damit die Kachel
+ * dieselbe Hoehe behaelt wie ihre Nachbarn. */
+.ctp-stat-card__swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: 5px;
+}
+
 .ctp-stat-card__value {
     font-size: 20px;
     font-weight: 600;
@@ -229,8 +315,131 @@
     letter-spacing: 0.04em;
 }
 
-.ctp-status-actions {
-    margin: 4px 0 0;
+/* Ein Zustand, der Aufmerksamkeit verdient, faerbt nur seinen eigenen Wert
+ * und sein Symbol - nicht die ganze Kachel. Eine vollflaechig rote Kachel
+ * neben vier neutralen liest sich als Alarm; hier geht es um „hier fehlt
+ * noch etwas“, und das darf die Zeile nicht dominieren. */
+.ctp-stat-card--ok .dashicons {
+    color: var(--ctp-admin-ok);
+}
+
+.ctp-stat-card--warn .dashicons,
+.ctp-stat-card--warn .ctp-stat-card__value {
+    color: var(--ctp-admin-warn);
+}
+
+.ctp-stat-card--error .dashicons,
+.ctp-stat-card--error .ctp-stat-card__value {
+    color: var(--ctp-admin-error);
+}
+
+/* Aktionsleiste unter einer Panel-Ueberschrift: ein Knopf, seine
+ * Rueckmeldung, ein kurzer Hinweis. Siehe SettingsPage::renderActionBar() -
+ * dieselbe Position auf jedem Tab, der eine solche Aktion anbietet. */
+.ctp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 4px;
+}
+
+.ctp-toolbar--secondary {
+    margin: 20px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ctp-admin-border);
+}
+
+/* Schiebt alles Folgende an den rechten Rand - in der Kalenderleiste trennt
+ * das die Suche von den beiden Sammelschaltern. */
+.ctp-toolbar__spacer {
+    flex: 1 1 auto;
+}
+
+.ctp-toolbar__hint {
+    color: var(--ctp-admin-muted);
+    font-size: 13px;
+}
+
+/* Die eine Rueckmeldung fuer jede Aktion im Backend (siehe ctpSetStatus()).
+ * Vorher war das ein nackter <span>: Erfolg und Fehler sahen identisch aus. */
+.ctp-inline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ctp-inline-status:empty {
+    display: none;
+}
+
+.ctp-inline-status::before {
+    font-family: dashicons;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.ctp-inline-status.is-busy {
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-inline-status.is-busy::before {
+    content: '\f463';
+    animation: ctp-spin 1.4s linear infinite;
+}
+
+.ctp-inline-status.is-success {
+    color: var(--ctp-admin-ok);
+}
+
+.ctp-inline-status.is-success::before {
+    content: '\f147';
+}
+
+.ctp-inline-status.is-error {
+    color: var(--ctp-admin-error);
+}
+
+.ctp-inline-status.is-error::before {
+    content: '\f534';
+}
+
+@keyframes ctp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ctp-inline-status.is-busy::before {
+        animation: none;
+    }
+}
+
+/* Sprungziele der Uebersicht in die uebrigen Tabs. */
+.ctp-quicklinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-quicklinks a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.ctp-quicklinks .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--ctp-admin-accent);
 }
 
 .ctp-panel .notice {
@@ -255,25 +464,118 @@
     flex-wrap: wrap;
 }
 
-/* Calendars tab */
-.ctp-calendars-table th.ctp-col-active,
-.ctp-calendars-table td:first-child {
-    width: 60px;
+/* Calendars tab
+ *
+ * Kachelliste statt der frueheren vierspaltigen Tabelle in einer
+ * Settings-API-Zelle (siehe SettingsPage::renderCalendarsTab()). Die
+ * Kalenderfarbe ist hier der Balken der Kachel - das Merkmal, an dem man einen
+ * Kalender im Frontend wiedererkennt, ist damit auch im Backend das erste,
+ * was man sieht, statt ein 36px-Kaestchen in Spalte drei. */
+.ctp-calendar-grid {
+    display: grid;
+    /* 320px ist die Breite, ab der Farbfeld (Waehler + Hex + Zuruecksetzen)
+     * und Bildzeile (Vorschau + zwei Knoepfe) je auf eine Zeile passen. */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
 }
 
-/* Wide enough for swatch + "#rrggbb" field + "Zurücksetzen" on one line. */
-.ctp-calendars-table th.ctp-col-color,
-.ctp-calendars-table td:nth-child(3) {
-    width: 270px;
+.ctp-calendar-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    padding: 16px 18px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: var(--ctp-admin-radius);
+    background: var(--ctp-admin-surface);
 }
 
-.ctp-calendars-table th.ctp-col-image,
-.ctp-calendars-table td:nth-child(4) {
-    width: 240px;
+.ctp-calendar-card[hidden] {
+    display: none;
 }
 
-.ctp-calendars-table td {
-    vertical-align: middle;
+/* Der Farbbalken. Inline-Style traegt die Farbe (siehe renderCalendarCard()),
+ * hier nur die Geometrie. */
+.ctp-calendar-card__bar {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+}
+
+/* Ein inaktiver Kalender bleibt lesbar, tritt aber sichtbar zurueck - vorher
+ * unterschied ihn nur ein leerer Haken ganz links von den aktiven. */
+.ctp-calendar-card.is-disabled {
+    background: color-mix(in srgb, var(--ctp-admin-border) 18%, var(--ctp-admin-surface));
+}
+
+.ctp-calendar-card.is-disabled .ctp-calendar-card__bar {
+    opacity: 0.35;
+}
+
+.ctp-calendar-card.is-disabled .ctp-calendar-card__name,
+.ctp-calendar-card.is-disabled .ctp-calendar-card__facts {
+    opacity: 0.6;
+}
+
+.ctp-calendar-card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.ctp-calendar-card__name {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ctp-admin-text);
+    cursor: pointer;
+}
+
+.ctp-calendar-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    color: var(--ctp-admin-muted);
+}
+
+/* Eine Zeile pro Einstellung, Beschriftung in fester Breite links - damit
+ * „Farbe“ und „Standardbild“ ueber alle Kacheln hinweg auf derselben
+ * Kante stehen. */
+.ctp-calendar-card__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-calendar-card__row-label {
+    flex: 0 0 88px;
+    font-size: 12px;
+    color: var(--ctp-admin-muted);
+}
+
+.ctp-calendar-card__row--shortcode {
+    justify-content: space-between;
+}
+
+.ctp-calendar-card__row--shortcode code {
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ctp-calendar-search {
+    min-width: 240px;
 }
 
 .ctp-muted-code {
@@ -326,6 +628,26 @@
 .ctp-image-field .ctp-image-remove {
     margin-left: 8px;
     vertical-align: middle;
+}
+
+/* In der Kalenderkachel sind Farb- und Bildzeile Flex-Container (siehe
+ * .ctp-calendar-card__row) - dort setzt `gap` die Abstaende, und die
+ * margin-lefts oben wuerden sich addieren. Ausserhalb der Kachel (Design-Tab,
+ * Akzentfarbe in einem <p>) bleiben sie unveraendert in Kraft. */
+.ctp-calendar-card__row .ctp-color-hex,
+.ctp-calendar-card__row .ctp-color-reset,
+.ctp-calendar-card__row .ctp-image-select,
+.ctp-calendar-card__row .ctp-image-remove {
+    margin-left: 0;
+}
+
+.ctp-calendar-card__row .ctp-color-hex {
+    flex: 0 1 8.5em;
+    min-width: 0;
+}
+
+.ctp-calendar-card__row .ctp-color-reset {
+    margin-left: auto;
 }
 
 .ctp-image-preview {
@@ -459,10 +781,43 @@
     color: #b32d2e;
 }
 
+/* Mehrsaetzige Erklaerungen unter einem Feld als Liste statt als Absatz -
+ * ein Absatz aus vier Regeln wird nicht zu Ende gelesen, vier Zeilen schon
+ * (siehe renderElementOrderField()/renderPagingMonthsField()). */
+ul.ctp-hint-list {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+ul.ctp-hint-list li {
+    position: relative;
+    padding: 2px 0 2px 14px;
+}
+
+ul.ctp-hint-list li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 10px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+}
+
 .ctp-radio-inline {
     margin-right: 1.5em;
 }
 
+/* Der Klickverhalten-Block (renderClickBehaviorField()) hat diese Klasse seit
+ * jeher vergeben, aber es gab nie eine Regel dazu: die drei Optionen liefen
+ * als Fliesstext in einer Zeile ineinander, und weil jede Beschriftung einen
+ * erklaerenden Halbsatz enthaelt („Popup – oeffnet die Details in einem
+ * Fenster …“), war nicht mehr zu erkennen, wo eine Option aufhoert und die
+ * naechste anfaengt. */
+.ctp-radio-block,
 .ctp-checkbox-block {
     display: block;
     margin: 0.35em 0;
@@ -484,6 +839,21 @@
     color: var(--ctp-admin-text);
 }
 
+/* Volltext-Fassung im Tab „Updates“: Kurzfassung und Erklaerung, deshalb
+ * mehr Luft zwischen den Punkten und eine begrenzte Zeilenlaenge - ueber die
+ * volle Panelbreite von 1400px liest sich ein Absatz nicht mehr. */
+.ctp-changelog-excerpt--full li {
+    max-width: 78ch;
+    padding-bottom: 10px;
+}
+
+.ctp-release__detail {
+    display: block;
+    margin-top: 2px;
+    color: var(--ctp-admin-muted);
+    line-height: 1.6;
+}
+
 .ctp-changelog-excerpt li::before {
     content: '';
     position: absolute;
@@ -493,6 +863,44 @@
     height: 6px;
     border-radius: 50%;
     background: var(--ctp-admin-accent);
+}
+
+/* Ein Release-Block im Tab „Updates“ (renderUpdatesTab()). */
+.ctp-release + .ctp-release {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-release__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 8px;
+}
+
+.ctp-release__version {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ctp-admin-text);
+}
+
+.ctp-release__badge {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ctp-admin-accent) 12%, var(--ctp-admin-surface));
+    color: var(--ctp-admin-accent);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ctp-release__date {
+    color: var(--ctp-admin-muted);
+    font-size: 12px;
+    font-weight: normal;
 }
 
 .ctp-shortcode-examples {
@@ -534,7 +942,9 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin: 16px 0 12px;
+    margin: 16px 0 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--ctp-admin-border);
 }
 
 .ctp-events-filters input[type='search'] {
@@ -566,6 +976,21 @@
     height: 16px;
     vertical-align: text-bottom;
     color: var(--ctp-admin-muted);
+}
+
+/* Reine Anzeigedaten als Schluessel/Wert-Tabelle: Version auf der Uebersicht
+ * und das Termindetail. Vorher war das einmal eine .widefat und einmal eine
+ * .form-table - also das Layout fuer *Eingabefelder* fuer etwas, in das man
+ * nichts eingeben kann. */
+.ctp-keyvalue-table th {
+    width: 200px;
+    color: var(--ctp-admin-muted);
+    font-weight: 600;
+    vertical-align: top;
+}
+
+.ctp-keyvalue-table td {
+    vertical-align: top;
 }
 
 .ctp-events-pager {
@@ -624,7 +1049,22 @@
     border-radius: 4px;
 }
 
+/* Rueckweg aus dem Termindetail - dieselbe Sprache wie die Sprungziele der
+ * Uebersicht (.ctp-quicklinks): Symbol plus Text, kein unterstrichener
+ * Kleinsttext ueber einem Kasten. */
 .ctp-back-link {
-    display: inline-block;
-    margin-bottom: 4px;
+    margin: 20px 0 0;
+}
+
+.ctp-back-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+}
+
+.ctp-back-link .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
 }

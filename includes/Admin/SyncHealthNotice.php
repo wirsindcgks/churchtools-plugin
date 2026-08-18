@@ -10,11 +10,11 @@ use ChurchToolsPlugin\Sync\SyncEngine;
 /**
  * Meldet einen kaputten oder stehengebliebenen Sync auf *jeder* Admin-Seite.
  *
- * Bisher stand beides nur im Tab „Übersicht": Wer nicht gezielt dorthin geht,
+ * Bisher stand beides nur im Tab „Übersicht“: Wer nicht gezielt dorthin geht,
  * merkt wochenlang nicht, dass die Termine auf der Website eingefroren sind –
  * und das ist der Fehler, der am längsten unentdeckt bleibt, weil eine
  * veraltete Terminliste völlig normal aussieht. Genau dieses „regelmäßig
- * nachschauen" soll hier entfallen.
+ * nachschauen“ soll hier entfallen.
  *
  * Drei Zustände, die gemeldet werden:
  *   - Der letzte Lauf ist mit einem Fehler abgebrochen
@@ -22,8 +22,8 @@ use ChurchToolsPlugin\Sync\SyncEngine;
  *   - Der letzte erfolgreiche Lauf liegt deutlich länger zurück, als das
  *     eingestellte Intervall erlaubt
  *
- * problem() ist öffentlich, weil der Tab „Übersicht" dieselbe Auskunft rendert
- * (siehe SettingsPage::renderStatusTab()) – ohne das stünde der stehengebliebene
+ * problem() ist öffentlich, weil der Tab „Übersicht“ dieselbe Auskunft rendert
+ * (siehe SettingsPage::renderStatusOverview()) – ohne das stünde der stehengebliebene
  * Sync ausgerechnet auf der Seite nicht, auf die dieser Hinweis verlinkt.
  */
 final class SyncHealthNotice
@@ -31,7 +31,7 @@ final class SyncHealthNotice
     /**
      * Wie viele Intervalle vergehen dürfen, bevor ein Sync als stehengeblieben
      * gilt. WP-Cron feuert nur bei Seitenaufrufen, ist also von Haus aus
-     * unpünktlich – bei „stündlich" wäre eine Warnung nach 61 Minuten reines
+     * unpünktlich – bei „stündlich“ wäre eine Warnung nach 61 Minuten reines
      * Rauschen. Der Faktor drei lässt normalen Verzug durch und schlägt erst
      * an, wenn wirklich etwas klemmt.
      */
@@ -42,7 +42,7 @@ final class SyncHealthNotice
      * allein reicht nicht: Auf einer Gemeindeseite ohne Nachtverkehr liegen
      * zwischen dem letzten Besucher am Abend und dem ersten am Morgen
      * regelmäßig zehn Stunden ohne einen einzigen WP-Cron-Lauf – bei
-     * „stündlich" (Vorgabe) wären das 3 Stunden Toleranz und damit jeden
+     * „stündlich“ (Vorgabe) wären das 3 Stunden Toleranz und damit jeden
      * Morgen ein roter Hinweis auf einer völlig gesunden Installation.
      * readme.txt beschreibt dieses Verhalten selbst als normal; ein Hinweis,
      * der im Normalbetrieb erscheint, wird nach der zweiten Woche überlesen.
@@ -152,9 +152,9 @@ final class SyncHealthNotice
      * WordPress testbar ist (siehe SyncHealthNoticeTest, das sie wie die
      * uebrigen internen Entscheidungen dieser Codebasis per Reflection ruft).
      *
-     * Der Fall „noch nie synchronisiert" hängt bewusst am *geplanten* Lauf und
+     * Der Fall „noch nie synchronisiert“ hängt bewusst am *geplanten* Lauf und
      * nicht bloß am fehlenden Zeitstempel: Direkt nach dem Einrichten ist
-     * „noch nie" der Normalzustand – Installer::scheduleIfNeeded() legt den
+     * „noch nie“ der Normalzustand – Installer::scheduleIfNeeded() legt den
      * ersten Lauf eine Minute später an. Ohne diese Bedingung bekäme jede
      * frisch und korrekt eingerichtete Installation auf dem Weg zurück ins
      * Dashboard einen Fehler angezeigt, der sich eine Minute später von selbst
@@ -184,8 +184,8 @@ final class SyncHealthNotice
      * Warnung fälschlich auszulösen oder zu verschlucken. get_gmt_from_date()
      * liefert echte UTC, time() ebenfalls.
      *
-     * Ein unlesbarer Wert (0 aus gmdate('U', 0)) gilt als „noch nie", nicht als
-     * „liegt 56 Jahre zurück".
+     * Ein unlesbarer Wert (0 aus gmdate('U', 0)) gilt als „noch nie“, nicht als
+     * „liegt 56 Jahre zurück“.
      */
     private static function timestamp(string $mysqlDate): ?int
     {
@@ -210,9 +210,9 @@ final class SyncHealthNotice
     }
 
     /**
-     * Nur der Tab „Übersicht" zeigt dasselbe bereits selbst. Auf „Design" oder
-     * „Events" stünde sonst nirgends, dass der Sync klemmt – und der Link
-     * „Zur Übersicht" führte auf eine Seite, auf der der gemeldete Zustand
+     * Nur der Tab „Übersicht“ zeigt dasselbe bereits selbst. Auf „Design“ oder
+     * „Events“ stünde sonst nirgends, dass der Sync klemmt – und der Link
+     * „Zur Übersicht“ führte auf eine Seite, auf der der gemeldete Zustand
      * wieder verschwunden ist.
      */
     private static function isOwnStatusTab(): bool
