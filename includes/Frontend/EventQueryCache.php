@@ -72,23 +72,30 @@ final class EventQueryCache
     }
 
     /**
-     * Cached frontend search across the whole sync horizon. Search terms are
-     * unbounded user input, so the key is a hash of the term — bounded in
-     * practice by how many distinct things visitors actually type, and each
-     * entry expires on the same short TTL as everything else here. Without a
-     * cache this would be an uncapped public endpoint running a leading-wildcard
-     * LIKE on every keystroke-triggered request.
+     * Cached counterpart of the "answer a toolbar question completely" query:
+     * the frontend search across the whole sync horizon, the eventfinder's
+     * timeframe ranges, or both at once. Search terms are unbounded user input,
+     * so they enter the key as a hash — bounded in practice by how many
+     * distinct things visitors actually type, and each entry expires on the
+     * same short TTL as everything else here. Without a cache this would be an
+     * uncapped public endpoint running a leading-wildcard LIKE on every
+     * keystroke-triggered request.
      */
-    public static function searchUpcoming(array $calendarIds, string $search, int $limit): array
-    {
-        $key = self::cacheKey($calendarIds, $limit, md5($search), null, 'events_search');
+    public static function findMatching(
+        array $calendarIds,
+        string $search,
+        ?string $startFrom,
+        ?string $startBefore,
+        int $limit
+    ): array {
+        $key = self::cacheKey($calendarIds, $limit, $startFrom, $startBefore, 'events_search', 0, md5($search));
         $cached = get_transient($key);
 
         if (is_array($cached)) {
             return $cached;
         }
 
-        $events = (new EventRepository())->searchUpcoming($calendarIds, $search, $limit);
+        $events = (new EventRepository())->findInWindow($calendarIds, $startFrom, $startBefore, $limit, 0, $search);
         set_transient($key, $events, self::TTL);
 
         return $events;
@@ -107,20 +114,27 @@ final class EventQueryCache
         update_option(self::VERSION_OPTION, (int) get_option(self::VERSION_OPTION, 0) + 1, false);
     }
 
+    /**
+     * $extra carries whatever a single caller adds on top of the shared
+     * calendar/limit/window identity — today only findMatching()'s hashed
+     * search term, which must not collide with the same window's unfiltered
+     * entry.
+     */
     private static function cacheKey(
         array $calendarIds,
         int $limit,
         ?string $startFrom = null,
         ?string $startBefore = null,
         string $prefix = 'events',
-        int $offset = 0
+        int $offset = 0,
+        string $extra = ''
     ): string {
         $calendarIds = array_map('intval', $calendarIds);
         sort($calendarIds);
 
         $version = (int) get_option(self::VERSION_OPTION, 0);
         $parts = implode(',', $calendarIds) . '|' . $limit . '|' . ($startFrom ?? '')
-            . '|' . ($startBefore ?? '') . '|' . $offset;
+            . '|' . ($startBefore ?? '') . '|' . $offset . '|' . $extra;
 
         return 'ctp_' . $prefix . '_' . $version . '_' . md5($parts);
     }

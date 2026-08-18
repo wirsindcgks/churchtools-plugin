@@ -9,6 +9,7 @@ use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Frontend\DetailDesign;
+use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
@@ -177,11 +178,18 @@ final class SettingsPage
          *
          *   _design_tile   -> the card's element order, paired in the layout grid
          *                     with the card preview it drives
-         *   _design_detail -> click behavior + the detail view's element order,
-         *                     paired with the detail preview
-         *   _design_global -> everything that is a global style decision with no
-         *                     drag&drop of its own (corners, field visibility,
-         *                     image ratio, accent color, months per page)
+         *   _design_detail -> the detail view's element order, paired with the
+         *                     detail preview
+         *   _design_global -> everything that applies site-wide and has no
+         *                     drag&drop of its own (click behavior, corners,
+         *                     field visibility, image ratio, accent and button
+         *                     color, months per page)
+         *
+         * Click behavior started out above the detail editor, on the grounds
+         * that it decides whether a detail view is reachable at all. It reads
+         * as a property *of that editor* there, though, while it in fact
+         * governs every card on the site — so it now sits with the rest of the
+         * site-wide settings, as the first of them.
          *
          * Previously the five global settings sat *between* the two drag&drop
          * editors in one tall left-hand column, which pushed the detail editor
@@ -195,13 +203,12 @@ final class SettingsPage
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
 
         $designDetailPage = self::PAGE_SLUG . '_design_detail';
-        add_settings_section('ctp_design_click', __('Klickverhalten', 'churchtools-plugin'), '__return_false', $designDetailPage);
-        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_click');
         add_settings_section('ctp_design_detail_order', __('Aufbau der Detailansicht', 'churchtools-plugin'), '__return_false', $designDetailPage);
         add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $designGlobalPage = self::PAGE_SLUG . '_design_global';
-        add_settings_section('ctp_design_global', __('Globale Darstellung', 'churchtools-plugin'), [self::class, 'renderGlobalDesignIntro'], $designGlobalPage);
+        add_settings_section('ctp_design_global', __('Globale Einstellungen', 'churchtools-plugin'), [self::class, 'renderGlobalDesignIntro'], $designGlobalPage);
+        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designGlobalPage, 'ctp_design_global');
@@ -1432,7 +1439,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten oben nicht auf „Keine“ steht.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten nicht auf „Keine“ steht.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-design-preview-backdrop">
                 <div
@@ -1917,7 +1924,7 @@ final class SettingsPage
     }
 
     /**
-     * Die vier Entscheidungen, die auf dem Design-Tab gelten, als Statuszeile -
+     * Die fuenf Entscheidungen, die auf dem Design-Tab gelten, als Statuszeile -
      * in derselben Form wie auf jedem anderen Tab.
      *
      * Sie beantwortet die Frage, die man beim Aufschlagen des Tabs hat: was
@@ -1946,6 +1953,7 @@ final class SettingsPage
             'tall' => __('Hoch · 4:5', 'churchtools-plugin'),
         ];
         $accentEnabled = !empty($settings['accent_color_enabled']);
+        $buttonEnabled = !empty($settings['button_color_enabled']);
 
         return [
             [
@@ -1969,6 +1977,18 @@ final class SettingsPage
                     ? (string) $settings['accent_color']
                     : __('vom Theme', 'churchtools-plugin'),
                 'label' => __('Akzentfarbe', 'churchtools-plugin'),
+            ],
+            [
+                // Ohne eigene Buttonfarbe steht hier nicht „vom Theme“ wie bei
+                // der Akzentfarbe: die Buttons erben in dem Fall keine
+                // Theme-Farbe, sie bleiben hell mit dünnem Rand und werden im
+                // gefüllten Zustand schwarz (siehe renderButtonColorField()).
+                'icon' => 'button',
+                'swatch' => $buttonEnabled ? (string) $settings['button_color'] : '',
+                'value' => $buttonEnabled
+                    ? (string) $settings['button_color']
+                    : __('Standard', 'churchtools-plugin'),
+                'label' => __('Buttonfarbe', 'churchtools-plugin'),
             ],
             [
                 'icon' => 'format-image',
@@ -2930,7 +2950,8 @@ final class SettingsPage
                     <?php if ($event['description'] !== '') : ?>
                         <tr>
                             <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
-                            <td><?php echo wp_kses_post($event['description']); ?></td>
+                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses_post() before adding any markup of its own (see its docblock). ?>
+                            <td><?php echo EventFormatter::descriptionHtml($event['description']); ?></td>
                         </tr>
                     <?php endif; ?>
                     <tr>

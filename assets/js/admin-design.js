@@ -84,16 +84,16 @@
 	}
 
 	/**
-	 * Hides the "Reihenfolge der Detailansicht" settings section and its
-	 * preview panel while "Keine" is selected — the setting has no visible
-	 * effect in that case. The section's <h2>/<table> pair comes straight out
-	 * of do_settings_sections() with no wrapping container of its own, so the
-	 * table is found via the field's own hidden input and the heading via its
-	 * previous sibling, rather than relying on a container id that doesn't exist.
+	 * Hides the "Aufbau der Detailansicht" editor and its preview panel while
+	 * "Keine" is selected — the setting has no visible effect in that case.
+	 * Both are whole panels now that the click-behavior radios have moved down
+	 * to the global settings: the editor panel holds nothing but that one
+	 * section, so hiding the panel (rather than the <h2>/<table> pair inside
+	 * it, as this did while the radios still sat above them) leaves no empty
+	 * box behind in the layout grid.
 	 */
 	var clickInputs = document.querySelectorAll('.ctp-design-click-input');
-	var detailTable = detailHiddenInput ? detailHiddenInput.closest('table') : null;
-	var detailHeading = detailTable ? detailTable.previousElementSibling : null;
+	var detailPanel = detailHiddenInput ? detailHiddenInput.closest('.ctp-panel') : null;
 	var detailPreviewPanel = detailPreview ? detailPreview.closest('.ctp-panel') : null;
 
 	function updateDetailVisibility() {
@@ -105,11 +105,8 @@
 		});
 		var hide = selected === 'none';
 
-		if (detailTable) {
-			detailTable.hidden = hide;
-		}
-		if (detailHeading) {
-			detailHeading.hidden = hide;
+		if (detailPanel) {
+			detailPanel.hidden = hide;
 		}
 		if (detailPreviewPanel) {
 			detailPreviewPanel.hidden = hide;

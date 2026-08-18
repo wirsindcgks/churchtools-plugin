@@ -117,4 +117,53 @@ final class EventQueryCacheTest extends TestCase
 
         $this->assertTrue(EventQueryCache::hasEventsFrom([1], '2026-10-01 00:00:00'));
     }
+
+    /**
+     * findMatching() hangs the search term into the key as $extra. Without it,
+     * "Taufe" and "Konzert" over the same calendars and the same timeframe
+     * would be one entry — and the second visitor would be served the first
+     * one's hits.
+     */
+    public function testCacheKeyDiffersBySearchTerm(): void
+    {
+        $taufe = $this->matchKey([1], null, null, md5('Taufe'));
+        $konzert = $this->matchKey([1], null, null, md5('Konzert'));
+
+        $this->assertNotSame($taufe, $konzert);
+    }
+
+    /**
+     * The counterpart: same term, different timeframe. "Konzert diese Woche"
+     * and "Konzert diesen Monat" are different questions.
+     */
+    public function testCacheKeyDiffersByTimeframeBoundsForTheSameTerm(): void
+    {
+        $term = md5('Konzert');
+        $thisWeek = $this->matchKey([1], '2026-08-19 00:00:00', '2026-08-24 00:00:00', $term);
+        $thisMonth = $this->matchKey([1], '2026-08-19 00:00:00', '2026-09-01 00:00:00', $term);
+
+        $this->assertNotSame($thisWeek, $thisMonth);
+        $this->assertNotSame($thisMonth, $this->matchKey([1], null, null, $term));
+    }
+
+    /**
+     * A hashed search term must not collide with the plain windowed entry for
+     * the same calendars and bounds — they live under different prefixes, but
+     * only the prefix separates them.
+     */
+    public function testSearchKeyDoesNotCollideWithThePagedEntry(): void
+    {
+        $paged = $this->cacheKey([1], 100, '2026-08-19 00:00:00', '2026-09-01 00:00:00');
+
+        $this->assertNotSame($paged, $this->matchKey([1], '2026-08-19 00:00:00', '2026-09-01 00:00:00', md5('')));
+    }
+
+    /** The key findMatching() computes, with its own prefix and limit. */
+    private function matchKey(array $calendarIds, ?string $startFrom, ?string $startBefore, string $extra): string
+    {
+        $method = new ReflectionMethod(EventQueryCache::class, 'cacheKey');
+        $method->setAccessible(true);
+
+        return $method->invoke(null, $calendarIds, 100, $startFrom, $startBefore, 'events_search', 0, $extra);
+    }
 }

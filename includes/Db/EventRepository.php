@@ -181,13 +181,20 @@ class EventRepository
      * passed through as a zero — and OFFSET is only valid alongside a LIMIT,
      * so both are appended together or not at all (with $offset only ever
      * non-zero when a cap is in play, see EventPager).
+     *
+     * $search narrows the same query by title/subtitle/location — the frontend
+     * search box (searchUpcoming() below, which is this method without bounds)
+     * and the eventfinder both need it, and the finder needs it *together with*
+     * a date range, which is why it lives here rather than in a second query
+     * that would have to grow its own copy of the window handling.
      */
     public function findInWindow(
         array $calendarIds = [],
         ?string $startFrom = null,
         ?string $startBefore = null,
         int $limit = 0,
-        int $offset = 0
+        int $offset = 0,
+        string $search = ''
     ): array {
         global $wpdb;
 
@@ -208,6 +215,13 @@ class EventRepository
             $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
             $sql .= " AND ct_calendar_id IN ({$placeholders})";
             array_push($params, ...$calendarIds);
+        }
+
+        $search = trim($search);
+        if ($search !== '') {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $sql .= ' AND (title LIKE %s OR subtitle LIKE %s OR location LIKE %s)';
+            array_push($params, $like, $like, $like);
         }
 
         $sql .= ' ORDER BY start_date ASC';
@@ -382,33 +396,19 @@ class EventRepository
      *
      * Hard-capped: this is reachable from a public endpoint, and a LIKE with a
      * leading wildcard cannot use an index.
+     *
+     * An unbounded findInWindow() with a search term, i.e. the same query
+     * without the window — kept as its own method because that is the question
+     * the search box asks, and because the cap belongs to *it* rather than to
+     * every windowed query.
      */
     public function searchUpcoming(array $calendarIds, string $search, int $limit = 100): array
     {
-        global $wpdb;
-
-        $search = trim($search);
-        if ($search === '') {
+        if (trim($search) === '') {
             return [];
         }
 
-        $like = '%' . $wpdb->esc_like($search) . '%';
-        $sql = 'SELECT * FROM %i WHERE end_date >= %s AND (title LIKE %s OR subtitle LIKE %s OR location LIKE %s)';
-        $params = [current_time('mysql'), $like, $like, $like];
-
-        if ($calendarIds !== []) {
-            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
-            $sql .= " AND ct_calendar_id IN ({$placeholders})";
-            array_push($params, ...$calendarIds);
-        }
-
-        $sql .= ' ORDER BY start_date ASC LIMIT %d';
-        $params[] = max(1, min(200, $limit));
-
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow().
-        $rows = $wpdb->get_results($wpdb->prepare($sql, $this->table, ...$params), ARRAY_A);
-
-        return $rows ?: [];
+        return $this->findInWindow($calendarIds, null, null, max(1, min(200, $limit)), 0, $search);
     }
 
     /**

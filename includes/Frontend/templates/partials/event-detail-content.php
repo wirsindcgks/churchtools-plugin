@@ -120,7 +120,8 @@ if (!defined('ABSPATH')) {
                 ?>
                 <?php if ($event['description'] !== '') : ?>
                     <div class="ctp-events__detail-description">
-                        <?php echo wp_kses_post($event['description']); ?>
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses_post() before adding any markup of its own (see its docblock). ?>
+                        <?php echo EventFormatter::descriptionHtml($event['description']); ?>
                     </div>
                 <?php endif; ?>
                 <?php

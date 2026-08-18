@@ -1,10 +1,14 @@
 /**
- * Client-side calendar filter + search for the list/grid layouts, plus the
- * "load more" paging that appends the next time window. The filter/search parts
- * run entirely in the browser (no re-fetch) so they keep working under full-page
- * caching, which the shortcode's server-rendered output has to support; paging
- * is the one place that talks to the server, over a public read-only endpoint
- * that needs no nonce for exactly that reason (see EventsEndpoint).
+ * Calendar filter, timeframe shortcuts and search for the list/grid layouts,
+ * plus the "load more" paging that appends the next time window.
+ *
+ * Every one of them answers twice: first in the browser, over the items already
+ * in the DOM, so the list reacts instantly and keeps working even when the
+ * request below fails or is slow — then from the server, which is the only side
+ * that can see past the month window the page loaded. All of it goes over one
+ * public read-only endpoint that needs no nonce, because the shortcode's
+ * server-rendered output has to survive full-page caching and an embedded nonce
+ * would go stale inside it (see EventsEndpoint).
  *
  * Event delegation on `document` means all of it works for every [ctp_events]
  * instance on the page — including cards appended after load — without having to
@@ -124,6 +128,13 @@
 		var calendarId = activeCalendarId(container);
 		var timeframe = activeTimeframe(container);
 		var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+		// Once the server has answered (see refreshFromServer()), the list *is*
+		// the answer and re-filtering it here could only ever take away from it.
+		// That is not hypothetical: the timeframe bounds are computed from the
+		// browser's clock here and from the site's clock there, so for a visitor
+		// in another timezone this pass would hide events at the edges of a
+		// range the server deliberately included.
+		var serverAnswered = container.classList.contains('ctp-events--searching');
 
 		var items = container.querySelectorAll('[data-ctp-calendar]');
 		var visibleCount = 0;
@@ -132,7 +143,7 @@
 			var matchesCalendar = calendarId === '' || item.getAttribute('data-ctp-calendar') === calendarId;
 			var matchesSearch = query === '' || (item.getAttribute('data-ctp-search') || '').indexOf(query) !== -1;
 			var matchesRange = matchesTimeframe(item.getAttribute('data-ctp-start'), timeframe);
-			var visible = matchesCalendar && matchesSearch && matchesRange;
+			var visible = serverAnswered || (matchesCalendar && matchesSearch && matchesRange);
 
 			item.hidden = !visible;
 			if (visible) {
@@ -183,22 +194,34 @@
 		var container = select.closest('.ctp-events');
 		if (container) {
 			applyToolbarState(container);
+			refreshFromServer(container);
 		}
 	});
 
 	/*
-	 * Search is two-stage. Typing filters what is already in the DOM instantly
-	 * (no request, works under full-page caching) — but the DOM only holds the
-	 * month window the page loaded, so a match further out would never show up.
-	 * A debounced request therefore also asks the server for every match across
-	 * the whole synced horizon and swaps those in.
+	 * Every toolbar question is two-stage. The client-side pass above answers
+	 * instantly and without a request (so it still works under full-page
+	 * caching) — but it can only ever answer "of what you can already see",
+	 * and the DOM holds just the month window the page loaded. So each change
+	 * also asks the server the same question against the whole synced horizon
+	 * and swaps the answer in.
 	 *
-	 * Original markup is stashed on first search and restored when the box is
-	 * cleared, so clearing always returns to the exact paged list the visitor
-	 * had — including anything they had already loaded via "Weitere Termine".
+	 * This started out as search-only, which left the calendar filter and the
+	 * eventfinder's timeframe buttons answering from the loaded window alone:
+	 * "Diesen Monat" on a list capped at twelve events showed whichever of the
+	 * month's events happened to be among those twelve, and the rest appeared
+	 * only after a click on "Weitere Termine laden". They now travel the same
+	 * path as the search term — see the endpoint for which combinations come
+	 * back complete and which keep a cursor.
+	 *
+	 * Original markup is stashed on the first such request and restored once
+	 * the toolbar is back in its neutral state, so clearing always returns to
+	 * the exact paged list the visitor had — including anything they had
+	 * already loaded via "Weitere Termine", and that button's own cursor.
 	 */
 	var searchTimers = new WeakMap();
 	var stashedLists = new WeakMap();
+	var requestTokens = new WeakMap();
 
 	document.addEventListener('input', function (event) {
 		var input = event.target;
@@ -214,58 +237,103 @@
 
 		applyToolbarState(container);
 
-		var config;
-		try {
-			config = JSON.parse(input.getAttribute('data-ctp-search-config') || '{}');
-		} catch (error) {
-			return;
-		}
-
-		if (!config.endpoint) {
-			return;
-		}
-
-		clearTimeout(searchTimers.get(input));
-		searchTimers.set(input, setTimeout(function () {
-			runServerSearch(container, input, config);
+		// Typing fires per keystroke, so this one is debounced; a button or
+		// dropdown change is a single deliberate act and goes straight out.
+		clearTimeout(searchTimers.get(container));
+		searchTimers.set(container, setTimeout(function () {
+			refreshFromServer(container);
 		}, 300));
 	});
 
-	function runServerSearch(container, input, config) {
+	/**
+	 * The instance's endpoint configuration, rendered by
+	 * EventListRenderer::resultsConfig() onto the toolbar element — whichever
+	 * of the two toolbars it is, and whichever controls it happens to contain.
+	 * Read by attribute rather than by element so an override is free to put it
+	 * elsewhere in the container.
+	 */
+	function resultsConfig(container) {
+		var host = container.querySelector('[data-ctp-toolbar-config]');
+		if (!host) {
+			return null;
+		}
+
+		try {
+			var config = JSON.parse(host.getAttribute('data-ctp-toolbar-config') || '{}');
+
+			return config.endpoint ? config : null;
+		} catch (error) {
+			return null;
+		}
+	}
+
+	/**
+	 * Asks the server the toolbar's current question in full. A neutral toolbar
+	 * (no search term worth sending, "Alle", "Jederzeit") asks nothing and puts
+	 * the stashed paged list back instead.
+	 */
+	function refreshFromServer(container) {
+		var config = resultsConfig(container);
 		var list = container.querySelector('.ctp-events__list');
-		var query = input.value.trim();
-		if (!list) {
+		// A pending keystroke debounce would only re-ask what is being asked
+		// right now — clicking a finder button mid-typing must not cost two
+		// requests.
+		clearTimeout(searchTimers.get(container));
+
+		if (!config || !list) {
 			return;
 		}
 
-		if (query.length < (config.min || 2)) {
+		var searchInput = container.querySelector('.ctp-events__search-input');
+		var query = searchInput ? searchInput.value.trim() : '';
+		var calendarId = activeCalendarId(container);
+		var timeframe = activeTimeframe(container);
+		// Below the minimum length the term is not sent at all (the endpoint
+		// rejects it), but a calendar or timeframe next to it still is.
+		var search = query.length >= (config.min || 2) ? query : '';
+
+		if (search === '' && calendarId === '' && timeframe === '') {
 			restoreStashedList(container, list);
 
 			return;
 		}
 
 		if (!stashedLists.has(container)) {
-			stashedLists.set(container, list.innerHTML);
+			stashedLists.set(container, {
+				html: list.innerHTML,
+				paging: pagingState(container),
+			});
 		}
 
 		var params = new URLSearchParams({
 			action: config.action,
-			search: query,
+			search: search,
+			calendar: calendarId || '',
+			timeframe: timeframe,
 			layout: config.layout,
 			columns: config.columns,
 			click: config.click,
+			// Normalized rather than passed through: a page served from a
+			// full-page cache can still carry a configuration from before
+			// these three were part of it, and an "undefined" in the query
+			// string reads as a *set* flag on the other side.
+			month_dividers: config.month_dividers ? 1 : 0,
+			months: config.months || 0,
+			limit: config.limit || 0,
 			calendars: (config.calendars || []).join(','),
 		});
+
+		var token = (requestTokens.get(container) || 0) + 1;
+		requestTokens.set(container, token);
 
 		fetch(config.endpoint + '?' + params.toString(), { credentials: 'same-origin' })
 			.then(function (response) {
 				return response.json();
 			})
 			.then(function (payload) {
-				// The box may have been typed in further (or cleared) while this
-				// request was in flight — a stale response must not overwrite a
-				// newer state.
-				if (input.value.trim() !== query) {
+				// The toolbar may have moved on while this was in flight — a
+				// stale response must not overwrite a newer state.
+				if (requestTokens.get(container) !== token) {
 					return;
 				}
 				if (!payload || !payload.success || !payload.data) {
@@ -273,35 +341,107 @@
 				}
 
 				list.innerHTML = payload.data.html;
-				setSearchMode(container, true);
+				setResultsMode(container, true);
+				// A complete answer (next_page: null) retires the button; a
+				// calendar-filtered "Jederzeit" keeps paging, and the cursor it
+				// comes back with has to carry the filter into every further
+				// click.
+				setPagingState(container, {
+					page: payload.data.next_page,
+					offset: payload.data.next_offset || 0,
+					calendar: calendarId || '',
+				});
 				applyToolbarState(container);
 			})
 			.catch(function () {
 				// Leave the client-side filtered list in place: it is a valid,
-				// if narrower, answer to the same query.
+				// if narrower, answer to the same question.
 			});
 	}
 
 	function restoreStashedList(container, list) {
-		if (stashedLists.has(container)) {
-			list.innerHTML = stashedLists.get(container);
+		var stashed = stashedLists.get(container);
+
+		if (stashed) {
+			list.innerHTML = stashed.html;
+			setPagingState(container, stashed.paging);
 			stashedLists.delete(container);
 		}
-		setSearchMode(container, false);
+		// Any answer still in flight would land on the restored list — bump the
+		// token so it is discarded like any other stale one.
+		requestTokens.set(container, (requestTokens.get(container) || 0) + 1);
+		setResultsMode(container, false);
 		applyToolbarState(container);
 	}
 
 	/**
-	 * While server results are shown, the load-more button would page the
-	 * *window*, not the search — appending unrelated events under a list of
-	 * matches. Hidden rather than removed so clearing the box brings it back.
+	 * Marks that the list is showing a server-side answer rather than the paged
+	 * window. Purely a styling hook for themes — which of the two is on screen
+	 * is otherwise invisible from CSS.
 	 */
-	function setSearchMode(container, active) {
+	function setResultsMode(container, active) {
 		container.classList.toggle('ctp-events--searching', active);
+	}
 
+	/**
+	 * The load-more button's cursor, as the stash needs to remember it: null
+	 * when the instance has no button at all (paging off, or a list that fit
+	 * into one page).
+	 */
+	function pagingState(container) {
+		var button = container.querySelector('.ctp-events__load-more');
+		if (!button) {
+			return null;
+		}
+
+		var config = readPagingConfig(button);
+
+		return config
+			? {
+				page: config.page,
+				offset: config.offset || 0,
+				calendar: config.calendar || '',
+				hidden: !!(button.parentElement && button.parentElement.hidden),
+			}
+			: null;
+	}
+
+	/**
+	 * Points the load-more button at a new cursor, or retires it when there is
+	 * nothing beyond the current list. Hidden rather than removed, so restoring
+	 * a stashed list brings the button back with it.
+	 */
+	function setPagingState(container, state) {
+		var button = container.querySelector('.ctp-events__load-more');
 		var more = container.querySelector('.ctp-events__more');
-		if (more) {
-			more.hidden = active;
+		if (!button || !more) {
+			return;
+		}
+
+		var config = readPagingConfig(button);
+		if (!config) {
+			return;
+		}
+
+		var exhausted = !state || typeof state.page !== 'number';
+		more.hidden = exhausted || !!state.hidden;
+		if (exhausted) {
+			return;
+		}
+
+		config.page = state.page;
+		config.offset = state.offset || 0;
+		config.calendar = state.calendar || '';
+		button.setAttribute('data-ctp-paging', JSON.stringify(config));
+		button.disabled = false;
+		button.removeAttribute('aria-busy');
+	}
+
+	function readPagingConfig(button) {
+		try {
+			return JSON.parse(button.getAttribute('data-ctp-paging') || '{}');
+		} catch (error) {
+			return null;
 		}
 	}
 
@@ -332,6 +472,7 @@
 		button.setAttribute('aria-pressed', 'true');
 
 		applyToolbarState(container);
+		refreshFromServer(container);
 	});
 
 	/**
@@ -396,15 +537,9 @@
 	function loadNextPage(button) {
 		var container = button.closest('.ctp-events');
 		var list = container ? container.querySelector('.ctp-events__list') : null;
-		var config;
+		var config = readPagingConfig(button);
 
-		try {
-			config = JSON.parse(button.getAttribute('data-ctp-paging') || '{}');
-		} catch (error) {
-			return;
-		}
-
-		if (!list || typeof config.page !== 'number') {
+		if (!list || !config || typeof config.page !== 'number') {
 			return;
 		}
 
@@ -433,6 +568,10 @@
 			months: config.months,
 			limit: config.limit,
 			calendars: (config.calendars || []).join(','),
+			// Written into the config by refreshFromServer() when a calendar
+			// filter is active: without it the next page would come back
+			// unfiltered and append events the visitor has filtered away.
+			calendar: config.calendar || '',
 			last_month: lastMonth || '',
 		});
 
@@ -451,18 +590,16 @@
 
 				list.insertAdjacentHTML('beforeend', payload.data.html);
 
-				// null means the server found nothing beyond this window —
-				// the button has done its job and would otherwise sit there
-				// as a control that can only ever no-op.
-				if (typeof payload.data.next_page !== 'number') {
-					button.parentElement.remove();
-				} else {
-					config.page = payload.data.next_page;
-					config.offset = payload.data.next_offset || 0;
-					button.setAttribute('data-ctp-paging', JSON.stringify(config));
-					button.disabled = false;
-					button.removeAttribute('aria-busy');
-				}
+				// A null next_page means the server found nothing beyond this
+				// window — the button has done its job and would otherwise sit
+				// there as a control that can only ever no-op. setPagingState()
+				// hides it rather than removing it, so a later filter change
+				// that *does* have further pages can put it back to work.
+				setPagingState(container, {
+					page: payload.data.next_page,
+					offset: payload.data.next_offset || 0,
+					calendar: config.calendar || '',
+				});
 
 				// An active filter or search must apply to the freshly
 				// appended items too, not just to what was there on load.

@@ -70,6 +70,8 @@ final class EventsEndpoint
         $monthDividers = !empty($_GET['month_dividers']);
         $lastMonth = isset($_GET['last_month']) ? sanitize_text_field(wp_unslash($_GET['last_month'])) : '';
         $search = isset($_GET['search']) ? sanitize_text_field(wp_unslash($_GET['search'])) : '';
+        $calendar = isset($_GET['calendar']) ? absint($_GET['calendar']) : 0;
+        $timeframe = isset($_GET['timeframe']) ? sanitize_key(wp_unslash($_GET['timeframe'])) : '';
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if (!in_array($layout, self::LAYOUTS, true)) {
@@ -77,29 +79,44 @@ final class EventsEndpoint
         }
 
         $search = trim($search);
+        // Anything unknown is read as "Jederzeit" rather than rejected: the
+        // parameter only ever narrows the answer, so a value this version
+        // doesn't know can safely fall back to the unnarrowed one.
+        $timeframe = in_array($timeframe, Timeframe::KEYS, true) ? $timeframe : '';
+        // The eventfinder's calendar buttons pick *one* of the calendars the
+        // instance is configured for; sanitizeCalendarIds() has already reduced
+        // that configuration to what is actually enabled, so this only has to
+        // choose from within it.
+        $calendarIds = $this->narrowToCalendar($this->sanitizeCalendarIds($rawCalendars), $calendar);
 
-        // A search request answers a different question than a paging request
-        // ("everything matching, anywhere in the horizon" vs "the next window"),
-        // so it returns early with its own payload shape rather than trying to
-        // carry a cursor it has no use for.
-        if ($search !== '') {
-            if (mb_strlen($search) < self::MIN_SEARCH_LENGTH) {
-                wp_send_json_error(['message' => 'search too short'], 400);
-            }
+        if ($search !== '' && mb_strlen($search) < self::MIN_SEARCH_LENGTH) {
+            wp_send_json_error(['message' => 'search too short'], 400);
+        }
 
-            $result = (new EventListRenderer())->renderSearchResults([
-                'calendar_ids' => $this->sanitizeCalendarIds($rawCalendars),
+        // A search or a timeframe asks a different question than a paging
+        // request does ("everything matching, anywhere in the horizon" vs "the
+        // next window"), and both are bounded enough to answer in one go — so
+        // they return early, with next_page: null in place of a cursor they
+        // have no use for.
+        //
+        // A bare calendar choice is not among them: "this calendar, at any
+        // time" is as open-ended as the unfiltered list and keeps the cursor,
+        // with the filter simply applied to every page of it.
+        if ($search !== '' || $timeframe !== '') {
+            $result = (new EventListRenderer())->renderMatches([
+                'calendar_ids' => $calendarIds,
                 'layout' => $layout,
                 'columns' => $columns,
                 'click' => in_array($click, self::CLICK_BEHAVIORS, true) ? $click : 'none',
+                'month_dividers' => $monthDividers,
                 'paging' => false,
-            ], mb_substr($search, 0, self::MAX_SEARCH_LENGTH));
+            ], mb_substr($search, 0, self::MAX_SEARCH_LENGTH), $timeframe);
 
             wp_send_json_success($result);
         }
 
         $result = (new EventListRenderer())->renderItems([
-            'calendar_ids' => $this->sanitizeCalendarIds($rawCalendars),
+            'calendar_ids' => $calendarIds,
             'layout' => $layout,
             'columns' => $columns,
             // Already resolved server-side when the first page was rendered, so
@@ -113,6 +130,32 @@ final class EventsEndpoint
         ], min(EventWindow::MAX_PAGE, $page), min(self::MAX_OFFSET, $offset), $this->sanitizeMonthKey($lastMonth));
 
         wp_send_json_success($result);
+    }
+
+    /**
+     * Reduces the instance's calendar list to the single calendar an
+     * eventfinder button selected. 0 means "Alle" and leaves the list alone.
+     *
+     * A calendar that isn't part of the list (or isn't enabled) yields the
+     * no-match sentinel rather than the unfiltered list, for the same reason
+     * sanitizeCalendarIds() does it: falling back to "all" would answer a
+     * narrower question with a *wider* result set.
+     *
+     * @param int[] $calendarIds
+     *
+     * @return int[]
+     */
+    private function narrowToCalendar(array $calendarIds, int $calendar): array
+    {
+        if ($calendar <= 0) {
+            return $calendarIds;
+        }
+
+        // [] means "every enabled calendar" (see sanitizeCalendarIds()), so the
+        // membership test has to be made against that same set.
+        $allowed = $calendarIds === [] ? SettingsPage::getEnabledCalendarIds() : $calendarIds;
+
+        return in_array($calendar, array_map('intval', $allowed), true) ? [$calendar] : [0];
     }
 
     /**

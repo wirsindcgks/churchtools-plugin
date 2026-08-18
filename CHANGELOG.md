@@ -5,6 +5,29 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.0] - 2026-08-19
+
+Ein Release über Antworten, die stimmen. Der Eventfinder hat bisher nur das
+durchsucht, was ohnehin schon auf der Seite stand — bei einer Liste, die
+seitenweise nachlädt, war „Diesen Monat" damit nicht der Monat. Dazu zwei
+Dinge, die man erst sieht, wenn man genau hinschaut: eine Beschreibung, die
+ihre Absätze verliert, und ein Hochkantfoto, das eine Kachel dreimal so hoch
+macht wie nötig.
+
+### Added
+
+- **Die Beschreibung behält die Formatierung aus ChurchTools.** Termintexte kommen von dort als reiner Text: Absätze sind Leerzeilen, ein Seminarprogramm ist eine Zeile pro Punkt. Bisher lief das durch einen einzigen Filter, der HTML erlaubt, aber Zeilenumbrüche nicht kennt — aus einem sorgfältig gegliederten Programmablauf wurde im Popup ein durchgehender Block. Absätze und Umbrüche bleiben jetzt erhalten, und URLs im Text werden nebenbei zu Links, was sie vorher nicht waren
+- **Die Buttonfarbe steht in der Statuszeile des Tabs „Design“.** Sie war die einzige der Design-Entscheidungen, die man nur durch Scrollen sehen konnte; jetzt steht sie mit Farbfleck neben der Akzentfarbe
+
+### Changed
+
+- **Der Eventfinder fragt den Server.** „Diese Woche“, „Diesen Monat“ und die Themen-Buttons haben bisher nur das gefiltert, was ohnehin schon auf der Seite stand — bei einer Liste, die zwei Monate am Stück lädt und dabei auf zwölf Kacheln gedeckelt ist, war „Diesen Monat“ also nicht der Monat, sondern der Teil davon, der es in diese zwölf geschafft hatte. Der Rest kam erst nach einem Klick auf „Weitere Termine laden“ zum Vorschein. Jede Auswahl geht jetzt zusätzlich an den Server und kommt vollständig zurück; ein Zeitraum blendet dabei den Nachladen-Button aus, weil es nichts mehr nachzuladen gibt. Nur die Kombination „Alle / Jederzeit“ bleibt die gewohnte, seitenweise Liste — bei einer Frage ohne jede Eingrenzung ist der ganze Sync-Zeitraum die Antwort, und dafür ist das Nachladen da. Der einfache Kalenderfilter (`filter="1"`) geht denselben Weg. Die sofortige Filterung im Browser bleibt als erste Antwort erhalten, damit die Liste ohne Wartezeit reagiert
+- **Das Klickverhalten steht jetzt bei den globalen Einstellungen.** Es stand über dem Aufbau der Detailansicht und las sich dadurch wie eine Eigenschaft dieses Editors, obwohl es für jede Kachel der Seite gilt. Der Abschnitt heißt entsprechend „Globale Einstellungen“ statt „Globale Darstellung“
+
+### Fixed
+
+- **Hochkantbilder ziehen „Nächster Termin“ nicht mehr in die Länge.** Das Bild sollte sich auf die Höhe des Textes daneben legen — tatsächlich brachte es seine eigene Höhe mit, und ein Porträtfoto blies die Kachel auf gut das Dreifache auf. Dieselbe Korrektur, die das Popup schon bekommen hat
+
 ## [0.11.0] - 2026-08-19
 
 Ein Release über das Frontend, entstanden aus einem Durchgang durch die

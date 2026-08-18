@@ -134,11 +134,43 @@ final class EventFormatter
 
     /**
      * wp_trim_words() already strips tags itself (descriptions can contain HTML,
-     * see SettingsPage's wp_kses_post() on the admin detail view), so the result
-     * here is plain text — callers still esc_html() it like every other field.
+     * see descriptionHtml() below), so the result here is plain text — callers
+     * still esc_html() it like every other field. Line breaks fall away with it,
+     * which is right for a one-line card excerpt: wp_trim_words() splits on
+     * `[\n\r\t ]+`, so a description typed across several lines still reads as
+     * one continuous sentence.
      */
     public static function excerpt(string $description, int $wordCount = 20): string
     {
         return wp_trim_words($description, $wordCount);
+    }
+
+    /**
+     * The description as renderable HTML, for the detail view (popup and own
+     * page) and the admin's event detail.
+     *
+     * ChurchTools stores descriptions as *plain text*: paragraphs are blank
+     * lines, lists are "•\t" lines, and the schedule of a seminar is one line
+     * per slot. Passed through wp_kses_post() alone — which is all this used to
+     * do — every one of those breaks collapses into a single running block of
+     * text, which is why a carefully laid-out program note arrived on the site
+     * as a wall.
+     *
+     * The three passes, in the order WordPress itself applies them to comment
+     * text:
+     *   - wp_kses_post() first, on the raw value, so the allowlist decides what
+     *     HTML survives before anything else adds markup of its own. (A
+     *     ChurchTools instance *can* deliver HTML here; both shapes have to
+     *     work.)
+     *   - make_clickable() turns bare URLs and mail addresses into links —
+     *     ChurchTools descriptions carry registration links as plain text, and
+     *     they were previously unreachable.
+     *   - wpautop() last, translating blank lines into <p> and single newlines
+     *     into <br>. It leaves existing block-level markup alone, so a
+     *     description that already *is* HTML doesn't get double-wrapped.
+     */
+    public static function descriptionHtml(string $description): string
+    {
+        return wpautop(make_clickable(wp_kses_post($description)));
     }
 }

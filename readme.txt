@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.11.0
+Stable tag: 0.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.0 =
+Der Eventfinder und der Kalenderfilter liefern jetzt vollständige Antworten: „Diese Woche“, „Diesen Monat“ und die Themen-Knöpfe durchsuchen den ganzen Sync-Zeitraum statt nur der gerade geladenen Termine. Beschreibungstexte behalten außerdem ihre Absätze und Zeilenumbrüche aus ChurchTools, und Hochkant-Bilder ziehen die Ansicht „Nächster Termin“ nicht mehr in die Länge. Das Klickverhalten steht im Tab „Design“ jetzt bei den globalen Einstellungen. Kein Handlungsbedarf.
+
 = 0.11.0 =
 Überarbeitetes Frontend: Datum, Uhrzeit und Ort lassen sich im Designer einzeln platzieren, die Buttonfarbe ist getrennt von der Akzentfarbe einstellbar, und Schriftgrößen von Kachel, Popup und Monatstrenner sind aufeinander abgestimmt. Behebt außerdem, dass das Popup die eingestellte Feld-Reihenfolge nicht umsetzte. Bestehende Design-Einstellungen wandern automatisch mit, kein Handlungsbedarf.
 
@@ -177,6 +180,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.0 =
+* Neu: Beschreibungstexte behalten die Formatierung aus ChurchTools – Absätze und Zeilenumbrüche bleiben erhalten, URLs im Text werden zu Links
+* Neu: Die Buttonfarbe steht in der Statuszeile des Tabs „Design“, mit Farbfleck neben der Akzentfarbe
+* Geändert: Eventfinder und Kalenderfilter fragen den Server – ein Zeitraum oder ein Thema liefert jetzt alle passenden Termine des Sync-Zeitraums, nicht nur die zufällig schon geladenen. „Alle / Jederzeit“ bleibt die gewohnte, seitenweise Liste
+* Geändert: Das Klickverhalten steht im Tab „Design“ bei den globalen Einstellungen statt über dem Aufbau der Detailansicht
+* Fix: Ein Hochkant-Bild machte die Kachel der Ansicht „Nächster Termin“ gut dreimal so hoch wie nötig
 
 = 0.11.0 =
 * Neu: Datum, Uhrzeit und Ort sind drei einzeln verschiebbare Elemente im Designer statt eines gemeinsamen Eintrags „Datum & Ort“. Bestehende Anordnungen wandern automatisch mit

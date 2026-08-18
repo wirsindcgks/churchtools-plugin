@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events__toolbar">
+<div class="ctp-events__toolbar" data-ctp-toolbar-config="<?php echo esc_attr((string) wp_json_encode($args['toolbar_config'])); ?>">
     <?php if ($args['search']) : ?>
         <div class="ctp-events__search">
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
@@ -26,7 +26,6 @@ if (!defined('ABSPATH')) {
             <input
                 type="search"
                 class="ctp-events__search-input"
-                data-ctp-search-config="<?php echo esc_attr((string) wp_json_encode($args['search_config'])); ?>"
                 placeholder="<?php esc_attr_e('Termine durchsuchen …', 'churchtools-plugin'); ?>"
                 aria-label="<?php esc_attr_e('Termine durchsuchen', 'churchtools-plugin'); ?>"
             />

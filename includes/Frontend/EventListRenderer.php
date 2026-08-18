@@ -24,11 +24,13 @@ final class EventListRenderer
     private const UPCOMING_FALLBACK_LIMIT = 10;
 
     /**
-     * Cap on how many hits one search returns. Generous enough that a realistic
-     * query never truncates, low enough that "e" doesn't try to render the
-     * entire synced calendar into one response.
+     * Cap on how many events one *complete answer* returns — a search's hits, or
+     * an eventfinder timeframe's range (see renderMatches()). Generous enough
+     * that a realistic query never truncates (a parish month is some three
+     * dozen events), low enough that "e" doesn't try to render the entire
+     * synced calendar into one response.
      */
-    private const SEARCH_LIMIT = 100;
+    private const MATCH_LIMIT = 100;
 
     public function render(array $args): string
     {
@@ -65,10 +67,6 @@ final class EventListRenderer
         $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
         $args['paging'] = $isFilterable && $args['paging'] && $args['next_page'] !== null;
         $args['paging_config'] = $args['paging'] ? $this->pagingConfig($args) : [];
-        // Carried on the search input itself rather than on the load-more
-        // button: search has to work with paging="0" too, where no button
-        // exists to hang a config off.
-        $args['search_config'] = $args['search'] ? $this->searchConfig($args) : [];
 
         // After $args['paging']/$args['eventfinder'], which filterCalendars()
         // branches on.
@@ -76,6 +74,14 @@ final class EventListRenderer
             ? $this->filterCalendars($events, $args)
             : [];
         $args['show_toolbar'] = $args['eventfinder'] || $args['search'] || $filterCalendars !== [];
+        // Carried on the toolbar itself rather than on the load-more button:
+        // every control in it has to be able to ask the server (see
+        // resultsConfig()), including on an instance with paging="0" or one
+        // whose list fits into a single page, where no button exists to hang a
+        // config off. Hence also *after* show_toolbar rather than gated on
+        // "search": a filter dropdown without a search box needs it just as
+        // much.
+        $args['toolbar_config'] = $args['show_toolbar'] ? $this->resultsConfig($args) : [];
 
         $templateName = "churchtools-plugin/event-{$args['layout']}.php";
         $template = locate_template($templateName);
@@ -134,36 +140,62 @@ final class EventListRenderer
     }
 
     /**
-     * Renders the items for a full-horizon search, in the same markup as a
-     * normal page so the frontend JS can swap them into the existing <ul>.
-     * Unlike renderItems() there is no window, no cursor and no "load more":
-     * a search returns its (capped) matches in one go, which is what makes it
-     * able to reach past the month window the page is currently showing.
+     * Renders the complete answer to a toolbar question — the search box's term,
+     * the eventfinder's timeframe, or both — in the same markup as a normal
+     * page, so the frontend JS can swap them into the existing <ul>.
      *
-     * @return array{html: string, count: int}
+     * Unlike renderItems() there is no window and no cursor: these queries
+     * return their (capped) matches in one go, which is exactly what lets them
+     * reach past the month window the page is currently showing. That reach is
+     * the point of the method — a client-side filter over the loaded DOM can
+     * only ever answer "of what you can already see", which is how "Diesen
+     * Monat" came to show a fraction of the month.
+     *
+     * The unbounded "Jederzeit" case is deliberately *not* routed here: with no
+     * date bound at all, a complete answer is the whole sync horizon, and
+     * MATCH_LIMIT would start silently swallowing events. That case stays with
+     * the paged path (renderItems()), which has a cursor for exactly this.
+     *
+     * @return array{html: string, count: int, next_page: null, next_offset: int}
      */
-    public function renderSearchResults(array $args, string $search): array
+    public function renderMatches(array $args, string $search, string $timeframe): array
     {
         $args = $this->prepareArgs($args);
+        $empty = ['html' => '', 'count' => 0, 'next_page' => null, 'next_offset' => 0];
 
         if ($args['layout'] === 'upcoming') {
-            return ['html' => '', 'count' => 0];
+            return $empty;
         }
 
+        $bounds = Timeframe::bounds($timeframe);
         $designSettings = SettingsPage::get();
-        $events = EventQueryCache::searchUpcoming($args['calendar_ids'], $search, self::SEARCH_LIMIT);
+        $events = EventQueryCache::findMatching(
+            $args['calendar_ids'],
+            $search,
+            $bounds['from'] ?? null,
+            $bounds['before'] ?? null,
+            self::MATCH_LIMIT
+        );
         $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
 
-        // Month dividers stay off for search results: hits are scattered across
-        // the whole horizon, so grouping them by month would produce a heading
-        // per result rather than a grouping.
-        $args['month_dividers'] = false;
+        // Month dividers stay off for a *search*: hits are scattered across the
+        // whole horizon, so grouping them by month would produce a heading per
+        // result rather than a grouping. A timeframe's results are a contiguous
+        // stretch of days instead, so there they group as usefully as on the
+        // paged list — and "Diesen Monat" spanning two headings is how a
+        // visitor sees that the month runs into the next one.
+        $args['month_dividers'] = $search === '' && $args['month_dividers'];
         $currentMonthKey = null;
 
         ob_start();
         require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-' . $args['layout'] . '-items.php';
 
-        return ['html' => (string) ob_get_clean(), 'count' => count($events)];
+        return [
+            'html' => (string) ob_get_clean(),
+            'count' => count($events),
+            'next_page' => null,
+            'next_offset' => 0,
+        ];
     }
 
     /**
@@ -294,11 +326,21 @@ final class EventListRenderer
     }
 
     /**
-     * What the search box needs to ask the server for matches beyond the
-     * currently loaded window. Deliberately a subset of pagingConfig(): no
-     * cursor, no month dividers, because a search result set has neither.
+     * What the toolbar needs to ask the server for a complete answer beyond the
+     * currently loaded window — used by the search box and, since the
+     * eventfinder's buttons became server-backed too, by those as well.
+     *
+     * pagingConfig() above is the counterpart for the load-more button and the
+     * two overlap heavily; they stay separate because this one has to exist
+     * where that one doesn't. The button is only rendered when a further page
+     * exists (and not at all under paging="0"), while the toolbar has to be
+     * able to ask its question on any list — including one that fits into a
+     * single page. Everything the paged branch needs (months, limit, dividers)
+     * therefore travels here as well: an eventfinder set to "Jederzeit" resumes
+     * the paged list under its calendar filter, and the appended pages have to
+     * be built exactly like the first one.
      */
-    private function searchConfig(array $args): array
+    private function resultsConfig(array $args): array
     {
         return [
             'endpoint' => EventsEndpoint::url(),
@@ -307,6 +349,9 @@ final class EventListRenderer
             'layout' => $args['layout'],
             'columns' => $args['columns'],
             'click' => $args['click_behavior'],
+            'month_dividers' => $args['month_dividers'] ? 1 : 0,
+            'months' => $args['months'],
+            'limit' => $args['limit'],
             'min' => 2,
         ];
     }

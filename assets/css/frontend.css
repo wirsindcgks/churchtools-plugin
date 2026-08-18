@@ -734,7 +734,20 @@
     }
 }
 
+/*
+ * Absolutely positioned, not just `height: 100%`: at desktop width the media
+ * cell's height is auto (it stretches to the row), so an in-flow image still
+ * contributed its *own* scaled height to that row — a 724×1024 portrait photo
+ * blew the hero up to ~880px, the very stretching the comment above says
+ * doesn't happen. Taken out of flow, the row is decided by hero-body's text
+ * alone (min-height 260px as the floor) and the image is contained inside
+ * whatever that turns out to be. Same treatment the popup's detail image got
+ * for the same reason. Harmless in the mobile branch, where the fixed
+ * aspect-ratio box already gives the cell a definite height.
+ */
 .ctp-events--upcoming .ctp-events__hero-media img {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -1037,6 +1050,16 @@
     margin-top: 0.4rem;
     font-size: var(--ctp-font-md);
     line-height: 1.6;
+}
+
+/*
+ * The description arrives as paragraphs now (EventFormatter::descriptionHtml()
+ * turns ChurchTools' plain-text line breaks into <p>/<br>), so the spacing
+ * between them is this plugin's decision rather than whatever margin the theme
+ * happens to put on <p> — which ranged from none at all to a full line.
+ */
+.ctp-events__detail-description p {
+    margin: 0 0 0.75em;
 }
 
 .ctp-events__detail-description :first-child {

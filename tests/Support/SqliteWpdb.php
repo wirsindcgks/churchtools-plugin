@@ -47,7 +47,10 @@ final class SqliteWpdb
                 ct_calendar_id INTEGER NOT NULL,
                 start_date TEXT NOT NULL,
                 end_date TEXT NOT NULL,
-                attachment_id INTEGER NULL
+                attachment_id INTEGER NULL,
+                title TEXT NOT NULL DEFAULT \'\',
+                subtitle TEXT NOT NULL DEFAULT \'\',
+                location TEXT NOT NULL DEFAULT \'\'
             )'
         );
     }
@@ -62,11 +65,13 @@ final class SqliteWpdb
         string $startDate,
         string $endDate,
         ?int $attachmentId = null,
-        ?int $ctEventId = null
+        ?int $ctEventId = null,
+        array $text = []
     ): void {
         $statement = $this->pdo->prepare(
-            'INSERT INTO `wp_ctp_events` (ct_event_id, ct_calendar_id, start_date, end_date, attachment_id)
-             VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO `wp_ctp_events`
+                (ct_event_id, ct_calendar_id, start_date, end_date, attachment_id, title, subtitle, location)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
         $statement->execute([
@@ -75,7 +80,26 @@ final class SqliteWpdb
             $startDate,
             $endDate,
             $attachmentId,
+            $text['title'] ?? '',
+            $text['subtitle'] ?? '',
+            $text['location'] ?? '',
         ]);
+    }
+
+    /**
+     * Wie $wpdb->esc_like(): maskiert die LIKE-Metazeichen, damit ein Suchwort
+     * mit "%" oder "_" als Text und nicht als Muster gilt.
+     *
+     * Nur da, damit die Suchabfrage hier überhaupt laufen kann - *ob* die
+     * Maskierung wirkt, lässt sich mit SQLite nicht pruefen: MySQL nimmt den
+     * Backslash in LIKE von sich aus als Escape-Zeichen, SQLite nur mit einem
+     * ESCAPE-Zusatz, den die Abfrage (richtigerweise) nicht mitbringt. Ein
+     * Test darauf würde hier also das Gegenteil dessen belegen, was in
+     * Produktion passiert.
+     */
+    public function esc_like(string $text): string
+    {
+        return addcslashes($text, '_%\\');
     }
 
     public function countRows(): int

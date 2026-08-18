@@ -10,10 +10,13 @@
  * theme wanting a different toolbar overrides the whole layout template
  * instead.
  *
- * Buttons toggle a "ctp-events__finder-btn--active" state and drive the
- * client-side filtering in assets/js/frontend.js (applyToolbarState()) —
- * same data-ctp-calendar/data-ctp-search attributes as the plain toolbar,
- * plus data-ctp-start (Y-m-d) on each item for the timeframe buttons.
+ * Buttons toggle a "ctp-events__finder-btn--active" state, which
+ * assets/js/frontend.js reads twice over: once to filter the items already in
+ * the DOM (applyToolbarState(), same data-ctp-calendar/data-ctp-search
+ * attributes as the plain toolbar, plus data-ctp-start (Y-m-d) per item for
+ * the timeframe buttons) and once to ask the server the same question against
+ * the whole synced horizon (refreshFromServer(), via the endpoint
+ * configuration on the search input below).
  *
  * @var array $args
  * @var array $filterCalendars
@@ -36,7 +39,7 @@ if (!defined('ABSPATH')) {
 $topicHeadingId = wp_unique_id('ctp-finder-topic-');
 $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
 ?>
-<div class="ctp-events__toolbar ctp-events__eventfinder">
+<div class="ctp-events__toolbar ctp-events__eventfinder" data-ctp-toolbar-config="<?php echo esc_attr((string) wp_json_encode($args['toolbar_config'])); ?>">
     <p class="ctp-events__finder-label"><?php esc_html_e('Du suchst …', 'churchtools-plugin'); ?></p>
     <?php if ($filterCalendars !== []) : ?>
         <div class="ctp-events__finder-row">
@@ -106,7 +109,6 @@ $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
         <input
             type="search"
             class="ctp-events__search-input"
-            data-ctp-search-config="<?php echo esc_attr((string) wp_json_encode($args['search_config'])); ?>"
             placeholder="<?php esc_attr_e('Termine durchsuchen …', 'churchtools-plugin'); ?>"
             aria-label="<?php esc_attr_e('Termine durchsuchen', 'churchtools-plugin'); ?>"
         />
