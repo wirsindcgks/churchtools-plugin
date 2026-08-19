@@ -239,6 +239,43 @@ class EventRepository
     }
 
     /**
+     * Which of the given calendars actually have something coming up — the
+     * calendars the frontend's filter dropdown and the eventfinder's
+     * "Thema"-buttons are allowed to offer.
+     *
+     * Without it the toolbar offered every *configured* calendar, and a
+     * calendar that happens to have nothing scheduled (a wedding calendar in a
+     * quiet quarter, say) was a button that led to an empty list — the visitor
+     * had no way of telling that apart from a broken filter.
+     *
+     * DISTINCT over the whole sync horizon rather than a per-calendar EXISTS:
+     * one pass answers it for every calendar at once, and the table is indexed
+     * on start_date, not on ct_calendar_id.
+     *
+     * @param int[] $calendarIds Empty means "every calendar in the table".
+     *
+     * @return int[]
+     */
+    public function calendarIdsWithUpcoming(array $calendarIds = []): array
+    {
+        global $wpdb;
+
+        $sql = 'SELECT DISTINCT ct_calendar_id FROM %i WHERE end_date >= %s';
+        $params = [$this->table, current_time('mysql')];
+
+        if ($calendarIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
+            $sql .= " AND ct_calendar_id IN ({$placeholders})";
+            array_push($params, ...$calendarIds);
+        }
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow() above.
+        $rows = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+
+        return array_map(static fn (array $row): int => (int) $row['ct_calendar_id'], (array) $rows);
+    }
+
+    /**
      * Whether anything is still upcoming at or after $startFrom — the "is there
      * another page?" question behind the load-more button. Deliberately a
      * SELECT 1 ... LIMIT 1 rather than a COUNT(*): the caller only needs the

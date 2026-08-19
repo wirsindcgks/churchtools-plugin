@@ -158,6 +158,28 @@ final class EventQueryCacheTest extends TestCase
         $this->assertNotSame($paged, $this->matchKey([1], '2026-08-19 00:00:00', '2026-09-01 00:00:00', md5('')));
     }
 
+    /**
+     * The toolbar's calendar list is legitimately empty on an instance whose
+     * calendars have nothing coming up — and get_transient() reports a cache
+     * miss with `false`, which an empty array would be indistinguishable from.
+     * Hence the wrapper, which this asserts actually round-trips: without it,
+     * every request would re-run the query and this would fall through to a
+     * repository the bootstrap gives no $wpdb (a fatal, not a silent pass).
+     */
+    public function testCachedEmptyCalendarListIsReturnedAsEmptyRatherThanRefetched(): void
+    {
+        set_transient($this->cacheKey([1, 2], 0, null, null, 'events_calendars'), ['ids' => []]);
+
+        $this->assertSame([], EventQueryCache::calendarIdsWithUpcoming([2, 1]));
+    }
+
+    public function testCachedCalendarListIsReturnedAsIs(): void
+    {
+        set_transient($this->cacheKey([1, 2], 0, null, null, 'events_calendars'), ['ids' => [2]]);
+
+        $this->assertSame([2], EventQueryCache::calendarIdsWithUpcoming([1, 2]));
+    }
+
     /** The key findMatching() computes, with its own prefix and limit. */
     private function matchKey(array $calendarIds, ?string $startFrom, ?string $startBefore, string $extra): string
     {

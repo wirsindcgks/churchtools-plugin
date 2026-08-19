@@ -72,6 +72,34 @@ final class EventQueryCache
     }
 
     /**
+     * Cached counterpart of EventRepository::calendarIdsWithUpcoming() — the
+     * toolbar asks it on every rendered list, exactly like the "is there
+     * another page?" check above, so it gets the same treatment.
+     *
+     * Wrapped in an array before storing (and unwrapped on read) because the
+     * honest answer can be the empty list, which get_transient() would hand
+     * back as `false`, i.e. as a cache miss, on every single request.
+     *
+     * @param int[] $calendarIds
+     *
+     * @return int[]
+     */
+    public static function calendarIdsWithUpcoming(array $calendarIds): array
+    {
+        $key = self::cacheKey($calendarIds, 0, null, null, 'events_calendars');
+        $cached = get_transient($key);
+
+        if (is_array($cached) && array_key_exists('ids', $cached)) {
+            return $cached['ids'];
+        }
+
+        $ids = (new EventRepository())->calendarIdsWithUpcoming($calendarIds);
+        set_transient($key, ['ids' => $ids], self::TTL);
+
+        return $ids;
+    }
+
+    /**
      * Cached counterpart of the "answer a toolbar question completely" query:
      * the frontend search across the whole sync horizon, the eventfinder's
      * timeframe ranges, or both at once. Search terms are unbounded user input,

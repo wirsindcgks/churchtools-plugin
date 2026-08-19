@@ -68,10 +68,10 @@ final class EventListRenderer
         $args['paging'] = $isFilterable && $args['paging'] && $args['next_page'] !== null;
         $args['paging_config'] = $args['paging'] ? $this->pagingConfig($args) : [];
 
-        // After $args['paging']/$args['eventfinder'], which filterCalendars()
-        // branches on.
+        // After $args['eventfinder'], which decides whether there is a toolbar
+        // to build these for at all.
         $filterCalendars = $isFilterable && ($args['filter'] || $args['eventfinder'])
-            ? $this->filterCalendars($events, $args)
+            ? $this->filterCalendars($args)
             : [];
         $args['show_toolbar'] = $args['eventfinder'] || $args['search'] || $filterCalendars !== [];
         // Carried on the toolbar itself rather than on the load-more button:
@@ -453,25 +453,33 @@ final class EventListRenderer
     }
 
     /**
-     * Builds the options for the frontend filter dropdown. Returns [] when
-     * there's nothing to filter (0 or 1 distinct calendar), so templates can
-     * render the filter bar with a plain empty-check.
+     * Builds the options for the frontend filter dropdown and the eventfinder's
+     * "Thema"-buttons: the calendars this instance draws from that actually
+     * have something coming up. Returns [] when there's nothing to filter
+     * (0 or 1 of them), so templates can render the toolbar with a plain
+     * empty-check.
      *
-     * Two sources, depending on whether more pages can still be appended:
-     *   - Paging active: the calendars this instance is *configured* for. The
-     *     rendered events are only the first window, so deriving the options
-     *     from them would produce a dropdown that silently gains entries as the
-     *     visitor loads more — or worse, one that's missing the calendar they
-     *     were looking for.
-     *   - No further pages: the calendars actually present among $events, the
-     *     original behavior — with the full result set in the DOM, an option
-     *     matching zero events would just be noise.
+     * The rule used to depend on whether more pages could be appended, and both
+     * halves of it were wrong in their own direction:
+     *   - With paging, every *configured* calendar was offered — including ones
+     *     with no upcoming events at all. Picking such a topic landed the
+     *     visitor on an empty list, indistinguishable from a broken filter.
+     *   - Without it, only the calendars present among the rendered events were
+     *     offered — which under an explicit paging="0" silently dropped topics
+     *     that do have events, just not inside the loaded window.
+     *
+     * One query settles both, and it is the same question in either case: a
+     * topic is worth offering exactly when something stands behind it. Since
+     * the toolbar's filters reach across the whole sync horizon now (see
+     * renderMatches()), "behind it" means the horizon, not the loaded page.
      */
-    private function filterCalendars(array $events, array $args): array
+    private function filterCalendars(array $args): array
     {
-        $calendars = $args['paging']
-            ? $this->configuredCalendars($args['calendar_ids'])
-            : $this->calendarsAmong($events);
+        $withEvents = EventQueryCache::calendarIdsWithUpcoming($args['calendar_ids']);
+        $calendars = array_values(array_filter(
+            $this->configuredCalendars($args['calendar_ids']),
+            static fn (array $calendar): bool => in_array($calendar['id'], $withEvents, true)
+        ));
 
         if (count($calendars) < 2) {
             return [];
@@ -480,22 +488,6 @@ final class EventListRenderer
         usort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
 
         return $calendars;
-    }
-
-    private function calendarsAmong(array $events): array
-    {
-        $calendars = [];
-
-        foreach ($events as $event) {
-            $id = (int) $event['ct_calendar_id'];
-
-            if (!isset($calendars[$id])) {
-                $name = $event['calendar_name'] !== '' ? $event['calendar_name'] : sprintf('#%d', $id);
-                $calendars[$id] = ['id' => $id, 'name' => $name];
-            }
-        }
-
-        return array_values($calendars);
     }
 
     /**

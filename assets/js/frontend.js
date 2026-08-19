@@ -152,11 +152,34 @@
 		});
 
 		updateMonthDividers(container);
+		updateEmptyMessage(container);
+	}
 
-		var emptyMessage = container.querySelector('.ctp-events__toolbar-empty');
-		if (emptyMessage) {
-			emptyMessage.hidden = visibleCount !== 0;
+	/**
+	 * "Keine Termine gefunden" — but only once that is actually established.
+	 *
+	 * The client-side pass above can empty the list for a question the server
+	 * is about to answer with events: pick a topic whose next date lies beyond
+	 * the loaded window and nothing in the DOM matches it, so for the second or
+	 * so until the answer arrives the visitor is told there is nothing — the
+	 * very dead end the topic list was trimmed to avoid. While a request is in
+	 * flight the message therefore stays down; an empty list is only reported
+	 * when nobody is still looking.
+	 */
+	function updateEmptyMessage(container) {
+		var message = container.querySelector('.ctp-events__toolbar-empty');
+		if (!message) {
+			return;
 		}
+
+		var visibleCount = 0;
+		container.querySelectorAll('[data-ctp-calendar]').forEach(function (item) {
+			if (!item.hidden) {
+				visibleCount += 1;
+			}
+		});
+
+		message.hidden = visibleCount !== 0 || pendingRequests.has(container);
 	}
 
 	/**
@@ -222,6 +245,10 @@
 	var searchTimers = new WeakMap();
 	var stashedLists = new WeakMap();
 	var requestTokens = new WeakMap();
+	// Only ever read by updateEmptyMessage() above — declared here with the
+	// rest of the per-container state rather than next to its reader, since it
+	// is this section that writes it.
+	var pendingRequests = new WeakMap();
 
 	document.addEventListener('input', function (event) {
 		var input = event.target;
@@ -325,6 +352,11 @@
 
 		var token = (requestTokens.get(container) || 0) + 1;
 		requestTokens.set(container, token);
+		// The instant pass has already run at this point (both callers filter
+		// first, then ask), so the message may be showing for a question that
+		// is still open — take it back down before the browser paints.
+		pendingRequests.set(container, token);
+		updateEmptyMessage(container);
 
 		fetch(config.endpoint + '?' + params.toString(), { credentials: 'same-origin' })
 			.then(function (response) {
@@ -336,7 +368,12 @@
 				if (requestTokens.get(container) !== token) {
 					return;
 				}
+
+				clearPending(container, token);
+
 				if (!payload || !payload.success || !payload.data) {
+					updateEmptyMessage(container);
+
 					return;
 				}
 
@@ -355,8 +392,21 @@
 			})
 			.catch(function () {
 				// Leave the client-side filtered list in place: it is a valid,
-				// if narrower, answer to the same question.
+				// if narrower, answer to the same question — including, now
+				// that nobody is still looking, an empty one.
+				clearPending(container, token);
+				updateEmptyMessage(container);
 			});
+	}
+
+	/**
+	 * Clears the in-flight marker, but only if it is still this request's — a
+	 * response that lost the race must not report the newer one as settled.
+	 */
+	function clearPending(container, token) {
+		if (pendingRequests.get(container) === token) {
+			pendingRequests.delete(container);
+		}
 	}
 
 	function restoreStashedList(container, list) {
@@ -368,8 +418,10 @@
 			stashedLists.delete(container);
 		}
 		// Any answer still in flight would land on the restored list — bump the
-		// token so it is discarded like any other stale one.
+		// token so it is discarded like any other stale one, and stop waiting
+		// on it.
 		requestTokens.set(container, (requestTokens.get(container) || 0) + 1);
+		pendingRequests.delete(container);
 		setResultsMode(container, false);
 		applyToolbarState(container);
 	}
