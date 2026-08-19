@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.12.2
+Stable tag: 0.12.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.3 =
+Reines Wartungs-Release: Am Plugin selbst ändert sich nichts, nur daran, womit es gebaut und wie es veröffentlicht wird. Kein Handlungsbedarf.
+
 = 0.12.2 =
 Die große Kachel der Ansicht „Nächster Termin“ öffnet beim Klick wieder die Detailansicht – sie sah bisher klickbar aus, reagierte aber nicht. Kein Handlungsbedarf.
 
@@ -186,6 +189,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.3 =
+* Änderung: Die Release-Seiten auf GitHub zeigen jetzt den Changelog-Abschnitt der Version statt nur einen Link auf den Commit-Bereich
+* Änderung: Der Build des Gutenberg-Blocks läuft auf Node 24 statt auf dem abgekündigten Node 20 – das Ergebnis ist unverändert
+* Änderung: Die Versionsüberschriften im Changelog verlinken wieder auf den jeweiligen Versionsvergleich
 
 = 0.12.2 =
 * Fix: Die große Kachel der Ansicht „Nächster Termin“ öffnet beim Klick wieder die Detailansicht – sie sah klickbar aus, tat aber nichts. Die Einträge darunter unter „Weitere Termine“ waren nicht betroffen

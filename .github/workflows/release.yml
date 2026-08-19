@@ -28,9 +28,22 @@ jobs:
 
       - run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - uses: actions/setup-node@v4
+      # v7 statt v4: Die aelteren Majors laufen auf der Node-20-Laufzeit der
+      # Actions, die GitHub inzwischen zwangsweise auf Node 24 hebt und bei jedem
+      # Release-Lauf anmahnt. package-manager-cache ist aus, weil v5 automatisches
+      # Dependency-Caching eingefuehrt hat - dieser Workflow baut ein Artefakt, das
+      # sich auf fremden Seiten selbst installiert, also bleibt der Build so
+      # nachvollziehbar wie bisher: npm ci aus der Lockdatei, nichts dazwischen.
+      # Node 24 ist der aktive LTS-Strang (Wartung ab Oktober 2026, Ende 2028) und
+      # dieselbe Laufzeit, auf der GitHub die Actions selbst inzwischen ausfuehrt.
+      # Vorher stand hier 20 - seit dem 30.04.2026 ohne Sicherheitsupdates. Fest
+      # gepinnt statt lts/*, weil aus diesem Schritt ein Artefakt faellt, das sich
+      # auf fremden Seiten installiert: Welche Node-Version es gebaut hat, soll in
+      # der Datei stehen und nicht davon abhaengen, wann der Lauf startet.
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
+          package-manager-cache: false
 
       - run: npm ci
       - run: npm run build
@@ -50,8 +63,31 @@ jobs:
           cd "${{ runner.temp }}"
           zip -r "${GITHUB_WORKSPACE}/churchtools-plugin-${GITHUB_REF_NAME}.zip" churchtools-plugin
 
+      # Die Release-Seite trug bisher nur einen Link auf den Commit-Bereich. Der
+      # CHANGELOG-Abschnitt dieses Tags sagt, was sich tatsaechlich geaendert hat,
+      # und zwar in denselben Worten, die auch der Tab „Updates" im Backend zeigt -
+      # also wird er die Release-Notes. generate_release_notes bleibt an; GitHub
+      # haengt seine „Full Changelog"-Zeile darunter.
+      - name: Extract release notes from CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
+            found && /^\[[^]]+\]: / { exit }
+            found { print }
+          ' CHANGELOG.md > "${{ runner.temp }}/release-notes.md"
+          # Ein leerer Abschnitt heisst: Der Tag wurde ohne seinen CHANGELOG-Eintrag
+          # gesetzt. Hier abzubrechen ist Absicht - lieber ein gestopptes Release als
+          # ein veroeffentlichtes, dessen Seite nichts sagt.
+          if [ ! -s "${{ runner.temp }}/release-notes.md" ]; then
+            echo "::error::CHANGELOG.md has no section for ${version}"
+            exit 1
+          fi
+
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: churchtools-plugin-${{ github.ref_name }}.zip
+          body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: true

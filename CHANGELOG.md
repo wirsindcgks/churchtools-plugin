@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.3] - 2026-08-19
+
+Ein Release, das am Plugin selbst nichts ändert — es betrifft die Auslieferung
+drumherum: wovon gebaut wird, und was auf der Release-Seite steht.
+
+### Changed
+
+- **Die Release-Seiten auf GitHub sagen jetzt, was sich geändert hat.** Dort stand bisher nur ein Link auf den Commit-Bereich. Der Text kommt jetzt aus genau dem Changelog-Abschnitt der jeweiligen Version — derselbe, den auch der Tab „Updates“ im Backend anzeigt. Fehlt der Abschnitt, bricht die Veröffentlichung ab, statt eine stumme Seite zu erzeugen
+- **Der Build läuft auf einer gewarteten Node-Version.** Er hing an Node 20, das seit dem 30. April 2026 keine Sicherheitsupdates mehr bekommt; jetzt Node 24, der aktive LTS-Strang. Am Ergebnis ändert das nichts — das gebaute Editor-Skript ist byteweise identisch, gegengeprüft gegen den letzten Build auf Node 20
+- **Die Versionsüberschriften in dieser Datei verlinken wieder.** Für sieben Releases fehlte die Linkdefinition, und „Unreleased“ zeigte noch auf 0.9.0 — auf GitHub stand an diesen Stellen roher Klammertext statt eines Vergleichslinks
+
 ## [0.12.2] - 2026-08-19
 
 Ein Fix für eine Kachel, die aussah, als könnte man sie anklicken, und es nicht
@@ -299,7 +310,15 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...HEAD
+[0.12.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.2...v0.12.3
+[0.12.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.1...v0.12.2
+[0.12.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.0...v0.12.1
+[0.12.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.9.2...v0.10.0
+[0.9.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.9.1...v0.9.2
+[0.9.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.5.0...v0.9.0
 [0.5.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.3.0...v0.4.0
