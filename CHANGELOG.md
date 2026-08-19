@@ -5,6 +5,22 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.5] - 2026-08-19
+
+Der Nachtrag zur 0.12.4, nach dem ersten Blick auf die aktualisierte
+Live-Seite: die Update-Prüfung, die an GitHubs Anfragegrenze scheiterte, und
+drei Dinge, die erst dort zu sehen waren.
+
+### Changed
+
+- **Die Update-Prüfung fragt nicht mehr die GitHub-API.** Nicht angemeldet erlaubt die 60 Anfragen pro Stunde und IP – und auf geteiltem Hosting ist das nicht die IP dieser einen Seite, sondern die aller Seiten auf demselben Server. Das Backend beantwortete „Nach Updates suchen" deshalb mit „HTTP 429" über alle drei abgefragten Endpunkte und konnte gar nichts mehr über Updates sagen. Gelesen wird jetzt eine kleine Datei aus dem Repo über raw.githubusercontent.com: ein CDN ohne dieses Limit, eine Anfrage statt drei, weiterhin ohne Zugangstoken. Diese Version muss einmalig von Hand hochgeladen werden – die Prüfung der alten kommt ja gerade nicht durch
+- **Die großen Überschriften sind schlanker.** Die Hero-Kachel und die Detailansicht standen im schwersten Schnitt, was in dieser Größe blockig wirkt; sie tragen ihr Gewicht über den Schriftgrad. Die Titel der Listen- und Grid-Kacheln bleiben, wie sie sind – sie sind klein genug, dass sie das Gewicht brauchen
+- **Der Datums-Chip der Hero-Kachel steht auf derselben senkrechten Linie wie die Chips der Liste darunter**, statt um die Polsterung des Textteils nach rechts versetzt
+
+### Fixed
+
+- **Der Aufzählungspunkt vor den Grid-Kacheln war nach 0.12.4 noch da.** Die Regel von damals hing an der Kachel – die ist in dieser Ansicht aber ein `<article>` *in* einem klassenlosen `<li>`, und der Punkt entsteht am `li`. Sie hängt jetzt an den direkten Kindern der Liste, wo er tatsächlich herkommt, und räumt dort auch die Markerspalte des Themes ab. Listen im Beschreibungstext eines Termins behalten ihre Punkte
+
 ## [0.12.4] - 2026-08-19
 
 Der erste Durchgang über eine echte Live-Seite: ein Fehler, der genau einmal
@@ -338,7 +354,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...HEAD
+[0.12.5]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...v0.12.5
 [0.12.4]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...v0.12.4
 [0.12.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.2...v0.12.3
 [0.12.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.1...v0.12.2

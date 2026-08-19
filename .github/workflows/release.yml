@@ -21,6 +21,23 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # update.json ist die Datei, aus der installierte Kopien von einer neuen
+      # Version erfahren (siehe includes/Update/GitHubUpdateChecker.php). Sie
+      # liegt im Repo, wird mit bin/make-update-json.php erzeugt und zeigt auf
+      # ein Paket, das es erst nach diesem Lauf gibt. Bleibt sie beim Taggen
+      # auf der vorigen Version stehen, laeuft das Release durch und trotzdem
+      # bekommt niemand das Update angeboten - deshalb hier abbrechen, wie beim
+      # fehlenden Changelog-Abschnitt weiter unten.
+      - name: Check update.json points at this release
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          expected="https://github.com/wirsindcgks/churchtools-plugin/releases/download/v${version}/churchtools-plugin-v${version}.zip"
+          if ! jq -e --arg v "$version" --arg u "$expected" \
+            '.version == $v and .download_url == $u' update.json > /dev/null; then
+            echo "::error::update.json does not point at ${GITHUB_REF_NAME} (run: php bin/make-update-json.php .)"
+            exit 1
+          fi
+
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'

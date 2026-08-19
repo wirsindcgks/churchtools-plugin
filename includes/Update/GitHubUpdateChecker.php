@@ -10,21 +10,34 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
  * The plugin isn't on WordPress.org (see plan.md's "Infrastruktur" ToDo — GitHub is
  * the chosen distribution channel), so WP's built-in update mechanism has nothing to
  * check against on its own. This wires the third-party plugin-update-checker library
- * to the GitHub Releases of this repo instead, using release *assets* rather than
- * GitHub's raw source zipball: neither vendor/ (Composer) nor
- * blocks/event-list/build/ (the compiled Gutenberg block) are committed to the repo,
- * so a plain source archive of a tag wouldn't actually run. See
- * .github/workflows/release.yml, which builds both and uploads a working zip as a
- * release asset whenever a vX.Y.Z tag is pushed.
+ * to a small metadata file in the repo that points at the release package: neither
+ * vendor/ (Composer) nor blocks/event-list/build/ (the compiled Gutenberg script) are
+ * committed, so a plain source archive of a tag wouldn't actually run. What gets
+ * distributed instead is built by .github/workflows/release.yml on every vX.Y.Z tag
+ * and attached as a release asset.
+ *
+ * Vorher fragte diese Klasse die GitHub-API (Releases, Tags, Branches). Nicht
+ * angemeldet erlaubt die 60 Anfragen pro Stunde und IP - und auf geteiltem Hosting
+ * ist das nicht die IP dieser einen Seite, sondern die aller Seiten auf dem Server.
+ * Auf cg-ks.de beantwortete GitHub am 19.08.2026 jede Update-Pruefung mit HTTP 429,
+ * quer ueber alle drei Endpunkte; das Backend konnte nur noch melden, dass es nichts
+ * ueber Updates sagen kann. raw.githubusercontent.com liefert Dateien ueber ein CDN
+ * aus und kennt dieses Limit nicht: eine Datei, eine Anfrage, kein Zugangstoken.
+ *
+ * update.json entsteht mit bin/make-update-json.php aus Plugin-Header und
+ * CHANGELOG.md und wird mit dem Release-Commit abgeschickt (die Adresse des Assets
+ * ergibt sich aus der Version). tests/Release/VersionConsistencyTest.php und ein
+ * Schritt im Release-Workflow halten sie an der ausgelieferten Version fest.
  */
 final class GitHubUpdateChecker
 {
     /**
-     * Steht auch in SettingsPage::REPO_URL - dort verlinkt der Tab „Updates“
-     * dieselbe Quelle, aus der hier die Releases geholt werden. Wer das
-     * Plugin aus einem Fork verteilt, aendert beide.
+     * Der Zweig, aus dem die Metadatendatei gelesen wird, ist der
+     * Standardzweig dieses Repos - das Repo selbst steht auch in
+     * SettingsPage::REPO_URL, wo der Tab „Updates“ dieselbe Quelle verlinkt.
+     * Wer das Plugin aus einem Fork verteilt, aendert beide.
      */
-    private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
+    private const METADATA_URL = 'https://raw.githubusercontent.com/wirsindcgks/churchtools-plugin/main/update.json';
 
     public static function register(): void
     {
@@ -36,18 +49,10 @@ final class GitHubUpdateChecker
             return;
         }
 
-        $updateChecker = PucFactory::buildUpdateChecker(self::REPO_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
-
-        // Kein Zugangstoken mehr. Das Repository ist seit dem 2026-08-18
-        // oeffentlich und bleibt es (siehe plan.md, „Rahmendaten“) - damit
-        // greift GitHubs Rate-Limit fuer nicht angemeldete Anfragen, 60 pro
-        // Stunde und IP, und zwei Update-Pruefungen am Tag kommen dem nie
-        // nahe. Ein Eingabefeld dafuer gab es trotzdem, und es kostete mehr,
-        // als es einbrachte: ein verschluesselt gespeichertes Geheimnis, das
-        // niemand braucht, plus eine Erklaerung im Backend, warum man es nicht
-        // ausfuellen muss. Wer aus einem privaten Fork verteilt, aendert
-        // REPO_URL hier ohnehin und kann an derselben Stelle
-        // setAuthentication() ergaenzen.
-        $updateChecker->getVcsApi()->enableReleaseAssets('/\.zip($|[?&#])/i');
+        // Kein VCS-Prueferzweig mehr: raw.githubusercontent.com steht nicht in
+        // der Hostliste der Bibliothek (PucFactory::getVcsService()), sie baut
+        // fuer diese Adresse also den reinen JSON-Metadaten-Pruefer - genau
+        // den, der hier gebraucht wird.
+        PucFactory::buildUpdateChecker(self::METADATA_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
     }
 }

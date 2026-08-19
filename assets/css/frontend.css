@@ -371,36 +371,35 @@
 }
 
 /*
- * Dasselbe nochmal, klassenbasiert und auf den <li> selbst: Themes formatieren
- * Listen ueblicherweise mit Regeln wie `.entry-content ul li` oder
- * `.page-content li`, und die schlagen ein `list-style: none`, das nur am
- * Container haengt (ein Element + eine Klasse gegen zwei Klassen). Auf
- * cg-ks.de stand deshalb vor jeder Kachel und jedem Monatstrenner ein
- * Aufzaehlungspunkt, und die Liste war zusaetzlich um die Marker-Einrueckung
- * des Themes nach rechts geschoben. ::marker als Nachsatz fuer Themes, die den
- * Punkt ueber `content` statt ueber `list-style` setzen.
+ * Dasselbe nochmal, spezifischer und an den direkten Kindern der Liste: Themes
+ * formatieren Listen mit Regeln wie `.entry-content ul li`, und die schlagen
+ * ein `list-style: none`, das nur am Container haengt. Auf cg-ks.de stand
+ * deshalb vor jeder Kachel und jedem Monatstrenner ein Aufzaehlungspunkt, und
+ * die Liste war um die Markerspalte des Themes nach rechts geschoben.
+ *
+ * Wichtig ist der Kindselektor statt der Klassen der Kacheln: In der
+ * Grid-Ansicht ist die Kachel ein <article> *in* einem klassenlosen <li>
+ * (siehe partials/event-grid-items.php) - eine Regel auf .ctp-events__card
+ * trifft also gar nicht das Element, an dem der Punkt haengt. Genau daran ist
+ * der erste Anlauf gescheitert.
+ *
+ * Der Kindselektor haelt zugleich Listen *im* Beschreibungstext heraus, die
+ * ihre Punkte behalten sollen (wp_kses_post() laesst ul/ol/li durch, siehe
+ * EventFormatter::description()) - die stehen tiefer, nicht direkt in
+ * .ctp-events__list. ::marker als Nachsatz fuer Themes, die den Punkt ueber
+ * `content` setzen statt ueber `list-style`.
  */
-.ctp-events .ctp-events__list {
+.ctp-events ul.ctp-events__list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-.ctp-events .ctp-events__item,
-.ctp-events .ctp-events__card,
-.ctp-events .ctp-events__month-divider {
+.ctp-events .ctp-events__list > li {
     list-style: none;
 }
 
-/*
- * Bewusst an denselben drei Klassen und nicht an `.ctp-events li`: Der
- * Beschreibungstext eines Termins darf Listen enthalten (wp_kses_post() laesst
- * ul/ol/li durch, siehe EventFormatter::description()), und deren Punkte
- * sollen bleiben.
- */
-.ctp-events .ctp-events__item::marker,
-.ctp-events .ctp-events__card::marker,
-.ctp-events .ctp-events__month-divider::marker {
+.ctp-events .ctp-events__list > li::marker {
     content: '';
 }
 
@@ -720,6 +719,14 @@
     align-self: flex-start;
     width: 3.9rem;
     padding: 0.5rem 0;
+    /*
+     * Auf dieselbe senkrechte Linie wie die Chips der Liste „Weitere Termine“
+     * darunter gezogen: Die stehen 0.2rem vom Rand des Blocks entfernt
+     * (.ctp-events__item), der Chip hier saesse ohne das 2.1rem plus 1px
+     * Rahmen weiter rechts, weil er im Textteil der Kachel liegt. Aendert sich
+     * eine der beiden Polsterungen, gehoert diese Rechnung mitgeaendert.
+     */
+    margin-inline-start: calc(0.2rem - 2.1rem - 1px);
 }
 
 .ctp-events__date-chip--hero .ctp-events__day {
@@ -889,10 +896,15 @@
     padding: 1.85rem 2.1rem;
 }
 
+/* 600 statt 750: In dieser Groesse traegt die Ueberschrift ihr Gewicht schon
+   ueber den Schriftgrad - der schwere Schnitt wirkte daneben blockig. Die
+   Titel der Listen- und Grid-Kacheln bleiben bei 700, sie sind klein genug,
+   dass sie das Gewicht brauchen. Gilt genauso fuer die Ueberschrift der
+   Detailansicht weiter unten. */
 .ctp-events--upcoming .ctp-events__hero-title {
     order: var(--ctp-order-title);
     font-size: clamp(var(--ctp-font-xl), 1rem + 1.4vw, var(--ctp-font-2xl));
-    font-weight: 750;
+    font-weight: 600;
     line-height: 1.15;
 }
 
@@ -1148,7 +1160,8 @@
     padding-bottom: 0.55rem;
     border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 30%, transparent);
     font-size: var(--ctp-font-xl);
-    font-weight: 750;
+    /* Siehe .ctp-events__hero-title: dieselbe Ueberlegung, derselbe Schnitt. */
+    font-weight: 600;
     line-height: 1.22;
 }
 

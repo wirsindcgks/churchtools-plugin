@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.12.4
+Stable tag: 0.12.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.5 =
+Diese Version einmalig von Hand hochladen: Bis einschließlich 0.12.4 fragt die Update-Prüfung die GitHub-API, die auf geteiltem Hosting regelmäßig mit „HTTP 429“ (Anfragegrenze der IP) antwortet. Ab 0.12.5 liest sie eine Datei über ein CDN ohne dieses Limit, danach funktioniert die Prüfung im Backend wieder von selbst.
+
 = 0.12.4 =
 Behebt einen Fehler beim allerersten Einrichten: Der API-Key wurde doppelt verschlüsselt gespeichert, wodurch ChurchTools jede Anfrage mit „401: No valid token“ beantwortete, obwohl der Verbindungstest grün war. Wer davon betroffen ist, muss nichts tun – der gespeicherte Key wird nach dem Update wieder gelesen.
 
@@ -192,6 +195,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.5 =
+* Änderung: Die Update-Prüfung fragt statt der GitHub-API eine Datei über raw.githubusercontent.com ab – die API erlaubt nicht angemeldet nur 60 Anfragen pro Stunde und IP, was auf geteiltem Hosting regelmäßig zu „HTTP 429“ führte
+* Fix: Der Aufzählungspunkt vor den Grid-Kacheln war nach 0.12.4 noch da – die Regel traf die Kachel, der Punkt hängt aber am Listeneintrag darum
+* Änderung: Die großen Überschriften (Hero-Kachel und Detailansicht) stehen in einem schlankeren Schnitt
+* Änderung: Der Datums-Chip der Hero-Kachel steht auf derselben senkrechten Linie wie die Chips der Liste darunter
 
 = 0.12.4 =
 * Fix: Der API-Key wurde beim allerersten Speichern doppelt verschlüsselt – ChurchTools antwortete danach auf jede Anfrage mit „401: No valid token“, während der Verbindungstest grün blieb. Bereits betroffene Installationen brauchen nichts zu tun, der Key wird beim Lesen ausgepackt

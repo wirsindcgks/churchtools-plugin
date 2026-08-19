@@ -1,0 +1,15 @@
+{
+    "name": "ChurchTools Events",
+    "slug": "churchtools-plugin",
+    "version": "0.12.5",
+    "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
+    "author": "wirsindcgks",
+    "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
+    "requires": "6.4",
+    "requires_php": "8.1",
+    "last_updated": "2026-08-19 21:48:32",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v0.12.5/churchtools-plugin-v0.12.5.zip",
+    "sections": {
+        "changelog": "<p>Der Nachtrag zur 0.12.4, nach dem ersten Blick auf die aktualisierte Live-Seite: die Update-Prüfung, die an GitHubs Anfragegrenze scheiterte, und drei Dinge, die erst dort zu sehen waren.</p>\n<h4>Changed</h4>\n<ul>\n<li><strong>Die Update-Prüfung fragt nicht mehr die GitHub-API.</strong> Nicht angemeldet erlaubt die 60 Anfragen pro Stunde und IP – und auf geteiltem Hosting ist das nicht die IP dieser einen Seite, sondern die aller Seiten auf demselben Server. Das Backend beantwortete „Nach Updates suchen&quot; deshalb mit „HTTP 429&quot; über alle drei abgefragten Endpunkte und konnte gar nichts mehr über Updates sagen. Gelesen wird jetzt eine kleine Datei aus dem Repo über raw.githubusercontent.com: ein CDN ohne dieses Limit, eine Anfrage statt drei, weiterhin ohne Zugangstoken. Diese Version muss einmalig von Hand hochgeladen werden – die Prüfung der alten kommt ja gerade nicht durch</li>\n<li><strong>Die großen Überschriften sind schlanker.</strong> Die Hero-Kachel und die Detailansicht standen im schwersten Schnitt, was in dieser Größe blockig wirkt; sie tragen ihr Gewicht über den Schriftgrad. Die Titel der Listen- und Grid-Kacheln bleiben, wie sie sind – sie sind klein genug, dass sie das Gewicht brauchen</li>\n<li><strong>Der Datums-Chip der Hero-Kachel steht auf derselben senkrechten Linie wie die Chips der Liste darunter</strong>, statt um die Polsterung des Textteils nach rechts versetzt</li>\n</ul>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Der Aufzählungspunkt vor den Grid-Kacheln war nach 0.12.4 noch da.</strong> Die Regel von damals hing an der Kachel – die ist in dieser Ansicht aber ein <code>&lt;article&gt;</code> <em>in</em> einem klassenlosen <code>&lt;li&gt;</code>, und der Punkt entsteht am <code>li</code>. Sie hängt jetzt an den direkten Kindern der Liste, wo er tatsächlich herkommt, und räumt dort auch die Markerspalte des Themes ab. Listen im Beschreibungstext eines Termins behalten ihre Punkte</li>\n</ul>\n"
+    }
+}

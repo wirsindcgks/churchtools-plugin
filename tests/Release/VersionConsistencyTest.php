@@ -56,6 +56,33 @@ final class VersionConsistencyTest extends TestCase
     }
 
     /**
+     * update.json ist die Datei, aus der installierte Kopien erfahren, dass es
+     * eine neue Version gibt (siehe Update\GitHubUpdateChecker). Sie liegt im
+     * Repo statt im Paket und wird von Hand mit bin/make-update-json.php
+     * erzeugt - bleibt sie beim Versionswechsel stehen, bekommt niemand das
+     * Update angeboten, und das faellt ohne diese Pruefung erst auf, wenn sich
+     * jemand wundert, warum das Backend die alte Version fuer aktuell haelt.
+     */
+    public function testUpdateMetadataMatchesPluginVersion(): void
+    {
+        $metadata = json_decode((string) file_get_contents(self::ROOT . '/update.json'), true);
+
+        $this->assertIsArray($metadata, 'update.json is not valid JSON.');
+        $this->assertSame($this->pluginVersion(), $metadata['version'] ?? null);
+
+        // Der Dateiname des Release-Assets ergibt sich aus dem Tag (siehe
+        // .github/workflows/release.yml) - zeigt der Link woandershin, laedt
+        // das Update ins Leere.
+        $this->assertSame(
+            sprintf(
+                'https://github.com/wirsindcgks/churchtools-plugin/releases/download/v%1$s/churchtools-plugin-v%1$s.zip',
+                $this->pluginVersion()
+            ),
+            $metadata['download_url'] ?? null
+        );
+    }
+
+    /**
      * Semantic versioning, since the GitHub update checker compares releases
      * with version_compare() - a tag like "v1.0" or "1.0.0-final" would sort in
      * ways nobody expects.

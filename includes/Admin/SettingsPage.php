@@ -31,9 +31,10 @@ final class SettingsPage
     private const PAGE_SLUG = 'churchtools-plugin';
 
     /**
-     * Muss mit GitHubUpdateChecker::REPO_URL uebereinstimmen - dort holt das
-     * Plugin seine Updates her, hier verlinkt der Tab „Updates“ dieselbe
-     * Quelle. Der abschliessende Schraegstrich gehoert dazu, die Links haengen
+     * Dasselbe Repository, aus dem GitHubUpdateChecker::METADATA_URL seine
+     * Angaben zu neuen Versionen liest - hier verlinkt der Tab „Updates“ die
+     * Quelle, dort wird sie abgefragt. Wer aus einem Fork verteilt, aendert
+     * beide. Der abschliessende Schraegstrich gehoert dazu, die Links haengen
      * ihre Pfade direkt an.
      */
     private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
