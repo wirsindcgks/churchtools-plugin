@@ -5,6 +5,34 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.4] - 2026-08-19
+
+Der erste Durchgang über eine echte Live-Seite: ein Fehler, der genau einmal
+pro Installation zuschlägt – beim ersten Einrichten, und dort so, dass alles
+danach aussieht, als läge es an ChurchTools – plus die Punkte, die auf
+cg-ks.de im Alltag auffielen.
+
+### Added
+
+- **Die Hero-Kachel der Ansicht „Nächster Termin“ hat jetzt einen Datums-Chip**, denselben wie jede Zeile der Liste, an derselben Stelle der Element-Reihenfolge (dem Bild-Slot). Sie war die einzige Ansicht ohne einen
+
+### Changed
+
+- **Die Schaltflächen des Plugins stehen in Versalien** – die Knöpfe des Eventfinders und „Weitere Termine laden“. Titel bleiben, wie sie sind
+- **Die Ansicht „Nächster Termin“ teilt sich erst ab 768 Pixeln in zwei Spalten** statt schon ab 640, und die Textspalte ist jetzt breiter als die Bildspalte statt umgekehrt. Vorher kippte die Kachel schon auf schmalen Tablets in zwei enge Spalten, in denen der Titel mehrzeilig umbrach, während daneben ein hochkantes Flyer-Bild in einer breiten, flachen Zelle schwamm
+- **Der Farbverlauf hinter dem Bild dieser Kachel ist weg.** Weil das Bild vollständig eingepasst wird (nie beschnitten), war der Verlauf neben einem hochkanten Flyer der auffälligste Teil der Kachel. Dort steht jetzt ruhiger Kachelgrund; die Kalenderfarbe bleibt im Farbpunkt, in den Akzenten und im Ersatzbild
+- **Gestapelt (unter 768 Pixeln) bestimmt das Bild seine Höhe selbst**, statt in eine Box mit festem Seitenverhältnis eingepasst zu werden – ein Hochformat stand darin schmal in der Mitte, mit breiten leeren Streifen links und rechts
+
+### Fixed
+
+- **Der API-Key wurde beim allerersten Speichern doppelt verschlüsselt.** ChurchTools beantwortete danach jede Anfrage mit „401: No valid token“ – während „Verbindung testen“ grün blieb und den Namen der angemeldeten Person zeigte, weil der Test den gerade getippten Wert prüft und nicht den gespeicherten. Die Ursache liegt in WordPress selbst: Beim ersten Schreiben einer noch nicht vorhandenen Option läuft deren Sanitizer zweimal – `update_option()` bereinigt, stellt fest, dass es die Option nicht gibt, und reicht an `add_option()` weiter, das erneut bereinigt –, und der zweite Durchlauf verschlüsselte den bereits verschlüsselten Wert ein zweites Mal. Verschlüsselte Werte tragen jetzt eine Kennzeichnung, an der der zweite Durchlauf sie erkennt und in Ruhe lässt. Wer den Fehler schon hat, muss nichts tun: Ein doppelt verschlüsselter Key wird beim Lesen ausgepackt
+- **Derselbe doppelte Durchlauf setzte beim ersten Speichern die Anordnung der Kachelelemente auf den Standard zurück**, samt einer PHP-Warnung mitten in der Antwort auf das Speichern. Beide Reihenfolge-Felder vertragen den zweiten Durchlauf jetzt
+- **Vor jeder Kachel und jedem Monatstrenner stand ein Aufzählungspunkt.** Die Listen des Plugins schalten ihre Punkte zwar selbst ab, aber Themes formatieren Listen mit Regeln wie `.entry-content ul li`, und die schlagen eine Abschaltung, die nur am Container hängt. Jetzt hängt sie an den Listeneinträgen selbst und ist spezifisch genug. Listen *im* Beschreibungstext eines Termins behalten ihre Punkte
+- **Das Popup zeigte kein Bild.** Es steckt in einem `<template>` pro Kachel und wird erst beim Öffnen in die Seite kopiert – ein Lazyload-Plugin (WP Rocket & Co.) ersetzt beim Ausliefern trotzdem das `src` durch einen Platzhalter, und seinen Beobachter bekommt die Kopie danach nie zu sehen. Das Popup holt die gemerkte Bildadresse jetzt beim Kopieren selbst zurück, unabhängig davon, welches Lazyload-Plugin im Spiel ist
+- **Die Suchleiste erschien trotz abgeschalteter Suche**, sobald der Eventfinder an war: Sein Suchfeld hing am Eventfinder statt am eigenen Schalter. Beide Werkzeugleisten fragen jetzt denselben Schalter
+- **Das Element im WPBakery-Builder hatte kein Icon** – es zeigte auf einen Icon-Namen, den WPBakery gar nicht kennt. Jetzt ein Kalender
+- **Ein fehlgeschlagener Kalenderabgleich stand nur im Tab „Kalender“.** Das ist die Stelle, an der der 401 oben sichtbar gewesen wäre – wer stattdessen auf der Übersicht nachsah, warum nichts synchronisiert wird, fand eine Seite ganz ohne Fehler: Der Sync holt zuerst die Kalenderliste, und scheitert das, ist danach kein Kalender aktiv, woraufhin der Lauf sich als „nichts zu tun“ beendet und den zuletzt gespeicherten Sync-Fehler sogar abräumt. Der Befund steht jetzt auch auf der Übersicht, und „Jetzt synchronisieren“ meldet ihn, statt Erfolg zu melden
+
 ## [0.12.3] - 2026-08-19
 
 Ein Release, das am Plugin selbst nichts ändert — es betrifft die Auslieferung
@@ -310,7 +338,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...HEAD
+[0.12.4]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...v0.12.4
 [0.12.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.2...v0.12.3
 [0.12.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.0...v0.12.1

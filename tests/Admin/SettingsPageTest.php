@@ -6,6 +6,7 @@ namespace ChurchToolsPlugin\Tests\Admin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Frontend\CardDesign;
+use ChurchToolsPlugin\Security\Crypto;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -403,5 +404,99 @@ final class SettingsPageTest extends TestCase
         $sanitized = SettingsPage::sanitizeSettings(['accent_color' => 'not-a-color']);
 
         $this->assertSame('#ff8800', $sanitized['accent_color']);
+    }
+
+    /**
+     * WordPress ruft den Sanitizer beim allerersten Schreiben einer Option
+     * zweimal auf: update_option() sanitisiert, stellt fest, dass es die
+     * Option noch nicht gibt, und reicht an add_option() weiter - das
+     * sanitisiert erneut (wp-includes/option.php). Der zweite Durchlauf
+     * bekommt damit die Ausgabe des ersten zu sehen, hier also einen bereits
+     * verschluesselten API-Key.
+     *
+     * Ohne die Praefix-Abfrage in apiKeyToStore() lag der Token danach doppelt
+     * verschluesselt in der Datenbank und jede Anfrage an ChurchTools
+     * scheiterte mit „401: No valid token“ - einmal pro Installation, bei der
+     * ersten Einrichtung, waehrend „Verbindung testen“ gruen blieb, weil der
+     * Test den getippten Wert nimmt und nicht den gespeicherten.
+     */
+    public function testFirstSaveDoesNotEncryptTheApiKeyTwice(): void
+    {
+        $first = SettingsPage::sanitizeSettings(['api_key' => 'ein-frisch-eingetragener-token']);
+        $second = SettingsPage::sanitizeSettings($first);
+
+        $this->assertTrue(Crypto::isCiphertext($second['api_key']));
+        $this->assertSame('ein-frisch-eingetragener-token', Crypto::decrypt($second['api_key']));
+    }
+
+    /**
+     * Derselbe doppelte Aufruf traf auch die beiden Reihenfolge-Felder: Sie
+     * kommen als kommagetrennter String herein und gehen als Liste heraus,
+     * die der zweite Durchlauf per (string) zu "Array" machte - eine
+     * PHP-Warnung, und die gerade eingestellte Anordnung schnappte auf die
+     * Standardanordnung zurueck (siehe orderInput()).
+     */
+    public function testFirstSaveKeepsTheElementOrder(): void
+    {
+        $order = 'date,time,location,media,title,calendar,subtitle,excerpt';
+
+        $first = SettingsPage::sanitizeSettings(['element_order' => $order]);
+        $second = SettingsPage::sanitizeSettings($first);
+
+        $this->assertSame(explode(',', $order), $second['element_order']);
+        $this->assertNotSame(CardDesign::DEFAULT_ORDER, $second['element_order']);
+    }
+
+    /**
+     * Die Gegenprobe: Das Feld wird nie mit dem gespeicherten Token
+     * vorbefuellt (siehe renderApiKeyField()), ein leeres Feld heisst also
+     * „unveraendert lassen“ und darf ihn nicht loeschen.
+     */
+    public function testEmptyApiKeyFieldKeepsTheStoredKey(): void
+    {
+        $stored = Crypto::encrypt('bereits-gespeicherter-token');
+        ctp_test_set_option('ctp_settings', ['api_key' => $stored]);
+
+        $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
+
+        $this->assertSame($stored, $sanitized['api_key']);
+    }
+
+    /**
+     * Der Bestand aus der Zeit vor dem Praefix: ein doppelt verschluesselter
+     * Key, wie ihn das erste Speichern hinterlassen hat. Er wird beim Lesen
+     * ausgepackt, damit niemand deswegen seinen Token neu eintragen muss -
+     * und darf dabei nicht als „laesst sich nicht entschluesseln“ gelten
+     * (diese Meldung gehoert der AUTH_KEY-Rotation).
+     */
+    public function testDoubleEncryptedKeyFromBeforeTheFixIsUnwrappedOnRead(): void
+    {
+        ctp_test_set_option('ctp_settings', [
+            'api_key' => ctp_test_legacy_encrypt(ctp_test_legacy_encrypt('token-aus-der-kaputten-zeit')),
+        ]);
+
+        $this->assertSame('token-aus-der-kaputten-zeit', SettingsPage::getDecryptedApiKey());
+        $this->assertFalse(SettingsPage::apiKeyDecryptionFailed());
+    }
+
+    public function testSinglyEncryptedKeyIsReadUnchanged(): void
+    {
+        ctp_test_set_option('ctp_settings', ['api_key' => Crypto::encrypt('ganz-normaler-token')]);
+
+        $this->assertSame('ganz-normaler-token', SettingsPage::getDecryptedApiKey());
+        $this->assertFalse(SettingsPage::apiKeyDecryptionFailed());
+    }
+
+    /**
+     * Ein Wert, der sich mit dem aktuellen AUTH_KEY nicht mehr entschluesseln
+     * laesst, muss weiterhin als solcher gemeldet werden - das Auspacken oben
+     * darf diesen Fall nicht verschlucken.
+     */
+    public function testUndecryptableKeyIsStillReportedAsBroken(): void
+    {
+        ctp_test_set_option('ctp_settings', ['api_key' => base64_encode(random_bytes(48))]);
+
+        $this->assertSame('', SettingsPage::getDecryptedApiKey());
+        $this->assertTrue(SettingsPage::apiKeyDecryptionFailed());
     }
 }

@@ -6,9 +6,50 @@ namespace ChurchToolsPlugin\Integrations;
 
 final class WpBakeryIntegration
 {
+    /**
+     * Klasse, unter der das Kalender-Icon des Elements haengt - WPBakery
+     * rendert im Elementefenster nur ein <span class="vc_element-icon {icon}">
+     * und erwartet in "icon" genau so einen Klassennamen. Was hier vorher
+     * stand ('icon-wpb-calendar'), gibt es in WPBakerys eigenem Icon-Satz
+     * nicht: Das Feld blieb leer, das Element stand als einziges ohne Bild in
+     * der Liste.
+     */
+    private const ICON_CLASS = 'ctp-vc-icon';
+
     public function register(): void
     {
         add_action('vc_before_init', [$this, 'mapShortcode']);
+
+        // Backend-Editor und Frontend-Editor sind zwei getrennte Kontexte, das
+        // Elementefenster gibt es in beiden.
+        add_action('admin_enqueue_scripts', [$this, 'enqueueElementIcon']);
+        add_action('vc_frontend_editor_enqueue_js_css', [$this, 'enqueueElementIcon']);
+    }
+
+    /**
+     * Nur eine Regel, deshalb als Inline-Style an einem leeren Handle statt an
+     * einer eigenen Datei (dasselbe Muster, das WordPress fuer
+     * wp_add_inline_style() ohne eigenes Stylesheet vorsieht). Der Selektor
+     * nennt beide Klassen und ist damit spezifischer als WPBakerys eigene
+     * .vc_element-icon-Regel - ohne !important, das in diesem Plugin nirgends
+     * vorkommt.
+     */
+    public function enqueueElementIcon(): void
+    {
+        if (!defined('WPB_VC_VERSION')) {
+            return;
+        }
+
+        $handle = 'ctp-wpbakery-element-icon';
+
+        wp_register_style($handle, false, [], CTP_VERSION);
+        wp_enqueue_style($handle);
+        wp_add_inline_style($handle, sprintf(
+            '.vc_element-icon.%1$s{background-image:url("%2$s");'
+                . 'background-size:22px 22px;background-position:center;background-repeat:no-repeat;}',
+            self::ICON_CLASS,
+            esc_url(CTP_PLUGIN_URL . 'assets/img/wpbakery-element.svg')
+        ));
     }
 
     /**
@@ -25,7 +66,7 @@ final class WpBakeryIntegration
             'name' => __('ChurchTools Events', 'churchtools-plugin'),
             'base' => 'ctp_events',
             'category' => __('ChurchTools', 'churchtools-plugin'),
-            'icon' => 'icon-wpb-calendar',
+            'icon' => self::ICON_CLASS,
             'params' => [
                 [
                     'type' => 'textfield',

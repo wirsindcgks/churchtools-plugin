@@ -2,10 +2,12 @@
 
 /**
  * Guided "Du suchst …" toolbar for the list/grid layouts — button-based
- * shortcuts for calendar and timeframe, plus a search field, in place of the
- * plain filter dropdown/search input from partials/toolbar.php (opt-in via
- * the shortcode/block/WPBakery "eventfinder" attribute, see
- * EventListRenderer::render()). Not part of the theme-override contract
+ * shortcuts for calendar and timeframe, plus (wenn "search" eingeschaltet
+ * ist) ein Suchfeld, in place of the plain filter dropdown/search input from
+ * partials/toolbar.php (opt-in via the shortcode/block/WPBakery "eventfinder"
+ * attribute, see EventListRenderer::render()). Das Suchfeld hing frueher am
+ * Eventfinder statt am eigenen Schalter: Wer die Suche abwaehlte und den
+ * Eventfinder anliess, bekam sie trotzdem. Not part of the theme-override contract
  * (only event-{layout}.php files are looked up via locate_template()); a
  * theme wanting a different toolbar overrides the whole layout template
  * instead.
@@ -15,8 +17,9 @@
  * the DOM (applyToolbarState(), same data-ctp-calendar/data-ctp-search
  * attributes as the plain toolbar, plus data-ctp-start (Y-m-d) per item for
  * the timeframe buttons) and once to ask the server the same question against
- * the whole synced horizon (refreshFromServer(), via the endpoint
- * configuration on the search input below).
+ * the whole synced horizon (refreshFromServer(), via data-ctp-toolbar-config
+ * an dieser Werkzeugleiste - nicht am Suchfeld, das es hier auch ohne geben
+ * darf).
  *
  * @var array $args
  * @var array $filterCalendars
@@ -103,15 +106,17 @@ $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
             ><?php esc_html_e('Diesen Monat', 'churchtools-plugin'); ?></button>
         </div>
     </div>
-    <div class="ctp-events__search">
-        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
-        <?php echo Icons::search(); ?>
-        <input
-            type="search"
-            class="ctp-events__search-input"
-            placeholder="<?php esc_attr_e('Termine durchsuchen …', 'churchtools-plugin'); ?>"
-            aria-label="<?php esc_attr_e('Termine durchsuchen', 'churchtools-plugin'); ?>"
-        />
-    </div>
+    <?php if ($args['search']) : ?>
+        <div class="ctp-events__search">
+            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
+            <?php echo Icons::search(); ?>
+            <input
+                type="search"
+                class="ctp-events__search-input"
+                placeholder="<?php esc_attr_e('Termine durchsuchen …', 'churchtools-plugin'); ?>"
+                aria-label="<?php esc_attr_e('Termine durchsuchen', 'churchtools-plugin'); ?>"
+            />
+        </div>
+    <?php endif; ?>
     <p class="ctp-events__toolbar-empty" hidden><?php esc_html_e('Keine Termine gefunden.', 'churchtools-plugin'); ?></p>
 </div>

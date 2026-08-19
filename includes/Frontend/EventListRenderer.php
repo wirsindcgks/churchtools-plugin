@@ -59,11 +59,17 @@ final class EventListRenderer
         // to append to.
         $isFilterable = $args['layout'] !== 'upcoming';
         // Eventfinder is a self-contained guided toolbar (calendar buttons, timeframe
-        // buttons, search) that replaces the plain filter/search toolbar rather than
+        // buttons, optionales Suchfeld) that replaces the plain filter/search toolbar rather than
         // stacking alongside it — showing both would be redundant UI over the same
         // underlying filtering, so it wins over "filter"/"search" when both are set.
         $args['eventfinder'] = $isFilterable && (bool) $args['eventfinder'];
-        $args['search'] = $args['eventfinder'] || ($isFilterable && (bool) $args['search']);
+        // Frueher schaltete der Eventfinder die Suche zwangsweise mit ein
+        // ("$args['eventfinder'] || ..."), weil sein Suchfeld als Teil von ihm
+        // gedacht war. Auf einer Seite, auf der die Suche bewusst abgewaehlt
+        // und der Eventfinder angelassen war, stand sie damit trotzdem da -
+        // ein Schalter ohne Wirkung. Beide Werkzeugleisten fragen jetzt
+        // denselben Schalter (siehe partials/eventfinder.php).
+        $args['search'] = $isFilterable && (bool) $args['search'];
         $args['month_dividers'] = $isFilterable && (bool) $args['month_dividers'];
         $args['paging'] = $isFilterable && $args['paging'] && $args['next_page'] !== null;
         $args['paging_config'] = $args['paging'] ? $this->pagingConfig($args) : [];

@@ -26,25 +26,53 @@ if (!defined('ABSPATH')) {
 
 $hero = $events[0] ?? null;
 $upcoming = array_slice($events, 1);
+
+/*
+ * Ohne Bild gibt es keine Bildzelle - und damit auch keine zweite Spalte, in
+ * der sonst eine leere Flaeche stuende. Solange dort ein Farbverlauf lag, sah
+ * die leere Zelle nach Absicht aus; auf ruhigem Kachelgrund (siehe
+ * frontend.css) waere sie einfach ein Loch neben dem Text.
+ */
+$heroHasMedia = $hero !== null
+    && $hero['image_url'] !== ''
+    && !in_array('media', $args['hidden_elements'], true);
 ?>
 <div class="ctp-events ctp-events--upcoming" style="<?php echo esc_attr($args['design_style']); ?>">
     <?php if ($hero === null) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
         <div
-            class="ctp-events__hero<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__hero--clickable' : ''; ?>"
+            class="ctp-events__hero<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__hero--clickable' : ''; ?><?php echo $heroHasMedia ? '' : ' ctp-events__hero--no-media'; ?>"
             <?php if ($hero['calendar_color'] !== '') : ?>
                 style="--ctp-accent:<?php echo esc_attr($hero['calendar_color']); ?>;"
             <?php endif; ?>
         >
-            <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
+            <?php if ($heroHasMedia) : ?>
                 <div class="ctp-events__hero-media<?php echo $hero['image_is_fallback'] ? ' ctp-events__hero-media--fallback' : ''; ?>">
-                    <?php if ($hero['image_url'] !== '') : ?>
-                        <img src="<?php echo esc_url($hero['image_url']); ?>" alt="" loading="lazy" />
-                    <?php endif; ?>
+                    <img src="<?php echo esc_url($hero['image_url']); ?>" alt="" loading="lazy" />
                 </div>
             <?php endif; ?>
             <div class="ctp-events__hero-body">
+                <?php
+                /*
+                 * Derselbe Datums-Chip wie in der Liste, samt seiner Position
+                 * im Bild-Slot der Reihenfolge (--ctp-order-media) - die
+                 * Hero-Kachel war die einzige Ansicht ohne einen. Bewusst in
+                 * der Textspalte und nicht als Aufkleber im Bildbereich: Dort
+                 * haengt er neben einem hochkanten Flyer im Leeren, weil die
+                 * Bildzelle breiter ist als das contain eingepasste Bild.
+                 */
+                ?>
+                <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
+                    <span class="ctp-events__date-chip ctp-events__date-chip--hero" aria-hidden="true">
+                        <span class="ctp-events__day">
+                            <?php echo esc_html(EventFormatter::dayNumber($hero['start_date'])); ?>
+                        </span>
+                        <span class="ctp-events__month">
+                            <?php echo esc_html(EventFormatter::monthAbbreviation($hero['start_date'])); ?>
+                        </span>
+                    </span>
+                <?php endif; ?>
                 <?php if (!in_array('calendar', $args['hidden_elements'], true)) : ?>
                     <span class="ctp-events__eyebrow">
                         <?php if ($hero['calendar_name'] !== '' && $hero['calendar_color'] !== '') : ?>

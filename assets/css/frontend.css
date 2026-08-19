@@ -242,7 +242,15 @@
     border-block-start: 1px solid var(--ctp-color-border);
 }
 
+/* Versalien fuer beide Schaltflaechen des Plugins (Eventfinder-Knoepfe und
+   "Weitere Termine laden"): dieselbe Auszeichnung, die .ctp-events__eyebrow,
+   .ctp-events__more-label und der Monatstrenner schon tragen - und die
+   Schaltflaechen des Themes auf cg-ks.de ebenso. Die Sperrung dazu, weil
+   Versalien ohne sie eng wirken. Nicht auf .ctp-events__card-trigger: das ist
+   der Titel des Termins in Knopfform, kein Bedienelement mit eigenem Wort. */
 .ctp-events__finder-btn {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     padding: 0.45rem 1.05rem;
     border: 1px solid var(--ctp-color-button-border);
     border-radius: var(--ctp-radius-pill);
@@ -288,6 +296,8 @@
    filled "strong" pair on hover, same two-state behavior as the eventfinder
    buttons and the popup's close button. */
 .ctp-events__load-more {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     padding: 0.7rem 1.6rem;
     border: 1px solid var(--ctp-color-button-border);
     border-radius: calc(var(--ctp-radius) * 0.6);
@@ -358,6 +368,40 @@
     list-style: none;
     margin: 0;
     padding: 0;
+}
+
+/*
+ * Dasselbe nochmal, klassenbasiert und auf den <li> selbst: Themes formatieren
+ * Listen ueblicherweise mit Regeln wie `.entry-content ul li` oder
+ * `.page-content li`, und die schlagen ein `list-style: none`, das nur am
+ * Container haengt (ein Element + eine Klasse gegen zwei Klassen). Auf
+ * cg-ks.de stand deshalb vor jeder Kachel und jedem Monatstrenner ein
+ * Aufzaehlungspunkt, und die Liste war zusaetzlich um die Marker-Einrueckung
+ * des Themes nach rechts geschoben. ::marker als Nachsatz fuer Themes, die den
+ * Punkt ueber `content` statt ueber `list-style` setzen.
+ */
+.ctp-events .ctp-events__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ctp-events .ctp-events__item,
+.ctp-events .ctp-events__card,
+.ctp-events .ctp-events__month-divider {
+    list-style: none;
+}
+
+/*
+ * Bewusst an denselben drei Klassen und nicht an `.ctp-events li`: Der
+ * Beschreibungstext eines Termins darf Listen enthalten (wp_kses_post() laesst
+ * ul/ol/li durch, siehe EventFormatter::description()), und deren Punkte
+ * sollen bleiben.
+ */
+.ctp-events .ctp-events__item::marker,
+.ctp-events .ctp-events__card::marker,
+.ctp-events .ctp-events__month-divider::marker {
+    content: '';
 }
 
 .ctp-events__color-dot {
@@ -668,6 +712,20 @@
     line-height: 1.1;
 }
 
+/* Derselbe Chip wie in der Liste, nur eine Spur groesser und ohne die
+   Stretch-Breite, die ein Flex-Kind in der Spalte sonst bekaeme: Die
+   Hero-Kachel ist ein Vielfaches einer Listenzeile, ein Chip in Listengroesse
+   verschwindet darin. */
+.ctp-events__date-chip--hero {
+    align-self: flex-start;
+    width: 3.9rem;
+    padding: 0.5rem 0;
+}
+
+.ctp-events__date-chip--hero .ctp-events__day {
+    font-size: var(--ctp-font-xl);
+}
+
 .ctp-events__card .ctp-events__content {
     order: var(--ctp-order-content);
     display: flex;
@@ -692,9 +750,17 @@
     box-shadow: var(--ctp-shadow);
 }
 
-@media (min-width: 640px) {
+/*
+ * Zweispaltig erst ab 768px statt ab 640px, und die Textspalte breiter als die
+ * Bildspalte statt umgekehrt. Vorher kippte die Kachel schon auf schmalen
+ * Tablets in zwei Spalten, in denen dann beides zu eng stand: Der Titel brach
+ * mehrzeilig um, waehrend daneben ein hochkantes Flyer-Bild in einer breiten,
+ * flachen Zelle schwamm (auf cg-ks.de 1128 Pixel breit, 281 hoch - das Bild
+ * darin knapp 200 Pixel breit, der Rest leer).
+ */
+@media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
         align-items: stretch;
     }
 }
@@ -705,27 +771,46 @@
  * at a consistent height because the height comes from the row (stretched to
  * match hero-body's text-driven height), not from the image's own aspect
  * ratio — a portrait event photo used to get cropped hard by `cover` against
- * a landscape box. Mobile (<640px, stacked) falls back to a fixed
- * aspect-ratio box since there's no sibling row height to stretch to there.
+ * a landscape box. Gestapelt (<768px) gibt es keine Nachbarzelle, an deren
+ * Hoehe sich etwas ausrichten koennte: Dort bestimmt das Bild seine Hoehe
+ * selbst (siehe die Regel darunter), und nur ohne Bild bleibt die Box mit
+ * festem Seitenverhaeltnis uebrig.
  */
 .ctp-events--upcoming .ctp-events__hero-media {
     order: var(--ctp-order-media);
     position: relative;
     width: 100%;
     aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 10);
-    background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--ctp-accent) 22%, var(--ctp-color-surface)),
-        color-mix(in srgb, var(--ctp-accent) 6%, var(--ctp-color-surface))
-    );
+    /*
+     * Ruhiger Kachelgrund statt des frueheren Verlaufs in der Kalenderfarbe:
+     * Das Bild wird contain eingepasst, also bleibt neben einem hochkanten
+     * Flyer viel von diesem Grund sichtbar - als kraeftiger Farbverlauf war das
+     * der auffaelligste Teil der Kachel und stand in Konkurrenz zum Flyer
+     * selbst. Die Kalenderfarbe bleibt dort, wo sie etwas bedeutet: im
+     * Farbpunkt, in den Akzenten und im Scrim des Ersatzbildes unten.
+     */
+    background: var(--ctp-color-surface);
 }
 
-@media (min-width: 640px) {
+/* Ohne Bildzelle bleibt nur der Text - der bekommt dann die ganze Breite,
+   statt die Spalte des fehlenden Bildes leer stehen zu lassen. Nach der
+   Spaltenregel oben, weil beide gleich spezifisch sind. */
+@media (min-width: 768px) {
+    .ctp-events--upcoming .ctp-events__hero--no-media {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero-media {
         grid-column: 2;
         grid-row: 1;
         aspect-ratio: auto;
-        min-height: 260px;
+        /* Waechst mit der Seitenbreite statt bei 260px stehen zu bleiben: Die
+           Hoehe dieser Zelle ist die einzige Groesse, die ein contain
+           eingepasstes Hochformat gross werden laesst. Nach oben gedeckelt,
+           damit die Kachel auf sehr breiten Seiten nicht zur Bildwand wird. */
+        min-height: clamp(260px, 22vw, 400px);
     }
 
     .ctp-events--upcoming .ctp-events__hero-body {
@@ -752,6 +837,30 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+/*
+ * Gestapelt (<768px) bestimmt das Bild seine Hoehe selbst, statt in eine Box
+ * mit festem Seitenverhaeltnis eingepasst zu werden: Ein hochkanter Flyer
+ * stand darin schmal in der Mitte, mit breiten leeren Streifen links und
+ * rechts - auf dem Handy die halbe Kachel. Nach oben gedeckelt, damit ein sehr
+ * hohes Bild nicht den ganzen Bildschirm einnimmt. Das feste Seitenverhaeltnis
+ * oben bleibt fuer den Fall ohne Bild, wo es die einzige Groesse ist, die die
+ * Zelle ueberhaupt hat (deshalb :has(img) und nicht einfach aspect-ratio: auto).
+ */
+@media (max-width: 767px) {
+    .ctp-events--upcoming .ctp-events__hero-media:has(img) {
+        aspect-ratio: auto;
+    }
+
+    .ctp-events--upcoming .ctp-events__hero-media img {
+        position: static;
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 65vh;
+        margin-inline: auto;
+    }
 }
 
 /* Same calendar-tinted scrim as .ctp-events__media--fallback, for the hero. */

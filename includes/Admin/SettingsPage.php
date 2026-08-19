@@ -316,7 +316,56 @@ final class SettingsPage
         ];
     }
 
+    /**
+     * Was gespeichert wird, wenn im Formular ein API-Key steht.
+     *
+     * Ein bereits verschluesselter Wert wird durchgereicht statt erneut
+     * verschluesselt: Beim allerersten Speichern einer Option laeuft dieser
+     * Sanitizer zweimal (update_option() sanitisiert und reicht an
+     * add_option() weiter, das erneut sanitisiert - siehe Crypto::PREFIX),
+     * der zweite Durchlauf bekommt also die Ausgabe des ersten zu sehen. Ohne
+     * diese Abfrage lag der Token danach doppelt verschluesselt in der
+     * Datenbank, und jede Anfrage an ChurchTools scheiterte mit
+     * "401: No valid token" - waehrend "Verbindung testen" gruen blieb, weil
+     * der Test den getippten Wert nimmt und nicht den gespeicherten (siehe
+     * effectiveConnection()).
+     *
+     * Leer heisst weiterhin "bestehenden Wert behalten": Das Feld wird nie mit
+     * dem gespeicherten Token vorbefuellt (siehe renderApiKeyField()), ein
+     * Speichern aus einem anderen Tab darf ihn also nicht loeschen.
+     */
+    private static function apiKeyToStore(string $submitted, string $existing): string
+    {
+        if ($submitted === '') {
+            return $existing;
+        }
+
+        return Crypto::isCiphertext($submitted) ? $submitted : Crypto::encrypt($submitted);
+    }
+
     public static function getDecryptedApiKey(): string
+    {
+        return self::storedApiKey();
+    }
+
+    /**
+     * Der gespeicherte Token, entschluesselt - oder '', wenn dabei nichts
+     * Brauchbares herauskommt.
+     *
+     * Packt dabei aus, was vor 0.12.4 beim allerersten Speichern doppelt
+     * verschluesselt wurde (siehe apiKeyToStore(); davor entsteht ein solcher
+     * Wert nicht mehr, die bereits gespeicherten tragen das Praefix aber
+     * nicht). Einmal entschluesselt kommt bei ihnen der base64-Text der
+     * inneren Verschluesselung heraus - druckbar und kurz genug, also fuer
+     * isPlausibleApiKey() ein gueltiger Token, der dann als
+     * "401: No valid token" bei ChurchTools landete. Hier wird er beim Lesen
+     * ausgepackt, damit niemand seinen Token deswegen neu eintragen muss; das
+     * naechste Speichern legt ihn ohnehin einfach verschluesselt ab.
+     *
+     * Ein echter Token entschluesselt sich zu nichts, deshalb entscheidet
+     * allein das Ergebnis der zweiten Runde, ob es eine zu entpacken gab.
+     */
+    private static function storedApiKey(): string
     {
         $stored = self::get()['api_key'];
         if ($stored === '') {
@@ -324,6 +373,11 @@ final class SettingsPage
         }
 
         $decrypted = Crypto::decrypt($stored);
+        $unwrapped = Crypto::decrypt($decrypted);
+
+        if (self::isPlausibleApiKey($unwrapped)) {
+            return $unwrapped;
+        }
 
         return self::isPlausibleApiKey($decrypted) ? $decrypted : '';
     }
@@ -341,12 +395,7 @@ final class SettingsPage
      */
     public static function apiKeyDecryptionFailed(): bool
     {
-        $stored = self::get()['api_key'];
-        if ($stored === '') {
-            return false;
-        }
-
-        return !self::isPlausibleApiKey(Crypto::decrypt($stored));
+        return self::get()['api_key'] !== '' && self::storedApiKey() === '';
     }
 
     private static function isPlausibleApiKey(string $token): bool
@@ -457,7 +506,7 @@ final class SettingsPage
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
                 : $existing['instance'],
-            'api_key' => $apiKey === '' ? $existing['api_key'] : Crypto::encrypt($apiKey),
+            'api_key' => self::apiKeyToStore($apiKey, $existing['api_key']),
             'calendars' => array_key_exists('calendars', $input)
                 ? self::sanitizeCalendars((array) $input['calendars'], $existing['calendars'])
                 : $existing['calendars'],
@@ -472,7 +521,7 @@ final class SettingsPage
                 ? (bool) $input['keep_data_on_uninstall']
                 : $existing['keep_data_on_uninstall'],
             'element_order' => array_key_exists('element_order', $input)
-                ? self::sanitizeElementOrder((string) $input['element_order'])
+                ? self::sanitizeElementOrder(self::orderInput($input['element_order']))
                 : $existing['element_order'],
             'corner_style' => $cornerStyle,
             // Checkbox group: renderFieldVisibilityField() prints a hidden
@@ -493,12 +542,28 @@ final class SettingsPage
             'button_color' => $buttonColor,
             'click_behavior' => $clickBehavior,
             'detail_element_order' => array_key_exists('detail_element_order', $input)
-                ? self::sanitizeDetailElementOrder((string) $input['detail_element_order'])
+                ? self::sanitizeDetailElementOrder(self::orderInput($input['detail_element_order']))
                 : $existing['detail_element_order'],
             'paging_months' => array_key_exists('paging_months', $input)
                 ? EventWindow::sanitizeMonths((int) $input['paging_months'])
                 : $existing['paging_months'],
         ];
+    }
+
+    /**
+     * Beide Reihenfolge-Felder kommen als kommagetrennter String aus ihrem
+     * Hidden-Input - beim allerersten Speichern einer Option laeuft dieser
+     * Sanitizer aber zweimal (siehe apiKeyToStore()), und im zweiten
+     * Durchlauf steht dort die bereits zerlegte Liste des ersten. Ohne diese
+     * Umwandlung machte (string) daraus "Array": eine PHP-Warnung mitten in
+     * der Antwort auf das Speichern, und aus einer gerade eingestellten
+     * Anordnung die Standardanordnung (siehe sanitizeElementOrder(), das
+     * einen unbekannten Wert bewusst auf CardDesign::DEFAULT_ORDER schnappen
+     * laesst).
+     */
+    private static function orderInput(mixed $raw): string
+    {
+        return is_array($raw) ? implode(',', array_map('strval', $raw)) : (string) $raw;
     }
 
     /**
@@ -2285,6 +2350,33 @@ final class SettingsPage
                     <p><?php echo esc_html($health['message']); ?></p>
                 </div>
             <?php endif; ?>
+            <?php $calendarError = SyncEngine::getLastCalendarError(); ?>
+            <?php if ($calendarError !== null) : ?>
+                <?php
+                /*
+                 * Eigener Kasten neben dem Sync-Fehler darueber, nicht statt
+                 * seiner: Der Kalenderabgleich scheitert unabhaengig vom
+                 * Terminabgleich und haelt ihn nicht auf (siehe
+                 * SyncEngine::refreshCalendarList()). Bisher stand dieser
+                 * Befund nur im Tab „Kalender“ - wer hier nachsah, warum
+                 * nichts synchronisiert wird, fand eine Seite ohne jeden
+                 * Fehler, waehrend die Kalenderliste in Wahrheit seit Stunden
+                 * nicht mehr geholt werden konnte.
+                 */
+                ?>
+                <div class="notice notice-warning inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: 1: date/time the calendar refresh last failed, 2: error message */
+                            esc_html__('Der Kalenderabgleich ist zuletzt fehlgeschlagen (%1$s): %2$s', 'churchtools-plugin'),
+                            esc_html(mysql2date($facts['date_format'], $calendarError['time'])),
+                            esc_html(wp_html_excerpt($calendarError['message'], 600, '…'))
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
             <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) : ?>
                 <div class="notice notice-info inline">
                     <p>
@@ -3647,6 +3739,18 @@ final class SettingsPage
 
             if ($cleanUpError !== null) {
                 wp_send_json_error(['message' => $cleanUpError['message']]);
+            }
+
+            // „Kein Kalender aktiv“ kann auch heissen: Die Liste liess sich
+            // gar nicht erst holen - ein abgelaufener API-Key etwa -, und
+            // deshalb ist keiner aktiv. Das ist der Unterschied zwischen
+            // „nichts zu tun“ und „kommt nicht an ChurchTools heran“, und er
+            // stand bisher nur im Tab „Kalender“, waehrend dieser Knopf
+            // Erfolg meldete.
+            $calendarError = SyncEngine::getLastCalendarError();
+
+            if ($calendarError !== null) {
+                wp_send_json_error(['message' => $calendarError['message']]);
             }
 
             wp_send_json_success([

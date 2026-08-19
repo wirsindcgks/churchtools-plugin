@@ -41,7 +41,29 @@ if (!defined('ABSPATH')) {
                     ?>
                     <div class="ctp-events__detail-media">
                         <div class="ctp-events__detail-media-frame<?php echo $event['image_is_fallback'] ? ' ctp-events__detail-media-frame--fallback' : ''; ?>">
-                            <img src="<?php echo esc_url($event['image_url']); ?>" alt="" />
+                            <?php
+                            /*
+                             * skip-lazy/data-no-lazy: Dieses Bild steckt im
+                             * <template> jeder Kachel und wird erst beim
+                             * Oeffnen des Popups in die Seite kopiert. Ein
+                             * Lazyload-Plugin (WP Rocket & Co.) ersetzt beim
+                             * Ausliefern trotzdem das src durch einen
+                             * Platzhalter und merkt sich die echte Adresse in
+                             * data-src - seinen Beobachter bekommt der Klon
+                             * danach aber nie zu sehen, das Popup blieb also
+                             * ohne Bild. Diese beiden Kennzeichen sind die
+                             * gaengigen Ausnahmen; unabhaengig davon holt
+                             * assets/js/frontend.js beim Klonen ein bereits
+                             * ersetztes src wieder zurueck.
+                             */
+                            ?>
+                            <img
+                                src="<?php echo esc_url($event['image_url']); ?>"
+                                alt=""
+                                class="skip-lazy"
+                                data-no-lazy="1"
+                                loading="eager"
+                            />
                         </div>
                     </div>
                 <?php endif; ?>

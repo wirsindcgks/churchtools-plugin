@@ -44,6 +44,22 @@ function ctp_test_reset_options(): void
     $GLOBALS['ctp_test_options'] = [];
 }
 
+/**
+ * Ein API-Key in der Form, in der Crypto ihn vor 0.12.4 abgelegt hat:
+ * base64(iv . ciphertext), ohne das Praefix, an dem Crypto::isCiphertext()
+ * heute einen eigenen Ciphertext erkennt. Zwei davon ineinander sind genau
+ * der Zustand, den WordPress' doppelter Sanitizer-Aufruf beim allerersten
+ * Speichern erzeugt hat - siehe SettingsPage::storedApiKey().
+ */
+function ctp_test_legacy_encrypt(string $plaintext): string
+{
+    $iv = openssl_random_pseudo_bytes(16);
+
+    return base64_encode(
+        $iv . openssl_encrypt($plaintext, 'aes-256-cbc', hash('sha256', AUTH_KEY, true), OPENSSL_RAW_DATA, $iv)
+    );
+}
+
 function get_option(string $name, $default = false)
 {
     return $GLOBALS['ctp_test_options'][$name] ?? $default;

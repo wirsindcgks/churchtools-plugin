@@ -667,6 +667,35 @@
 			});
 	}
 
+	/*
+	 * Ein Lazyload-Plugin (WP Rocket & Co.) ersetzt beim Ausliefern das src
+	 * jedes <img> durch einen Platzhalter und merkt sich die echte Adresse in
+	 * data-src/data-lazy-src. Die Bilder im <template> jeder Kachel erwischt es
+	 * dabei mit - seinen Beobachter bekommt dieser Klon hier aber nie zu sehen,
+	 * das Popup blieb deshalb ohne Bild (auf cg-ks.de blieb ein 0x1 Pixel
+	 * grosses Platzhalter-SVG stehen). Beim Klonen also selbst zuruecksetzen,
+	 * unabhaengig davon, ob das Plugin die Ausnahme-Kennzeichen im Markup
+	 * beachtet hat (siehe partials/event-detail-content.php).
+	 */
+	function restoreLazyImages(fragment) {
+		var images = fragment.querySelectorAll('img');
+
+		Array.prototype.forEach.call(images, function (img) {
+			var src = img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+			var srcset = img.getAttribute('data-srcset') || img.getAttribute('data-lazy-srcset');
+
+			if (src) {
+				img.setAttribute('src', src);
+			}
+
+			if (srcset) {
+				img.setAttribute('srcset', srcset);
+			}
+
+			img.classList.remove('lazy', 'lazyload', 'lazyloading');
+		});
+	}
+
 	function openDetailModal(trigger) {
 		var unit = trigger.closest('li, .ctp-events__hero');
 		var container = trigger.closest('.ctp-events');
@@ -682,7 +711,10 @@
 		}
 
 		body.innerHTML = '';
-		body.appendChild(template.content.cloneNode(true));
+
+		var content = template.content.cloneNode(true);
+		restoreLazyImages(content);
+		body.appendChild(content);
 		dialog.showModal();
 	}
 })();
