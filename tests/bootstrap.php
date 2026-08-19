@@ -235,3 +235,87 @@ function ctp_test_install_wpdb(): \ChurchToolsPlugin\Tests\Support\SqliteWpdb
 
     return $wpdb;
 }
+
+/**
+ * The layout templates guard themselves with `if (!defined('ABSPATH')) exit;`,
+ * so rendering one in a test (see tests/Frontend/PopupTemplateTest.php) needs the
+ * constant to exist. Pointed at the plugin directory rather than at a WordPress
+ * root, since nothing reachable from a template does anything with the value —
+ * the two callers that build paths from it (Installer::createTables(),
+ * SyncEngine::syncSeriesImage()) load wp-admin includes and are out of reach of
+ * these tests either way.
+ */
+define('ABSPATH', dirname(__DIR__) . '/');
+
+/**
+ * Escaping and translation, as far as rendering a template needs them. Faithful
+ * enough for the markup to come out parseable (esc_html()/esc_attr() really do
+ * encode, so a fixture value with an angle bracket can't invent an element),
+ * without pulling in kses or the l10n stack — the template tests assert on the
+ * *structure* of the output, and the escaping rules themselves are WP core's
+ * job, not this plugin's.
+ */
+function esc_html(string $text): string
+{
+    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+
+function esc_attr(string $text): string
+{
+    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+}
+
+function esc_url(string $url): string
+{
+    return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+}
+
+function esc_html_e(string $text, string $domain = ''): void
+{
+    echo esc_html($text);
+}
+
+function esc_attr_e(string $text, string $domain = ''): void
+{
+    echo esc_attr($text);
+}
+
+function __(string $text, string $domain = ''): string
+{
+    return $text;
+}
+
+/**
+ * Date formatting for EventFormatter, which every layout template calls for its
+ * date/time lines and month dividers. mysql2date() reads the stored
+ * "Y-m-d H:i:s" values; date_i18n() only ever gets a timestamp from it
+ * (monthLabel()), and translating the month name is exactly the part that has
+ * no meaning without WordPress, so it stays English here.
+ */
+function mysql2date(string $format, string $date, bool $translate = true): string
+{
+    return (new DateTimeImmutable($date))->format($format);
+}
+
+function date_i18n(string $format, $timestamp = false): string
+{
+    return gmdate($format, (int) $timestamp);
+}
+
+/**
+ * Same word split and ellipsis WP core uses, minus the filters and the
+ * multibyte/CJK branch — EventFormatter::excerpt() passes plain descriptions
+ * through it, and the templates only need a shortened string back.
+ */
+function wp_trim_words(string $text, int $numWords = 55, ?string $more = null): string
+{
+    $words = preg_split('/[\n\r\t ]+/', wp_strip_all_tags($text), $numWords + 1);
+
+    if (count($words) > $numWords) {
+        array_pop($words);
+
+        return implode(' ', $words) . ($more ?? '&hellip;');
+    }
+
+    return implode(' ', $words);
+}

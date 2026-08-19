@@ -6,6 +6,12 @@
  * "limit" is greater than 1).
  * Override by copying this file to yourtheme/churchtools-plugin/event-upcoming.php.
  *
+ * With the "popup" click behavior, an event's <template class="ctp-events__detail-template">
+ * has to stay inside the unit its trigger sits in — the hero <div> for the hero, the
+ * <li> for each item below it. openDetailModal() in assets/js/frontend.js resolves it
+ * from there (closest('li, .ctp-events__hero')), so a template placed next to the unit
+ * rather than inside it leaves the click with nothing to open.
+ *
  * @var array $events
  * @var array $args
  */
@@ -96,11 +102,11 @@ $upcoming = array_slice($events, 1);
                 <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup, same trust boundary as $args['design_style'] above. ?>
                 <?php echo $args['design_separators']; ?>
             </div>
+            <?php if ($args['click_behavior'] === 'popup') : ?>
+                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- detail_html is this same event's fields already individually escaped by partials/event-detail-content.php, just pre-rendered server-side (see EventListRenderer::withCalendarMeta()). ?>
+                <template class="ctp-events__detail-template"><?php echo $hero['detail_html']; ?></template>
+            <?php endif; ?>
         </div>
-        <?php if ($args['click_behavior'] === 'popup') : ?>
-            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- detail_html is this same event's fields already individually escaped by partials/event-detail-content.php, just pre-rendered server-side (see EventListRenderer::withCalendarMeta()). ?>
-            <template class="ctp-events__detail-template"><?php echo $hero['detail_html']; ?></template>
-        <?php endif; ?>
 
         <?php if ($upcoming !== []) : ?>
             <p class="ctp-events__more-label"><?php esc_html_e('Weitere Termine', 'churchtools-plugin'); ?></p>

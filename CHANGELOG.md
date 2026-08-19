@@ -5,6 +5,15 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.2] - 2026-08-19
+
+Ein Fix für eine Kachel, die aussah, als könnte man sie anklicken, und es nicht
+konnte.
+
+### Fixed
+
+- **Die große Kachel der Ansicht „Nächster Termin“ ließ sich nicht anklicken.** Sie zeigte den Mauszeiger als Hand, hob sich beim Überfahren an, und beim Klick passierte nichts. Für das Popup liegt die Detailansicht jedes Termins schon fertig in der Seite, pro Kachel in einem eigenen Element — bei der großen Kachel lag es eine Ebene zu weit außen, neben ihr statt in ihr, und der Klick fand darin nichts zu öffnen. Die kleineren Einträge darunter unter „Weitere Termine“ waren nie betroffen. Der Fehler bestand seit 0.2.0, seit es das Popup überhaupt gibt
+
 ## [0.12.1] - 2026-08-19
 
 Ein Nachtrag zur 0.12.0, und einer, der zu ihr gehört: Die Werkzeugleiste gibt
