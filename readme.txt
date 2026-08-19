@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.12.0
+Stable tag: 0.12.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.1 =
+Der Eventfinder und das Kalender-Dropdown bieten nur noch Kalender an, in denen tatsächlich Termine anstehen – ein Thema ohne Termine führte bisher auf eine leere Liste. Außerdem erscheint „Keine Termine gefunden“ nicht mehr für den Moment, in dem die Antwort des Servers noch unterwegs ist. Kein Handlungsbedarf.
+
 = 0.12.0 =
 Der Eventfinder und der Kalenderfilter liefern jetzt vollständige Antworten: „Diese Woche“, „Diesen Monat“ und die Themen-Knöpfe durchsuchen den ganzen Sync-Zeitraum statt nur der gerade geladenen Termine. Beschreibungstexte behalten außerdem ihre Absätze und Zeilenumbrüche aus ChurchTools, und Hochkant-Bilder ziehen die Ansicht „Nächster Termin“ nicht mehr in die Länge. Das Klickverhalten steht im Tab „Design“ jetzt bei den globalen Einstellungen. Kein Handlungsbedarf.
 
@@ -180,6 +183,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.1 =
+* Fix: Der Eventfinder und das Kalender-Dropdown bieten nur noch Kalender an, in denen etwas ansteht – ein Kalender ohne kommende Termine war ein Knopf, der auf eine leere Liste führte. Kommt wieder etwas dazu, ist er von selbst zurück
+* Fix: „Keine Termine gefunden“ erschien für den Moment zwischen Klick und Antwort des Servers, auch wenn gleich darauf eine volle Liste kam
 
 = 0.12.0 =
 * Neu: Beschreibungstexte behalten die Formatierung aus ChurchTools – Absätze und Zeilenumbrüche bleiben erhalten, URLs im Text werden zu Links

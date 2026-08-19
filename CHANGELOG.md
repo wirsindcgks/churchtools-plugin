@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.1] - 2026-08-19
+
+Ein Nachtrag zur 0.12.0, und einer, der zu ihr gehört: Die Werkzeugleiste gibt
+seit dem letzten Release vollständige Antworten — nur bot sie weiterhin Fragen
+an, auf die es keine gibt.
+
+### Fixed
+
+- **Der Eventfinder bietet nur noch Themen an, hinter denen etwas steht.** Die „Thema“-Knöpfe kamen aus den Kalendern, für die eine Einbindung konfiguriert ist — ob dort etwas ansteht, spielte keine Rolle. Ein Kalender ohne kommende Termine war damit ein Knopf, der auf eine leere Liste führte, und von außen nicht von einem kaputten Filter zu unterscheiden. Die Liste richtet sich jetzt danach, was tatsächlich noch kommt: Ein Kalender, dessen Termine alle vorbei sind, verschwindet von selbst, und sobald er wieder etwas hat, ist er von selbst zurück. Gilt genauso für das Kalender-Dropdown der einfachen Werkzeugleiste
+- **„Keine Termine gefunden“ erschien, bevor es das war.** Zwischen Klick und Antwort des Servers filtert der Browser die bereits geladenen Termine — bei einem Thema, dessen nächster Termin jenseits des geladenen Zeitfensters liegt, bleibt dabei nichts übrig, und für eine knappe Sekunde stand die Meldung genau dort, wo gleich eine volle Liste erscheint. Sie wartet jetzt, solange eine Anfrage offen ist
+
 ## [0.12.0] - 2026-08-19
 
 Ein Release über Antworten, die stimmen. Der Eventfinder hat bisher nur das
