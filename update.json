@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "0.12.8",
+    "version": "1.0.0",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-20 06:46:07",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v0.12.8/churchtools-plugin-v0.12.8.zip",
+    "last_updated": "2026-08-20 07:35:14",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.0.0/churchtools-plugin-v1.0.0.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Auf gecachten Seiten waren die Aufzählungspunkte zurück.</strong> Mit der Umstellung auf <code>&lt;div role=&quot;list&quot;&gt;</code> in 0.12.7 wurde die CSS-Abschaltung der Punkte überflüssig und flog heraus – für Seiten, die ein Caching-Plugin noch in der Ausgabe von vorher ausliefert, aber eben nicht: Dort trifft altes <code>&lt;ul&gt;/&lt;li&gt;</code>-Markup auf das neue Stylesheet, und die Punkte standen wieder da. Die Abschaltung bleibt jetzt stehen, obwohl sie für das eigene Markup wirkungslos ist. Sie deckt denselben Fall in einem Theme ab, das ein eigenes <code>event-*.php</code> mitbringt</li>\n</ul>\n<h4>Changed</h4>\n<ul>\n<li><strong>Die Knöpfe des Eventfinders stehen im selben Schnitt wie „Weitere Termine laden&quot;</strong> – halbfett statt in der Textstärke des Themes</li>\n</ul>\n"
+        "changelog": "<p>Die erste Versionsnummer, die etwas verspricht. Das Plugin läuft seit dem 19.08.2026 auf einer echten Gemeindeseite, und die Reihe von Fehlern, die ein erster Live-Einsatz zutage fördert, ist abgearbeitet: der doppelt verschlüsselte API-Key beim ersten Speichern, die Update-Prüfung an GitHubs Anfragegrenze, die Aufzählungspunkte des Themes vor jeder Kachel, das Popup ohne Bild, das fehlende Icon im WPBakery-Builder. Der letzte offene Punkt war die Frage, ob das Plugin selbst die Seite bremst – gemessen ja, siehe unten, und behoben.</p>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Eine Terminliste schlug jedes Bild einzeln nach.</strong> Zwei Datenbankabfragen pro Bild, bei 26 Bildern auf einer Seite also 52 von 55 Abfragen eines Durchlaufs. Auf einem eigenen Server fällt das kaum auf, auf einem gemeinsam genutzten ist jede davon eine eigene Wartezeit: Der Endpunkt der Live-Seite brauchte gut zwei Sekunden über der reinen WordPress-Grundlast. Alle Bilder einer Seite werden jetzt in einem Zug geholt – <strong>55 Abfragen wurden 5</strong>, bei unverändertem Ergebnis</li>\n</ul>\n"
     }
 }

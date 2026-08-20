@@ -5,6 +5,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.0.0] - 2026-08-20
+
+Die erste Versionsnummer, die etwas verspricht. Das Plugin läuft seit dem
+19.08.2026 auf einer echten Gemeindeseite, und die Reihe von Fehlern, die ein
+erster Live-Einsatz zutage fördert, ist abgearbeitet: der doppelt
+verschlüsselte API-Key beim ersten Speichern, die Update-Prüfung an GitHubs
+Anfragegrenze, die Aufzählungspunkte des Themes vor jeder Kachel, das Popup
+ohne Bild, das fehlende Icon im WPBakery-Builder. Der letzte offene Punkt war
+die Frage, ob das Plugin selbst die Seite bremst – gemessen ja, siehe unten,
+und behoben.
+
+### Fixed
+
+- **Eine Terminliste schlug jedes Bild einzeln nach.** Zwei Datenbankabfragen pro Bild, bei 26 Bildern auf einer Seite also 52 von 55 Abfragen eines Durchlaufs. Auf einem eigenen Server fällt das kaum auf, auf einem gemeinsam genutzten ist jede davon eine eigene Wartezeit: Der Endpunkt der Live-Seite brauchte gut zwei Sekunden über der reinen WordPress-Grundlast. Alle Bilder einer Seite werden jetzt in einem Zug geholt – **55 Abfragen wurden 5**, bei unverändertem Ergebnis
+
 ## [0.12.8] - 2026-08-20
 
 ### Fixed
@@ -395,7 +410,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...v1.0.0
 [0.12.8]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...v0.12.8
 [0.12.7]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...v0.12.7
 [0.12.6]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...v0.12.6

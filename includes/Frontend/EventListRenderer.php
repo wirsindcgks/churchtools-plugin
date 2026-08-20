@@ -103,9 +103,9 @@ final class EventListRenderer
 
     /**
      * Renders one further page of list/grid items for the load-more button —
-     * just the <li> elements (plus their month dividers), no container, no
+     * just the item elements (plus their month dividers), no container, no
      * toolbar, since those are already in the page and the JS appends into the
-     * existing <ul>. Called from EventsEndpoint, which has already validated
+     * existing list container (see the templates: a div[role=list], not a <ul>). Called from EventsEndpoint, which has already validated
      * every value in $args against the same rules render() applies.
      *
      * @return array{html: string, next_page: int|null, next_offset: int}
@@ -413,6 +413,7 @@ final class EventListRenderer
     {
         $calendars = SettingsPage::get()['calendars'];
         $order = DetailDesign::isValidOrder($detailOrder) ? $detailOrder : DetailDesign::DEFAULT_ORDER;
+        self::primeAttachmentCache($events, $calendars);
 
         foreach ($events as &$event) {
             $calendar = $calendars[(int) $event['ct_calendar_id']] ?? null;
@@ -494,6 +495,49 @@ final class EventListRenderer
         usort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
 
         return $calendars;
+    }
+
+    /**
+     * Holt alle Bilder dieser Seite in einem Zug in den Objekt-Cache.
+     *
+     * wp_get_attachment_image_url() unten schlaegt sonst jedes Bild einzeln
+     * nach, und zwar mit zwei Abfragen (Beitrag und Metadaten). Bei 26 Bildern
+     * auf einer Seite waren das 52 der 55 Abfragen eines Durchlaufs - gemessen
+     * gegen die Testumgebung. Lokal faellt das nicht auf, auf einem gemeinsam
+     * genutzten Server ist jede dieser Abfragen eine eigene Wartezeit, und die
+     * Seite von cg-ks.de brauchte im Endpunkt gut zwei Sekunden.
+     *
+     * _prime_post_caches() ist Kernfunktion und in WordPress selbst genau dafuer
+     * da (WP_Query nutzt sie fuer ihre eigenen Ergebnisse). Der fuehrende
+     * Unterstrich heisst „nicht Teil der oeffentlichen API“ - die Alternative
+     * waere eine WP_Query ueber post__in nur zum Fuellen desselben Caches, also
+     * derselbe Effekt mit mehr Umweg.
+     *
+     * @param array<int, array<string, mixed>> $events
+     * @param array<int, array<string, mixed>> $calendars
+     */
+    private static function primeAttachmentCache(array $events, array $calendars): void
+    {
+        $ids = [];
+
+        foreach ($events as $event) {
+            $attachmentId = (int) ($event['attachment_id'] ?? 0);
+            if ($attachmentId > 0) {
+                $ids[] = $attachmentId;
+            }
+
+            $calendar = $calendars[(int) $event['ct_calendar_id']] ?? null;
+            $defaultImageId = (int) ($calendar['default_image_id'] ?? 0);
+            if ($defaultImageId > 0) {
+                $ids[] = $defaultImageId;
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+
+        if ($ids !== []) {
+            _prime_post_caches($ids, false, true);
+        }
     }
 
     /**
