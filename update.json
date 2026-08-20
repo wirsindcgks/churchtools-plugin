@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "0.12.7",
+    "version": "0.12.8",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-20 06:33:44",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v0.12.7/churchtools-plugin-v0.12.7.zip",
+    "last_updated": "2026-08-20 06:46:07",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v0.12.8/churchtools-plugin-v0.12.8.zip",
     "sections": {
-        "changelog": "<p>Die Aufzählungspunkte waren nach zwei Anläufen immer noch nicht weg, sondern nur überschrieben – auf dem Handy blieb eine Einrückung stehen. Diesmal ist die Ursache weg statt ihrer Wirkung.</p>\n<h4>Changed</h4>\n<ul>\n<li><strong>Die Terminlisten sind keine <code>&lt;ul&gt;</code> mehr, sondern <code>&lt;div role=&quot;list&quot;&gt;</code> mit <code>&lt;div role=&quot;listitem&quot;&gt;</code>.</strong> Zweimal war der Punkt vor den Kacheln per CSS überschrieben worden, und zweimal kam etwas davon zurück – zuletzt 18 Pixel Einrückung, sichtbar vor allem auf dem Handy. Der Grund ließ sich messen: Uncode formatiert jede Liste im Seiteninhalt mit <code>.post-content ul:not(.no-list):not(.navigation):not(…)</code> und kommt über seine sechs <code>:not(.klasse)</code> auf sieben Klassen Spezifität. Dagegen gewinnt keine Regel dieses Plugins, die noch zu lesen wäre. Ohne <code>&lt;ul&gt;</code>/<code>&lt;li&gt;</code> greifen solche Theme-Regeln gar nicht erst – in jedem Theme, nicht nur in diesem einen. Die Listen-Semantik tragen jetzt die role-Attribute; die braucht es hier ohnehin, weil Safari einer Liste mit <code>display: grid</code> oder <code>flex</code> die Listenrolle aberkennt, auch einer echten <code>&lt;ul&gt;</code></li>\n<li><strong>Alle Schaltflächen haben dieselbe Schriftgröße</strong>, eine neue Stufe zwischen den bisherigen beiden: Die Knöpfe des Eventfinders standen für eine Reihe von Bedienelementen zu klein, „Weitere Termine laden&quot; erbte die Textgröße und war daneben zu groß</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Auf gecachten Seiten waren die Aufzählungspunkte zurück.</strong> Mit der Umstellung auf <code>&lt;div role=&quot;list&quot;&gt;</code> in 0.12.7 wurde die CSS-Abschaltung der Punkte überflüssig und flog heraus – für Seiten, die ein Caching-Plugin noch in der Ausgabe von vorher ausliefert, aber eben nicht: Dort trifft altes <code>&lt;ul&gt;/&lt;li&gt;</code>-Markup auf das neue Stylesheet, und die Punkte standen wieder da. Die Abschaltung bleibt jetzt stehen, obwohl sie für das eigene Markup wirkungslos ist. Sie deckt denselben Fall in einem Theme ab, das ein eigenes <code>event-*.php</code> mitbringt</li>\n</ul>\n<h4>Changed</h4>\n<ul>\n<li><strong>Die Knöpfe des Eventfinders stehen im selben Schnitt wie „Weitere Termine laden&quot;</strong> – halbfett statt in der Textstärke des Themes</li>\n</ul>\n"
     }
 }

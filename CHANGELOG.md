@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.8] - 2026-08-20
+
+### Fixed
+
+- **Auf gecachten Seiten waren die Aufzählungspunkte zurück.** Mit der Umstellung auf `<div role="list">` in 0.12.7 wurde die CSS-Abschaltung der Punkte überflüssig und flog heraus – für Seiten, die ein Caching-Plugin noch in der Ausgabe von vorher ausliefert, aber eben nicht: Dort trifft altes `<ul>/<li>`-Markup auf das neue Stylesheet, und die Punkte standen wieder da. Die Abschaltung bleibt jetzt stehen, obwohl sie für das eigene Markup wirkungslos ist. Sie deckt denselben Fall in einem Theme ab, das ein eigenes `event-*.php` mitbringt
+
+### Changed
+
+- **Die Knöpfe des Eventfinders stehen im selben Schnitt wie „Weitere Termine laden"** – halbfett statt in der Textstärke des Themes
+
 ## [0.12.7] - 2026-08-20
 
 Die Aufzählungspunkte waren nach zwei Anläufen immer noch nicht weg, sondern
@@ -385,7 +395,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...HEAD
+[0.12.8]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...v0.12.8
 [0.12.7]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...v0.12.7
 [0.12.6]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...v0.12.6
 [0.12.5]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...v0.12.5

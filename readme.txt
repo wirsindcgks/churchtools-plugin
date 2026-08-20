@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.12.7
+Stable tag: 0.12.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.8 =
+Holt die Abschaltung der Aufzählungspunkte zurück, die für Seiten aus einem Cache mit älterem Markup weiterhin gebraucht wird. Nach dem Update den Seiten-Cache leeren, sonst zeigt die Seite weiter die alte Ausgabe.
+
 = 0.12.7 =
 Beseitigt die Ursache der Aufzählungspunkte und der Einrückung vor den Kacheln: Die Terminlisten sind jetzt role-basierte Container statt ul/li, an denen Theme-Regeln für Inhaltslisten nicht mehr greifen. Wer ein eigenes Template aus dem Theme heraus überschreibt, sollte die Änderung nachziehen.
 
@@ -201,6 +204,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.8 =
+* Fix: Auf Seiten aus dem Cache eines Optimierungs-Plugins waren die Aufzählungspunkte vor den Kacheln zurück – die Abschaltung im CSS bleibt jetzt bestehen, auch wenn das eigene Markup sie nicht mehr braucht
+* Änderung: Die Knöpfe des Eventfinders halbfett, wie „Weitere Termine laden"
 
 = 0.12.7 =
 * Änderung: Terminlisten als `<div role="list">` statt `<ul>` – Theme-Regeln für Inhaltslisten (Aufzählungspunkte, Einrückung) greifen damit nicht mehr, statt nur überschrieben zu werden
