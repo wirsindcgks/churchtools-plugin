@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.0.1 =
+Absicherung für das Sammelholen der Bilder aus 1.0.0. Kein Handlungsbedarf.
+
 = 1.0.0 =
 Erste stabile Version. Enthält außerdem eine spürbare Entlastung der Datenbank: Die Bilder einer Terminliste werden in einem Zug geholt statt einzeln – aus 55 Abfragen pro Durchlauf werden 5.
 
@@ -207,6 +210,9 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.0.1 =
+* Änderung: Das Sammelholen der Bilder greift auf eine WordPress-Kernfunktion zurück, die formal nicht Teil der öffentlichen API ist – fehlt sie einmal, wird die Seite wieder langsamer statt kaputt
 
 = 1.0.0 =
 * Erste stabile Version nach dem ersten Live-Einsatz

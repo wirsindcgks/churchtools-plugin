@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.0.1] - 2026-08-20
+
+### Changed
+
+- **Das Sammelholen der Bilder aus 1.0.0 ist gegen sein eigenes Werkzeug abgesichert.** Es ruft eine Kernfunktion auf, die WordPress in jeder `WP_Query` selbst benutzt, deren führender Unterstrich aber sagt: nicht Teil der öffentlichen API. Verschwindet sie in einer künftigen WordPress-Version, wird die Seite jetzt wieder langsamer statt kaputt – die Bilder werden dann einzeln nachgeschlagen wie vor 1.0.0. Ein Test hält den Fall fest, indem er genau in dem Zustand läuft, gegen den die Absicherung schützt
+
 ## [1.0.0] - 2026-08-20
 
 Die erste Versionsnummer, die etwas verspricht. Das Plugin läuft seit dem
@@ -410,7 +416,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...v1.0.0
 [0.12.8]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...v0.12.8
 [0.12.7]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...v0.12.7

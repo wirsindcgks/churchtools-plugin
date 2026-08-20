@@ -511,7 +511,10 @@ final class EventListRenderer
      * da (WP_Query nutzt sie fuer ihre eigenen Ergebnisse). Der fuehrende
      * Unterstrich heisst „nicht Teil der oeffentlichen API“ - die Alternative
      * waere eine WP_Query ueber post__in nur zum Fuellen desselben Caches, also
-     * derselbe Effekt mit mehr Umweg.
+     * derselbe Effekt mit mehr Umweg. Wenn eine kuenftige WordPress-Version sie
+     * doch entfernt, soll die Seite langsam werden und nicht kaputtgehen:
+     * Ohne sie schlaegt wp_get_attachment_image_url() die Bilder wieder
+     * einzeln nach, genau wie vor 1.0.0.
      *
      * @param array<int, array<string, mixed>> $events
      * @param array<int, array<string, mixed>> $calendars
@@ -535,7 +538,7 @@ final class EventListRenderer
 
         $ids = array_values(array_unique($ids));
 
-        if ($ids !== []) {
+        if ($ids !== [] && function_exists('_prime_post_caches')) {
             _prime_post_caches($ids, false, true);
         }
     }
