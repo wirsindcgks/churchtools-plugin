@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.0.3] - 2026-08-20
+
+### Changed
+
+- **Der Eventfinder ist mittig ausgerichtet**, wie „Weitere Termine laden" unter der Liste: Überschrift, die Knopfreihen und das Suchfeld. Zentriert werden dabei die Inhalte der Abschnitte, nicht die Abschnitte selbst – die Trennlinie zwischen „Thema" und „Zeitraum" läuft weiter über die ganze Breite, statt auf die Breite ihrer Knöpfe zu schrumpfen. Das Suchfeld steht dabei auf höchstens 26rem statt über die volle Breite, sonst wäre es das breiteste Element einer sonst mittigen Werkzeugleiste
+
 ## [1.0.2] - 2026-08-20
 
 ### Fixed
@@ -422,7 +428,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...v1.0.0

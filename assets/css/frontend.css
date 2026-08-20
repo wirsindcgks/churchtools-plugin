@@ -126,6 +126,15 @@
     align-items: center;
 }
 
+/* Im Eventfinder steht das Suchfeld als eigener Abschnitt unter den
+   Knopfreihen - ueber die volle Breite gezogen waere es das breiteste Element
+   einer sonst mittigen Werkzeugleiste. */
+.ctp-events__eventfinder .ctp-events__search {
+    width: min(100%, 26rem);
+    flex: 0 1 auto;
+    align-self: center;
+}
+
 .ctp-events__search .ctp-events__icon {
     position: absolute;
     left: 0.85rem;
@@ -191,10 +200,21 @@
     gap: 0;
 }
 
+/*
+ * Mittig ausgerichtet, wie „Weitere Termine laden“ unter der Liste (siehe
+ * .ctp-events__more): Beides sind Bedienelemente, die zur Liste gehoeren und
+ * nicht zu ihr gehoerender Text - links buendig standen sie in der Spalte wie
+ * ein weiterer Absatz.
+ *
+ * Zentriert werden die Inhalte der Abschnitte, nicht die Abschnitte selbst:
+ * Die Trennlinie zwischen „Thema“ und „Zeitraum“ soll weiterhin ueber die
+ * ganze Breite laufen und nicht auf die Breite ihrer Knoepfe schrumpfen.
+ */
 .ctp-events__finder-label {
     margin: 0 0 0.9rem;
     font-size: var(--ctp-font-lg);
     font-weight: 700;
+    text-align: center;
 }
 
 /* One section per filter dimension ("Thema"/"Zeitraum", plus the search field
@@ -207,7 +227,7 @@
        read as a form label rather than as the section title it is. */
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     gap: 0.55rem;
     margin-block-start: 0.95rem;
     padding-block-start: 0.95rem;
@@ -229,6 +249,7 @@
 .ctp-events__finder-group {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.5rem;
 }
 

@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-20 07:59:04",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.0.2/churchtools-plugin-v1.0.2.zip",
+    "last_updated": "2026-08-20 08:44:48",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.0.3/churchtools-plugin-v1.0.3.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>„Nach Updates suchen&quot; drehte endlos.</strong> Der Knopf leerte den Update-Zwischenspeicher von WordPress und rief <code>wp_update_plugins()</code> auf – und das ist etwas anderes, als es aussieht: WordPress fragt damit api.wordpress.org nach <em>allen</em> installierten Plugins und wartet auf die Antwort. Auf einer Seite mit vielen Plugins und einem Server unter Last kommt die nicht mehr an, während die eine Datei, um die es hier geht, in Bruchteilen einer Sekunde da ist. Gefragt wird jetzt genau diese eine Quelle: <strong>0,345 Sekunden</strong> für die vollständige Prüfung inklusive Netzwerk. Der Zwischenspeicher von WordPress wird dabei nicht mehr geleert – die Update-Bibliothek hängt ihr Ergebnis ohnehin bei jedem Lesen in die Liste der verfügbaren Updates ein, die Plugin-Seite zeigt es also unverändert an</li>\n</ul>\n"
+        "changelog": "<h4>Changed</h4>\n<ul>\n<li><strong>Der Eventfinder ist mittig ausgerichtet</strong>, wie „Weitere Termine laden&quot; unter der Liste: Überschrift, die Knopfreihen und das Suchfeld. Zentriert werden dabei die Inhalte der Abschnitte, nicht die Abschnitte selbst – die Trennlinie zwischen „Thema&quot; und „Zeitraum&quot; läuft weiter über die ganze Breite, statt auf die Breite ihrer Knöpfe zu schrumpfen. Das Suchfeld steht dabei auf höchstens 26rem statt über die volle Breite, sonst wäre es das breiteste Element einer sonst mittigen Werkzeugleiste</li>\n</ul>\n"
     }
 }
