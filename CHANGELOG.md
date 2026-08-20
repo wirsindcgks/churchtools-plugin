@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.7] - 2026-08-20
+
+Die Aufzählungspunkte waren nach zwei Anläufen immer noch nicht weg, sondern
+nur überschrieben – auf dem Handy blieb eine Einrückung stehen. Diesmal ist
+die Ursache weg statt ihrer Wirkung.
+
+### Changed
+
+- **Die Terminlisten sind keine `<ul>` mehr, sondern `<div role="list">` mit `<div role="listitem">`.** Zweimal war der Punkt vor den Kacheln per CSS überschrieben worden, und zweimal kam etwas davon zurück – zuletzt 18 Pixel Einrückung, sichtbar vor allem auf dem Handy. Der Grund ließ sich messen: Uncode formatiert jede Liste im Seiteninhalt mit `.post-content ul:not(.no-list):not(.navigation):not(…)` und kommt über seine sechs `:not(.klasse)` auf sieben Klassen Spezifität. Dagegen gewinnt keine Regel dieses Plugins, die noch zu lesen wäre. Ohne `<ul>`/`<li>` greifen solche Theme-Regeln gar nicht erst – in jedem Theme, nicht nur in diesem einen. Die Listen-Semantik tragen jetzt die role-Attribute; die braucht es hier ohnehin, weil Safari einer Liste mit `display: grid` oder `flex` die Listenrolle aberkennt, auch einer echten `<ul>`
+- **Alle Schaltflächen haben dieselbe Schriftgröße**, eine neue Stufe zwischen den bisherigen beiden: Die Knöpfe des Eventfinders standen für eine Reihe von Bedienelementen zu klein, „Weitere Termine laden" erbte die Textgröße und war daneben zu groß
+
 ## [0.12.6] - 2026-08-20
 
 Eine Runde Feinschliff an der Darstellung, nach dem zweiten Durchgang über die
@@ -374,7 +385,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...HEAD
+[0.12.7]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...v0.12.7
 [0.12.6]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...v0.12.6
 [0.12.5]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...v0.12.5
 [0.12.4]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...v0.12.4

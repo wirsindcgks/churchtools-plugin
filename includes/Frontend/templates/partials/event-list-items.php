@@ -28,11 +28,11 @@ if (!defined('ABSPATH')) {
 <?php foreach ($events as $event) : ?>
     <?php if ($args['month_dividers'] && EventFormatter::monthKey($event['start_date']) !== $currentMonthKey) : ?>
         <?php $currentMonthKey = EventFormatter::monthKey($event['start_date']); ?>
-        <li class="ctp-events__month-divider" data-ctp-month="<?php echo esc_attr($currentMonthKey); ?>">
+        <div class="ctp-events__month-divider" role="listitem" data-ctp-month="<?php echo esc_attr($currentMonthKey); ?>">
             <?php echo esc_html(EventFormatter::monthLabel($event['start_date'])); ?>
-        </li>
+        </div>
     <?php endif; ?>
-    <li
+    <div
         class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
         data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
         data-ctp-search="<?php echo esc_attr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); ?>"
@@ -108,5 +108,5 @@ if (!defined('ABSPATH')) {
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- detail_html is this same event's fields already individually escaped by partials/event-detail-content.php, just pre-rendered server-side (see EventListRenderer::withCalendarMeta()). ?>
             <template class="ctp-events__detail-template"><?php echo $event['detail_html']; ?></template>
         <?php endif; ?>
-    </li>
+    </div>
 <?php endforeach; ?>

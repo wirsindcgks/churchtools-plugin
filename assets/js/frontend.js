@@ -697,7 +697,7 @@
 	}
 
 	function openDetailModal(trigger) {
-		var unit = trigger.closest('li, .ctp-events__hero');
+		var unit = trigger.closest('.ctp-events__item, .ctp-events__cell, .ctp-events__hero');
 		var container = trigger.closest('.ctp-events');
 		if (!unit || !container) {
 			return;

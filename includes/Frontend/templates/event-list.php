@@ -26,10 +26,10 @@ if (!defined('ABSPATH')) {
     <?php if (empty($events)) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
-        <ul class="ctp-events__list">
+        <div class="ctp-events__list" role="list">
             <?php $currentMonthKey = null; ?>
             <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-list-items.php'; ?>
-        </ul>
+        </div>
         <?php if ($args['paging']) : ?>
             <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/load-more.php'; ?>
         <?php endif; ?>

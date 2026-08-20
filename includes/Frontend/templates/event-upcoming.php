@@ -134,9 +134,9 @@ $heroHasMedia = $hero !== null
 
         <?php if ($upcoming !== []) : ?>
             <p class="ctp-events__more-label"><?php esc_html_e('Weitere Termine', 'churchtools-plugin'); ?></p>
-            <ul class="ctp-events__list">
+            <div class="ctp-events__list" role="list">
                 <?php foreach ($upcoming as $event) : ?>
-                    <li
+                    <div
                         class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
                         <?php if ($event['calendar_color'] !== '') : ?>
                             style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
@@ -206,9 +206,9 @@ $heroHasMedia = $hero !== null
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- detail_html is this same event's fields already individually escaped by partials/event-detail-content.php, just pre-rendered server-side (see EventListRenderer::withCalendarMeta()). ?>
                             <template class="ctp-events__detail-template"><?php echo $event['detail_html']; ?></template>
                         <?php endif; ?>
-                    </li>
+                    </div>
                 <?php endforeach; ?>
-            </ul>
+            </div>
         <?php endif; ?>
         <?php if ($args['click_behavior'] === 'popup') : ?>
             <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/modal.php'; ?>

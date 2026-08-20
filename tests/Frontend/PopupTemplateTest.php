@@ -51,7 +51,7 @@ final class PopupTemplateTest extends TestCase
             $title = trim($trigger->textContent);
             $unit = $this->clickedUnit($trigger);
 
-            $this->assertNotNull($unit, "{$layout}: trigger for \"{$title}\" sits in no <li>/hero");
+            $this->assertNotNull($unit, "{$layout}: trigger for \"{$title}\" sits in no Eintrag/Hero-Kachel");
 
             $templates = $this->query(
                 $dom,
@@ -183,14 +183,16 @@ final class PopupTemplateTest extends TestCase
 
     /**
      * The element openDetailModal() would land on:
-     * `trigger.closest('li, .ctp-events__hero')`.
+     * `trigger.closest('.ctp-events__item, .ctp-events__cell, .ctp-events__hero')`.
      */
     private function clickedUnit(DOMElement $trigger): ?DOMElement
     {
+        $units = ['ctp-events__item', 'ctp-events__cell', 'ctp-events__hero'];
+
         for ($node = $trigger->parentNode; $node instanceof DOMElement; $node = $node->parentNode) {
             $classes = explode(' ', (string) $node->getAttribute('class'));
 
-            if ($node->tagName === 'li' || in_array('ctp-events__hero', $classes, true)) {
+            if (array_intersect($units, $classes) !== []) {
                 return $node;
             }
         }

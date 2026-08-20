@@ -91,6 +91,12 @@
     --ctp-font-lg: calc(var(--ctp-font-base) * 1.125);
     --ctp-font-xl: calc(var(--ctp-font-base) * 1.375);
     --ctp-font-2xl: calc(var(--ctp-font-base) * 2);
+    /* Eine Groesse fuer alle Schaltflaechen des Plugins. Bewusst zwischen sm
+       und md: Die Knoepfe des Eventfinders standen auf sm und wirkten fuer
+       eine Reihe von Bedienelementen zu klein, „Weitere Termine laden“ erbte
+       md und war daneben zu gross - beides dieselbe Sorte Knopf, also
+       dieselbe Groesse. */
+    --ctp-font-control: calc(var(--ctp-font-base) * 0.94);
 
     color: var(--ctp-color-text);
     font-size: var(--ctp-font-md);
@@ -261,7 +267,7 @@
     background-color: var(--ctp-color-button);
     color: var(--ctp-color-button-text);
     font: inherit;
-    font-size: var(--ctp-font-sm);
+    font-size: var(--ctp-font-control);
     line-height: 1.35;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -337,6 +343,7 @@
     background-color: var(--ctp-color-button);
     color: var(--ctp-color-button-text);
     font: inherit;
+    font-size: var(--ctp-font-control);
     font-weight: 600;
     line-height: 1.2;
     cursor: pointer;
@@ -394,46 +401,31 @@
     grid-column: 1 / -1;
 }
 
+/*
+ * Bewusst <div role="list"> statt <ul> und <div role="listitem"> statt <li>
+ * (siehe die Templates). Das ist kein Geschmack, sondern das Ergebnis eines
+ * verlorenen Spezifitaetskampfes: Uncode - das Theme auf der ersten
+ * Live-Seite - formatiert jede Liste im Inhalt mit
+ *
+ *   .post-content ul:not(.no-list):not(.navigation):not(.pagination):not(…)
+ *
+ * und kommt ueber die sechs :not(.klasse) auf sieben Klassen Spezifitaet.
+ * Dagegen gewinnt keine Regel dieses Plugins, die noch zu lesen waere: Vor
+ * jeder Kachel stand ein Aufzaehlungspunkt, und die Liste war um 18px
+ * eingerueckt. Zwei Anlaeufe haben das ueberschrieben statt abgestellt - ohne
+ * <ul>/<li> greifen solche Theme-Regeln gar nicht erst, und zwar in jedem
+ * Theme, nicht nur in diesem einen.
+ *
+ * Die Listen-Semantik bleibt ueber die role-Attribute erhalten. Die braucht es
+ * hier ohnehin: Safari erkennt einer Liste mit display: grid oder flex die
+ * Listenrolle ab, auch einer echten <ul>.
+ */
 .ctp-events__list {
     display: flex;
     flex-direction: column;
     gap: 0;
-    list-style: none;
     margin: 0;
     padding: 0;
-}
-
-/*
- * Dasselbe nochmal, spezifischer und an den direkten Kindern der Liste: Themes
- * formatieren Listen mit Regeln wie `.entry-content ul li`, und die schlagen
- * ein `list-style: none`, das nur am Container haengt. Auf cg-ks.de stand
- * deshalb vor jeder Kachel und jedem Monatstrenner ein Aufzaehlungspunkt, und
- * die Liste war um die Markerspalte des Themes nach rechts geschoben.
- *
- * Wichtig ist der Kindselektor statt der Klassen der Kacheln: In der
- * Grid-Ansicht ist die Kachel ein <article> *in* einem klassenlosen <li>
- * (siehe partials/event-grid-items.php) - eine Regel auf .ctp-events__card
- * trifft also gar nicht das Element, an dem der Punkt haengt. Genau daran ist
- * der erste Anlauf gescheitert.
- *
- * Der Kindselektor haelt zugleich Listen *im* Beschreibungstext heraus, die
- * ihre Punkte behalten sollen (wp_kses_post() laesst ul/ol/li durch, siehe
- * EventFormatter::description()) - die stehen tiefer, nicht direkt in
- * .ctp-events__list. ::marker als Nachsatz fuer Themes, die den Punkt ueber
- * `content` setzen statt ueber `list-style`.
- */
-.ctp-events ul.ctp-events__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.ctp-events .ctp-events__list > li {
-    list-style: none;
-}
-
-.ctp-events .ctp-events__list > li::marker {
-    content: '';
 }
 
 .ctp-events__color-dot {
