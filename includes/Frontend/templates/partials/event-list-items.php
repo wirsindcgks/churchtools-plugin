@@ -54,9 +54,6 @@ if (!defined('ABSPATH')) {
         <span class="ctp-events__body">
             <?php if (!in_array('calendar', $args['hidden_elements'], true) && $event['calendar_name'] !== '') : ?>
                 <span class="ctp-events__eyebrow">
-                    <?php if ($event['calendar_color'] !== '') : ?>
-                        <span class="ctp-events__color-dot" aria-hidden="true"></span>
-                    <?php endif; ?>
                     <?php echo esc_html($event['calendar_name']); ?>
                 </span>
             <?php endif; ?>

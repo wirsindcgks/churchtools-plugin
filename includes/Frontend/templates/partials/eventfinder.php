@@ -63,8 +63,11 @@ $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
                 <?php foreach ($filterCalendars as $filterCalendar) : ?>
                     <button
                         type="button"
-                        class="ctp-events__finder-btn"
+                        class="ctp-events__finder-btn ctp-events__finder-btn--calendar"
                         data-ctp-finder-calendar="<?php echo esc_attr($filterCalendar['id']); ?>"
+                        <?php if (($filterCalendar['color'] ?? '') !== '') : ?>
+                            style="--ctp-accent:<?php echo esc_attr($filterCalendar['color']); ?>;"
+                        <?php endif; ?>
                         aria-pressed="false"
                     ><?php echo esc_html($filterCalendar['name']); ?></button>
                 <?php endforeach; ?>

@@ -510,7 +510,15 @@ final class EventListRenderer
 
         foreach ($ids as $id) {
             $name = $known[$id]['name'] ?? '';
-            $calendars[$id] = ['id' => $id, 'name' => $name !== '' ? $name : sprintf('#%d', $id)];
+            // Die Farbe wandert bis in die Knoepfe des Eventfinders (siehe
+            // partials/eventfinder.php): Ein Knopf in der Farbe seines
+            // Kalenders ist im Ergebnis darunter wiederzuerkennen, wo dieselbe
+            // Farbe die Kategorie auszeichnet.
+            $calendars[$id] = [
+                'id' => $id,
+                'name' => $name !== '' ? $name : sprintf('#%d', $id),
+                'color' => (string) ($known[$id]['color'] ?? ''),
+            ];
         }
 
         return array_values($calendars);

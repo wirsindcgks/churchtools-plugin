@@ -47,37 +47,33 @@ $heroHasMedia = $hero !== null
                 style="--ctp-accent:<?php echo esc_attr($hero['calendar_color']); ?>;"
             <?php endif; ?>
         >
+            <?php
+            /*
+             * Eigene Spalte links, nicht mehr im Textteil: Datums-Chip,
+             * daneben die Angaben zum Termin, dann das Bild. Der Chip steht
+             * dabei senkrecht mittig zur Kachel. An "media" gebunden wie in
+             * jeder anderen Ansicht - wer den Bildbereich abwaehlt, waehlt den
+             * Chip mit ab, die Datumszeile im Text bleibt.
+             */
+            ?>
+            <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
+                <span class="ctp-events__date-chip ctp-events__date-chip--hero" aria-hidden="true">
+                    <span class="ctp-events__day">
+                        <?php echo esc_html(EventFormatter::dayNumber($hero['start_date'])); ?>
+                    </span>
+                    <span class="ctp-events__month">
+                        <?php echo esc_html(EventFormatter::monthAbbreviation($hero['start_date'])); ?>
+                    </span>
+                </span>
+            <?php endif; ?>
             <?php if ($heroHasMedia) : ?>
                 <div class="ctp-events__hero-media<?php echo $hero['image_is_fallback'] ? ' ctp-events__hero-media--fallback' : ''; ?>">
                     <img src="<?php echo esc_url($hero['image_url']); ?>" alt="" loading="lazy" />
                 </div>
             <?php endif; ?>
             <div class="ctp-events__hero-body">
-                <?php
-                /*
-                 * Derselbe Datums-Chip wie in der Liste, samt seiner Position
-                 * im Bild-Slot der Reihenfolge (--ctp-order-media) - die
-                 * Hero-Kachel war die einzige Ansicht ohne einen. Bewusst in
-                 * der Textspalte und nicht als Aufkleber im Bildbereich: Dort
-                 * haengt er neben einem hochkanten Flyer im Leeren, weil die
-                 * Bildzelle breiter ist als das contain eingepasste Bild.
-                 */
-                ?>
-                <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
-                    <span class="ctp-events__date-chip ctp-events__date-chip--hero" aria-hidden="true">
-                        <span class="ctp-events__day">
-                            <?php echo esc_html(EventFormatter::dayNumber($hero['start_date'])); ?>
-                        </span>
-                        <span class="ctp-events__month">
-                            <?php echo esc_html(EventFormatter::monthAbbreviation($hero['start_date'])); ?>
-                        </span>
-                    </span>
-                <?php endif; ?>
                 <?php if (!in_array('calendar', $args['hidden_elements'], true)) : ?>
                     <span class="ctp-events__eyebrow">
-                        <?php if ($hero['calendar_name'] !== '' && $hero['calendar_color'] !== '') : ?>
-                            <span class="ctp-events__color-dot" aria-hidden="true"></span>
-                        <?php endif; ?>
                         <?php
                         $eyebrow = $hero['calendar_name'] !== ''
                             ? $hero['calendar_name']
@@ -159,9 +155,6 @@ $heroHasMedia = $hero !== null
                         <span class="ctp-events__body">
                             <?php if (!in_array('calendar', $args['hidden_elements'], true) && $event['calendar_name'] !== '') : ?>
                                 <span class="ctp-events__eyebrow">
-                                    <?php if ($event['calendar_color'] !== '') : ?>
-                                        <span class="ctp-events__color-dot" aria-hidden="true"></span>
-                                    <?php endif; ?>
                                     <?php echo esc_html($event['calendar_name']); ?>
                                 </span>
                             <?php endif; ?>

@@ -1421,7 +1421,6 @@ final class SettingsPage
                             </div>
                             <div class="ctp-events__content" id="ctp-design-preview-content">
                                 <span class="ctp-events__eyebrow" data-key="calendar" <?php echo in_array('calendar', $hidden, true) ? 'hidden' : ''; ?>>
-                                    <span class="ctp-events__color-dot" aria-hidden="true"></span>
                                     <?php esc_html_e('Beispiel-Kalender', 'churchtools-plugin'); ?>
                                 </span>
                                 <span class="ctp-events__title">
@@ -1488,7 +1487,7 @@ final class SettingsPage
         $blocks = [
             'media' => '<div class="ctp-events__detail-media" aria-hidden="true">'
                 . '<div class="ctp-events__detail-media-frame ctp-design-preview-block__media"></div></div>',
-            'calendar' => '<span class="ctp-events__eyebrow"><span class="ctp-events__color-dot" aria-hidden="true"></span>'
+            'calendar' => '<span class="ctp-events__eyebrow">'
                 . esc_html__('Beispiel-Kalender', 'churchtools-plugin') . '</span>',
             'title' => '<h2 class="ctp-events__detail-title">' . esc_html__('Beispiel-Termin', 'churchtools-plugin') . '</h2>',
             'subtitle' => '<p class="ctp-events__subtitle">' . esc_html__('Untertitel-Beispiel', 'churchtools-plugin') . '</p>',

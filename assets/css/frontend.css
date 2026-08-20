@@ -30,9 +30,13 @@
      * drops into most site designs unchanged; a theme overrides these five
      * without touching anything else.
      */
-    --ctp-color-button: var(--ctp-color-surface);
+    /* Weiss statt Kachelgrund, und der Rand in der eingestellten Buttonfarbe
+       (--ctp-color-button-strong) statt in einem grauen Haarstrich: Der Knopf
+       soll sich als Bedienelement zu erkennen geben, ohne gefuellt zu sein -
+       gefuellt ist er erst im gewaehlten Zustand. */
+    --ctp-color-button: #fff;
     --ctp-color-button-text: var(--wp--preset--color--contrast, #111827);
-    --ctp-color-button-border: var(--ctp-color-border);
+    --ctp-color-button-border: var(--ctp-color-button-strong);
     --ctp-color-button-strong: var(--wp--preset--color--contrast, #111827);
     --ctp-color-button-strong-text: var(--ctp-color-surface);
     --ctp-gap: clamp(1.35rem, 1.6vw + 0.7rem, 2.4rem);
@@ -263,8 +267,14 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+/*
+ * Leichte Fuellung statt Randfaerbung: Der Rand traegt seit dem Umstellen auf
+ * weisse Knoepfe schon die Buttonfarbe, ein Hover, der nur ihn einfaerbt,
+ * waere ohne Wirkung geblieben. Der gewaehlte Zustand bleibt die volle
+ * Fuellung, der Unterschied zwischen „darueber“ und „gewaehlt“ also deutlich.
+ */
 .ctp-events__finder-btn:hover {
-    border-color: var(--ctp-color-button-strong);
+    background-color: color-mix(in srgb, var(--ctp-color-button-strong) 8%, var(--ctp-color-button));
 }
 
 /* Focus rings stay on --ctp-accent rather than the button tokens: the filled
@@ -279,6 +289,29 @@
     border-color: var(--ctp-color-button-strong);
     background-color: var(--ctp-color-button-strong);
     color: var(--ctp-color-button-strong-text);
+}
+
+/*
+ * Die Themen-Knoepfe tragen die Farbe ihres Kalenders (das Markup setzt sie je
+ * Knopf als --ctp-accent, siehe partials/eventfinder.php). Ein Knopf hier hat
+ * damit dieselbe Farbe wie die Kategorie an den Terminen darunter - man findet
+ * das Gesuchte im Ergebnis wieder, statt vor einer Reihe gleich aussehender
+ * Knoepfe zu stehen. „Alle“ bleibt neutral, es steht fuer keinen Kalender.
+ */
+.ctp-events__finder-btn--calendar {
+    border-color: color-mix(in srgb, var(--ctp-accent) 55%, transparent);
+    color: var(--ctp-accent);
+}
+
+.ctp-events__finder-btn--calendar:hover {
+    border-color: var(--ctp-accent);
+    background-color: color-mix(in srgb, var(--ctp-accent) 10%, var(--ctp-color-button));
+}
+
+.ctp-events__finder-btn--calendar.ctp-events__finder-btn--active {
+    border-color: var(--ctp-accent);
+    background-color: var(--ctp-accent);
+    color: var(--ctp-color-surface);
 }
 
 /* ---------- "load more" paging (list/grid layouts, see partials/load-more.php) ---------- */
@@ -535,6 +568,10 @@
     font-weight: 700;
 }
 
+.ctp-events__date-badge .ctp-events__day {
+    font-size: calc(var(--ctp-font-lg) * 1.1);
+}
+
 .ctp-events__month {
     display: block;
     font-size: var(--ctp-font-2xs);
@@ -551,6 +588,9 @@
     flex: 1 1 auto;
 }
 
+/* 600 wie die Hero- und die Detail-Ueberschrift: Die drei sind dasselbe -
+   der Name des Termins - und sahen in drei verschiedenen Staerken danach aus,
+   als waeren sie es nicht. Den Rang untereinander macht der Schriftgrad. */
 .ctp-events__title {
     order: var(--ctp-order-title);
     display: flex;
@@ -558,7 +598,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: var(--ctp-font-lg);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.3;
 }
 
@@ -647,7 +687,6 @@
     overflow: hidden;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
-    border: 1px solid var(--ctp-color-border);
     box-shadow: var(--ctp-shadow);
 }
 
@@ -699,11 +738,14 @@
     mix-blend-mode: multiply;
 }
 
+/* Eine Spur groesser als frueher (Polsterung und Zahl je gut ein Zehntel):
+   Auf der Grid-Kachel liegt das Badge ueber dem Bild und musste sich dagegen
+   behaupten - mehr als das waere ein Aufkleber. */
 .ctp-events__date-badge {
     position: absolute;
     top: 0.85rem;
     left: 0.85rem;
-    padding: 0.35rem 0.65rem;
+    padding: 0.45rem 0.8rem;
     border-radius: calc(var(--ctp-radius) * 0.55);
     background: var(--ctp-color-surface);
     box-shadow: 0 4px 12px color-mix(in srgb, currentColor 16%, transparent);
@@ -715,18 +757,12 @@
    Stretch-Breite, die ein Flex-Kind in der Spalte sonst bekaeme: Die
    Hero-Kachel ist ein Vielfaches einer Listenzeile, ein Chip in Listengroesse
    verschwindet darin. */
+/* Eine Spur groesser als in der Liste - die Hero-Kachel ist ein Vielfaches
+   einer Listenzeile, ein Chip in Listengroesse verschwindet darin. Steht in
+   seiner eigenen Spalte (siehe oben), deshalb hier keine Ausrichtung mehr. */
 .ctp-events__date-chip--hero {
-    align-self: flex-start;
     width: 3.9rem;
     padding: 0.5rem 0;
-    /*
-     * Auf dieselbe senkrechte Linie wie die Chips der Liste „Weitere Termine“
-     * darunter gezogen: Die stehen 0.2rem vom Rand des Blocks entfernt
-     * (.ctp-events__item), der Chip hier saesse ohne das 2.1rem plus 1px
-     * Rahmen weiter rechts, weil er im Textteil der Kachel liegt. Aendert sich
-     * eine der beiden Polsterungen, gehoert diese Rechnung mitgeaendert.
-     */
-    margin-inline-start: calc(0.2rem - 2.1rem - 1px);
 }
 
 .ctp-events__date-chip--hero .ctp-events__day {
@@ -744,17 +780,45 @@
 
 /* ---------- upcoming layout ---------- */
 
+/*
+ * Drei Bereiche nebeneinander: Datums-Chip, die Angaben zum Termin, das Bild.
+ * Der Chip steht senkrecht mittig, das Bild rechts. Gestapelt (<768px) rutscht
+ * das Bild ueber die volle Breite nach oben, darunter stehen Chip und Angaben
+ * nebeneinander - dasselbe Bild, das auch eine Listenzeile abgibt.
+ *
+ * Innenabstand statt randlos: Vorher lief das Bild bis an die Kante der Kachel
+ * und der Chip klebte am linken Rand. Weil die Kachel keinen Rahmen mehr hat
+ * (nur noch den Schatten), braucht sie diesen Abstand, damit ihr Inhalt nicht
+ * im Nichts steht. Das Bild bekommt dafuer eine eigene Rundung, die vorher das
+ * overflow der Kachel besorgt hat.
+ */
 .ctp-events--upcoming .ctp-events__hero {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1.1rem;
+    padding: 1.25rem;
     margin-block-end: var(--ctp-gap);
-    overflow: hidden;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
-    border: 1px solid var(--ctp-color-border);
     box-shadow: var(--ctp-shadow);
+}
+
+.ctp-events--upcoming .ctp-events__date-chip--hero {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+}
+
+.ctp-events--upcoming .ctp-events__hero-body {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Ohne Bild faellt die erste Zeile weg, Chip und Angaben ruecken hoch. */
+.ctp-events--upcoming .ctp-events__hero--no-media .ctp-events__date-chip--hero,
+.ctp-events--upcoming .ctp-events__hero--no-media .ctp-events__hero-body {
+    grid-row: 1;
 }
 
 /*
@@ -767,8 +831,20 @@
  */
 @media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero {
-        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        padding: 1.5rem;
         align-items: stretch;
+    }
+
+    .ctp-events--upcoming .ctp-events__date-chip--hero {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .ctp-events--upcoming .ctp-events__hero-body {
+        grid-column: 2;
+        grid-row: 1;
     }
 }
 
@@ -785,9 +861,15 @@
  */
 .ctp-events--upcoming .ctp-events__hero-media {
     order: var(--ctp-order-media);
+    grid-column: 1 / -1;
+    grid-row: 1;
     position: relative;
     width: 100%;
     aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 10);
+    /* Eigene Rundung und eigener Beschnitt: Die Kachel klemmt das Bild nicht
+       mehr an ihrer Kante ab, seit sie Innenabstand hat. */
+    overflow: hidden;
+    border-radius: calc(var(--ctp-radius) * 0.6);
     /*
      * Ruhiger Kachelgrund statt des frueheren Verlaufs in der Kalenderfarbe:
      * Das Bild wird contain eingepasst, also bleibt neben einem hochkanten
@@ -799,18 +881,18 @@
     background: var(--ctp-color-surface);
 }
 
-/* Ohne Bildzelle bleibt nur der Text - der bekommt dann die ganze Breite,
-   statt die Spalte des fehlenden Bildes leer stehen zu lassen. Nach der
-   Spaltenregel oben, weil beide gleich spezifisch sind. */
+/* Ohne Bildzelle bleiben Chip und Angaben - die bekommen dann die ganze
+   Breite, statt die Spalte des fehlenden Bildes leer stehen zu lassen. Nach
+   der Spaltenregel oben, weil beide gleich spezifisch sind. */
 @media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero--no-media {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr);
     }
 }
 
 @media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero-media {
-        grid-column: 2;
+        grid-column: 3;
         grid-row: 1;
         aspect-ratio: auto;
         /* Waechst mit der Seitenbreite statt bei 260px stehen zu bleiben: Die
@@ -820,10 +902,6 @@
         min-height: clamp(260px, 22vw, 400px);
     }
 
-    .ctp-events--upcoming .ctp-events__hero-body {
-        grid-column: 1;
-        grid-row: 1;
-    }
 }
 
 /*
@@ -893,7 +971,6 @@
     flex-direction: column;
     justify-content: center;
     gap: 0.7rem;
-    padding: 1.85rem 2.1rem;
 }
 
 /* 600 statt 750: In dieser Groesse traegt die Ueberschrift ihr Gewicht schon
@@ -983,7 +1060,9 @@
     max-width: min(640px, calc(100vw - 2rem));
     max-height: calc(100vh - 4rem);
     padding: 0;
-    border: 1px solid var(--ctp-color-border);
+    /* Ohne grauen Rahmen wie Kachel und Hero-Kachel auch - der Schatten
+       darunter trennt das Fenster genug vom Seiteninhalt. */
+    border: none;
     border-radius: var(--ctp-radius);
     background: var(--ctp-color-surface);
     color: var(--ctp-color-text);

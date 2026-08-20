@@ -74,9 +74,6 @@ if (!defined('ABSPATH')) {
                 ?>
                 <?php if ($event['calendar_name'] !== '') : ?>
                     <span class="ctp-events__eyebrow">
-                        <?php if ($event['calendar_color'] !== '') : ?>
-                            <span class="ctp-events__color-dot" aria-hidden="true"></span>
-                        <?php endif; ?>
                         <?php echo esc_html($event['calendar_name']); ?>
                     </span>
                 <?php endif; ?>

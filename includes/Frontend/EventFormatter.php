@@ -99,7 +99,11 @@ final class EventFormatter
 
     public static function monthAbbreviation(string $mysqlDate): string
     {
-        return mysql2date('M', $mysqlDate);
+        // Ohne den abschliessenden Punkt, den WordPress' deutsche Uebersetzung
+        // mitliefert ("Aug."): Im Datums-Chip steht das Kuerzel unter der Zahl,
+        // gesperrt und in Versalien - der Punkt haengt darin schief und
+        // verschiebt das Kuerzel gegen die Zahl darueber aus der Mitte.
+        return rtrim(mysql2date('M', $mysqlDate), '.');
     }
 
     /**

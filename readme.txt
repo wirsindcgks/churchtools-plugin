@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.12.5
+Stable tag: 0.12.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 0.12.6 =
+Reiner Feinschliff an der Darstellung plus das fehlende Icon im WPBakery-Builder. Kein Handlungsbedarf – und erstmals wieder ein Update, das sich im Backend selbst anbietet.
+
 = 0.12.5 =
 Diese Version einmalig von Hand hochladen: Bis einschließlich 0.12.4 fragt die Update-Prüfung die GitHub-API, die auf geteiltem Hosting regelmäßig mit „HTTP 429“ (Anfragegrenze der IP) antwortet. Ab 0.12.5 liest sie eine Datei über ein CDN ohne dieses Limit, danach funktioniert die Prüfung im Backend wieder von selbst.
 
@@ -195,6 +198,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 0.12.6 =
+* Änderung: „Nächster Termin" neu aufgeteilt – Datums-Chip links und senkrecht mittig, daneben die Angaben, rechts das Bild, dazu Innenabstand in der Kachel
+* Änderung: Kacheln, „Nächster Termin" und Popup ohne grauen Rahmen
+* Änderung: Kachel-, Hero- und Popup-Titel im selben Schnitt
+* Änderung: Schaltflächen weiß, Rand in der eingestellten Buttonfarbe
+* Änderung: Die Themen-Knöpfe des Eventfinders in der Farbe ihres Kalenders
+* Änderung: Kategorie-Auszeichnung ohne Farbpunkt, Monatskürzel ohne Punkt, Datums-Badge der Grid-Kachel eine Spur größer
+* Fix: Das Element im WPBakery-Builder zeigt jetzt wirklich ein Kalender-Icon
 
 = 0.12.5 =
 * Änderung: Die Update-Prüfung fragt statt der GitHub-API eine Datei über raw.githubusercontent.com ab – die API erlaubt nicht angemeldet nur 60 Anfragen pro Stunde und IP, was auf geteiltem Hosting regelmäßig zu „HTTP 429“ führte

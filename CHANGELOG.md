@@ -5,6 +5,26 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.6] - 2026-08-20
+
+Eine Runde Feinschliff an der Darstellung, nach dem zweiten Durchgang über die
+Live-Seite – und das WPBakery-Icon, das im ersten Anlauf nicht ankam.
+
+### Changed
+
+- **Die Ansicht „Nächster Termin" ist neu aufgeteilt:** Datums-Chip links und senkrecht mittig, daneben die Angaben zum Termin, rechts das Bild. Die Kachel hat jetzt Innenabstand – Bild und Chip standen vorher an ihrer Kante, was ohne Rahmen (siehe unten) nach Versehen aussah
+- **Kacheln, „Nächster Termin" und Popup haben keinen grauen Rahmen mehr.** Der Schatten trennt sie genug vom Seitenhintergrund
+- **Alle Titel stehen im selben Schnitt.** Kachel-, Hero- und Popup-Titel waren drei verschiedene Stärken für dieselbe Sache – den Namen des Termins. Den Rang untereinander macht jetzt der Schriftgrad allein
+- **Die Schaltflächen sind weiß, ihr Rand trägt die eingestellte Buttonfarbe.** Gefüllt ist ein Knopf erst im gewählten Zustand; der Zeigerkontakt tönt ihn nur noch leicht, weil eine Randfärbung dort jetzt wirkungslos wäre
+- **Die Themen-Knöpfe des Eventfinders tragen die Farbe ihres Kalenders** – dieselbe, mit der die Kategorie an den Terminen darunter ausgezeichnet ist. Damit findet man im Ergebnis wieder, wonach man oben gefragt hat. „Alle" bleibt neutral, es steht für keinen Kalender
+- **Die Kategorie-Auszeichnung kommt ohne den Farbpunkt aus** – sie ist ohnehin ganz in der Kalenderfarbe gehalten, der Punkt sagte nichts Zusätzliches
+- **Das Datums-Badge der Grid-Kachel ist eine Spur größer.** Es liegt dort über dem Bild und musste sich dagegen behaupten
+- **Die Monatskürzel stehen ohne Punkt** („AUG" statt „AUG."). Gesperrt, in Versalien und unter der Tageszahl saß er schief und schob das Kürzel aus der Mitte
+
+### Fixed
+
+- **Das Element im WPBakery-Builder hatte weiterhin kein Icon.** Der Klassenname aus 0.12.4 hätte eine eigene CSS-Regel im Elementefenster gebraucht, und die verlor gegen WPBakerys eigene – das Feld blieb ein dunkles Quadrat. `vc_map()` nimmt an dieser Stelle auch eine Bildadresse; genau die steht jetzt dort, als PNG mit Transparenz, wie es WPBakerys Dokumentation vorgibt
+
 ## [0.12.5] - 2026-08-19
 
 Der Nachtrag zur 0.12.4, nach dem ersten Blick auf die aktualisierte
@@ -354,7 +374,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.6...HEAD
+[0.12.6]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.5...v0.12.6
 [0.12.5]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.4...v0.12.5
 [0.12.4]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.3...v0.12.4
 [0.12.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.2...v0.12.3
