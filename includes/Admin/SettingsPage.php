@@ -14,6 +14,7 @@ use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\SyncEngine;
+use ChurchToolsPlugin\Update\GitHubUpdateChecker;
 use Throwable;
 
 final class SettingsPage
@@ -3679,9 +3680,10 @@ final class SettingsPage
      * Ohne diesen Knopf haengt der Tab „Updates“ am Zwischenspeicher von
      * WordPress (`update_plugins`, ueblicherweise zwoelf Stunden alt) - wer
      * gerade ein Release veroeffentlicht hat und nachsehen will, ob es
-     * ankommt, konnte nur warten. Geloescht wird nur der Zwischenspeicher;
-     * die Pruefung selbst macht wp_update_plugins(), und den GitHub-Teil
-     * daran haengt der GitHubUpdateChecker ein.
+     * ankommt, konnte nur warten. Gefragt wird dabei genau eine Quelle - die
+     * Metadatendatei dieses Plugins - und nicht mehr ueber
+     * wp_update_plugins() der Update-Dienst von WordPress nach saemtlichen
+     * installierten Plugins (siehe GitHubUpdateChecker::checkNow()).
      */
     public function ajaxCheckUpdates(): void
     {
@@ -3691,10 +3693,11 @@ final class SettingsPage
             wp_send_json_error(['message' => __('Keine Berechtigung.', 'churchtools-plugin')], 403);
         }
 
-        delete_site_transient('update_plugins');
-        wp_update_plugins();
+        $update = GitHubUpdateChecker::checkNow();
 
-        $update = self::updateStatus();
+        if ($update === null) {
+            wp_send_json_error(['message' => __('Die Update-Prüfung steht auf dieser Installation nicht zur Verfügung.', 'churchtools-plugin')]);
+        }
 
         if ($update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>')) {
             wp_send_json_success([

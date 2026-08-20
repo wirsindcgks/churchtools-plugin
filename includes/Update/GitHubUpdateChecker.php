@@ -39,6 +39,16 @@ final class GitHubUpdateChecker
      */
     private const METADATA_URL = 'https://raw.githubusercontent.com/wirsindcgks/churchtools-plugin/main/update.json';
 
+    /**
+     * Der Pruefer der Bibliothek, damit „Nach Updates suchen“ ihn direkt
+     * fragen kann (siehe checkNow()).
+     *
+     * Bewusst ohne Typ: Die Klasse liegt in einem versionierten Namensraum der
+     * Bibliothek (v5p7 heute, morgen eine andere), und das Alias v5 gibt es
+     * nur fuer die Fabrik.
+     */
+    private static ?object $checker = null;
+
     public static function register(): void
     {
         // Guards against a raw `git clone` without `composer install` (vendor/ isn't
@@ -53,6 +63,41 @@ final class GitHubUpdateChecker
         // der Hostliste der Bibliothek (PucFactory::getVcsService()), sie baut
         // fuer diese Adresse also den reinen JSON-Metadaten-Pruefer - genau
         // den, der hier gebraucht wird.
-        PucFactory::buildUpdateChecker(self::METADATA_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
+        self::$checker = PucFactory::buildUpdateChecker(self::METADATA_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
+    }
+
+    /**
+     * Fragt genau diese eine Quelle ab, fuer den Knopf „Nach Updates suchen“.
+     *
+     * Vorher stand dort delete_site_transient('update_plugins') plus
+     * wp_update_plugins() - und das ist etwas ganz anderes, als es aussieht:
+     * WordPress fragt damit api.wordpress.org nach *allen* installierten
+     * Plugins und wartet auf die Antwort. Auf einer Seite mit vielen Plugins
+     * und einem Server unter Last drehte der Knopf deshalb endlos (auf
+     * cg-ks.de am 20.08.2026 so erlebt), obwohl die eine Datei, um die es
+     * geht, in Bruchteilen einer Sekunde da ist.
+     *
+     * Der Zwischenspeicher von WordPress wird dabei nicht mehr geleert: Die
+     * Bibliothek haengt ihr Ergebnis ohnehin bei jedem Lesen in die Liste der
+     * verfuegbaren Updates ein, die Plugin-Seite zeigt es also genauso.
+     *
+     * @return array{version: string|null, checked: int}|null null, wenn die
+     *         Bibliothek gar nicht geladen ist (siehe register()).
+     */
+    public static function checkNow(): ?array
+    {
+        if (self::$checker === null) {
+            return null;
+        }
+
+        self::$checker->checkForUpdates();
+
+        $state = self::$checker->getUpdateState();
+        $update = $state->getUpdate();
+
+        return [
+            'version' => isset($update->version) ? (string) $update->version : null,
+            'checked' => (int) $state->getLastCheck(),
+        ];
     }
 }

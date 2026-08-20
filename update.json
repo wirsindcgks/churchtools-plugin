@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-20 07:39:49",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.0.1/churchtools-plugin-v1.0.1.zip",
+    "last_updated": "2026-08-20 07:59:04",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.0.2/churchtools-plugin-v1.0.2.zip",
     "sections": {
-        "changelog": "<h4>Changed</h4>\n<ul>\n<li><strong>Das Sammelholen der Bilder aus 1.0.0 ist gegen sein eigenes Werkzeug abgesichert.</strong> Es ruft eine Kernfunktion auf, die WordPress in jeder <code>WP_Query</code> selbst benutzt, deren führender Unterstrich aber sagt: nicht Teil der öffentlichen API. Verschwindet sie in einer künftigen WordPress-Version, wird die Seite jetzt wieder langsamer statt kaputt – die Bilder werden dann einzeln nachgeschlagen wie vor 1.0.0. Ein Test hält den Fall fest, indem er genau in dem Zustand läuft, gegen den die Absicherung schützt</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>„Nach Updates suchen&quot; drehte endlos.</strong> Der Knopf leerte den Update-Zwischenspeicher von WordPress und rief <code>wp_update_plugins()</code> auf – und das ist etwas anderes, als es aussieht: WordPress fragt damit api.wordpress.org nach <em>allen</em> installierten Plugins und wartet auf die Antwort. Auf einer Seite mit vielen Plugins und einem Server unter Last kommt die nicht mehr an, während die eine Datei, um die es hier geht, in Bruchteilen einer Sekunde da ist. Gefragt wird jetzt genau diese eine Quelle: <strong>0,345 Sekunden</strong> für die vollständige Prüfung inklusive Netzwerk. Der Zwischenspeicher von WordPress wird dabei nicht mehr geleert – die Update-Bibliothek hängt ihr Ergebnis ohnehin bei jedem Lesen in die Liste der verfügbaren Updates ein, die Plugin-Seite zeigt es also unverändert an</li>\n</ul>\n"
     }
 }

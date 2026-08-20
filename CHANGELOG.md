@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.0.2] - 2026-08-20
+
+### Fixed
+
+- **„Nach Updates suchen" drehte endlos.** Der Knopf leerte den Update-Zwischenspeicher von WordPress und rief `wp_update_plugins()` auf – und das ist etwas anderes, als es aussieht: WordPress fragt damit api.wordpress.org nach *allen* installierten Plugins und wartet auf die Antwort. Auf einer Seite mit vielen Plugins und einem Server unter Last kommt die nicht mehr an, während die eine Datei, um die es hier geht, in Bruchteilen einer Sekunde da ist. Gefragt wird jetzt genau diese eine Quelle: **0,345 Sekunden** für die vollständige Prüfung inklusive Netzwerk. Der Zwischenspeicher von WordPress wird dabei nicht mehr geleert – die Update-Bibliothek hängt ihr Ergebnis ohnehin bei jedem Lesen in die Liste der verfügbaren Updates ein, die Plugin-Seite zeigt es also unverändert an
+
 ## [1.0.1] - 2026-08-20
 
 ### Changed
@@ -416,7 +422,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.8...v1.0.0
 [0.12.8]: https://github.com/wirsindcgks/churchtools-plugin/compare/v0.12.7...v0.12.8
