@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.1.0 =
+Darstellungs-Feinschliff und ein sichtbares Icon für WPBakery. Zeitangaben stehen jetzt als „10:30–12:00 Uhr" da, die Detailansicht zeigt den Datums-Chip vor dem Titel, und die Ansicht „Nächster Termin" teilt Angaben und Bild zu gleichen Teilen. Kein Handlungsbedarf.
+
 = 1.0.3 =
 Reine Darstellungsänderung: Der Eventfinder steht mittig. Kein Handlungsbedarf.
 
@@ -216,6 +219,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.1.0 =
+* Neu: Die Detailansicht (Popup und eigene Seite) zeigt den Datums-Chip vor dem Titel
+* Neu: Zeitangaben tragen ihre Einheit – „10:30–12:00 Uhr"; im 12-Stunden-Format entfällt sie, dort sagt am/pm dasselbe
+* Änderung: In der Ansicht „Nächster Termin" sind Angaben und Bild gleich breit, das Bild füllt die gewählte Bildform vollständig aus, und der Datums-Chip steht auf der Linie des Titels
+* Änderung: Die farbige Linie unter dem Titel der Detailansicht ist entfallen
+* Fix: Das Element im WPBakery-Builder zeigt endlich sein Icon – es war grau auf dunklem Grund und damit unsichtbar, jetzt weiß
 
 = 1.0.3 =
 * Änderung: Der Eventfinder ist mittig ausgerichtet – Überschrift, Knopfreihen und Suchfeld –, wie „Weitere Termine laden" unter der Liste

@@ -28,7 +28,6 @@ final class EventQueryCacheTest extends TestCase
         string $prefix = 'events'
     ): string {
         $method = new ReflectionMethod(EventQueryCache::class, 'cacheKey');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $calendarIds, $limit, $startFrom, $startBefore, $prefix);
     }
@@ -184,7 +183,6 @@ final class EventQueryCacheTest extends TestCase
     private function matchKey(array $calendarIds, ?string $startFrom, ?string $startBefore, string $extra): string
     {
         $method = new ReflectionMethod(EventQueryCache::class, 'cacheKey');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $calendarIds, 100, $startFrom, $startBefore, 'events_search', 0, $extra);
     }

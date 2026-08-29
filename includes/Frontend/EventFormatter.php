@@ -74,12 +74,38 @@ final class EventFormatter
             return '';
         }
 
-        $format = get_option('time_format');
+        $format = (string) get_option('time_format');
         $separator = self::isSameDay($event) ? '–' : ' – ';
 
-        return mysql2date($format, $event['start_date'])
-            . $separator
-            . mysql2date($format, $event['end_date']);
+        return self::withClockSuffix(
+            mysql2date($format, $event['start_date'])
+                . $separator
+                . mysql2date($format, $event['end_date']),
+            $format
+        );
+    }
+
+    /**
+     * Haengt die Einheit an die Uhrzeit: "10:30–12:00" wird "10:30–12:00 Uhr".
+     *
+     * Uebersetzbar statt fest verdrahtet, weil "Uhr" eine deutsche
+     * Eigenheit ist - in einer englischen Uebersetzung bleibt schlicht "%s"
+     * stehen.
+     *
+     * Ausgelassen wird der Zusatz beim 12-Stunden-Format: Dessen am/pm sagt
+     * dasselbe schon selbst, "10:30 am Uhr" waere doppelt gemoppelt und
+     * falsch. Erkennbar an einem unmaskierten a/A im Formatstring - in
+     * date()-Formaten steht ein Backslash davor, wenn das Zeichen als
+     * Buchstabe gemeint ist.
+     */
+    private static function withClockSuffix(string $time, string $format): string
+    {
+        if ((bool) preg_match('/(?<!\\\\)[aA]/', $format)) {
+            return $time;
+        }
+
+        /* translators: %s is a time or time range, e.g. "10:30–12:00". */
+        return sprintf(__('%s Uhr', 'churchtools-plugin'), $time);
     }
 
     private static function isSameDay(array $event): bool

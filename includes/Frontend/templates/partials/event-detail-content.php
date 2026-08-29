@@ -82,14 +82,34 @@ if (!defined('ABSPATH')) {
 
             case 'title':
                 ?>
-                <h2 class="ctp-events__detail-title">
-                    <?php echo esc_html($event['title']); ?>
-                    <?php if (!empty($event['all_day'])) : ?>
-                        <span class="ctp-events__badge">
-                            <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
+                <?php
+                /*
+                 * Datums-Chip vor dem Titel, wie in den Kacheln: Er ist die
+                 * Marke, an der man einen Termin wiedererkennt, und stand
+                 * bisher nur in den Listen. Die Datumszeile weiter unten
+                 * bleibt daneben bestehen - sie nennt Wochentag und volles
+                 * Datum, der Chip ist aria-hidden und damit fuer Screenreader
+                 * nicht die zweite Stimme derselben Angabe.
+                 */
+                ?>
+                <div class="ctp-events__detail-heading">
+                    <span class="ctp-events__date-chip ctp-events__date-chip--detail" aria-hidden="true">
+                        <span class="ctp-events__day">
+                            <?php echo esc_html(EventFormatter::dayNumber($event['start_date'])); ?>
                         </span>
-                    <?php endif; ?>
-                </h2>
+                        <span class="ctp-events__month">
+                            <?php echo esc_html(EventFormatter::monthAbbreviation($event['start_date'])); ?>
+                        </span>
+                    </span>
+                    <h2 class="ctp-events__detail-title">
+                        <?php echo esc_html($event['title']); ?>
+                        <?php if (!empty($event['all_day'])) : ?>
+                            <span class="ctp-events__badge">
+                                <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
+                            </span>
+                        <?php endif; ?>
+                    </h2>
+                </div>
                 <?php
                 break;
 

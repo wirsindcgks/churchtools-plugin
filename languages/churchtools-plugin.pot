@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ChurchTools Events 1.0.3\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-08-20 08:44:49+0000\n"
+"POT-Creation-Date: 2026-08-28 21:45:38+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -30,19 +30,19 @@ msgstr ""
 msgid "Keine Kalender geladen. Im Plugin-Tab „Kalender“ zuerst Kalender laden."
 msgstr ""
 
-#: blocks/event-list/index.js:76 includes/Admin/SettingsPage.php:2768 includes/Integrations/WpBakeryIntegration.php:44
+#: blocks/event-list/index.js:76 includes/Admin/SettingsPage.php:2768 includes/Integrations/WpBakeryIntegration.php:52
 msgid "Ansicht"
 msgstr ""
 
-#: blocks/event-list/index.js:79 includes/Admin/SettingsPage.php:1548 includes/Integrations/WpBakeryIntegration.php:47
+#: blocks/event-list/index.js:79 includes/Admin/SettingsPage.php:1548 includes/Integrations/WpBakeryIntegration.php:55
 msgid "Liste"
 msgstr ""
 
-#: blocks/event-list/index.js:80 includes/Admin/SettingsPage.php:1562 includes/Integrations/WpBakeryIntegration.php:48
+#: blocks/event-list/index.js:80 includes/Admin/SettingsPage.php:1562 includes/Integrations/WpBakeryIntegration.php:56
 msgid "Grid"
 msgstr ""
 
-#: blocks/event-list/index.js:81 includes/Admin/SettingsPage.php:1570 includes/Frontend/templates/event-upcoming.php:80 includes/Integrations/WpBakeryIntegration.php:49
+#: blocks/event-list/index.js:81 includes/Admin/SettingsPage.php:1570 includes/Frontend/templates/event-upcoming.php:93 includes/Integrations/WpBakeryIntegration.php:57
 msgid "Nächster Termin"
 msgstr ""
 
@@ -50,7 +50,7 @@ msgstr ""
 msgid "Spalten"
 msgstr ""
 
-#: blocks/event-list/index.js:97 includes/Integrations/WpBakeryIntegration.php:61
+#: blocks/event-list/index.js:97 includes/Integrations/WpBakeryIntegration.php:69
 msgid "Maximale Anzahl Events (0 = unbegrenzt)"
 msgstr ""
 
@@ -62,27 +62,27 @@ msgstr ""
 msgid "Nur als Obergrenze pro Nachlade-Schritt. Wie viel angezeigt wird, bestimmt der Zeitraum."
 msgstr ""
 
-#: blocks/event-list/index.js:110 includes/Admin/SettingsPage.php:2028 includes/Integrations/WpBakeryIntegration.php:68
+#: blocks/event-list/index.js:110 includes/Admin/SettingsPage.php:2028 includes/Integrations/WpBakeryIntegration.php:76
 msgid "Klickverhalten"
 msgstr ""
 
-#: blocks/event-list/index.js:113 includes/Integrations/WpBakeryIntegration.php:71
+#: blocks/event-list/index.js:113 includes/Integrations/WpBakeryIntegration.php:79
 msgid "Standard (Design-Einstellung)"
 msgstr ""
 
-#: blocks/event-list/index.js:114 includes/Admin/SettingsPage.php:2008 includes/Integrations/WpBakeryIntegration.php:72
+#: blocks/event-list/index.js:114 includes/Admin/SettingsPage.php:2008 includes/Integrations/WpBakeryIntegration.php:80
 msgid "Keine"
 msgstr ""
 
-#: blocks/event-list/index.js:115 includes/Admin/SettingsPage.php:2009 includes/Integrations/WpBakeryIntegration.php:73
+#: blocks/event-list/index.js:115 includes/Admin/SettingsPage.php:2009 includes/Integrations/WpBakeryIntegration.php:81
 msgid "Popup"
 msgstr ""
 
-#: blocks/event-list/index.js:116 includes/Admin/SettingsPage.php:2010 includes/Integrations/WpBakeryIntegration.php:74
+#: blocks/event-list/index.js:116 includes/Admin/SettingsPage.php:2010 includes/Integrations/WpBakeryIntegration.php:82
 msgid "Eigene Seite"
 msgstr ""
 
-#: blocks/event-list/index.js:123 includes/Integrations/WpBakeryIntegration.php:79
+#: blocks/event-list/index.js:123 includes/Integrations/WpBakeryIntegration.php:87
 msgid "Eventfinder anzeigen"
 msgstr ""
 
@@ -90,27 +90,27 @@ msgstr ""
 msgid "„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten."
 msgstr ""
 
-#: blocks/event-list/index.js:134 includes/Integrations/WpBakeryIntegration.php:90
+#: blocks/event-list/index.js:134 includes/Integrations/WpBakeryIntegration.php:98
 msgid "Kalenderfilter anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:139 includes/Integrations/WpBakeryIntegration.php:97
+#: blocks/event-list/index.js:139 includes/Integrations/WpBakeryIntegration.php:105
 msgid "Suchleiste anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:146 includes/Integrations/WpBakeryIntegration.php:104
+#: blocks/event-list/index.js:146 includes/Integrations/WpBakeryIntegration.php:112
 msgid "Termine nach Monat gruppieren"
 msgstr ""
 
-#: blocks/event-list/index.js:151 includes/Integrations/WpBakeryIntegration.php:121
+#: blocks/event-list/index.js:151 includes/Integrations/WpBakeryIntegration.php:129
 msgid "Nachladen-Button anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:153 includes/Integrations/WpBakeryIntegration.php:118
+#: blocks/event-list/index.js:153 includes/Integrations/WpBakeryIntegration.php:126
 msgid "Lädt jeweils den nächsten Zeitraum nach, ohne die Seite neu zu laden."
 msgstr ""
 
-#: blocks/event-list/index.js:163 includes/Integrations/WpBakeryIntegration.php:128
+#: blocks/event-list/index.js:163 includes/Integrations/WpBakeryIntegration.php:136
 msgid "Zeitraum pro Seite in Monaten (0 = Standard)"
 msgstr ""
 
@@ -1178,15 +1178,20 @@ msgstr ""
 msgid "Unerwartete Antwort der ChurchTools-API (kein „data“-Feld): %s"
 msgstr ""
 
+#. translators: %s is a time or time range, e.g. "10:30–12:00".
+#: includes/Frontend/EventFormatter.php:108
+msgid "%s Uhr"
+msgstr ""
+
 #: includes/Frontend/templates/event-grid.php:31 includes/Frontend/templates/event-list.php:27 includes/Frontend/templates/event-upcoming.php:42
 msgid "Keine anstehenden Termine."
 msgstr ""
 
-#: includes/Frontend/templates/event-upcoming.php:102 includes/Frontend/templates/event-upcoming.php:172 includes/Frontend/templates/partials/event-detail-content.php:89 includes/Frontend/templates/partials/event-grid-items.php:73 includes/Frontend/templates/partials/event-list-items.php:71
+#: includes/Frontend/templates/event-upcoming.php:115 includes/Frontend/templates/event-upcoming.php:186 includes/Frontend/templates/partials/event-detail-content.php:108 includes/Frontend/templates/partials/event-grid-items.php:73 includes/Frontend/templates/partials/event-list-items.php:71
 msgid "Ganztägig"
 msgstr ""
 
-#: includes/Frontend/templates/event-upcoming.php:136
+#: includes/Frontend/templates/event-upcoming.php:150
 msgid "Weitere Termine"
 msgstr ""
 
@@ -1238,39 +1243,39 @@ msgstr ""
 msgid "Nach Kalender filtern"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:39
+#: includes/Integrations/WpBakeryIntegration.php:47
 msgid "Kalender-IDs (kommagetrennt)"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:54
+#: includes/Integrations/WpBakeryIntegration.php:62
 msgid "Spalten (nur Grid)"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:62
+#: includes/Integrations/WpBakeryIntegration.php:70
 msgid "Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin“ die Gesamtzahl inkl. Hero-Kachel."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:80
+#: includes/Integrations/WpBakeryIntegration.php:88
 msgid "„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten, falls dort ebenfalls angehakt."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:85 includes/Integrations/WpBakeryIntegration.php:92 includes/Integrations/WpBakeryIntegration.php:99
+#: includes/Integrations/WpBakeryIntegration.php:93 includes/Integrations/WpBakeryIntegration.php:100 includes/Integrations/WpBakeryIntegration.php:107
 msgid "Anzeigen"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:106
+#: includes/Integrations/WpBakeryIntegration.php:114
 msgid "Gruppieren"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:117
+#: includes/Integrations/WpBakeryIntegration.php:125
 msgid "Weitere Termine nachladen"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:122
+#: includes/Integrations/WpBakeryIntegration.php:130
 msgid "Aus (nur der erste Zeitraum)"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:129
+#: includes/Integrations/WpBakeryIntegration.php:137
 msgid "Überschreibt die globale Einstellung im Plugin-Tab „Design“ nur für dieses Element."
 msgstr ""
 

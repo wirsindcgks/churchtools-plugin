@@ -5,6 +5,28 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.0] - 2026-08-29
+
+Eine Runde Feinschliff an der Darstellung, ein Fehler, der zweimal als
+behoben galt, und ein README, das endlich für die gedacht ist, die das Plugin
+benutzen wollen statt es zu entwickeln.
+
+### Added
+
+- **Die Detailansicht trägt den Datums-Chip vor dem Titel** – dieselbe Marke, an der man einen Termin in der Liste wiedererkennt. Gilt für das Popup und die eigene Termin-Seite; die Datumszeile darunter bleibt als vorlesbare Fassung mit vollem Datum stehen
+- **Zeitangaben nennen ihre Einheit**: „10:30–12:00 Uhr" statt „10:30–12:00", in allen Ansichten. Im 12-Stunden-Format entfällt der Zusatz, dort sagt am/pm dasselbe schon selbst
+- **Das README ist eine Anleitung für Anwender geworden** – Einrichtung Schritt für Schritt, fertige Shortcode-Beispiele, eine Kurztabelle der Optionen und fünf Screenshots. Die Bilder zeigen erfundene Termine mit abstrakten Platzhaltern, erzeugt ohne WordPress aus den Templates selbst (`bin/demo-screenshots.php`). Der Entwicklerteil steht jetzt in `docs/ARCHITECTURE.md`
+
+### Changed
+
+- **In der Ansicht „Nächster Termin" sind Angaben und Bild gleich breit** (vorher 1,35 zu 1), und das Bild füllt die im Design-Tab gewählte Bildform vollständig aus, statt in einer text-hohen Fläche mit Leerstreifen zu stehen. Die Standardwahl „Breit" ist dort jetzt tatsächlich 16:9 – vorher 16:10, ausgerechnet die eine Form, in der ein 16:9-Foto nicht aufgeht
+- **Datums-Chip und Angaben stehen zusammen**: Der Chip sitzt auf der Linie des Titels statt frei in der Kachelmitte, und beide zusammen stehen mittig zum Bild. Die Angaben tragen dafür keine Abstände des Themes mehr – die Kachel war je nach Theme anders proportioniert
+- **Die farbige Linie unter dem Titel der Detailansicht ist entfallen.** Sie trennte den Titel von seinen eigenen Angaben; die Kalenderfarbe steht ohnehin im Chip und in der Kalender-Pille
+
+### Fixed
+
+- **Das Element im WPBakery-Builder zeigte nach zwei Anläufen immer noch kein Icon.** Die Datei kam jedes Mal an – sie war nur nicht zu sehen: mittelgraues Icon auf WPBakerys dunkler Elementekachel. Jetzt ein weißer Kalender mit „CT", und unter neuem Dateinamen, weil die Icon-Adresse keine Version mitführt und Browser wie Builder sonst weiter das alte Bild ausliefern
+
 ## [1.0.3] - 2026-08-20
 
 ### Changed
@@ -428,7 +450,8 @@ Zielseite im Betrieb war.
 - Fatal Error beim Speichern des leeren Kalender-Tabs (`sanitizeSettings()` erhielt `null` statt eines Arrays, wenn das Formular keine Felder enthielt)
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
-[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.0...v1.0.1

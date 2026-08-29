@@ -1,90 +1,138 @@
 # ChurchTools Events
 
-WordPress-Plugin, das Kalender-Events aus der [ChurchTools](https://church.tools) API synchronisiert, lokal in der WordPress-Datenbank vorhält und nach einer einstellbaren Aufbewahrungszeit wieder entfernt. Anzeige erfolgt per Shortcode, Gutenberg-Block oder WPBakery-Element auf Basis einer gemeinsamen Rendering-Schicht.
+Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an — als Liste, als Kachelraster oder als „Nächster Termin". Termine werden einmal in ChurchTools gepflegt und erscheinen auf der Website von selbst.
 
-Vollständige Bedienungsanleitung (alle Shortcode-Attribute, Ansichten, Theme-Overrides, Datenschutz-Hinweise): siehe [readme.txt](readme.txt). Dieses Dokument beschreibt die Architektur für Entwickler.
+- **Automatischer Abgleich** per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") kommen als einzelne Termine an, abgesagte verschwinden wieder.
+- **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
+- **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder.
+- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite.
+- **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
+- **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
+- **Updates** kommen wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
 
-## Status
+Voraussetzungen: WordPress ab 6.4, PHP ab 8.1, eine ChurchTools-Instanz und ein API-Key dafür.
 
-Produktiv einsetzbar (v1.0.0). Anforderungen: WordPress ≥ 6.4, PHP ≥ 8.1.
+## So sieht das aus
 
-## Funktionsumfang
+Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
-- Sync ausgewählter ChurchTools-Kalender per WP-Cron, Intervall und Vorlaufzeitraum einstellbar
-- Terminserien werden auf je eine Zeile pro tatsächlichem Vorkommnis abgebildet
-- Event-Bilder werden in die Medienbibliothek importiert (kein Hotlinking auf ChurchTools)
-- Drei Frontend-Ansichten: Liste, Grid, „Nächster Termin"
-- Monatsweises Nachladen statt „alles auf einmal", Kalenderfilter, Suche, Eventfinder, Monatstrenner
-- Klickbare Kacheln mit Popup oder eigener Termin-Seite
-- Design-Tab: Reihenfolge/Sichtbarkeit der Kartenelemente, Eckenstil, Bildformat, Akzentfarbe – mit Live-Vorschau
-- Automatische Plugin-Updates über GitHub Releases
+**Liste** — kompakte Zeilen mit Datums-Chip, Kategorie, Titel, Zeit und Ort; mit `month_dividers="1"` nach Monaten gruppiert.
 
-## Bewusste Grenzen
+![Listenansicht mit Monatsüberschriften](docs/screenshots/liste.png)
 
-- **Eine ChurchTools-Instanz pro WordPress-Installation** (entschieden 2026-08-18). Kalender-IDs sind nur pro Instanz eindeutig; Mehrfach-Instanzen würden Schema, Settings und jede Shortcode-Option betreffen. Einstiegspunkt für eine spätere Aenderung wäre `SettingsPage::OPTION_KEY` plus eine Instanz-Spalte in `ctp_events`.
-- **Multisite ungetestet.** Die Tabelle hängt am Site-Präfix, eine netzwerkweite Aktivierung legt sie nicht für bestehende Sites an.
-- **Kein Monatskalender-Layout, keine REST-API, kein systematischer Barrierefreiheits-Pass, keine visuellen Regressionstests.**
-- **Der API-Key ist an `AUTH_KEY` gebunden** und überlebt einen Salt-Wechsel nicht – das ist Absicht (die Datenbank allein reicht nicht zum Entschlüsseln), wird erkannt und im Backend gemeldet.
+**Kachelraster** — Bild, Datums-Badge und ein kurzer Auszug, Spaltenzahl einstellbar. Termine ohne eigenes Bild bekommen eine Fläche in der Farbe ihres Kalenders.
 
-## Architektur
+![Grid-Ansicht mit drei Spalten](docs/screenshots/grid.png)
 
-### Datenhaltung
+**Nächster Termin** — eine große Kachel für den nächsten Termin, darunter die folgenden in Kurzform.
 
-Eine eigene Tabelle `{prefix}ctp_events` statt eines Custom Post Type: die Daten sind eine Kopie eines externen Systems, werden nie in WordPress redaktionell bearbeitet und nach Ablauf wieder gelöscht – der CPT-Overhead (Revisionen, Meta-Tabelle, Autosaves, Editor-UI) hätte dafür keinen Gegenwert. Der Preis dafür: die Detailseite ist eine virtuelle Rewrite-Route ohne echten `WP_Post` (siehe `Frontend\EventDetailPage`).
+![Ansicht „Nächster Termin" mit großer Kachel und Folgeterminen](docs/screenshots/naechster-termin.png)
 
-Eindeutig ist eine Zeile über `(ct_event_id, start_date)` – eine Terminserie („jeden Montag") liefert je Vorkommnis eine eigene Zeile mit derselben `ct_event_id`.
+**Eventfinder** — geführter Einstieg statt Dropdown: ein Knopf je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche.
 
-### Klassen
+![Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste](docs/screenshots/eventfinder.png)
 
-| Klasse | Aufgabe |
+**Termindetails** — als Popup auf derselben Seite (im Bild) oder als eigene Termin-URL.
+
+![Popup mit Bild, Datums-Chip, Titel, Zeit, Ort und Beschreibung](docs/screenshots/popup.png)
+
+## Installation
+
+1. Unter [Releases](https://github.com/wirsindcgks/churchtools-plugin/releases) beim neuesten Eintrag die Datei `churchtools-plugin-vX.Y.Z.zip` herunterladen. **Nicht** „Source code (zip)" — darin fehlen die fertig gebauten Bestandteile, das Plugin läuft damit nicht.
+2. In WordPress unter *Plugins → Installieren → Plugin hochladen* die ZIP-Datei auswählen und installieren.
+3. Plugin aktivieren. Im linken Menü erscheint der Punkt **ChurchTools**.
+
+Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Aktualisierung läuft über die normale Plugin-Übersicht.
+
+## Einrichten in fünf Minuten
+
+1. **Verbindung herstellen.** *ChurchTools → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
+2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
+3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
+4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
+5. **Aussehen anpassen.** *ChurchTools → Design*: Reihenfolge und Sichtbarkeit der Angaben auf einer Kachel, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe — mit Vorschau daneben.
+
+Läuft etwas nicht, steht der Grund auf der Übersichtsseite: Sie zeigt den letzten Abgleich, die Zahl gespeicherter Termine und Fehler im Klartext.
+
+## Termine auf einer Seite anzeigen
+
+Alle drei Wege benutzen denselben Unterbau und können dasselbe:
+
+- **Gutenberg-Block** — Block „ChurchTools Events" einfügen, alles Weitere in der Seitenleiste rechts.
+- **WPBakery** — Element „ChurchTools Events" aus der Kategorie „ChurchTools".
+- **Shortcode** — für Theme-Dateien, Widgets und alles andere.
+
+### Beispiele
+
+**Startseite: der nächste Termin, groß, mit drei weiteren darunter**
+
+```
+[ctp_events layout="upcoming" limit="4"]
+```
+
+**Terminseite: alle Kalender mit geführter Suche und Monatsüberschriften**
+
+```
+[ctp_events layout="list" eventfinder="1" month_dividers="1"]
+```
+
+**Nur die Gottesdienste als Kachelraster, drei Spalten**
+
+```
+[ctp_events calendar="Gottesdienste" layout="grid" columns="3"]
+```
+
+**Teaser in der Seitenleiste: drei Termine, ohne Nachladen-Button**
+
+```
+[ctp_events layout="list" limit="3" paging="0"]
+```
+
+**Zwei Kalender, Auswahl per Dropdown und Suchfeld**
+
+```
+[ctp_events calendar="Gottesdienste,Jugend" layout="list" filter="1" search="1"]
+```
+
+Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. Im Tab *Design* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
+
+### Die wichtigsten Optionen
+
+| Option | Wirkung |
 | --- | --- |
-| `Admin\SettingsPage` | Einstellungsseite mit sieben Tabs (Übersicht, Verbindung, Kalender, Synchronisation, Design, Events, Updates). API-Key und GitHub-Token werden verschlüsselt gespeichert (`Security\Crypto`, Schlüssel aus `AUTH_KEY` abgeleitet). |
-| `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). |
-| `Sync\SyncEngine` | Per WP-Cron (`ctp_run_sync`) getriggerter Sync. Fängt eigene Exceptions ab und persistiert sie, damit ein unbeaufsichtigter Cron-Lauf nie fatalt. |
-| `Sync\RetentionCleanup` | Per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist. |
-| `Db\Installer` | Schema via `dbDelta()`, Cron-Zeitpläne (inkl. Umplanung bei Intervall-Wechsel). |
-| `Db\EventRepository` | Sämtliche SQL-Zugriffe, inkl. der gefilterten Abfragen für die Admin-Events-Übersicht. |
-| `Frontend\EventListRenderer` | Zentrale Rendering-Logik; wählt je nach `layout` eines von drei theme-überschreibbaren Templates. |
-| `Frontend\EventWindow` / `EventPager` | Monatsfenster-Paging: welcher Zeitraum eine „Seite" ist und wie „Weitere Termine laden" weiterschaltet. |
-| `Frontend\EventQueryCache` | Transient-Cache vor den Lese-Queries, invalidiert per Versionszähler nach jedem Sync. |
-| `Frontend\EventsEndpoint` | Öffentlicher, lesender AJAX-Endpunkt hinter dem Nachladen-Button (bewusst ohne Nonce, siehe Klassen-Docblock). |
-| `Frontend\CardDesign` / `DetailDesign` | Übersetzen die Design-Tab-Einstellungen in CSS-Custom-Properties bzw. eine Feld-Reihenfolge. |
-| `Update\GitHubUpdateChecker` | Bindet `yahnis-elsts/plugin-update-checker` an die GitHub Releases dieses Repos. |
+| `calendar` | Kalender-IDs und/oder -Namen, kommagetrennt. Leer = alle aktiven |
+| `layout` | `list` (Standard), `grid` oder `upcoming` |
+| `columns` | Spalten bei `grid`, 2–6 (Standard 3); auf schmalen Bildschirmen automatisch weniger |
+| `limit` | Obergrenze; bei `upcoming` die Gesamtzahl inklusive der großen Kachel |
+| `eventfinder` | Geführte „Du suchst …"-Leiste mit Themen- und Zeitraum-Knöpfen |
+| `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
+| `month_dividers` | Termine nach Monaten gruppieren |
+| `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Knopf |
+| `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |
 
-### Ein Renderer, drei Einbindungen
+Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — dieselbe Datei, die WordPress in der Plugin-Detailansicht anzeigt.
 
-Shortcode, Gutenberg-Block und WPBakery-Element rufen alle `EventListRenderer::render()` mit demselben Argument-Array auf – neue Optionen müssen deshalb an drei Stellen durchgereicht werden (`Frontend\Shortcode`, `Blocks\EventListBlock`, `Integrations\WpBakeryIntegration`) und in `readme.txt` dokumentiert werden.
+## Gut zu wissen
 
-```
-[ctp_events calendar="1,Gottesdienste" layout="grid" columns="3" eventfinder="1"]
-```
+**Es wird nicht alles auf einmal geladen.** Liste und Grid zeigen zunächst den laufenden und den nächsten Monat; „Weitere Termine laden" hängt die folgenden an, ohne die Seite neu zu laden. Das hält die Seite schnell, auch bei vielen wöchentlichen Serien. Abschaltbar mit `paging="0"`.
 
-### Theme-Overrides
+**Filter und Suche laufen im Browser** und funktionieren deshalb auch hinter einem Caching-Plugin. Was jenseits des geladenen Zeitraums liegt, holt das Plugin bei Bedarf nach.
 
-`yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`. Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
+**Alte Termine räumen sich selbst weg**, samt importierter Bilder, nach der im Tab *Synchronisation* eingestellten Frist.
 
-## Entwicklung
+**Ein eigenes Layout** ist möglich, aber selten nötig: Die Templates aus `includes/Frontend/templates/` lassen sich nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort anpassen — updatesicher. Details dazu in [readme.txt](readme.txt).
 
-```bash
-composer install
-composer lint     # PHPCS (PSR-12 + WordPress-Security/DB/I18n-Sniffs)
-composer test     # PHPUnit
+**Grenzen**: eine ChurchTools-Instanz pro WordPress-Installation, Multisite ungetestet, kein Monatskalender-Raster. Der API-Key ist an die WordPress-Salts (`AUTH_KEY`) gebunden — nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin sagt das im Backend.
 
-npm install
-npm run build     # kompiliert den Gutenberg-Block
-npm run start     # Watch-Modus für den Block
-```
+## Fragen und Antworten
 
-Für lokale Tests: Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` verlinken/kopieren und aktivieren.
+Antworten zu Sync-Intervall und WP-Cron, deaktivierten Kalendern, Serverumzügen und Datenschutz stehen im FAQ-Teil der [readme.txt](readme.txt) — im Backend bequemer zu lesen unter *Plugins → ChurchTools Events → Details*.
 
-`vendor/` und `blocks/event-list/build/` sind bewusst nicht eingecheckt – ein reiner Source-Checkout ist deshalb nicht lauffähig. Der Release-Workflow (`.github/workflows/release.yml`) baut beides und hängt ein installierbares ZIP an das GitHub-Release.
+Ein Problem gefunden oder etwas vermisst? [Issues](https://github.com/wirsindcgks/churchtools-plugin/issues) im Repository.
 
-### Release
+## Für Entwickler
 
-1. Version in `churchtools-plugin.php` (Header **und** `CTP_VERSION`), `readme.txt` (`Stable tag`) und `CHANGELOG.md` anheben – `tests/Release/VersionConsistencyTest.php` prüft, dass alle vier übereinstimmen.
-2. Übersetzungsvorlage neu erzeugen: `wp i18n make-pot . languages/churchtools-plugin.pot`
-3. `composer test && composer lint`
-4. Tag `vX.Y.Z` pushen – der Release-Workflow baut und veröffentlicht das ZIP.
+Aufbau, Klassen, Theme-Overrides, lokale Entwicklung und der Release-Ablauf: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Alle nennenswerten Änderungen stehen im [Changelog](CHANGELOG.md).
 
 ## Lizenz
 

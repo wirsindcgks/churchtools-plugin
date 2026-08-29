@@ -113,7 +113,6 @@ final class SyncHealthNoticeTest extends TestCase
     private function threshold(int $intervalSeconds): int
     {
         $method = new ReflectionMethod(SyncHealthNotice::class, 'staleThreshold');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $intervalSeconds);
     }
@@ -121,7 +120,6 @@ final class SyncHealthNoticeTest extends TestCase
     private function state(?int $lastSync, int $nextRun): ?string
     {
         $method = new ReflectionMethod(SyncHealthNotice::class, 'stalenessState');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $lastSync, $nextRun, self::NOW, self::ALLOWED);
     }

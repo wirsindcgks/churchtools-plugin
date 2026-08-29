@@ -826,7 +826,7 @@
 .ctp-events--upcoming .ctp-events__hero {
     position: relative;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.1rem;
     padding: 1.25rem;
     margin-block-end: var(--ctp-gap);
@@ -835,60 +835,74 @@
     box-shadow: var(--ctp-shadow);
 }
 
-.ctp-events--upcoming .ctp-events__date-chip--hero {
-    grid-column: 1;
-    grid-row: 2;
-    align-self: center;
-}
-
-.ctp-events--upcoming .ctp-events__hero-body {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-/* Ohne Bild faellt die erste Zeile weg, Chip und Angaben ruecken hoch. */
-.ctp-events--upcoming .ctp-events__hero--no-media .ctp-events__date-chip--hero,
-.ctp-events--upcoming .ctp-events__hero--no-media .ctp-events__hero-body {
-    grid-row: 1;
+/*
+ * Chip und Angaben bilden eine Gruppe. Innerhalb der Gruppe steht der Chip
+ * oben, also auf der Linie der ersten Textzeile - er gehoert zum Titel, nicht
+ * zur Kachelmitte. Die Gruppe als Ganzes steht ab 768px senkrecht mittig zum
+ * Bild (siehe unten). Einzeln im Kachelgitter ging beides nicht zugleich:
+ * Zwei Gitterzellen kennen die Hoehe der jeweils anderen nicht, "beide mittig"
+ * und "Chip auf der Titelzeile" schliessen sich dort gegenseitig aus.
+ */
+.ctp-events--upcoming .ctp-events__hero-main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: inherit;
+    align-items: start;
 }
 
 /*
- * Zweispaltig erst ab 768px statt ab 640px, und die Textspalte breiter als die
- * Bildspalte statt umgekehrt. Vorher kippte die Kachel schon auf schmalen
- * Tablets in zwei Spalten, in denen dann beides zu eng stand: Der Titel brach
- * mehrzeilig um, waehrend daneben ein hochkantes Flyer-Bild in einer breiten,
- * flachen Zelle schwamm (auf cg-ks.de 1128 Pixel breit, 281 hoch - das Bild
- * darin knapp 200 Pixel breit, der Rest leer).
+ * Zweispaltig erst ab 768px statt ab 640px. Vorher kippte die Kachel schon auf
+ * schmalen Tablets in zwei Spalten, in denen dann beides zu eng stand: Der
+ * Titel brach mehrzeilig um, waehrend daneben ein hochkantes Flyer-Bild in
+ * einer breiten, flachen Zelle schwamm (auf cg-ks.de 1128 Pixel breit, 281
+ * hoch - das Bild darin knapp 200 Pixel breit, der Rest leer).
+ *
+ * Angaben und Bild sind gleich breit (1fr gegen 1fr, vorher 1.35fr gegen 1fr).
+ * Der Datums-Chip bleibt bewusst seine eigene, inhaltsbreite Spalte davor: Die
+ * Haelften beziehen sich auf Angaben und Bild, nicht auf Chip+Angaben gegen
+ * Bild - sonst muesste der Chip in eine gemeinsame Zelle mit den Angaben, und
+ * das kostet Markup fuer einen Unterschied von rund 60 Pixeln.
  */
 @media (min-width: 768px) {
     .ctp-events--upcoming .ctp-events__hero {
-        grid-template-columns: auto minmax(0, 1.35fr) minmax(0, 1fr);
+        grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
         gap: 1.5rem;
         padding: 1.5rem;
         align-items: stretch;
     }
 
-    .ctp-events--upcoming .ctp-events__date-chip--hero {
-        grid-column: 1;
+    /*
+     * subgrid statt eigener Spalten: Die Gruppe uebernimmt die ersten beiden
+     * Spuren der Kachel (Chipbreite und die eine Haelfte), damit die Angaben
+     * exakt so breit bleiben wie das Bild rechts. Mit eigenen Spalten waere
+     * die Textspalte um Chip plus Abstand schmaler.
+     *
+     * align-self: center stellt Chip und Angaben zusammen mittig zum Bild
+     * (Nutzerwunsch 2026-08-28); innerhalb der Gruppe bleibt der Chip oben und
+     * damit auf der Titelzeile.
+     */
+    .ctp-events--upcoming .ctp-events__hero-main {
+        grid-column: 1 / 3;
         grid-row: 1;
-    }
-
-    .ctp-events--upcoming .ctp-events__hero-body {
-        grid-column: 2;
-        grid-row: 1;
+        grid-template-columns: subgrid;
+        align-self: center;
     }
 }
 
 /*
  * Image lives on the right at desktop width, shown in full (object-fit:
- * contain, never cropped) regardless of portrait/landscape source, and lands
- * at a consistent height because the height comes from the row (stretched to
- * match hero-body's text-driven height), not from the image's own aspect
- * ratio — a portrait event photo used to get cropped hard by `cover` against
- * a landscape box. Gestapelt (<768px) gibt es keine Nachbarzelle, an deren
- * Hoehe sich etwas ausrichten koennte: Dort bestimmt das Bild seine Hoehe
- * selbst (siehe die Regel darunter), und nur ohne Bild bleibt die Box mit
- * festem Seitenverhaeltnis uebrig.
+ * contain, never cropped) regardless of portrait/landscape source — a portrait
+ * event photo used to get cropped hard by `cover` against a landscape box. Die
+ * Zelle traegt dafuer in beiden Zweigen das im Design-Tab gewaehlte
+ * Seitenverhaeltnis (--ctp-media-aspect-ratio): Ein Bild in genau diesem
+ * Verhaeltnis fuellt die Zelle damit vollstaendig aus, statt in einer
+ * text-hohen Box mit Leerstreifen zu stehen. Der Fallback ist 16/9 wie bei den
+ * Kacheln - CardDesign setzt die Variable fuer die Auswahl "Breit" gar nicht
+ * erst, und stand hier wie frueher 16/10, waere ausgerechnet die Standardwahl
+ * die eine, die nicht aufgeht: ein 16:9-Foto haette in einer 16:10-Zelle oben
+ * und unten je einen Streifen Leerraum. Gestapelt (<768px) bestimmt ein vorhandenes Bild
+ * seine Hoehe weiterhin selbst (siehe die Regel weiter unten); dort bleibt das
+ * feste Verhaeltnis dem Fall ohne Bild.
  */
 .ctp-events--upcoming .ctp-events__hero-media {
     order: var(--ctp-order-media);
@@ -896,7 +910,7 @@
     grid-row: 1;
     position: relative;
     width: 100%;
-    aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 10);
+    aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 9);
     /* Eigene Rundung und eigener Beschnitt: Die Kachel klemmt das Bild nicht
        mehr an ihrer Kante ab, seit sie Innenabstand hat. */
     overflow: hidden;
@@ -925,12 +939,19 @@
     .ctp-events--upcoming .ctp-events__hero-media {
         grid-column: 3;
         grid-row: 1;
-        aspect-ratio: auto;
-        /* Waechst mit der Seitenbreite statt bei 260px stehen zu bleiben: Die
-           Hoehe dieser Zelle ist die einzige Groesse, die ein contain
-           eingepasstes Hochformat gross werden laesst. Nach oben gedeckelt,
-           damit die Kachel auf sehr breiten Seiten nicht zur Bildwand wird. */
-        min-height: clamp(260px, 22vw, 400px);
+        /*
+         * align-self statt des geerbten stretch: Eine gestreckte Zelle hat eine
+         * definite Hoehe, und gegen die kommt aspect-ratio nicht an - die Zelle
+         * waere wieder so hoch wie der Text daneben und das Bild stuende mit
+         * Leerstreifen darin. So gibt das Verhaeltnis die Hoehe vor, und ist
+         * der Text laenger, bleibt unter dem Bild Platz statt im Bild.
+         *
+         * Vorher stand hier aspect-ratio: auto plus
+         * min-height: clamp(260px, 22vw, 400px), also eine text-getriebene
+         * Hoehe mit Untergrenze. Beides ist weg: Die Untergrenze wuerde das
+         * gewaehlte Verhaeltnis auf schmalen Spalten wieder aushebeln.
+         */
+        align-self: start;
     }
 
 }
@@ -996,11 +1017,18 @@
     mix-blend-mode: multiply;
 }
 
+/*
+ * flex-start statt center: Die Angaben standen senkrecht mittig zur Kachel,
+ * der Datums-Chip daneben ebenso - beide zusammen hingen damit in der Luft und
+ * die erste Zeile der Angaben lag tiefer als der Chip. Oben ausgerichtet
+ * beginnen Chip und Titel auf derselben Linie; ist das Bild hoeher als der
+ * Text, bleibt der Platz unter dem Text statt verteilt ueber beide Enden.
+ */
 .ctp-events--upcoming .ctp-events__hero-body {
     order: var(--ctp-order-content);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0.7rem;
 }
 
@@ -1009,6 +1037,24 @@
    Titel der Listen- und Grid-Kacheln bleiben bei 700, sie sind klein genug,
    dass sie das Gewicht brauchen. Gilt genauso fuer die Ueberschrift der
    Detailansicht weiter unten. */
+/*
+ * Die Angaben tragen keine eigenen Aussenabstaende mehr, ihr Abstand kommt
+ * allein aus dem gap dieser Spalte. Zwei Gruende: Der Titel ist ein <h3> und
+ * erbte die Abstaende des Themes (in der Testumgebung 32px oben und unten),
+ * waehrend der Chip in seiner eigenen Spalte am oberen Rand der Zeile sitzt -
+ * um genau diese 32px stand die Titelzeile tiefer als er. Und die Reihenfolge
+ * der Angaben ist im Design-Tab frei einstellbar: Solange jedes Element eigene
+ * Abstaende mitbringt, haengt der Abstand zwischen zwei Zeilen davon ab,
+ * welche beiden gerade nebeneinander liegen.
+ *
+ * :first-child waere hier falsch: Die Elemente stehen in fester DOM-Reihenfolge
+ * und werden per CSS order sortiert - das erste Kind im Markup ist also nicht
+ * das erste im Bild.
+ */
+.ctp-events--upcoming .ctp-events__hero-body > * {
+    margin-block: 0;
+}
+
 .ctp-events--upcoming .ctp-events__hero-title {
     order: var(--ctp-order-title);
     font-size: clamp(var(--ctp-font-xl), 1rem + 1.4vw, var(--ctp-font-2xl));
@@ -1265,10 +1311,20 @@
     mix-blend-mode: multiply;
 }
 
+/*
+ * Titelzeile der Detailansicht: Datums-Chip und Titel nebeneinander. Die
+ * farbige Linie unter dem Titel ist dafuer entfallen - sie trennte den Titel
+ * von seinen eigenen Angaben, und die Kalenderfarbe steht ohnehin schon im
+ * Chip und in der Kalender-Pille.
+ */
+.ctp-events__detail-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
 .ctp-events__detail-title {
     margin: 0;
-    padding-bottom: 0.55rem;
-    border-bottom: 2px solid color-mix(in srgb, var(--ctp-accent) 30%, transparent);
     font-size: var(--ctp-font-xl);
     /* Siehe .ctp-events__hero-title: dieselbe Ueberlegung, derselbe Schnitt. */
     font-weight: 600;

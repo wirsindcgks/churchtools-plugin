@@ -66,7 +66,6 @@ final class ClientTest extends TestCase
     private function extractErrorMessage(string $rawBody, mixed $decoded): string
     {
         $method = new ReflectionMethod(Client::class, 'extractErrorMessage');
-        $method->setAccessible(true);
 
         return $method->invoke(new Client('https://example.church.tools', 'token'), $rawBody, $decoded);
     }

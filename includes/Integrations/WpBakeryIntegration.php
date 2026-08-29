@@ -31,8 +31,16 @@ final class WpBakeryIntegration
              * Elementefenster - und die verlor gegen WPBakerys eigene, das
              * Feld blieb ein leeres dunkles Quadrat. PNG statt SVG, weil die
              * Dokumentation genau das vorgibt (PNG oder GIF, transparent).
+             *
+             * Das Bild ist weiss auf transparentem Grund: Die Elementekachel
+             * von WPBakery ist dunkel, und die erste Fassung (mittelgraues
+             * Icon) war darauf praktisch unsichtbar - deshalb sah es zweimal
+             * nach "kein Icon" aus, obwohl die Datei jedes Mal ankam. Der
+             * Dateiname traegt das -ct, weil die URL keine Version mitfuehrt:
+             * Unter dem alten Namen haetten Browser und WPBakerys eigener
+             * Asset-Cache weiter das graue Bild von vorher ausgeliefert.
              */
-            'icon' => CTP_PLUGIN_URL . 'assets/img/wpbakery-element.png',
+            'icon' => CTP_PLUGIN_URL . 'assets/img/wpbakery-element-ct.png',
             'params' => [
                 [
                     'type' => 'textfield',

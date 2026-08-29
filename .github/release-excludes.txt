@@ -13,6 +13,7 @@ package-lock.json
 plan.md
 update.json
 README.md
+docs/
 Start.txt
 .DS_Store
 bin/

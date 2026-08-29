@@ -10,3 +10,6 @@
 # installiert - lokale Werkzeuge, kein Bestandteil des Plugins.
 /.claude/
 /skills-lock.json
+
+# Build-Ausgabe der Demo-Seiten fuer die README-Screenshots (bin/demo-screenshots.php)
+docs/.demo/

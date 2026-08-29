@@ -227,7 +227,7 @@ final class CardDesign
         }
 
         // Only a non-default ratio needs an inline override — "wide" leaves each
-        // layout's own hardcoded aspect-ratio (16/9 grid, 16/10 hero) untouched,
+        // layout's own hardcoded aspect-ratio (16/9 in grid and hero) untouched,
         // same "default emits nothing" rule as corner_style above.
         if (isset(self::MEDIA_ASPECT_RATIOS[$mediaAspectRatio]) && $mediaAspectRatio !== 'wide') {
             $variables['--ctp-media-aspect-ratio'] = self::MEDIA_ASPECT_RATIOS[$mediaAspectRatio];

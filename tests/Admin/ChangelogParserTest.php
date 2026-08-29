@@ -23,7 +23,6 @@ final class ChangelogParserTest extends TestCase
     private function split(string $line): array
     {
         $method = new ReflectionMethod(SettingsPage::class, 'splitChangelogLine');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $line);
     }
@@ -100,7 +99,6 @@ final class ChangelogParserTest extends TestCase
     public function testReadsTheShippedChangelog(): void
     {
         $method = new ReflectionMethod(SettingsPage::class, 'changelogReleases');
-        $method->setAccessible(true);
         $releases = $method->invoke(null, 3, 6);
 
         $this->assertCount(3, $releases, 'Der Tab „Updates“ zeigt die letzten drei Versionen.');

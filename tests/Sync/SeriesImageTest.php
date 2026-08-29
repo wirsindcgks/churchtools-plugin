@@ -80,7 +80,6 @@ final class SeriesImageTest extends TestCase
     private function syncSeriesImage(EventRepository $repository, int $ctEventId, string $imageUrl): void
     {
         $method = new ReflectionMethod(SyncEngine::class, 'syncSeriesImage');
-        $method->setAccessible(true);
         $method->invoke(null, $repository, $ctEventId, $imageUrl);
     }
 }

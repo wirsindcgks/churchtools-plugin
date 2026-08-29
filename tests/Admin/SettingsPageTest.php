@@ -25,7 +25,6 @@ final class SettingsPageTest extends TestCase
     private function sanitizeInstance(string $raw): string
     {
         $method = new ReflectionMethod(SettingsPage::class, 'sanitizeInstance');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $raw);
     }
@@ -173,7 +172,6 @@ final class SettingsPageTest extends TestCase
     private function sanitizeElementOrder(string $raw): array
     {
         $method = new ReflectionMethod(SettingsPage::class, 'sanitizeElementOrder');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $raw);
     }

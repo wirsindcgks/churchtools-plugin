@@ -210,7 +210,6 @@ final class SyncEngineTest extends TestCase
     private function recordEmptyRun(): array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'recordEmptyRun');
-        $method->setAccessible(true);
 
         return $method->invoke(null);
     }
@@ -218,7 +217,6 @@ final class SyncEngineTest extends TestCase
     private function forgetEmptyRuns(): array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'forgetEmptyRuns');
-        $method->setAccessible(true);
 
         return $method->invoke(null);
     }
@@ -226,7 +224,6 @@ final class SyncEngineTest extends TestCase
     private function looksLikeApiFailure(array $envelopes, bool $hasStored, int $runs = 1, int $spread = 0): bool
     {
         $method = new ReflectionMethod(SyncEngine::class, 'looksLikeApiFailure');
-        $method->setAccessible(true);
 
         return $method->invoke(
             null,
@@ -241,7 +238,6 @@ final class SyncEngineTest extends TestCase
     private function mapOccurrence(array $envelope): ?array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'mapOccurrence');
-        $method->setAccessible(true);
 
         return $method->invoke(null, $envelope);
     }
