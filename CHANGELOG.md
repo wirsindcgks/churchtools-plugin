@@ -5,6 +5,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.0] - 2026-08-29
+
+Das WPBakery-Icon, das seit 1.1.1 an einer `!important`-Regel des Themes
+scheiterte, plus eine Kleinigkeit, die im Builder viel ausmacht: Der Baustein
+sagt jetzt selbst, was in ihm eingeschaltet ist.
+
+### Added
+
+- **Der Baustein im WPBakery-Builder zeigt seine aktiven Optionen** – Ansicht, Kalender-IDs und die eingeschalteten Zusätze (Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung) stehen unter dem Namen, so wie es die mitgelieferten Elemente auch tun. Damit ist ohne Öffnen erkennbar, was ein Baustein tut. Es steht immer nur da, was tatsächlich an ist: Ausgeschaltete Felder landen gar nicht erst im Shortcode. Angezeigt wird die Beschriftung statt des gespeicherten Werts – „Ansicht: Grid" statt „Ansicht: grid"
+
+### Fixed
+
+- **Das Element im WPBakery-Builder zeigt sein Icon** – der Fix in 1.1.1 hat die Ursache getroffen, aber nicht gereicht. Die Zielumgebung färbt die Symbolkachel über die Kurzform `background: … !important`, und die setzt `background-image` gleich mit zurück; ohne eigenes `!important` war das Symbol damit wieder weg. Die Regel setzt sich jetzt durch – es ist die einzige Stelle im Plugin mit `!important`, und sie steht dort, weil eine fremde Regel es zuerst benutzt. Das Symbol ist wieder weiß, weil die Kachel dunkel eingefärbt wird; die Fläche selbst bleibt dem Theme überlassen, damit das Element aussieht wie seine Nachbarn
+- **Das Icon füllte die Kachel randlos aus.** Es steht jetzt mit Abstand darin, in derselben optischen Größe wie die Symbole der übrigen Elemente
+
 ## [1.1.1] - 2026-08-29
 
 Ein Nachtrag zu 1.1.0: Das WPBakery-Icon, das dort als behoben galt, war es
@@ -461,6 +476,7 @@ Zielseite im Betrieb war.
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
 [Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...v1.0.3

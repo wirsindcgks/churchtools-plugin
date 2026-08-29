@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-29 20:45:54",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.1.1/churchtools-plugin-v1.1.1.zip",
+    "last_updated": "2026-08-29 21:11:21",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.2.0/churchtools-plugin-v1.2.0.zip",
     "sections": {
-        "changelog": "<p>Ein Nachtrag zu 1.1.0: Das WPBakery-Icon, das dort als behoben galt, war es nicht. Diesmal steht die Ursache fest, weil sie nicht mehr geraten, sondern in WPBakerys Quellcode nachgelesen wurde.</p>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Das Element im WPBakery-Builder zeigt sein Icon</strong> – dritter Anlauf, diesmal an der Ursache. Der Fix in 1.1.0 („grau auf dunklem Grund, jetzt weiß&quot;) beruhte auf zwei Annahmen, die beide nicht stimmen. Erstens erreicht eine Bildadresse in <code>icon</code> das Elementefenster überhaupt nicht: WPBakery schreibt den Wert bis 6.x ungeprüft ins <code>class</code>-Attribut, und seit 8.4 verwirft es ihn ersatzlos, sobald er als URL durchgeht – übrig bleibt WPBakerys eigenes Logo. Zweitens ist die Elementekachel hell, nicht dunkel; ein weißes Icon wäre dort auch bei funktionierender Anzeige unsichtbar geblieben. Das Element meldet sein Icon jetzt als CSS-Klasse an und bringt die passende Regel selbst mit – der Weg, den WPBakerys eigene Elemente gehen und der in jeder geprüften Version funktioniert. Das Bild ist eine dunkle Kalender-Kontur im Stil der mitgelieferten Element-Icons</li>\n</ul>\n"
+        "changelog": "<p>Das WPBakery-Icon, das seit 1.1.1 an einer <code>!important</code>-Regel des Themes scheiterte, plus eine Kleinigkeit, die im Builder viel ausmacht: Der Baustein sagt jetzt selbst, was in ihm eingeschaltet ist.</p>\n<h4>Added</h4>\n<ul>\n<li><strong>Der Baustein im WPBakery-Builder zeigt seine aktiven Optionen</strong> – Ansicht, Kalender-IDs und die eingeschalteten Zusätze (Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung) stehen unter dem Namen, so wie es die mitgelieferten Elemente auch tun. Damit ist ohne Öffnen erkennbar, was ein Baustein tut. Es steht immer nur da, was tatsächlich an ist: Ausgeschaltete Felder landen gar nicht erst im Shortcode. Angezeigt wird die Beschriftung statt des gespeicherten Werts – „Ansicht: Grid&quot; statt „Ansicht: grid&quot;</li>\n</ul>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Das Element im WPBakery-Builder zeigt sein Icon</strong> – der Fix in 1.1.1 hat die Ursache getroffen, aber nicht gereicht. Die Zielumgebung färbt die Symbolkachel über die Kurzform <code>background: … !important</code>, und die setzt <code>background-image</code> gleich mit zurück; ohne eigenes <code>!important</code> war das Symbol damit wieder weg. Die Regel setzt sich jetzt durch – es ist die einzige Stelle im Plugin mit <code>!important</code>, und sie steht dort, weil eine fremde Regel es zuerst benutzt. Das Symbol ist wieder weiß, weil die Kachel dunkel eingefärbt wird; die Fläche selbst bleibt dem Theme überlassen, damit das Element aussieht wie seine Nachbarn</li>\n<li><strong>Das Icon füllte die Kachel randlos aus.</strong> Es steht jetzt mit Abstand darin, in derselben optischen Größe wie die Symbole der übrigen Elemente</li>\n</ul>\n"
     }
 }

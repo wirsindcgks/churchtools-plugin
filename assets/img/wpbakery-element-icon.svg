@@ -1,18 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
     <!--
-        Strichstaerke, Farbe und Randabstand sind von WPBakerys eigenen
-        Elementsymbolen uebernommen (assets/vc/vc-element-icons/*.svg, dort
-        durchgaengig 1.7px Kontur in #00447F auf transparentem Grund), damit
-        das Element im Elementefenster nicht als Fremdkoerper zwischen den
-        mitgelieferten Elementen steht.
+        Weiss auf transparentem Grund und randfuellend gezeichnet: Die Kachel
+        bekommt ihre dunkle Flaeche aus dem CSS (bzw. auf der Zielseite vom
+        Theme), der Abstand zum Rand entsteht ueber background-size. Siehe
+        WpBakeryIntegration::enqueueElementIcon().
     -->
-    <g stroke="#00447F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2.35" y="5.65" width="29.3" height="26" rx="2.5" />
-        <path d="M2.35 13.5h29.3M10.5 2.35v6.3M23.5 2.35v6.3" />
+    <g stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1" y="3.5" width="22" height="19.5" rx="3" />
+        <path d="M1 10.5h22M7 1v5M17 1v5" />
     </g>
-    <g fill="#00447F">
-        <circle cx="10.5" cy="22.5" r="1.75" />
-        <circle cx="17" cy="22.5" r="1.75" />
-        <circle cx="23.5" cy="22.5" r="1.75" />
+    <g fill="#ffffff">
+        <circle cx="6.75" cy="17" r="1.6" />
+        <circle cx="12" cy="17" r="1.6" />
+        <circle cx="17.25" cy="17" r="1.6" />
     </g>
 </svg>
