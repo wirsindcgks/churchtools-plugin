@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-29 21:11:21",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.2.0/churchtools-plugin-v1.2.0.zip",
+    "last_updated": "2026-08-29 21:21:38",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.2.1/churchtools-plugin-v1.2.1.zip",
     "sections": {
-        "changelog": "<p>Das WPBakery-Icon, das seit 1.1.1 an einer <code>!important</code>-Regel des Themes scheiterte, plus eine Kleinigkeit, die im Builder viel ausmacht: Der Baustein sagt jetzt selbst, was in ihm eingeschaltet ist.</p>\n<h4>Added</h4>\n<ul>\n<li><strong>Der Baustein im WPBakery-Builder zeigt seine aktiven Optionen</strong> – Ansicht, Kalender-IDs und die eingeschalteten Zusätze (Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung) stehen unter dem Namen, so wie es die mitgelieferten Elemente auch tun. Damit ist ohne Öffnen erkennbar, was ein Baustein tut. Es steht immer nur da, was tatsächlich an ist: Ausgeschaltete Felder landen gar nicht erst im Shortcode. Angezeigt wird die Beschriftung statt des gespeicherten Werts – „Ansicht: Grid&quot; statt „Ansicht: grid&quot;</li>\n</ul>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Das Element im WPBakery-Builder zeigt sein Icon</strong> – der Fix in 1.1.1 hat die Ursache getroffen, aber nicht gereicht. Die Zielumgebung färbt die Symbolkachel über die Kurzform <code>background: … !important</code>, und die setzt <code>background-image</code> gleich mit zurück; ohne eigenes <code>!important</code> war das Symbol damit wieder weg. Die Regel setzt sich jetzt durch – es ist die einzige Stelle im Plugin mit <code>!important</code>, und sie steht dort, weil eine fremde Regel es zuerst benutzt. Das Symbol ist wieder weiß, weil die Kachel dunkel eingefärbt wird; die Fläche selbst bleibt dem Theme überlassen, damit das Element aussieht wie seine Nachbarn</li>\n<li><strong>Das Icon füllte die Kachel randlos aus.</strong> Es steht jetzt mit Abstand darin, in derselben optischen Größe wie die Symbole der übrigen Elemente</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Das Icon des WPBakery-Elements blieb dunkelblau statt weiß und war zu groß.</strong> Die weiße Fassung war ausgeliefert, sie kam nur nicht an: Der Dateiname bleibt über Versionen hinweg gleich und die Adresse im Stylesheet führte keine Version mit, also lieferte der Browser weiter das Bild aus 1.1.1 aus – die Regel war neu, das Bild darin nicht. Die Adresse trägt jetzt ein <code>?ver=</code>. Dazu steht das Symbol auf 48 % der Kachel statt auf 64 %: Die übrigen Elemente zeichnen ihre Symbole als Schriftzeichen in 15 px, und 15 von 32 ist genau diese Größe</li>\n</ul>\n"
     }
 }

@@ -129,9 +129,17 @@ final class WpBakeryIntegration
      *
      * Die Flaeche bleibt bewusst *ohne* !important - wo ein Theme sie faerbt,
      * soll seine Farbe gelten, sonst springt ICON_BACKDROP ein. Und
-     * background-size haelt das Symbol auf rund zwei Dritteln der Kachel,
-     * statt es randfuellend aufzublasen: dieselbe optische Groesse, die die
-     * uebrigen Elemente dort haben.
+     * background-size setzt das Symbol auf 48% der Kachel: Das Theme zeichnet
+     * seine eigenen Symbole als Schriftzeichen in 15px, und 15 von 32 ist
+     * genau diese Groesse - randfuellend war es sichtbar groesser als seine
+     * Nachbarn.
+     *
+     * Das ?ver= an der Bildadresse ist kein Beiwerk. Der Dateiname bleibt
+     * ueber Versionen hinweg gleich, und nach 1.2.0 lieferte der Browser
+     * weiter das dunkelblaue Bild aus 1.1.1 aus - die Regel war neu, das Bild
+     * darin nicht. Am vc_map()-Wert waere ein Anhaengsel riskant (WPBakery
+     * prueft dort auf eine URL), hier steht die Adresse aber im eigenen
+     * Stylesheet und nichts prueft sie.
      */
     public function enqueueElementIcon(): void
     {
@@ -158,10 +166,10 @@ final class WpBakeryIntegration
                 . 'background-image:url("%3$s") !important;'
                 . 'background-position:center !important;'
                 . 'background-repeat:no-repeat !important;'
-                . 'background-size:64%% !important;}',
+                . 'background-size:48%% !important;}',
             self::ICON_CLASS,
             self::BASE,
-            esc_url(CTP_PLUGIN_URL . 'assets/img/wpbakery-element-icon.svg'),
+            esc_url(add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/img/wpbakery-element-icon.svg')),
             self::ICON_BACKDROP
         ));
 

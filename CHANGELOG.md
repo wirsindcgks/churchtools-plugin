@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.1] - 2026-08-29
+
+### Fixed
+
+- **Das Icon des WPBakery-Elements blieb dunkelblau statt weiß und war zu groß.** Die weiße Fassung war ausgeliefert, sie kam nur nicht an: Der Dateiname bleibt über Versionen hinweg gleich und die Adresse im Stylesheet führte keine Version mit, also lieferte der Browser weiter das Bild aus 1.1.1 aus – die Regel war neu, das Bild darin nicht. Die Adresse trägt jetzt ein `?ver=`. Dazu steht das Symbol auf 48 % der Kachel statt auf 64 %: Die übrigen Elemente zeichnen ihre Symbole als Schriftzeichen in 15 px, und 15 von 32 ist genau diese Größe
+
 ## [1.2.0] - 2026-08-29
 
 Das WPBakery-Icon, das seit 1.1.1 an einer `!important`-Regel des Themes
@@ -476,6 +482,7 @@ Zielseite im Betrieb war.
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
 [Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.2.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...v1.1.0
