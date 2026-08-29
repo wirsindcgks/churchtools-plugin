@@ -405,7 +405,8 @@
 /* Sized as a section label rather than a heading that competes with the card
    titles under it: one step below them (--ctp-font-md vs --ctp-font-lg), but
    uppercase and letter-spaced so it still reads as a grouping marker — same
-   idiom .ctp-events__eyebrow and .ctp-events__more-label already use. */
+   idiom .ctp-events__eyebrow and .ctp-events__more-label already use.
+   Die Grid-Ansicht weicht davon ab, siehe unten. */
 .ctp-events__month-divider {
     margin-block: calc(var(--ctp-gap) * 0.7) calc(var(--ctp-gap) * 0.35);
     font-size: var(--ctp-font-md);
@@ -419,8 +420,18 @@
     margin-block-start: 0;
 }
 
+/*
+ * Im Grid eine Stufe groesser als in der Liste (--ctp-font-lg statt -md).
+ * Der Trenner steht dort nicht ueber einer schmalen Zeile, sondern ueber einer
+ * kompletten Kachelreihe, die er per `grid-column: 1 / -1` in voller Breite
+ * ueberspannt - auf dieser Breite und mit dem groesseren Abstand ringsum wirkte
+ * die Listengroesse verloren statt zurueckhaltend. In der Liste bleibt es bei
+ * --ctp-font-md: dort sitzt der Trenner direkt auf den Zeilen und wuerde bei
+ * gleicher Groesse mit deren Titeln (ebenfalls --ctp-font-lg) konkurrieren.
+ */
 .ctp-events--grid .ctp-events__month-divider {
     grid-column: 1 / -1;
+    font-size: var(--ctp-font-lg);
 }
 
 /*
