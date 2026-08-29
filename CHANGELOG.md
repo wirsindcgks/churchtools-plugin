@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.1] - 2026-08-30
+
+### Fixed
+
+- **Die Einstellungen des Design-Tabs greifen jetzt auch auf der eigenen Terminseite** – „Ecken" und eine global gesetzte Akzentfarbe wirkten dort bisher nicht, obwohl der Tab sie als für alle Ansichten gültig beschreibt. Betroffen war ausschließlich die eigene Seite (Klickverhalten „Eigene Seite"); Liste, Grid, „Nächster Termin" und das Popup hatten sie immer. Sichtbar wird es an den Ecken von Bildrahmen und Kalender-Etikett. **Wer „Eckig" eingestellt hat, sieht seine Terminseiten nach dem Update also anders als vorher** – nämlich so, wie die Einstellung es die ganze Zeit angekündigt hat. Die Farbe des jeweiligen Kalenders geht weiterhin vor einer global gesetzten Akzentfarbe
+
 ## [1.3.0] - 2026-08-29
 
 Vier wählbare Stil-Vorlagen im Design-Tab. Das ist die Ausbaustufe, die seit
@@ -500,6 +506,7 @@ Zielseite im Betrieb war.
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
 [Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.3.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.1...v1.2.0

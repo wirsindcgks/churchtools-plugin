@@ -384,9 +384,36 @@ final class EventListRenderer
             : DetailDesign::DEFAULT_ORDER;
         $backUrl = wp_get_referer();
         $backUrl = $backUrl !== false && $backUrl !== '' ? $backUrl : home_url('/');
-        // Eigener Name statt $args['design_class'] wie in den Listen-Templates:
-        // Diese Ansicht bekommt gar kein $args, sie rendert genau einen Termin.
+        // Eigene Namen statt $args['design_class']/['design_style'] wie in den
+        // Listen-Templates: Diese Ansicht bekommt gar kein $args, sie rendert
+        // genau einen Termin.
         $designClass = DesignPreset::bodyClass($designSettings['design_preset']);
+        // Dieselben Variablen wie in den Kachelansichten, und zwar aus
+        // demselben Grund: Die Einstellungen des Design-Tabs gelten laut ihrer
+        // eigenen Beschreibung fuer *alle* Ansichten. Bis 1.3.0 war die eigene
+        // Detailseite die einzige, die sie nicht bekam - „Eckig" und eine
+        // global gesetzte Akzentfarbe wirkten dort nicht, im Popup daneben
+        // schon (das liegt im Container der Liste und erbt von dort).
+        //
+        // Wirksam wird davon hier nur ein Teil, und das ist so richtig: Die
+        // Radius-Variablen erreichen Bildrahmen und Badges, die Akzentfarbe
+        // dient als Rueckfallwert unter der Kalenderfarbe, die das Partial
+        // weiterhin auf .ctp-events__detail selbst setzt und die damit gewinnt
+        // - genau wie eine Kachel ueber dem Container gewinnt. Die
+        // --ctp-order-*-Variablen laufen hier ins Leere (die Detailansicht
+        // ordnet serverseitig, siehe DetailDesign), und
+        // --ctp-media-aspect-ratio ebenso: Das Bild der Detailansicht haengt
+        // an Hoehenbegrenzungen, nicht an einem Seitenverhaeltnis. Sie
+        // trotzdem mitzugeben ist billiger als ein zweiter, halbierter
+        // Bauweg, der bei der naechsten neuen Einstellung wieder auseinander
+        // laufen wuerde.
+        $designStyle = CardDesign::styleAttribute(
+            $designSettings['element_order'],
+            $designSettings['corner_style'],
+            $designSettings['media_aspect_ratio'],
+            $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : '',
+            $designSettings['button_color_enabled'] ? $designSettings['button_color'] : ''
+        );
 
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);

@@ -9,13 +9,14 @@
  * @var array $order Validated DetailDesign::ELEMENT_KEYS permutation.
  * @var string $backUrl
  * @var string $designClass Preset class from DesignPreset::bodyClass(), '' for the default preset.
+ * @var string $designStyle CSS custom properties from CardDesign::styleAttribute(), same as the list layouts.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events ctp-events--detail <?php echo esc_attr($designClass); ?>">
+<div class="ctp-events ctp-events--detail <?php echo esc_attr($designClass); ?>" style="<?php echo esc_attr($designStyle); ?>">
     <p><a class="ctp-events__back" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></a></p>
     <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php'; ?>
 </div>

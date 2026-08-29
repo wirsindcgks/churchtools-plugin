@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.3.1 =
+Behebt, dass „Ecken“ und eine global gesetzte Akzentfarbe auf der eigenen Terminseite nicht wirkten. Wer „Eckig“ eingestellt hat und das Klickverhalten „Eigene Seite“ nutzt, sieht diese Seiten nach dem Update entsprechend eckig – so, wie die Einstellung es angekündigt hat.
+
 = 1.3.0 =
 Neu: vier wählbare Stil-Vorlagen im Tab „Design“ (Standard, Ruhig, Warm, Strukturiert), jede mit eigener Vorschau. „Standard“ ist die bisherige Optik – wer nichts umstellt, sieht nach dem Update dasselbe wie vorher. Kein Handlungsbedarf.
 
@@ -231,6 +234,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.3.1 =
+
+* Behoben: Die Einstellungen des Design-Tabs greifen jetzt auch auf der eigenen Terminseite – „Ecken“ und eine global gesetzte Akzentfarbe wirkten dort bisher nicht, in allen anderen Ansichten und im Popup dagegen schon
+* Sichtbar an den Ecken von Bildrahmen und Kalender-Etikett. Wer „Eckig“ eingestellt hat und das Klickverhalten „Eigene Seite“ nutzt, sieht diese Seiten nach dem Update anders als vorher
+* Die Farbe des jeweiligen Kalenders geht weiterhin vor einer global gesetzten Akzentfarbe
 
 = 1.3.0 =
 
