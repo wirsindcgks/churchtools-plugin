@@ -93,6 +93,20 @@ final class ChangelogParserTest extends TestCase
     }
 
     /**
+     * Eine Zeile ohne fetten Satz am Anfang kann trotzdem eine Fettung
+     * mittendrin haben. Die stand im Backend eine Zeit lang als „**" da, weil
+     * nur der Zweig *mit* fettem Anfang sie entfernt hat.
+     */
+    public function testStripsBoldFromLinesThatDoNotStartWithIt(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'splitChangelogLine');
+        $parsed = $method->invoke(null, 'Gilt weiterhin **über** der Vorlage');
+
+        $this->assertSame('Gilt weiterhin über der Vorlage', $parsed['lead']);
+        $this->assertSame('', $parsed['text']);
+    }
+
+    /**
      * Die echte CHANGELOG.md des Repos, nicht ein Ausschnitt: sie ist das,
      * was im Release-Zip landet und was die beiden Admin-Ansichten lesen.
      */

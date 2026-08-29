@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 ?>
 <div
-    class="ctp-events ctp-events--grid"
+    class="ctp-events ctp-events--grid <?php echo esc_attr($args['design_class']); ?>"
     style="--ctp-columns:<?php echo (int) $args['columns']; ?>;<?php echo esc_attr($args['design_style']); ?>"
 >
     <?php if ($args['eventfinder']) : ?>

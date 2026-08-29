@@ -118,6 +118,50 @@
 	});
 	updateDetailVisibility();
 
+	/*
+	 * Stil-Vorlage: tauscht die Preset-Klasse auf beiden Vorschauen, sobald eine
+	 * andere Karte gewaehlt wird. Die Regel stammt aus DesignPreset::bodyClass()
+	 * und ist hier gespiegelt - Praefix plus Wert, und fuer "standard" gar keine
+	 * Klasse, weil dessen Werte schon in .ctp-events selbst stehen.
+	 *
+	 * Bewusst vor dem Abbruch weiter unten (kein Reihenfolge-Editor auf der
+	 * Seite): Die Vorlagenwahl haengt an keinem der beiden Editoren.
+	 */
+	var PRESET_CLASS_PREFIX = 'ctp-events--preset-';
+	var PRESET_DEFAULT = 'standard';
+	var presetInputs = document.querySelectorAll('input[name="ctp_settings[design_preset]"]');
+
+	function applyPreset(value) {
+		[
+			document.getElementById('ctp-design-preview'),
+			document.getElementById('ctp-design-detail-preview')
+		].forEach(function (frame) {
+			if (!frame) {
+				return;
+			}
+
+			// Ueber eine Kopie der Liste, weil classList live ist und das
+			// Entfernen waehrend des Durchlaufs sonst Eintraege ueberspringt.
+			Array.prototype.slice.call(frame.classList).forEach(function (name) {
+				if (name.indexOf(PRESET_CLASS_PREFIX) === 0) {
+					frame.classList.remove(name);
+				}
+			});
+
+			if (value && value !== PRESET_DEFAULT) {
+				frame.classList.add(PRESET_CLASS_PREFIX + value);
+			}
+		});
+	}
+
+	Array.prototype.forEach.call(presetInputs, function (input) {
+		input.addEventListener('change', function () {
+			if (input.checked) {
+				applyPreset(input.value);
+			}
+		});
+	});
+
 	var ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'excerpt', 'date', 'time', 'location'];
 	var SEPARATOR_TYPES = ['spacer', 'divider'];
 	var labels = window.ctpDesignLabels || { divider: 'Trennlinie', spacer: 'Abstand', remove: 'Entfernen' };

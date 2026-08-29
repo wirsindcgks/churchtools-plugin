@@ -5,6 +5,24 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.0] - 2026-08-29
+
+Vier wählbare Stil-Vorlagen im Design-Tab. Das ist die Ausbaustufe, die seit
+dem Facelift im August als „wenn alles steht" vorgemerkt war: Statt eines
+festen Aussehens gibt es jetzt vier, und die Wahl steht als Erstes im Tab, weil
+alles andere darauf aufsetzt.
+
+### Added
+
+- **Stil-Vorlagen im Tab „Design"** – „Standard", „Ruhig", „Warm" und „Strukturiert" als Grundlage für alle Ansichten, jede mit einer eigenen kleinen Vorschau in der Auswahl. Sie legen Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest. **„Standard" ist die bisherige Optik** – wer nichts umstellt, sieht nach dem Update dasselbe wie vorher
+- Eine Vorlage fasst ausschließlich die Optik an. Reihenfolge der Felder, ausgeblendete Felder und Klickverhalten bleiben unberührt: Das ist eingerichtete Konfiguration und nicht Teil eines Stils
+- **Die Einzeleinstellungen gelten weiterhin über der Vorlage** – wer „Eckig" gewählt hat, bekommt eckige Ecken auch in „Warm"; dasselbe gilt für Akzentfarbe, Buttonfarbe und Bild-Seitenverhältnis
+- Beide Live-Vorschauen im Design-Tab – Kachel und Detailansicht – schalten beim Wechsel sofort mit
+
+### Changed
+
+- **Die Monatstrenner im Grid sind eine Stufe größer** – dort steht der Trenner über einer kompletten Kachelreihe, die er in voller Breite überspannt, und wirkte in der Größe der Listenansicht verloren. In der Liste bleibt es bei der bisherigen Größe: Dort sitzt er direkt auf den Zeilen und würde sonst mit deren Titeln konkurrieren
+
 ## [1.2.1] - 2026-08-29
 
 ### Fixed
@@ -482,6 +500,7 @@ Zielseite im Betrieb war.
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
 [Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.3.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...v1.1.1

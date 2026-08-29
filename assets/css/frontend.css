@@ -1385,3 +1385,207 @@
 .ctp-events__back:hover {
     color: var(--ctp-accent);
 }
+
+/* ---------- design presets (siehe DesignPreset.php, Design-Tab „Stil") ---------- */
+
+/*
+ * Vier wählbare Stil-Grundlagen. „Standard" ist das Aussehen, das seit dem
+ * Facelift ausgeliefert wird, und steht deshalb schon oben in .ctp-events —
+ * es bekommt hier bewusst keinen eigenen Block, sonst stünde dort eine leere
+ * Regel. Die drei anderen greifen die Richtungen der Prototyp-Runden auf.
+ *
+ * Zwei Konventionen für alles, was hier folgt:
+ *
+ *   1. Jeder Selektor beginnt mit `.ctp-events.ctp-events--preset-x`, obwohl
+ *      eine der beiden Klassen genügen würde. Das hebt jede Preset-Regel
+ *      genau eine Klasse über ihre Grundregel weiter oben, unabhängig davon,
+ *      wo im Dokument sie steht — sonst entschiede bei gleichem Gewicht die
+ *      Reihenfolge in der Datei, und die ändert sich beim nächsten Einschub.
+ *   2. Ein Preset ändert nur Optik. Nichts hier setzt `order`, blendet
+ *      Elemente aus oder greift ins Klickverhalten ein — das ist die
+ *      Konfiguration der Redaktion (CardDesign), nicht Teil eines Stils.
+ *
+ * Was ein Preset *nicht* erzwingt: Ecken, Akzentfarbe, Buttonfarbe und
+ * Bildformat kommen aus dem Design-Tab als Inline-Style und schlagen jede
+ * Regel hier. Wer „Eckig" wählt, bekommt eckige Ecken auch in „Warm".
+ */
+
+/*
+ * Ruhig — architektonisch. Haarlinie statt Schatten, fast kein Radius, keine
+ * Bewegung bei Hover: Die Kachel ist ein gezeichneter Rahmen, kein Objekt, das
+ * über dem Papier schwebt. Das Kalender-Label verliert seine Pille und bleibt
+ * als farbiger Text stehen.
+ */
+.ctp-events.ctp-events--preset-ruhig {
+    --ctp-radius: 3px;
+    --ctp-radius-pill: 3px;
+    --ctp-shadow: none;
+}
+
+/*
+ * box-sizing steht hier und nicht nur der Vollstaendigkeit halber: Die Kachel
+ * traegt `height: 100%`, und mit `content-box` - was ein Theme durchaus
+ * einstellen kann, das Plugin setzt selbst keine Regel dazu - kaemen die zwei
+ * Pixel des Rahmens oben drauf, statt hineinzuzaehlen. Die Kachel stuende dann
+ * um zwei Pixel ueber ihrer Zeile.
+ */
+.ctp-events.ctp-events--preset-ruhig .ctp-events__card,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__hero,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__detail-media-frame {
+    box-sizing: border-box;
+    border: 1px solid var(--ctp-color-border);
+}
+
+/* Das Datumsschild bringt seinen Schatten selbst mit (es liegt ueber dem
+   Bild, nicht auf der Kachelflaeche) - in einem Stil ohne Schatten faellt
+   genau das auf. Haarlinie statt Schatten, wie die Kachel darunter. */
+.ctp-events.ctp-events--preset-ruhig .ctp-events__date-badge {
+    box-shadow: none;
+    border: 1px solid var(--ctp-color-border);
+}
+
+/*
+ * Das Popup behält einen Schatten, obwohl --ctp-shadow hier `none` ist: Es
+ * liegt über der Seite statt in ihr, und eine Haarlinie allein trennt es nicht
+ * genug vom Inhalt darunter. Zurückhaltender als der Standardschatten, aber
+ * vorhanden.
+ */
+.ctp-events.ctp-events--preset-ruhig .ctp-events__modal {
+    border: 1px solid var(--ctp-color-border);
+    box-shadow: 0 24px 60px -30px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+/* Statt der Anhebung färbt sich der Rahmen — dieselbe Rückmeldung, ohne dass
+   sich etwas bewegt. */
+.ctp-events.ctp-events--preset-ruhig .ctp-events__card--clickable:hover,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__card--clickable:focus-within,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__hero--clickable:hover,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__hero--clickable:focus-within {
+    box-shadow: none;
+    transform: none;
+    border-color: color-mix(in srgb, var(--ctp-accent) 55%, transparent);
+}
+
+.ctp-events.ctp-events--preset-ruhig .ctp-events__item--clickable:hover,
+.ctp-events.ctp-events--preset-ruhig .ctp-events__item--clickable:focus-within {
+    transform: none;
+}
+
+.ctp-events.ctp-events--preset-ruhig .ctp-events__card--clickable:hover .ctp-events__media img {
+    transform: none;
+}
+
+.ctp-events.ctp-events--preset-ruhig .ctp-events__eyebrow {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/*
+ * Warm — großzügig. Weicher Radius, ein etwas weiterer Schatten und mehr Luft
+ * zwischen den Kacheln; das Kalender-Label ist gefüllt statt umrandet. Die
+ * Füllung ist bewusst eine Mischung mit der Kachelfläche und nicht die
+ * Akzentfarbe selbst: Kalenderfarben reichen von dunkelblau bis hellgelb, und
+ * eine voll gefüllte Pille wäre bei der Hälfte davon unlesbar.
+ */
+.ctp-events.ctp-events--preset-warm {
+    --ctp-radius: 22px;
+    --ctp-gap: clamp(1.6rem, 1.8vw + 0.9rem, 2.8rem);
+    --ctp-shadow: 0 2px 6px color-mix(in srgb, currentColor 6%, transparent),
+        0 28px 56px -26px color-mix(in srgb, #8a6a3a 42%, transparent);
+}
+
+.ctp-events.ctp-events--preset-warm .ctp-events__eyebrow {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--ctp-accent) 18%, var(--ctp-color-surface));
+}
+
+.ctp-events.ctp-events--preset-warm .ctp-events__card--clickable:hover,
+.ctp-events.ctp-events--preset-warm .ctp-events__card--clickable:focus-within {
+    transform: translateY(-5px);
+}
+
+.ctp-events.ctp-events--preset-warm .ctp-events__card--clickable:hover .ctp-events__media img {
+    transform: scale(1.05);
+}
+
+/*
+ * Strukturiert — redaktionell. Kein Schatten, sondern eine kräftige Kante in
+ * der Kalenderfarbe an der Oberkante; Kanten und Trennlinien sind deutlicher
+ * als sonst, die Ecken praktisch rechtwinklig. Das Kalender-Label wird zum
+ * Balken vor dem Namen statt zur Pille.
+ */
+.ctp-events.ctp-events--preset-strukturiert {
+    --ctp-radius: 2px;
+    --ctp-radius-pill: 0px;
+    --ctp-shadow: none;
+    --ctp-color-border: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* box-sizing: siehe die Begruendung bei „Ruhig" weiter oben. */
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__card,
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__hero {
+    box-sizing: border-box;
+    border: 1px solid var(--ctp-color-border);
+    border-block-start: 3px solid var(--ctp-accent);
+}
+
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__detail-media-frame {
+    box-sizing: border-box;
+    border: 1px solid var(--ctp-color-border);
+}
+
+/* Siehe „Ruhig": derselbe Schatten am selben Element, hier zusaetzlich
+   rechtwinklig statt abgerundet. */
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__date-badge {
+    box-shadow: none;
+    border: 1px solid var(--ctp-color-border);
+}
+
+/* Siehe die Begründung beim Popup von „Ruhig" — hier zusätzlich mit der
+   Akzentkante, die in diesem Stil jede Fläche trägt. */
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__modal {
+    border: 1px solid var(--ctp-color-border);
+    border-block-start: 3px solid var(--ctp-accent);
+    box-shadow: 0 24px 60px -30px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+/* Ueber :not(:last-child) statt ueber die Grundregel plus deren
+   :last-child-Ausnahme: Die Ausnahme wiegt eine Klasse weniger als diese Regel
+   und wuerde sonst verlieren - die letzte Zeile bekaeme einen Trenner, unter
+   dem nichts mehr folgt. */
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__item:not(:last-child) {
+    border-block-end: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__title {
+    font-weight: 700;
+}
+
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__eyebrow {
+    padding: 0 0 0 0.55rem;
+    border: none;
+    border-inline-start: 3px solid var(--ctp-accent);
+    background: none;
+}
+
+/* Keine Bewegung, stattdessen faerbt sich die Flaeche eine Spur in der
+   Kalenderfarbe und die Oberkante wird kraeftiger. */
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__card--clickable:hover,
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__card--clickable:focus-within,
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__hero--clickable:hover,
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__hero--clickable:focus-within {
+    box-shadow: none;
+    transform: none;
+    background: color-mix(in srgb, var(--ctp-accent) 5%, var(--ctp-color-surface));
+}
+
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__item--clickable:hover,
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__item--clickable:focus-within {
+    transform: none;
+    background: color-mix(in srgb, var(--ctp-accent) 5%, transparent);
+}
+
+.ctp-events.ctp-events--preset-strukturiert .ctp-events__card--clickable:hover .ctp-events__media img {
+    transform: none;
+}

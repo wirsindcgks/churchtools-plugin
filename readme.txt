@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …“-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL.
-* **Design-Tab** mit Live-Vorschau: Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
 * **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.3.0 =
+Neu: vier wählbare Stil-Vorlagen im Tab „Design“ (Standard, Ruhig, Warm, Strukturiert), jede mit eigener Vorschau. „Standard“ ist die bisherige Optik – wer nichts umstellt, sieht nach dem Update dasselbe wie vorher. Kein Handlungsbedarf.
+
 = 1.2.1 =
 Nachbesserung am Icon des WPBakery-Elements: Es ist jetzt weiß statt dunkelblau und kleiner. Kein Handlungsbedarf.
 
@@ -228,6 +231,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.3.0 =
+
+* Neu: Vier Stil-Vorlagen im Tab „Design“ – „Standard“, „Ruhig“, „Warm“ und „Strukturiert“ – als Grundlage für alle Ansichten, jede mit einer kleinen Vorschau direkt in der Auswahl
+* „Standard“ entspricht der bisherigen Optik: Bestandsseiten sehen nach dem Update unverändert aus
+* Eine Vorlage ändert nur die Optik (Rundungen, Schatten, Ränder, Verhalten beim Überfahren mit der Maus), nicht die Reihenfolge der Felder, ausgeblendete Felder oder das Klickverhalten
+* Die Einstellungen „Ecken“, „Akzentfarbe“, „Buttonfarbe“ und „Bild-Seitenverhältnis“ gelten weiterhin über der Vorlage
+* Beide Live-Vorschauen im Design-Tab schalten beim Wechsel der Vorlage sofort mit
+* Geändert: Die Monatstrenner im Grid sind eine Stufe größer – dort überspannen sie eine ganze Kachelreihe. In der Liste bleiben sie unverändert
 
 = 1.2.1 =
 * Fix: Das Icon des WPBakery-Elements blieb dunkelblau statt weiß – der Browser lieferte weiter das Bild der Vorversion aus, weil die Adresse im Stylesheet keine Version mitführte. Außerdem steht es jetzt kleiner in der Kachel, auf einer Größe mit den übrigen Elementen

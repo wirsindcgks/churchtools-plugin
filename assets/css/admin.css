@@ -663,6 +663,146 @@
 }
 
 /* Design tab */
+
+/* ---------- Stil-Vorlagen (renderDesignPresetField(), DesignPreset.php) ---------- */
+
+.ctp-design-style {
+    margin-bottom: 20px;
+}
+
+.ctp-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    max-width: 980px;
+}
+
+/*
+ * Das Radio liegt in der Ecke der Karte statt vor ihrer Beschriftung: Die
+ * ganze Karte ist die Schaltflaeche (sie steckt im <label>), der Knopf zeigt
+ * nur noch an, welche gewaehlt ist. Absolut positioniert, damit er die
+ * Miniatur darunter nicht verschiebt.
+ */
+.ctp-preset-option {
+    position: relative;
+    display: block;
+    cursor: pointer;
+}
+
+.ctp-preset-input {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1;
+    margin: 0;
+}
+
+.ctp-preset-body {
+    display: block;
+    height: 100%;
+    padding: 12px;
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: 6px;
+    background: var(--ctp-admin-surface);
+}
+
+.ctp-preset-option:hover .ctp-preset-body {
+    border-color: #2271b1;
+}
+
+/* Der Rahmen allein reicht als Markierung nicht - er ist eine Farbaenderung
+   an einer Linie, die ohnehin da ist. Der zusaetzliche Ring verdoppelt sie
+   optisch, ohne die Karte um einen Pixel groesser zu machen. */
+.ctp-preset-input:checked + .ctp-preset-body {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.ctp-preset-input:focus-visible + .ctp-preset-body {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.ctp-preset-name {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.ctp-preset-description {
+    display: block;
+    margin-top: 3px;
+    color: var(--ctp-admin-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/*
+ * Die Miniatur ist echtes Frontend-Markup unter der jeweiligen Preset-Klasse
+ * (siehe renderDesignPresetField()) - hier bekommt sie nur eine Groesse und
+ * einen ruhigen Untergrund, damit der Unterschied zwischen den Vorlagen das
+ * Einzige ist, was ins Auge faellt. Die Akzentfarbe ist ein fester Demo-Wert
+ * wie in den grossen Vorschauen auch: Auf der Seite kommt sie spaeter vom
+ * jeweiligen Kalender.
+ */
+.ctp-preset-swatch {
+    --ctp-accent: #2563eb;
+    display: block;
+    padding: 14px;
+    border-radius: 4px;
+    background: #f0f0f1;
+}
+
+/* Die Kachel streckt sich im Frontend auf die Hoehe ihrer Gitterzelle; hier
+   gibt es keine, also nimmt sie ihre eigene. */
+.ctp-preset-swatch .ctp-events__card {
+    height: auto;
+}
+
+.ctp-preset-swatch__media {
+    display: block;
+    aspect-ratio: 16 / 7;
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--ctp-accent) 45%, transparent),
+        color-mix(in srgb, var(--ctp-accent) 12%, transparent)
+    );
+}
+
+.ctp-preset-swatch__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px;
+}
+
+/* Ohne das eigene `order` wuerde das Etikett unter die beiden Textbalken
+   rutschen: Es traegt im Frontend --ctp-order-calendar (Vorgabe 1), die
+   Balken hier gar keins - und 0 kommt vor 1. */
+.ctp-preset-swatch .ctp-events__eyebrow {
+    order: 0;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+}
+
+/* Platzhalter fuer Titel und Beschreibung: zwei Balken statt Blindtext, weil
+   auf dieser Groesse ohnehin keine Schrift mehr lesbar waere - und weil die
+   Vorlagen sich in Form und Rahmen unterscheiden, nicht im Text. */
+.ctp-preset-swatch__line {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: 2px;
+    background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.ctp-preset-swatch__line--title {
+    width: 72%;
+    height: 8px;
+    background: color-mix(in srgb, currentColor 42%, transparent);
+}
+
 /* The preview card itself stays card-sized; its panel fills the grid cell. */
 .ctp-design-preview-frame {
     max-width: 280px;

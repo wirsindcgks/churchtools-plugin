@@ -273,6 +273,13 @@ final class EventListRenderer
             (int) $args['months'] > 0 ? (int) $args['months'] : (int) $designSettings['paging_months']
         );
 
+        // Die Stil-Grundlage kommt als Klasse, nicht als Inline-Variablen —
+        // warum, steht im Docblock von DesignPreset. Die Rangfolge zwischen
+        // beiden ergibt sich daraus von selbst: Der Inline-Style unten schlaegt
+        // die Klasse, eine ausdrueckliche Einzeleinstellung im Design-Tab liegt
+        // also ueber dem gewaehlten Stil.
+        $args['design_class'] = DesignPreset::bodyClass($designSettings['design_preset']);
+
         $args['design_style'] = CardDesign::styleAttribute(
             $designSettings['element_order'],
             $designSettings['corner_style'],
@@ -377,6 +384,9 @@ final class EventListRenderer
             : DetailDesign::DEFAULT_ORDER;
         $backUrl = wp_get_referer();
         $backUrl = $backUrl !== false && $backUrl !== '' ? $backUrl : home_url('/');
+        // Eigener Name statt $args['design_class'] wie in den Listen-Templates:
+        // Diese Ansicht bekommt gar kein $args, sie rendert genau einen Termin.
+        $designClass = DesignPreset::bodyClass($designSettings['design_preset']);
 
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);

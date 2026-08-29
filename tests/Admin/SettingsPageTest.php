@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Tests\Admin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Frontend\DesignPreset;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Security\Crypto;
 use PHPUnit\Framework\TestCase;
@@ -144,6 +145,34 @@ final class SettingsPageTest extends TestCase
         $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
 
         $this->assertSame(90, $sanitized['sync_days_ahead']);
+    }
+
+    public function testSanitizeSettingsAcceptsValidDesignPreset(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['design_preset' => 'warm']);
+
+        $this->assertSame('warm', $sanitized['design_preset']);
+    }
+
+    public function testSanitizeSettingsFallsBackToExistingDesignPresetWhenInvalid(): void
+    {
+        ctp_test_set_option('ctp_settings', ['design_preset' => 'ruhig']);
+
+        $sanitized = SettingsPage::sanitizeSettings(['design_preset' => 'barock']);
+
+        $this->assertSame('ruhig', $sanitized['design_preset']);
+    }
+
+    /**
+     * Eine Bestandsseite hat den Schlüssel gar nicht gespeichert — sie muss
+     * auf dem Standard landen, nicht auf einem leeren Wert, der später als
+     * Klassenname im Markup stünde.
+     */
+    public function testDesignPresetDefaultsToStandardForSitesThatNeverSavedIt(): void
+    {
+        ctp_test_set_option('ctp_settings', ['corner_style' => 'square']);
+
+        $this->assertSame(DesignPreset::DEFAULT_PRESET, SettingsPage::get()['design_preset']);
     }
 
     public function testSanitizeSettingsAcceptsValidCornerStyle(): void

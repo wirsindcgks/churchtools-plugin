@@ -50,7 +50,7 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
 3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
 4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
-5. **Aussehen anpassen.** *ChurchTools → Design*: Reihenfolge und Sichtbarkeit der Angaben auf einer Kachel, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe — mit Vorschau daneben.
+5. **Aussehen anpassen.** *ChurchTools → Design*: eine von vier Stil-Vorlagen als Grundlage (Standard, Ruhig, Warm, Strukturiert), darunter Reihenfolge und Sichtbarkeit der Angaben auf einer Kachel, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe — mit Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
 
 Läuft etwas nicht, steht der Grund auf der Übersichtsseite: Sie zeigt den letzten Abgleich, die Zahl gespeicherter Termine und Fehler im Klartext.
 

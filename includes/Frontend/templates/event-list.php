@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events ctp-events--list" style="<?php echo esc_attr($args['design_style']); ?>">
+<div class="ctp-events ctp-events--list <?php echo esc_attr($args['design_class']); ?>" style="<?php echo esc_attr($args['design_style']); ?>">
     <?php if ($args['eventfinder']) : ?>
         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/eventfinder.php'; ?>
     <?php elseif ($args['show_toolbar']) : ?>

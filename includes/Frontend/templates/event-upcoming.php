@@ -37,7 +37,7 @@ $heroHasMedia = $hero !== null
     && $hero['image_url'] !== ''
     && !in_array('media', $args['hidden_elements'], true);
 ?>
-<div class="ctp-events ctp-events--upcoming" style="<?php echo esc_attr($args['design_style']); ?>">
+<div class="ctp-events ctp-events--upcoming <?php echo esc_attr($args['design_class']); ?>" style="<?php echo esc_attr($args['design_style']); ?>">
     <?php if ($hero === null) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>

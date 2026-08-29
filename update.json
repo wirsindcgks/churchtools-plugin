@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-29 21:21:38",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.2.1/churchtools-plugin-v1.2.1.zip",
+    "last_updated": "2026-08-29 21:55:55",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.3.0/churchtools-plugin-v1.3.0.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Das Icon des WPBakery-Elements blieb dunkelblau statt weiß und war zu groß.</strong> Die weiße Fassung war ausgeliefert, sie kam nur nicht an: Der Dateiname bleibt über Versionen hinweg gleich und die Adresse im Stylesheet führte keine Version mit, also lieferte der Browser weiter das Bild aus 1.1.1 aus – die Regel war neu, das Bild darin nicht. Die Adresse trägt jetzt ein <code>?ver=</code>. Dazu steht das Symbol auf 48 % der Kachel statt auf 64 %: Die übrigen Elemente zeichnen ihre Symbole als Schriftzeichen in 15 px, und 15 von 32 ist genau diese Größe</li>\n</ul>\n"
+        "changelog": "<p>Vier wählbare Stil-Vorlagen im Design-Tab. Das ist die Ausbaustufe, die seit dem Facelift im August als „wenn alles steht&quot; vorgemerkt war: Statt eines festen Aussehens gibt es jetzt vier, und die Wahl steht als Erstes im Tab, weil alles andere darauf aufsetzt.</p>\n<h4>Added</h4>\n<ul>\n<li><strong>Stil-Vorlagen im Tab „Design&quot;</strong> – „Standard&quot;, „Ruhig&quot;, „Warm&quot; und „Strukturiert&quot; als Grundlage für alle Ansichten, jede mit einer eigenen kleinen Vorschau in der Auswahl. Sie legen Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest. <strong>„Standard&quot; ist die bisherige Optik</strong> – wer nichts umstellt, sieht nach dem Update dasselbe wie vorher</li>\n<li>Eine Vorlage fasst ausschließlich die Optik an. Reihenfolge der Felder, ausgeblendete Felder und Klickverhalten bleiben unberührt: Das ist eingerichtete Konfiguration und nicht Teil eines Stils</li>\n<li>Die vier Einzeleinstellungen darunter gelten weiterhin <strong>über</strong> der Vorlage. Wer „Eckig&quot; gewählt hat, bekommt eckige Ecken auch in „Warm&quot;; dasselbe gilt für Akzentfarbe, Buttonfarbe und Bild-Seitenverhältnis</li>\n<li>Beide Live-Vorschauen im Design-Tab – Kachel und Detailansicht – schalten beim Wechsel sofort mit</li>\n</ul>\n<h4>Changed</h4>\n<ul>\n<li><strong>Die Monatstrenner im Grid sind eine Stufe größer</strong> – dort steht der Trenner über einer kompletten Kachelreihe, die er in voller Breite überspannt, und wirkte in der Größe der Listenansicht verloren. In der Liste bleibt es bei der bisherigen Größe: Dort sitzt er direkt auf den Zeilen und würde sonst mit deren Titeln konkurrieren</li>\n</ul>\n"
     }
 }

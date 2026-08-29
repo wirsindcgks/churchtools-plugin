@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardDesign;
+use ChurchToolsPlugin\Frontend\DesignPreset;
 use ChurchToolsPlugin\Frontend\DetailDesign;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
@@ -200,6 +201,17 @@ final class SettingsPage
          * do_settings_sections() call renders a section; saving is governed
          * solely by settings_fields(self::PAGE_SLUG) in renderPage().
          */
+        /*
+         * Der Stil steht in einem eigenen Abschnitt ueber den beiden Editoren,
+         * nicht bei den globalen Einstellungen darunter: Er ist die Grundlage,
+         * auf der alles andere aufsetzt, und beide Vorschauen unten zeigen ihn
+         * unmittelbar. Bei den globalen Einstellungen stuende die Wahl unter
+         * ihrem eigenen Ergebnis.
+         */
+        $designStylePage = self::PAGE_SLUG . '_design_style';
+        add_settings_section('ctp_design_style', __('Stil', 'churchtools-plugin'), [self::class, 'renderDesignStyleIntro'], $designStylePage);
+        add_settings_field('design_preset', __('Vorlage', 'churchtools-plugin'), [$this, 'renderDesignPresetField'], $designStylePage, 'ctp_design_style');
+
         $designTilePage = self::PAGE_SLUG . '_design_tile';
         add_settings_section('ctp_design_order', __('Aufbau der Kachel', 'churchtools-plugin'), '__return_false', $designTilePage);
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
@@ -241,6 +253,7 @@ final class SettingsPage
             'sync_days_ahead' => 365,
             'retention_days' => 30,
             'keep_data_on_uninstall' => false,
+            'design_preset' => DesignPreset::DEFAULT_PRESET,
             'element_order' => CardDesign::DEFAULT_ORDER,
             'corner_style' => 'rounded',
             'hidden_elements' => [],
@@ -473,6 +486,11 @@ final class SettingsPage
             $syncInterval = $input['sync_interval'];
         }
 
+        $designPreset = $existing['design_preset'];
+        if (array_key_exists('design_preset', $input) && in_array($input['design_preset'], DesignPreset::PRESETS, true)) {
+            $designPreset = $input['design_preset'];
+        }
+
         $cornerStyle = $existing['corner_style'];
         if (array_key_exists('corner_style', $input) && in_array($input['corner_style'], CardDesign::CORNER_STYLES, true)) {
             $cornerStyle = $input['corner_style'];
@@ -522,6 +540,7 @@ final class SettingsPage
             'keep_data_on_uninstall' => array_key_exists('keep_data_on_uninstall', $input)
                 ? (bool) $input['keep_data_on_uninstall']
                 : $existing['keep_data_on_uninstall'],
+            'design_preset' => $designPreset,
             'element_order' => array_key_exists('element_order', $input)
                 ? self::sanitizeElementOrder(self::orderInput($input['element_order']))
                 : $existing['element_order'],
@@ -1154,6 +1173,91 @@ final class SettingsPage
      * setting's effect is not visible in a preview right next to it, so it says
      * where to look instead.
      */
+    public static function renderDesignStyleIntro(): void
+    {
+        echo '<p class="description">'
+            . esc_html__('Die Grundlage für alle Ansichten. Sie legt Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest – nicht aber, welche Felder erscheinen oder in welcher Reihenfolge: Das bleibt in den beiden Editoren darunter. Die Einstellungen ganz unten („Ecken“, „Akzentfarbe“, „Buttonfarbe“, „Bild-Seitenverhältnis“) gelten weiterhin über der Vorlage.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
+     * German labels and one-line descriptions for DesignPreset::PRESETS —
+     * dieselbe Aufteilung wie bei elementOrderLabels(): Die Schlüssel gehören
+     * der Frontend-Klasse, die Beschriftungen dieser Admin-Klasse.
+     *
+     * @return array<string, array{label: string, description: string}>
+     */
+    private static function designPresetLabels(): array
+    {
+        return [
+            'standard' => [
+                'label' => __('Standard', 'churchtools-plugin'),
+                'description' => __('Weiche Rundungen, ruhiger Schatten, umrandetes Kalender-Etikett. Die bisherige Optik – wer nichts umstellt, bekommt genau das.', 'churchtools-plugin'),
+            ],
+            'ruhig' => [
+                'label' => __('Ruhig', 'churchtools-plugin'),
+                'description' => __('Zurückhaltend und architektonisch: feine Linien statt Schatten, fast keine Rundung, keine Bewegung beim Überfahren. Der Kalendername steht als farbiger Text da.', 'churchtools-plugin'),
+            ],
+            'warm' => [
+                'label' => __('Warm', 'churchtools-plugin'),
+                'description' => __('Großzügig und einladend: starke Rundungen, ein weicherer Schatten, mehr Luft zwischen den Kacheln, gefülltes Kalender-Etikett. Beim Überfahren hebt sich die Kachel und das Bild zoomt leicht.', 'churchtools-plugin'),
+            ],
+            'strukturiert' => [
+                'label' => __('Strukturiert', 'churchtools-plugin'),
+                'description' => __('Kontrastreich und redaktionell: rechtwinklig, ohne Schatten, dafür eine kräftige Kante in der Kalenderfarbe und deutliche Trennlinien.', 'churchtools-plugin'),
+            ],
+        ];
+    }
+
+    /**
+     * Vier Optionen als anklickbare Karten, jede mit einer eigenen kleinen
+     * Vorschau daneben.
+     *
+     * Die Vorschau ist echtes Frontend-Markup unter der jeweiligen
+     * Preset-Klasse, kein nachgebautes Abbild: frontend.css ist auf diesem Tab
+     * ohnehin geladen (siehe enqueueAssets()), also zeigt jede Kachel genau
+     * die Regeln, die später auch auf der Seite greifen. Ein nachgebautes
+     * Abbild wäre die zweite Stelle, an der jedes Preset gepflegt werden
+     * müsste – und die erste, die veraltet.
+     */
+    public function renderDesignPresetField(): void
+    {
+        $current = DesignPreset::sanitize((string) self::get()['design_preset']);
+        $labels = self::designPresetLabels();
+
+        echo '<div class="ctp-preset-grid">';
+        foreach (DesignPreset::PRESETS as $preset) {
+            $texts = $labels[$preset] ?? ['label' => $preset, 'description' => ''];
+            printf(
+                '<label class="ctp-preset-option">'
+                    . '<input type="radio" name="%1$s[design_preset]" value="%2$s" %3$s class="ctp-preset-input" />'
+                    . '<span class="ctp-preset-body">'
+                        . '<span class="ctp-preset-swatch ctp-events %4$s" aria-hidden="true">'
+                            . '<span class="ctp-events__card">'
+                                . '<span class="ctp-preset-swatch__media"></span>'
+                                . '<span class="ctp-preset-swatch__text">'
+                                    . '<span class="ctp-events__eyebrow">%5$s</span>'
+                                    . '<span class="ctp-preset-swatch__line ctp-preset-swatch__line--title"></span>'
+                                    . '<span class="ctp-preset-swatch__line"></span>'
+                                . '</span>'
+                            . '</span>'
+                        . '</span>'
+                        . '<span class="ctp-preset-name">%6$s</span>'
+                        . '<span class="ctp-preset-description">%7$s</span>'
+                    . '</span>'
+                . '</label>',
+                esc_attr(self::OPTION_KEY),
+                esc_attr($preset),
+                checked($current, $preset, false),
+                esc_attr(DesignPreset::bodyClass($preset)),
+                esc_html__('Kalender', 'churchtools-plugin'),
+                esc_html($texts['label']),
+                esc_html($texts['description'])
+            );
+        }
+        echo '</div>';
+    }
+
     public static function renderGlobalDesignIntro(): void
     {
         echo '<p class="description">'
@@ -1410,7 +1514,7 @@ final class SettingsPage
             <p class="description">
                 <?php esc_html_e('Vorschau als Grid-Kachel – die Einstellung gilt gleichermaßen für Grid, Liste und „Nächster Termin“.', 'churchtools-plugin'); ?>
             </p>
-            <div class="ctp-events ctp-events--grid ctp-design-preview-frame" id="ctp-design-preview" style="<?php echo esc_attr($style); ?>">
+            <div class="ctp-events ctp-events--grid ctp-design-preview-frame <?php echo esc_attr(DesignPreset::bodyClass((string) $settings['design_preset'])); ?>" id="ctp-design-preview" style="<?php echo esc_attr($style); ?>">
                 <ul class="ctp-events__list">
                     <li>
                         <article class="ctp-events__card">
@@ -1509,7 +1613,7 @@ final class SettingsPage
             </p>
             <div class="ctp-design-preview-backdrop">
                 <div
-                    class="ctp-events ctp-events__detail ctp-design-preview-frame"
+                    class="ctp-events ctp-events__detail ctp-design-preview-frame <?php echo esc_attr(DesignPreset::bodyClass((string) $settings['design_preset'])); ?>"
                     id="ctp-design-detail-preview"
                     style="<?php echo esc_attr($style); ?>"
                 >
@@ -2547,6 +2651,11 @@ final class SettingsPage
         $line = trim((string) preg_replace('/`(.+?)`/u', '$1', $line));
 
         if (preg_match('/^\*\*(.+?)\*\*(.*)$/us', $line, $matches) !== 1) {
+            // Auch hier Fettungen entfernen, nicht nur im Zweig darunter: Eine
+            // Zeile, die *nicht* mit einem fetten Satz beginnt, kann trotzdem
+            // eine mittendrin haben - und die stand vorher als "**" im Backend.
+            $line = (string) preg_replace('/\*\*(.+?)\*\*/u', '$1', $line);
+
             return ['lead' => mb_strimwidth($line, 0, 200, '…'), 'text' => ''];
         }
 
@@ -3147,6 +3256,10 @@ final class SettingsPage
                 ?>
                 <form method="post" action="options.php">
                     <?php settings_fields(self::PAGE_SLUG); ?>
+                    <?php // Volle Breite ueber den Paaren: die Stil-Grundlage, auf der beide Vorschauen aufsetzen. ?>
+                    <div class="ctp-panel ctp-design-style">
+                        <?php do_settings_sections(self::PAGE_SLUG . '_design_style'); ?>
+                    </div>
                     <div class="ctp-design-layout">
                         <div class="ctp-panel">
                             <?php do_settings_sections(self::PAGE_SLUG . '_design_tile'); ?>

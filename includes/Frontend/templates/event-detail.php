@@ -8,13 +8,14 @@
  * @var array $event Already enriched via EventListRenderer::withCalendarMeta().
  * @var array $order Validated DetailDesign::ELEMENT_KEYS permutation.
  * @var string $backUrl
+ * @var string $designClass Preset class from DesignPreset::bodyClass(), '' for the default preset.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="ctp-events ctp-events--detail">
+<div class="ctp-events ctp-events--detail <?php echo esc_attr($designClass); ?>">
     <p><a class="ctp-events__back" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></a></p>
     <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php'; ?>
 </div>

@@ -129,6 +129,7 @@ final class PopupTemplateTest extends TestCase
             'click_behavior' => $clickBehavior,
             'hidden_elements' => [],
             'design_style' => '',
+            'design_class' => '',
             'design_separators' => '',
             'month_dividers' => false,
             'eventfinder' => false,
