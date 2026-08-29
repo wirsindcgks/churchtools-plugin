@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.1] - 2026-08-29
+
+Ein Nachtrag zu 1.1.0: Das WPBakery-Icon, das dort als behoben galt, war es
+nicht. Diesmal steht die Ursache fest, weil sie nicht mehr geraten, sondern in
+WPBakerys Quellcode nachgelesen wurde.
+
+### Fixed
+
+- **Das Element im WPBakery-Builder zeigt sein Icon** – dritter Anlauf, diesmal an der Ursache. Der Fix in 1.1.0 („grau auf dunklem Grund, jetzt weiß") beruhte auf zwei Annahmen, die beide nicht stimmen. Erstens erreicht eine Bildadresse in `icon` das Elementefenster überhaupt nicht: WPBakery schreibt den Wert bis 6.x ungeprüft ins `class`-Attribut, und seit 8.4 verwirft es ihn ersatzlos, sobald er als URL durchgeht – übrig bleibt WPBakerys eigenes Logo. Zweitens ist die Elementekachel hell, nicht dunkel; ein weißes Icon wäre dort auch bei funktionierender Anzeige unsichtbar geblieben. Das Element meldet sein Icon jetzt als CSS-Klasse an und bringt die passende Regel selbst mit – der Weg, den WPBakerys eigene Elemente gehen und der in jeder geprüften Version funktioniert. Das Bild ist eine dunkle Kalender-Kontur im Stil der mitgelieferten Element-Icons
+
 ## [1.1.0] - 2026-08-29
 
 Eine Runde Feinschliff an der Darstellung, ein Fehler, der zweimal als
@@ -451,6 +461,7 @@ Zielseite im Betrieb war.
 - Sync speicherte trotz erfolgreicher Verbindung 0 Termine: falsches Feld-Mapping gegen die reale API-Antwortstruktur (`appointment.base`/`appointment.calculated` statt der ursprünglich aus dem OpenAPI-Schema angenommenen `appointment`/`calculatedDates`)
 
 [Unreleased]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...HEAD
+[1.1.1]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/wirsindcgks/churchtools-plugin/compare/v1.0.1...v1.0.2

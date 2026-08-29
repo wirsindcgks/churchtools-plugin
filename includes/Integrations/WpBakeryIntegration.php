@@ -6,9 +6,85 @@ namespace ChurchToolsPlugin\Integrations;
 
 final class WpBakeryIntegration
 {
+    /**
+     * Shortcode-Tag, unter dem das Element bei WPBakery gemeldet ist. Steht
+     * hier als Konstante, weil die CSS-Selektoren unten den Tag woertlich
+     * enthalten muessen (WPBakery baut daraus die id des Kachel-Links).
+     */
+    private const BASE = 'ctp_events';
+
+    /**
+     * Klasse, unter der das Symbol des Elements haengt. Der "icon"-Wert von
+     * vc_map() muss ein Klassenname sein, keine Bildadresse - siehe
+     * enqueueElementIcon() fuer die Begruendung.
+     */
+    private const ICON_CLASS = 'ctp-vc-icon';
+
+    /**
+     * Verhindert, dass die Regel doppelt im Dokument landet, falls beide
+     * Enqueue-Haken in derselben Anfrage feuern: wp_add_inline_style() haengt
+     * bei jedem Aufruf an, wp_enqueue_style() nicht.
+     */
+    private bool $iconStyleAdded = false;
+
     public function register(): void
     {
         add_action('vc_before_init', [$this, 'mapShortcode']);
+
+        // Backend-Editor und Frontend-Editor sind zwei getrennte Kontexte, das
+        // Elementefenster gibt es in beiden.
+        add_action('admin_enqueue_scripts', [$this, 'enqueueElementIcon']);
+        add_action('vc_frontend_editor_enqueue_js_css', [$this, 'enqueueElementIcon']);
+    }
+
+    /**
+     * Legt das Symbol des Elements per CSS fest.
+     *
+     * Warum ueberhaupt eigenes CSS, wo vc_map() laut Dokumentation auch eine
+     * Bildadresse in "icon" akzeptiert: Im Elementefenster kommt eine solche
+     * Adresse nie an. WPBakery baut die Kachel in
+     * Vc_Add_Element_Box::getIcon(); dort landete der "icon"-Wert bis 6.x
+     * ungeprueft im class-Attribut (aus einer URL werden dabei sinnlose
+     * Klassennamen), und seit 8.4 wird ein Wert, den FILTER_VALIDATE_URL
+     * durchlaesst, ersatzlos verworfen - uebrig bleibt
+     * <i class="vc_general vc_element-icon">, also WPBakerys eigenes Logo aus
+     * der Standardregel. Die Adresse wertet allein printIconStyles() aus, ein
+     * zweiter, an admin_head haengender Pfad fuer die Element-Kachel *im
+     * Seitenaufbau*. Genau das ist der Grund, warum das Symbol zweimal
+     * "einfach nicht kam", obwohl die Datei jedes Mal erreichbar war.
+     *
+     * Die Selektorliste ist die aus printIconStyles(): sie deckt beide Orte
+     * ab (Elementefenster und schematische Darstellung im Backend) und traegt
+     * ueber die id des Kachel-Links genug Gewicht, um sich gegen WPBakerys
+     * Standardregel und gegen Themes mit eigenem WPBakery-Zweig zu behaupten
+     * - ohne !important, das in diesem Plugin nirgends vorkommt.
+     */
+    public function enqueueElementIcon(): void
+    {
+        if (!defined('WPB_VC_VERSION') || $this->iconStyleAdded) {
+            return;
+        }
+
+        $handle = 'ctp-wpbakery-element-icon';
+
+        // Kein eigenes Stylesheet fuer eine einzige Regel: false als Quelle ist
+        // der von WordPress dafuer vorgesehene Weg fuer wp_add_inline_style().
+        wp_register_style($handle, false, [], CTP_VERSION);
+        wp_enqueue_style($handle);
+        wp_add_inline_style($handle, sprintf(
+            '.vc_element-icon.%1$s,'
+                . '.vc_el-container #%2$s .vc_element-icon,'
+                . '.vc_el-container > #%2$s > .vc_element-icon,'
+                . '.wpb_%2$s > .wpb_element_wrapper > .wpb_element_title > .vc_element-icon,'
+                . '.vc_helper.vc_helper-%2$s > .vc_element-icon'
+                . '{background-image:url("%3$s");background-position:center;'
+                . 'background-repeat:no-repeat;background-size:contain;}',
+            self::ICON_CLASS,
+            self::BASE,
+            esc_url(CTP_PLUGIN_URL . 'assets/img/wpbakery-element-icon.svg')
+        ));
+
+        $this->iconStyleAdded = true;
     }
 
     /**
@@ -23,24 +99,11 @@ final class WpBakeryIntegration
 
         vc_map([
             'name' => __('ChurchTools Events', 'churchtools-plugin'),
-            'base' => 'ctp_events',
+            'base' => self::BASE,
             'category' => __('ChurchTools', 'churchtools-plugin'),
-            /*
-             * Bildadresse, kein Klassenname: WPBakerys vc_map() nimmt beides,
-             * aber die Klassenvariante braucht eine eigene CSS-Regel im
-             * Elementefenster - und die verlor gegen WPBakerys eigene, das
-             * Feld blieb ein leeres dunkles Quadrat. PNG statt SVG, weil die
-             * Dokumentation genau das vorgibt (PNG oder GIF, transparent).
-             *
-             * Das Bild ist weiss auf transparentem Grund: Die Elementekachel
-             * von WPBakery ist dunkel, und die erste Fassung (mittelgraues
-             * Icon) war darauf praktisch unsichtbar - deshalb sah es zweimal
-             * nach "kein Icon" aus, obwohl die Datei jedes Mal ankam. Der
-             * Dateiname traegt das -ct, weil die URL keine Version mitfuehrt:
-             * Unter dem alten Namen haetten Browser und WPBakerys eigener
-             * Asset-Cache weiter das graue Bild von vorher ausgeliefert.
-             */
-            'icon' => CTP_PLUGIN_URL . 'assets/img/wpbakery-element-ct.png',
+            // Klassenname, keine Bildadresse - warum, steht in
+            // enqueueElementIcon().
+            'icon' => self::ICON_CLASS,
             'params' => [
                 [
                     'type' => 'textfield',

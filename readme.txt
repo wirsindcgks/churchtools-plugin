@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.1.1 =
+Das Element im WPBakery-Builder zeigt jetzt tatsächlich sein Icon – der Anlauf in 1.1.0 hat es nicht behoben. Betrifft nur den Builder, sonst ändert sich nichts. Kein Handlungsbedarf.
+
 = 1.1.0 =
 Darstellungs-Feinschliff und ein sichtbares Icon für WPBakery. Zeitangaben stehen jetzt als „10:30–12:00 Uhr" da, die Detailansicht zeigt den Datums-Chip vor dem Titel, und die Ansicht „Nächster Termin" teilt Angaben und Bild zu gleichen Teilen. Kein Handlungsbedarf.
 
@@ -219,6 +222,9 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.1.1 =
+* Fix: Das Element im WPBakery-Builder zeigt sein Icon. Der Fix in 1.1.0 hat nicht gewirkt – eine Bildadresse erreicht das Elementefenster gar nicht, und die Kachel ist hell statt dunkel, ein weißes Icon war dort ebenso unsichtbar. Jetzt als CSS-Klasse angemeldet, mit dunklem Icon
 
 = 1.1.0 =
 * Neu: Die Detailansicht (Popup und eigene Seite) zeigt den Datums-Chip vor dem Titel
