@@ -162,7 +162,9 @@ final class DetailLayoutTest extends TestCase
 
         $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-text', $css);
         $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-media', $css);
-        $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail--no-media', $css);
+        // Ohne Bild bleibt es bei einer Spalte — sonst stuende rechts ein
+        // breiter leerer Streifen.
+        $this->assertStringContainsString(':not(.ctp-events__detail--no-media)', $css);
         // Die Neutralisierung der Kachel-`order`-Variablen eine Ebene tiefer:
         // ohne sie sortiert die Kachelreihenfolge die Felder in den Hüllen ein
         // zweites Mal um (siehe .ctp-events__detail > * weiter oben).
@@ -170,30 +172,30 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
-     * Der Nachbau des Fehlers, der beim Bauen tatsächlich passiert ist: Unter
-     * 900px nimmt das Layout die Platzierung der Kinder zurück, und dafür
-     * muss jedes einzeln beim Namen genannt werden. Ein knappes `> *` sieht
-     * gleichwertig aus, wiegt aber eine Klasse weniger als die
-     * Desktop-Regeln — ein Media-Query erhöht die Spezifität nicht. Das Bild
-     * behielt damit sein `grid-column: 2`, das Raster legte eine implizite
-     * zweite Spalte an, und die Seite stand auf dem Telefon weiter
-     * zweispaltig: mit einer 70px schmalen Textspalte neben dem Bild.
+     * Die Zweispaltigkeit hängt an der Breite *dieses Blocks*, nicht an der des
+     * Fensters — und das ist keine Feinheit. Als Inhalt einer Seite steckt die
+     * Terminseite im Inhaltsbereich des Themes, und der ist bei manchen Themes
+     * 650px breit, auch auf einem 1600px-Bildschirm. Eine Fensterabfrage hätte
+     * dort zwei Spalten aufgemacht, wo keine hinpassen.
+     *
+     * Dazu die Richtung: Eine Spalte ist der Ausgangszustand, zwei sind die
+     * Ausnahme. In 1.4.0 war es umgekehrt, und die Rücknahme in der
+     * Medienabfrage wog eine Klasse weniger als die Regel, die sie zurücknehmen
+     * sollte — auf dem Telefon stand die Seite deshalb weiter zweispaltig.
      */
-    public function testTheMobileLayoutTakesBackEveryPlacedChildByName(): void
+    public function testTheTwoColumnLayoutHangsOnTheContainerNotTheViewport(): void
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
-        $start = strpos($css, '@media (max-width: 900px)');
+
+        $this->assertStringContainsString('container-name: ctp-detail;', $css);
+        $this->assertStringContainsString('@container ctp-detail (min-width:', $css);
+
+        $start = strpos($css, '@container ctp-detail (min-width:');
         $this->assertIsInt($start);
+        $block = substr($css, $start, (int) strpos($css, "\n}", $start) - $start);
 
-        $reset = substr($css, $start, (int) strpos($css, 'grid-row: auto;', $start) - $start);
-
-        foreach (['.ctp-events__detail-text', '.ctp-events__detail-media', '.ctp-events__detail-description'] as $child) {
-            $this->assertStringContainsString(
-                '.ctp-events__detail > ' . $child,
-                $reset,
-                $child . ' muss unter 900px einzeln zurückgenommen werden.'
-            );
-        }
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) 1.05fr;', $block, 'Die zweite Spalte darf nur innerhalb der Container-Abfrage entstehen.');
+        $this->assertStringContainsString('grid-column: 2;', $block, 'Und die Platzierung des Bildes ebenso.');
     }
 
     /**

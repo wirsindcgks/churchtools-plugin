@@ -19,7 +19,7 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
  * Vorher fragte diese Klasse die GitHub-API (Releases, Tags, Branches). Nicht
  * angemeldet erlaubt die 60 Anfragen pro Stunde und IP - und auf geteiltem Hosting
  * ist das nicht die IP dieser einen Seite, sondern die aller Seiten auf dem Server.
- * Auf cg-ks.de beantwortete GitHub am 19.08.2026 jede Update-Pruefung mit HTTP 429,
+ * Auf der Live-Seite beantwortete GitHub am 19.08.2026 jede Update-Pruefung mit HTTP 429,
  * quer ueber alle drei Endpunkte; das Backend konnte nur noch melden, dass es nichts
  * ueber Updates sagen kann. raw.githubusercontent.com liefert Dateien ueber ein CDN
  * aus und kennt dieses Limit nicht: eine Datei, eine Anfrage, kein Zugangstoken.
@@ -74,7 +74,7 @@ final class GitHubUpdateChecker
      * WordPress fragt damit api.wordpress.org nach *allen* installierten
      * Plugins und wartet auf die Antwort. Auf einer Seite mit vielen Plugins
      * und einem Server unter Last drehte der Knopf deshalb endlos (auf
-     * cg-ks.de am 20.08.2026 so erlebt), obwohl die eine Datei, um die es
+     * der Live-Seite am 20.08.2026 so erlebt), obwohl die eine Datei, um die es
      * geht, in Bruchteilen einer Sekunde da ist.
      *
      * Der Zwischenspeicher von WordPress wird dabei nicht mehr geleert: Die

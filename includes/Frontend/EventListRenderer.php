@@ -375,7 +375,15 @@ final class EventListRenderer
      * way render() enriches every list/grid/upcoming event, then includes the
      * "own page" wrapper template (back link + partials/event-detail-content.php).
      */
-    public function renderDetail(array $rawEvent): string
+    /**
+     * @param bool $hosted Ob der Termin als Inhalt einer echten Seite
+     *                     ausgeliefert wird (Einstellung „Adresse der
+     *                     Terminseite", siehe EventDetailPage) — dann bringt
+     *                     das Theme seinen Container samt Innenabstand schon
+     *                     mit, und der eigene wäre der zweite um denselben
+     *                     Inhalt.
+     */
+    public function renderDetail(array $rawEvent, bool $hosted = false): string
     {
         $designSettings = SettingsPage::get();
         $event = $this->withCalendarMeta([$rawEvent], 'page', $designSettings['detail_element_order'])[0];
@@ -387,7 +395,7 @@ final class EventListRenderer
         // Eigene Namen statt $args['design_class']/['design_style'] wie in den
         // Listen-Templates: Diese Ansicht bekommt gar kein $args, sie rendert
         // genau einen Termin.
-        $designClass = DesignPreset::bodyClass($designSettings['design_preset']);
+        $designClass = trim(DesignPreset::bodyClass($designSettings['design_preset']) . ($hosted ? ' ctp-events--hosted' : ''));
         // Dieselben Variablen wie in den Kachelansichten, und zwar aus
         // demselben Grund: Die Einstellungen des Design-Tabs gelten laut ihrer
         // eigenen Beschreibung fuer *alle* Ansichten. Bis 1.3.0 war die eigene
@@ -485,7 +493,7 @@ final class EventListRenderer
                 }
             }
 
-            $event['detail_url'] = EventDetailPage::url((int) $event['id']);
+            $event['detail_url'] = EventDetailPage::urlForEvent($event);
 
             if ($clickBehavior === 'popup') {
                 $event['detail_html'] = $this->renderDetailPartial($event, $order);
@@ -552,7 +560,7 @@ final class EventListRenderer
      * auf einer Seite waren das 52 der 55 Abfragen eines Durchlaufs - gemessen
      * gegen die Testumgebung. Lokal faellt das nicht auf, auf einem gemeinsam
      * genutzten Server ist jede dieser Abfragen eine eigene Wartezeit, und die
-     * Seite von cg-ks.de brauchte im Endpunkt gut zwei Sekunden.
+     * Live-Seite brauchte im Endpunkt gut zwei Sekunden.
      *
      * _prime_post_caches() ist Kernfunktion und in WordPress selbst genau dafuer
      * da (WP_Query nutzt sie fuer ihre eigenen Ergebnisse). Der fuehrende

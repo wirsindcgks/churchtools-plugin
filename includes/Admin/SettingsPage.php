@@ -223,6 +223,7 @@ final class SettingsPage
         $designGlobalPage = self::PAGE_SLUG . '_design_global';
         add_settings_section('ctp_design_global', __('Globale Einstellungen', 'churchtools-plugin'), [self::class, 'renderGlobalDesignIntro'], $designGlobalPage);
         add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designGlobalPage, 'ctp_design_global');
+        add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
         add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designGlobalPage, 'ctp_design_global');
@@ -268,6 +269,11 @@ final class SettingsPage
             // same "start on the value already in effect" rule as accent_color.
             'button_color' => '#111827',
             'click_behavior' => 'popup',
+            // 0 = keine Elternseite: Termine behalten die Adresse
+            // /churchtools-termin/<id>/, mit der sie bis 1.4.1 ausgeliefert
+            // wurden. Bestandsseiten aendern ihre Adressen also nicht von
+            // selbst, nur weil aktualisiert wurde.
+            'detail_page_id' => 0,
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
         ];
@@ -501,6 +507,25 @@ final class SettingsPage
             $clickBehavior = $input['click_behavior'];
         }
 
+        // Muss eine veroeffentlichte Seite sein, sonst 0: Ein Entwurf oder ein
+        // Beitrag haette entweder gar keine oeffentliche Adresse oder eine, die
+        // WordPress schon selbst belegt. Die Pruefung steht hier und nicht erst
+        // beim Rendern, damit die Einstellung nicht still etwas anderes
+        // bedeutet, als sie anzeigt.
+        $detailPageId = $existing['detail_page_id'];
+        if (array_key_exists('detail_page_id', $input)) {
+            $candidate = (int) $input['detail_page_id'];
+            $usable = $candidate > 0
+                && get_post_type($candidate) === 'page'
+                && get_post_status($candidate) === 'publish'
+                // Startseite und Beitragsseite scheiden aus: Ihre
+                // Rewrite-Regel laege ueber der halben Website
+                // (Frontend\EventDetailPage::mayHostEvents()).
+                && $candidate !== (int) get_option('page_on_front')
+                && $candidate !== (int) get_option('page_for_posts');
+            $detailPageId = $usable ? $candidate : 0;
+        }
+
         $mediaAspectRatio = $existing['media_aspect_ratio'];
         if (array_key_exists('media_aspect_ratio', $input) && array_key_exists($input['media_aspect_ratio'], CardDesign::MEDIA_ASPECT_RATIOS)) {
             $mediaAspectRatio = $input['media_aspect_ratio'];
@@ -562,6 +587,7 @@ final class SettingsPage
                 : $existing['button_color_enabled'],
             'button_color' => $buttonColor,
             'click_behavior' => $clickBehavior,
+            'detail_page_id' => $detailPageId,
             'detail_element_order' => array_key_exists('detail_element_order', $input)
                 ? self::sanitizeDetailElementOrder(self::orderInput($input['detail_element_order']))
                 : $existing['detail_element_order'],
@@ -1431,6 +1457,53 @@ final class SettingsPage
         }
         echo '<p class="description">'
             . esc_html__('Gilt für jeden Shortcode/Block/WPBakery-Eintrag, sofern dort nicht per Attribut "click" explizit überschrieben (siehe Referenz unten).', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
+     * Wählt die Seite, unter deren Adresse die Termine liegen. Zwei Dinge
+     * hängen daran, und das zweite ist das wichtigere:
+     *
+     *   - die Adresse: /termine/gottesdienst-06-09-2026/ statt
+     *     /churchtools-termin/4021/
+     *   - die Einbettung ins Theme: Mit Elternseite liefert WordPress eine
+     *     ganz normale Seite aus, wir tauschen nur ihren Inhalt. Ohne
+     *     Elternseite gibt es keinen echten Beitrag, und auf einem Block-Theme
+     *     bekommt die Termin-Adresse dann weder dessen Vorlage noch dessen
+     *     Kopf- und Fußbereich (siehe Frontend\EventDetailPage).
+     */
+    public function renderDetailPageField(): void
+    {
+        $settings = self::get();
+        $current = (int) $settings['detail_page_id'];
+
+        wp_dropdown_pages([
+            'name' => self::OPTION_KEY . '[detail_page_id]',
+            'selected' => $current,
+            'show_option_none' => __('— Keine — eigene Adresse ohne Elternseite', 'churchtools-plugin'),
+            'option_none_value' => '0',
+            'post_status' => 'publish',
+            // Gar nicht erst zur Auswahl stellen, was der Sanitizer daneben
+            // ohnehin ablehnen muesste — siehe dort.
+            'exclude' => implode(',', array_filter([
+                (int) get_option('page_on_front'),
+                (int) get_option('page_for_posts'),
+            ])),
+        ]);
+
+        if ($current > 0 && get_post_status($current) === 'publish') {
+            printf(
+                '<p class="description">%s <code>%s</code></p>',
+                esc_html__('Termine liegen dann unter:', 'churchtools-plugin'),
+                esc_html(trailingslashit((string) get_permalink($current)) . 'gottesdienst-06-09-2026/')
+            );
+        }
+
+        echo '<p class="description">'
+            . esc_html__('Startseite und Beitragsseite stehen nicht zur Wahl: Ihre Adressregel läge über der halben Website. Nur wirksam bei Klickverhalten „Eigene Seite“. Die Seite bleibt normal erreichbar und behält ihren Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin. Die bisherigen Adressen (/churchtools-termin/…) leiten dauerhaft auf die neuen weiter, bereits verschickte Links bleiben also gültig.', 'churchtools-plugin')
+            . '</p>';
+        echo '<p class="description">'
+            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag – auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlen der Seite dann die Vorlage des Themes sowie dessen Kopf- und Fußbereich.', 'churchtools-plugin')
             . '</p>';
     }
 

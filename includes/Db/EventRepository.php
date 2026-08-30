@@ -239,6 +239,48 @@ class EventRepository
     }
 
     /**
+     * Alle Termine eines Kalendertages, aufsteigend — die Auflösung der
+     * sprechenden Adresse (siehe Frontend\EventSlug). Der Titel-Teil des Slugs
+     * wird danach in PHP verglichen, nicht in SQL: Aus `sanitize_title()` führt
+     * kein Weg zurück, den eine WHERE-Klausel nachbilden könnte, und ein Tag
+     * hat eine Handvoll Termine, keine Handvoll Tausend.
+     *
+     * Als Bereich über `start_date` statt als `DATE(start_date) = %s`: Eine
+     * Funktion um die Spalte herum schließt den Index auf `start_date` aus, den
+     * diese Tabelle als einzigen hat.
+     *
+     * Anders als findInWindow() ohne `end_date >= jetzt`: Eine Adresse, die
+     * jemand aus einem Newsletter oder aus dem Verlauf aufruft, soll den
+     * Termin auch am Tag danach noch zeigen und nicht ins Leere laufen,
+     * solange die Zeile in der Tabelle steht (siehe `retention_days`).
+     *
+     * @param string $date Y-m-d
+     * @param int[]  $calendarIds Leer heißt „jeder Kalender in der Tabelle".
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findOnDate(string $date, array $calendarIds = []): array
+    {
+        global $wpdb;
+
+        $sql = 'SELECT * FROM %i WHERE start_date >= %s AND start_date <= %s';
+        $params = [$this->table, $date . ' 00:00:00', $date . ' 23:59:59'];
+
+        if ($calendarIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($calendarIds), '%d'));
+            $sql .= " AND ct_calendar_id IN ({$placeholders})";
+            array_push($params, ...$calendarIds);
+        }
+
+        $sql .= ' ORDER BY start_date ASC';
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see findInWindow() above: string literals plus a generated "%d,%d,..." list, prepared with matching positional params.
+        $results = $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+
+        return $results ?: [];
+    }
+
+    /**
      * Which of the given calendars actually have something coming up — the
      * calendars the frontend's filter dropdown and the eventfinder's
      * "Thema"-buttons are allowed to offer.

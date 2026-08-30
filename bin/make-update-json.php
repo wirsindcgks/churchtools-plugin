@@ -6,7 +6,7 @@
  *
  * Warum nicht mehr die GitHub-API: Sie erlaubt nicht angemeldet 60 Anfragen
  * pro Stunde und IP, und auf geteiltem Hosting ist das nicht die IP dieser
- * einen Seite - auf cg-ks.de beantwortete GitHub jede Update-Pruefung mit
+ * einen Seite - auf der Live-Seite beantwortete GitHub jede Update-Pruefung mit
  * HTTP 429. raw.githubusercontent.com liefert Dateien ueber ein CDN aus und
  * kennt dieses Limit nicht (siehe Update\GitHubUpdateChecker).
  *

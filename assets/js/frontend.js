@@ -672,7 +672,7 @@
 	 * jedes <img> durch einen Platzhalter und merkt sich die echte Adresse in
 	 * data-src/data-lazy-src. Die Bilder im <template> jeder Kachel erwischt es
 	 * dabei mit - seinen Beobachter bekommt dieser Klon hier aber nie zu sehen,
-	 * das Popup blieb deshalb ohne Bild (auf cg-ks.de blieb ein 0x1 Pixel
+	 * das Popup blieb deshalb ohne Bild (auf der Live-Seite blieb ein 0x1 Pixel
 	 * grosses Platzhalter-SVG stehen). Beim Klonen also selbst zuruecksetzen,
 	 * unabhaengig davon, ob das Plugin die Ausnahme-Kennzeichen im Markup
 	 * beachtet hat (siehe partials/event-detail-content.php).

@@ -5,6 +5,34 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.5.0] - 2026-08-30
+
+Termine bekommen eine lesbare Adresse unter einer bestehenden Seite – und
+damit, fast nebenbei, die Einbettung ins Theme, die der eigenen Terminseite
+bisher gefehlt hat. Beides ist dieselbe Änderung: Wer den Termin als *Inhalt*
+einer echten Seite ausliefert statt daneben, bekommt von WordPress eine ganz
+gewöhnliche Seite zurück, mit allem, was das Theme dazu beiträgt.
+
+### Added
+
+- **Neue Einstellung „Adresse der Terminseite" im Tab „Design"** – wählt eine bestehende Seite aus, unter deren Adresse die Termine liegen. Aus `/churchtools-termin/4021/` wird dann `/termine/gottesdienst-06-09-2026/`
+- **Der Termin wird zum Inhalt dieser Seite.** Das ist der eigentliche Gewinn: Auf einem Block-Theme (Twenty Twenty-Two und neuer) bekam die Terminseite bisher weder die Vorlage des Theme noch dessen Kopf- und Fußbereich, sondern die Notfassung aus `wp-includes/theme-compat/` – eine Datei, die WordPress seit Version 3.0 als veraltet führt. Der Grund: Ohne echten Beitrag lief der Template-Loader nie, und in dem steckt die Block-Vorlage. Mit ausgewählter Seite gibt es einen echten Beitrag, und die Frage stellt sich nicht mehr
+- **Titel *und* Datum in der Adresse**, nicht der Titel allein: In der Testinstanz stehen 120 Termine auf 29 verschiedene Titel, „Gottesdienst" allein 21-mal. Ein Titel-Slug benennt eine Serie, nicht ein Vorkommnis. Auch nicht die interne Nummer – die vergibt ein erneuter Vollsync neu, Titel und Datum stehen im Termin selbst
+- **Die alten Adressen leiten dauerhaft weiter** (301). Bereits verschickte oder verlinkte Termin-Adressen bleiben gültig
+- Die Überschrift der ausgewählten Seite weicht für diesen Aufruf dem Termin – sonst stünde „Termine" als Überschrift über der Überschrift des Termins. Die Seite selbst bleibt normal erreichbar und behält ihren eigenen Inhalt
+
+### Changed
+
+- **Die Zweispaltigkeit der Terminseite richtet sich jetzt nach der Breite des Inhaltsbereichs statt nach der des Fensters.** Als Inhalt einer Seite steckt die Terminansicht im Inhaltsbereich des Theme, und der ist bei manchen Themes 650 Pixel breit – auch auf einem großen Bildschirm. Eine Fensterabfrage hätte dort zwei Spalten aufgemacht, wo keine hineinpassen
+- Als Inhalt einer Seite gibt der Terminblock seinen eigenen Innenabstand ab – den bringt dort das Theme schon mit, und zwei ineinander gelegte Rahmen sehen aus wie ein Fehler
+- Ohne ausgewählte Seite bleibt alles wie bisher: dieselbe Adresse, dasselbe Verhalten. Bestandsseiten ändern ihre Adressen also nicht von selbst, nur weil aktualisiert wurde
+- Die Domain der Live-Seite steht nicht mehr im veröffentlichten Code – sie diente dort als Beleg in Kommentaren und Changelog-Einträgen, und für die gilt dieselbe Zurückhaltung wie für den Rest des öffentlichen Repositorys
+
+### Notes
+
+- **Bewusste Grenze**: Zwei Termine mit demselben Titel am selben Tag (der 9-Uhr- und der 11-Uhr-Gottesdienst) teilen sich eine Adresse; sie führt auf den früheren der beiden. Ein Zeit-Anhängsel im Slug wäre die Abhilfe, kostet aber jede Adresse ihre Lesbarkeit, damit ein seltener Fall aufgeht
+- Die lesbare Adresse setzt eingeschaltete Permalinks voraus (Einstellungen → Permalinks, alles außer „Einfach"). Bei „Einfach" fällt sie auf die Fragezeichen-Form zurück, wie bisher schon die ID-Adresse
+
 ## [1.4.1] - 2026-08-30
 
 ### Fixed
@@ -212,7 +240,7 @@ drei Dinge, die erst dort zu sehen waren.
 Der erste Durchgang über eine echte Live-Seite: ein Fehler, der genau einmal
 pro Installation zuschlägt – beim ersten Einrichten, und dort so, dass alles
 danach aussieht, als läge es an ChurchTools – plus die Punkte, die auf
-cg-ks.de im Alltag auffielen.
+der Live-Seite im Alltag auffielen.
 
 ### Added
 

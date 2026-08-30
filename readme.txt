@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.1
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,6 +88,15 @@ Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einste
 
 Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Grid“ als Ansicht gewählt ist.
 
+= Adresse der Terminseite =
+
+Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
+
+* Die Adressen werden lesbar: `/termine/gottesdienst-06-09-2026/` statt `/churchtools-termin/4021/`. Titel *und* Datum, weil ein Titel allein eine Terminserie benennt und nicht einen einzelnen Termin.
+* Der Termin wird zum Inhalt dieser Seite. WordPress liefert damit eine ganz normale Seite aus – mit der Vorlage des Theme, dessen Kopf- und Fußbereich und allem, was sonst dazugehört. Ohne ausgewählte Seite gibt es für den Termin keinen echten WordPress-Beitrag; auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlt der Terminseite dann die Vorlage des Theme.
+
+Die ausgewählte Seite bleibt ganz normal erreichbar und behält ihren eigenen Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin. Bereits verschickte Links auf die alten Adressen bleiben gültig: Sie werden dauerhaft (301) auf die neuen weitergeleitet. Voraussetzung sind eingeschaltete Permalinks (Einstellungen → Permalinks, alles außer „Einfach“).
+
 = Eigenes Design =
 
 Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `event-grid.php`, `event-upcoming.php`). Zum Anpassen die gewünschte Datei aus `wp-content/plugins/churchtools-plugin/includes/Frontend/templates/` nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort bearbeiten – das Original bleibt unangetastet und übersteht Plugin-Updates. Die einzelnen Termin-Zeilen bzw. -Karten liegen in `partials/event-list-items.php` und `partials/event-grid-items.php`; ein eigenes Layout-Template sollte diese weiterhin einbinden, weil das Nachladen (`paging="1"`) genau dieses Markup nachliefert – andernfalls `paging="0"` setzen, damit nachgeladene Termine nicht anders aussehen als die bereits sichtbaren. Das mitgelieferte Stylesheet orientiert sich zusätzlich automatisch an den Globalen Stilen des aktiven Theme (Akzentfarbe, Eckenradius, Flächenfarbe), sofern das Theme diese über `theme.json` bereitstellt.
@@ -160,6 +169,9 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Neu: Termine können unter der Adresse einer bestehenden Seite liegen (`/termine/gottesdienst-06-09-2026/`) und werden dann als deren Inhalt ausgeliefert – mit Vorlage, Kopf- und Fußbereich des Theme. Auf Block-Themes (Twenty Twenty-Two und neuer) behebt das, dass die Terminseite bisher außerhalb der Theme-Vorlage stand. Einzurichten im Tab „Design“ unter „Adresse der Terminseite“; ohne diese Einstellung bleibt alles wie bisher. Alte Adressen leiten dauerhaft weiter.
 
 = 1.4.1 =
 Behebt, dass das Kalender-Etikett auf der eigenen Terminseite nicht an der im Design-Tab eingestellten Position stand. Betrifft nur, wer die Reihenfolge der Felder dort geändert hat.
@@ -240,6 +252,17 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.5.0 =
+
+* Neu: Einstellung „Adresse der Terminseite“ im Tab „Design“ – wählt eine bestehende Seite, unter deren Adresse die Termine liegen (`/termine/gottesdienst-06-09-2026/` statt `/churchtools-termin/4021/`)
+* Der Termin wird dann zum Inhalt dieser Seite: WordPress liefert eine ganz normale Seite aus, mit Vorlage, Kopf- und Fußbereich des Theme. Auf Block-Themes (Twenty Twenty-Two und neuer) bekam die Terminseite bisher stattdessen die veraltete Notfassung aus `wp-includes/theme-compat/`
+* Die Adresse besteht aus Titel und Datum, nicht aus dem Titel allein: Ein Titel benennt eine Terminserie, kein einzelnes Vorkommnis
+* Alte Adressen (`/churchtools-termin/…`) leiten dauerhaft (301) auf die neuen weiter – bereits verschickte Links bleiben gültig
+* Die Überschrift der ausgewählten Seite weicht für diesen Aufruf dem Termin; die Seite selbst bleibt normal erreichbar und behält ihren Inhalt
+* Geändert: Die Zweispaltigkeit der Terminseite richtet sich nach der Breite des Inhaltsbereichs statt nach der des Fensters – in einem schmalen Inhaltsbereich hätte eine Fensterabfrage zwei Spalten aufgemacht, wo keine hineinpassen
+* Ohne ausgewählte Seite ändert sich nichts: dieselbe Adresse, dasselbe Verhalten
+* Bewusste Grenze: Zwei Termine mit demselben Titel am selben Tag teilen sich eine Adresse; sie führt auf den früheren der beiden
 
 = 1.4.1 =
 

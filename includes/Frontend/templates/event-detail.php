@@ -8,7 +8,7 @@
  * @var array $event Already enriched via EventListRenderer::withCalendarMeta().
  * @var array $order Validated DetailDesign::ELEMENT_KEYS permutation.
  * @var string $backUrl
- * @var string $designClass Preset class from DesignPreset::bodyClass(), '' for the default preset.
+ * @var string $designClass Container classes: the preset from DesignPreset::bodyClass() (empty for the default one) plus ctp-events--hosted when the event is rendered inside a real page.
  * @var string $designStyle CSS custom properties from CardDesign::styleAttribute(), same as the list layouts.
  * @var string $detailContext Always 'page' here — see partials/event-detail-content.php.
  */

@@ -66,6 +66,60 @@ function get_option(string $name, $default = false)
 }
 
 /**
+ * Reduzierter Nachbau von WordPress' sanitize_title() — genau der Teil, den
+ * Frontend\EventSlug braucht, und bewusst nicht mehr.
+ *
+ * Das Original (wp-includes/formatting.php) ruft im Standardkontext „save"
+ * erst remove_accents() und dann sanitize_title_with_dashes(). Dessen letzte
+ * vier Zeilen sind hier eins zu eins nachgebaut, und für reines ASCII ist das
+ * Ergebnis identisch. Was fehlt, ist alles rund um Nicht-ASCII: remove_accents()
+ * bildet Umlaute je nach Sprache verschieden ab (ä→a in en_US, ä→ae in de_DE),
+ * und utf8_uri_encode() lässt aus allem übrigen Prozent-Oktette werden, die
+ * das Original stehen lässt.
+ *
+ * Deshalb prüft EventSlugTest exakte Zeichenketten nur an ASCII-Titeln; für
+ * alles andere prüft er die Rundreise (bauen → zerlegen → wiederfinden), und
+ * die gilt unabhängig davon, wie ein Zeichen abgebildet wird.
+ */
+function sanitize_title(string $title): string
+{
+    $title = strtolower($title);
+    $title = str_replace('.', '-', $title);
+    $title = (string) preg_replace('/[^a-z0-9 _-]/', '', $title);
+    $title = (string) preg_replace('/\s+/', '-', $title);
+    $title = (string) preg_replace('|-+|', '-', $title);
+
+    return trim($title, '-');
+}
+
+/**
+ * Beiträge, so weit die Prüfung in SettingsPage::sanitizeSettings() für
+ * „detail_page_id" sie befragt: Typ und Status. Tests legen sie über
+ * ctp_test_set_post() an.
+ */
+$GLOBALS['ctp_test_posts'] = [];
+
+function ctp_test_set_post(int $id, string $type, string $status, string $uri = ''): void
+{
+    $GLOBALS['ctp_test_posts'][$id] = ['type' => $type, 'status' => $status, 'uri' => $uri];
+}
+
+function get_post_type($post = null)
+{
+    return $GLOBALS['ctp_test_posts'][(int) $post]['type'] ?? false;
+}
+
+function get_post_status($post = null)
+{
+    return $GLOBALS['ctp_test_posts'][(int) $post]['status'] ?? false;
+}
+
+function get_page_uri($post = null)
+{
+    return $GLOBALS['ctp_test_posts'][(int) $post]['uri'] ?? false;
+}
+
+/**
  * SyncEngine::getLastError()/run() read and write the "ctp_last_sync_error" option
  * through update_option()/delete_option(), not just get_option() — needed so tests
  * can exercise that persisted-error round trip the same way the real option table

@@ -16,6 +16,54 @@ final class SettingsPageTest extends TestCase
     protected function setUp(): void
     {
         ctp_test_reset_options();
+        $GLOBALS['ctp_test_posts'] = [];
+    }
+
+    /**
+     * Die Elternseite der Termin-Adressen muss eine veröffentlichte *Seite*
+     * sein. Alles andere hätte entweder keine öffentliche Adresse (Entwurf)
+     * oder eine, die WordPress selbst schon belegt (Beitrag) — und die
+     * Einstellung würde still etwas anderes bedeuten als das, was sie anzeigt.
+     */
+    public function testDetailPageIdAcceptsAPublishedPage(): void
+    {
+        ctp_test_set_post(43, 'page', 'publish');
+
+        $this->assertSame(43, SettingsPage::sanitizeSettings(['detail_page_id' => '43'])['detail_page_id']);
+    }
+
+    /**
+     * @dataProvider unusablePageProvider
+     */
+    public function testDetailPageIdFallsBackToNoneForAnythingElse(string $type, string $status, string $why): void
+    {
+        ctp_test_set_post(43, $type, $status);
+
+        $this->assertSame(0, SettingsPage::sanitizeSettings(['detail_page_id' => '43'])['detail_page_id'], $why);
+    }
+
+    public function unusablePageProvider(): array
+    {
+        return [
+            'Entwurf' => ['page', 'draft', 'Ein Entwurf hat keine öffentliche Adresse.'],
+            'Papierkorb' => ['page', 'trash', 'Eine gelöschte Seite erst recht nicht.'],
+            'Beitrag' => ['post', 'publish', 'Ein Beitrag hat schon eine eigene Adressstruktur.'],
+        ];
+    }
+
+    public function testDetailPageIdFallsBackToNoneForAnIdThatDoesNotExist(): void
+    {
+        $this->assertSame(0, SettingsPage::sanitizeSettings(['detail_page_id' => '999'])['detail_page_id']);
+    }
+
+    /**
+     * Die Voreinstellung ist „keine Elternseite": Eine bestehende Installation
+     * ändert ihre Termin-Adressen nicht von selbst, nur weil aktualisiert wurde.
+     */
+    public function testWithoutADetailPageTheSettingStaysAtNone(): void
+    {
+        $this->assertSame(0, SettingsPage::defaults()['detail_page_id']);
+        $this->assertSame(0, SettingsPage::sanitizeSettings([])['detail_page_id']);
     }
 
     /**
@@ -52,7 +100,7 @@ final class SettingsPageTest extends TestCase
 
     public function testSanitizeInstanceStripsDisallowedCharacters(): void
     {
-        $this->assertSame('cgks', $this->sanitizeInstance('cg ks!'));
+        $this->assertSame('musterkirche', $this->sanitizeInstance('muster kirche!'));
     }
 
     public function testResolveCalendarIdsPassesThroughNumericIds(): void

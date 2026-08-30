@@ -79,6 +79,27 @@ final class DetailPageDesignTest extends TestCase
     }
 
     /**
+     * Als Inhalt einer echten Seite gibt der Block seinen eigenen
+     * Innenabstand ab — dort bringt das Theme seinen Container schon mit, und
+     * zwei ineinander gelegte Rahmen sehen aus wie ein Fehler. Die Preset-Klasse
+     * steht daneben und darf davon nicht verdrängt werden: Beide landen im
+     * selben Attribut.
+     */
+    public function testTheHostedVariantIsMarkedAndKeepsItsPreset(): void
+    {
+        $bare = $this->renderContainer('', 'ctp-events--preset-warm');
+        $this->assertStringNotContainsString('ctp-events--hosted', $bare->getAttribute('class'));
+
+        $hosted = $this->renderContainer('', 'ctp-events--preset-warm ctp-events--hosted');
+        $class = $hosted->getAttribute('class');
+        $this->assertStringContainsString('ctp-events--hosted', $class);
+        $this->assertStringContainsString('ctp-events--preset-warm', $class);
+
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+        $this->assertStringContainsString('.ctp-events--detail.ctp-events--hosted', $css);
+    }
+
+    /**
      * Rendert event-detail.php so, wie EventListRenderer::renderDetail() es
      * einbindet — dieselben Variablen, dasselbe include. Der Renderer selbst
      * bleibt außen vor, weil er mit locate_template()/wp_get_referer() an

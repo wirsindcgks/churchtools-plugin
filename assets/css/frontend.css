@@ -276,7 +276,7 @@
 /* Versalien fuer beide Schaltflaechen des Plugins (Eventfinder-Knoepfe und
    "Weitere Termine laden"): dieselbe Auszeichnung, die .ctp-events__eyebrow,
    .ctp-events__more-label und der Monatstrenner schon tragen - und die
-   Schaltflaechen des Themes auf cg-ks.de ebenso. Die Sperrung dazu, weil
+   Schaltflaechen des Themes auf der Live-Seite ebenso. Die Sperrung dazu, weil
    Versalien ohne sie eng wirken. Nicht auf .ctp-events__card-trigger: das ist
    der Titel des Termins in Knopfform, kein Bedienelement mit eigenem Wort. */
 .ctp-events__finder-btn {
@@ -464,7 +464,7 @@
 /*
  * Diese Liste ist seit 0.12.7 kein <ul> mehr - aber <ul>/<li> kann sie
  * trotzdem noch sein: in einer Seite, die im Cache eines Optimierungs-Plugins
- * liegt und noch aeltere Ausgabe ausliefert (auf cg-ks.de genau so passiert,
+ * liegt und noch aeltere Ausgabe ausliefert (auf der Live-Seite genau so passiert,
  * mit sichtbaren Aufzaehlungspunkten als Folge), oder in einem Theme, das ein
  * eigenes event-*.php mitbringt. Deshalb bleibt die Abschaltung stehen, auch
  * wenn sie fuer das eigene Markup ohne Wirkung ist. Ueber den Kindselektor,
@@ -865,7 +865,7 @@
  * Zweispaltig erst ab 768px statt ab 640px. Vorher kippte die Kachel schon auf
  * schmalen Tablets in zwei Spalten, in denen dann beides zu eng stand: Der
  * Titel brach mehrzeilig um, waehrend daneben ein hochkantes Flyer-Bild in
- * einer breiten, flachen Zelle schwamm (auf cg-ks.de 1128 Pixel breit, 281
+ * einer breiten, flachen Zelle schwamm (auf der Live-Seite 1128 Pixel breit, 281
  * hoch - das Bild darin knapp 200 Pixel breit, der Rest leer).
  *
  * Angaben und Bild sind gleich breit (1fr gegen 1fr, vorher 1.35fr gegen 1fr).
@@ -1388,15 +1388,41 @@
  * des Themes da - es gibt keinen echten Beitrag, um den das Theme einen legen
  * koennte (siehe EventDetailPage) -, und so klebte der Inhalt am linken Rand
  * des Fensters. Der Kasten hier ist also der fehlende Container, nicht
- * Zierrat: mittig, mit Luft ringsum, in der Breite begrenzt. Ein Theme, das
- * doch einen eigenen Container mitbringt, bekommt dadurch etwas mehr Abstand -
- * das ist der guenstigere der beiden Fehler.
+ * Zierrat: mittig, mit Luft ringsum, in der Breite begrenzt.
+ *
+ * Mit eingestellter Elternseite bringt das Theme seinen eigenen Container mit,
+ * und dann liegt hier einer im anderen. Das ist der guenstigere der beiden
+ * Fehler: etwas mehr Abstand ist zu verschmerzen, kein Container dagegen
+ * nicht.
  */
 .ctp-events--detail {
+    /*
+     * Der Bezugsrahmen fuer die Abfrage weiter unten. Die Aufteilung dieser
+     * Seite haengt daran, wie breit sie *hier* ist, und nicht daran, wie breit
+     * das Fenster ist: Als Inhalt einer Seite steckt sie im Inhaltsbereich des
+     * Themes, und der ist bei manchen Themes 650px breit, auch auf einem
+     * 1600px-Bildschirm. Eine Fensterabfrage haette dort zwei Spalten
+     * aufgemacht, wo keine hinpassen. Dieselbe Ueberlegung wie beim
+     * Grid-Layout weiter oben, nur mit @container statt mit auto-fit.
+     */
+    container-type: inline-size;
+    container-name: ctp-detail;
     max-width: 62rem;
     margin-inline: auto;
     padding-block: clamp(1.75rem, 4vw, 3rem);
     padding-inline: clamp(1.25rem, 5vw, 2.5rem);
+}
+
+/*
+ * Als Inhalt einer echten Seite (Einstellung „Adresse der Terminseite") legt
+ * das Theme seinen Container schon um diesen Block - dann ist der eigene
+ * Innenabstand der zweite um denselben Inhalt, und oben stand dadurch ein
+ * Streifen Leere, den niemand bestellt hat. Die Breitenbegrenzung bleibt: Sie
+ * gilt dem Lesemass und nicht dem Rand.
+ */
+.ctp-events--detail.ctp-events--hosted {
+    padding-block: 0;
+    padding-inline: 0;
 }
 
 .ctp-events__back {
@@ -1413,52 +1439,73 @@
 }
 
 /*
- * Zwei Spalten statt der einen Spalte des Popups: Kopf links, Bild rechts -
- * dieselbe Aufteilung, die die Hero-Kachel von „Nächster Termin" ab 768px
- * hat (dort `grid-column: 3`). Damit ist diese Seite auch im Aufbau die
- * grosse Fassung der Kachel, aus der man auf sie geklickt hat, und nicht
- * deren Spiegelbild.
- *
- * Die Zeilenaufteilung macht die eigentliche Arbeit: Kopfblock in Zeile 1
- * (unten buendig), Eckdaten in Zeile 2 (oben buendig), Bild ueber beide.
- * Ist das Bild hoeher als die beiden zusammen, waechst der freie Platz
- * zwischen den Zeilen - und weil die beiden Bloecke ihn von beiden Seiten
- * einfassen, steht der Text am Ende mittig neben dem Bild, ohne dass eine
- * feste Hoehe irgendwo stuende.
+ * Eine Spalte ist der Ausgangszustand, zwei sind die Ausnahme - und nicht
+ * umgekehrt. Das ist mehr als Geschmack: In 1.4.0 stand die Zweispaltigkeit
+ * in der Grundregel und wurde in einer Medienabfrage zurueckgenommen. Eine
+ * Medienabfrage erhoeht die Spezifitaet aber nicht, und die Ruecknahme wog
+ * eine Klasse weniger als die Regel, die sie zuruecknehmen sollte: Das Bild
+ * behielt sein `grid-column: 2`, das Raster legte eine implizite zweite
+ * Spalte an, und auf dem Telefon stand die Seite weiter zweispaltig. Wird die
+ * Ausnahme zur Ausnahme, gibt es nichts zurueckzunehmen.
+ */
+.ctp-events--detail .ctp-events__detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    column-gap: 2.75rem;
+    row-gap: 1.5rem;
+}
+
+/* Auf einer Spalte eroeffnet das Bild die Seite, statt hinter den Eckdaten
+   nachzukommen - auf einem Telefon ist es das Erste, was man sieht. */
+.ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
+    order: -1;
+    justify-content: flex-start;
+}
+
+/*
+ * Zwei Spalten, sobald der Platz dafuer da ist: Kopf links, Bild rechts -
+ * dieselbe Aufteilung, die die Hero-Kachel von „Nächster Termin" ab 768px hat
+ * (dort `grid-column: 3`). Damit ist diese Seite auch im Aufbau die grosse
+ * Fassung der Kachel, aus der man auf sie geklickt hat, und nicht deren
+ * Spiegelbild.
  *
  * Das Popup bleibt ausserhalb dieser Regeln (kein .ctp-events--detail davor):
  * dort ist der Platz zu knapp fuer zwei Spalten, und die Anordnung folgt dort
  * weiter der im Design-Tab eingestellten Reihenfolge.
  */
-.ctp-events--detail .ctp-events__detail {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 1.05fr;
-    align-items: start;
-    column-gap: 2.75rem;
-    row-gap: 1.25rem;
-}
+@container ctp-detail (min-width: 46rem) {
+    /* Ohne Bild gibt es nichts, was die zweite Spalte fuellen koennte - dann
+       waere sie nur ein breiter leerer Streifen rechts. Die Kennzeichnung
+       setzt das Partial, weil nur PHP weiss, ob ein Bild kommt. */
+    .ctp-events--detail .ctp-events__detail:not(.ctp-events__detail--no-media) {
+        grid-template-columns: minmax(0, 1fr) 1.05fr;
+        row-gap: 1.25rem;
+    }
 
-/* Ohne Bild gibt es nichts, was die zweite Spalte fuellen koennte - dann
-   waere sie nur ein breiter leerer Streifen rechts. Die Kennzeichnung setzt
-   das Partial, weil nur PHP weiss, ob ein Bild kommt. */
-.ctp-events--detail .ctp-events__detail--no-media {
-    grid-template-columns: minmax(0, 1fr);
-}
+    /* Mittig neben dem Bild statt oben buendig: Ein Hochkant-Flyer ist gut
+       doppelt so hoch wie der Textblock daneben, und der klebte oben an der
+       Kante, waehrend rechts die Haelfte des Bildes ohne Gegenueber stand. */
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-text {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: center;
+    }
 
-/* Mittig neben dem Bild statt oben buendig: Ein Hochkant-Flyer ist gut doppelt
-   so hoch wie der Textblock daneben, und der klebte oben an der Kante,
-   waehrend rechts die Haelfte des Bildes ohne Gegenueber stand. */
-.ctp-events--detail .ctp-events__detail > .ctp-events__detail-text {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: center;
-}
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
+        grid-column: 2;
+        grid-row: 1;
+        order: 0;
+        align-self: start;
+        justify-content: flex-end;
+    }
 
-.ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-    justify-content: flex-end;
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 1.5rem;
+        padding-block-start: 2.25rem;
+    }
 }
 
 /*
@@ -1467,10 +1514,8 @@
  * Versehen, und ein Absatz ueber 62rem liest sich schlecht.
  */
 .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    margin-top: 1.5rem;
-    padding-block-start: 2.25rem;
+    margin-top: 0.5rem;
+    padding-block-start: 1.75rem;
     border-block-start: 1px solid var(--ctp-color-border);
     font-size: var(--ctp-font-lg);
     line-height: 1.68;
@@ -1564,44 +1609,6 @@
 .ctp-events--detail .ctp-events__detail-media img {
     max-height: 24rem;
     object-fit: contain;
-}
-
-/*
- * Unter 900px wird aus den zwei Spalten wieder eine. Das Bild geht dabei nach
- * ganz oben (`order: -1`) statt an die Stelle, an der es im Quelltext steht:
- * Auf einem Telefon ist es das, was die Seite eroeffnet, und nicht ein
- * Nachtrag hinter den Eckdaten.
- */
-@media (max-width: 900px) {
-    .ctp-events--detail .ctp-events__detail {
-        grid-template-columns: minmax(0, 1fr);
-        row-gap: 1.5rem;
-    }
-
-    /*
-     * Jedes platzierte Kind einzeln zurueckgenommen statt in einem `> *`:
-     * Ein Media-Query erhoeht die Spezifitaet nicht, und `> *` wiegt eine
-     * Klasse weniger als `> .ctp-events__detail-media` weiter oben. Das Bild
-     * behielt damit sein `grid-column: 2`, das Raster legte dafuer eine
-     * implizite zweite Spalte an - und die Seite stand auf dem Telefon
-     * weiterhin zweispaltig, mit einer 70px schmalen Textspalte daneben.
-     */
-    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-text,
-    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-media,
-    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
-        grid-column: 1;
-        grid-row: auto;
-    }
-
-    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
-        order: -1;
-        justify-content: flex-start;
-    }
-
-    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
-        margin-top: 0.5rem;
-        padding-block-start: 1.75rem;
-    }
 }
 
 /* ---------- design presets (siehe DesignPreset.php, Design-Tab „Stil") ---------- */
