@@ -109,6 +109,9 @@ final class DetailPageDesignTest extends TestCase
         // Container-Attribut, nicht die Beschreibung.
         $order = array_values(array_diff(DetailDesign::DEFAULT_ORDER, ['description']));
         $backUrl = 'https://example.test/termine';
+        // Wie in renderDetail(): Die Seite reicht ihren Kontext bis ins
+        // Partial durch, damit dort das zweispaltige Layout gebaut wird.
+        $detailContext = 'page';
 
         ob_start();
         require CTP_PLUGIN_DIR . 'includes/Frontend/templates/event-detail.php';

@@ -5,6 +5,31 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.4.0] - 2026-08-30
+
+Die eigene Terminseite, neu gebaut. Sie war die Ansicht, die am wenigsten nach
+dem Rest der Website aussah: Angaben und Bild untereinander in einer schmalen
+Spalte, die am linken Fensterrand klebte, weil zwischen Kopf- und Fußbereich
+des Themes kein Container um sie herum steht. Jetzt ist sie die große Fassung
+der Kachel, aus der man auf sie geklickt hat – gleiche Aufteilung, gleicher
+Datums-Chip, nur in Seitengröße.
+
+### Changed
+
+- **Die eigene Terminseite ist zweispaltig** – Bild rechts, Titel und Angaben links, wie in der Kachel „Nächster Termin". Der Titel steht groß und als Überschrift erster Ordnung, der Datums-Chip daneben in derselben Größe, und die Beschreibung läuft unter einer Trennlinie über die volle Breite. Unter 900 px wird daraus wieder eine Spalte, mit dem Bild oben
+- **Die Seite hat einen eigenen Rahmen** – mittig, in der Breite begrenzt und mit Abstand zum Fensterrand. Bisher gab es keinen: Diese Seite steht ohne echten Beitrag zwischen Kopf- und Fußbereich des Themes, und damit auch ohne dessen Container
+- **Termine ohne Bild bekommen keine leere zweite Spalte** – die Seite fällt dann von selbst auf eine Spalte zurück
+- Der Autorenname in der Plugin-Übersicht verweist jetzt auf das GitHub-Profil
+
+### Fixed
+
+- **Auf Block-Themes fehlte der eigenen Terminseite das Viewport-Tag** – Twenty Twenty-Two und alles danach lassen dieses Tag von WordPress selbst setzen, und zwar im Template-Loader, den diese Seite nie erreicht. Telefone bauten sie deshalb in 980 px Breite auf und zoomten heraus: alles richtig angeordnet, nur unlesbar klein. In einem schmal gezogenen Fenster am Rechner ist das nicht zu sehen, auf einem Telefon sofort
+- **Der Datums-Chip stand in der Detailansicht hinter dem Titel**, sobald das Bild im Design-Tab nicht mehr an erster Stelle stand – er trägt die Reihenfolge-Variable des Bildes, und die Titelzeile ist ebenfalls eine Flex-Zeile. Betraf Popup und eigene Seite gleichermaßen
+
+### Notes
+
+- Die im Design-Tab eingestellte Reihenfolge der Felder gilt auf der eigenen Seite jetzt **innerhalb** zweier Gruppen – Kopf (Kalender, Titel, Untertitel) und Eckdaten (Datum, Zeit, Ort). Wo Bild und Beschreibung stehen, entscheidet dort das Layout: Das Bild gehört neben den ganzen Kopf, nicht zwischen zwei seiner Zeilen. Im Popup gilt die Reihenfolge unverändert für alle Felder
+
 ## [1.3.1] - 2026-08-30
 
 ### Fixed

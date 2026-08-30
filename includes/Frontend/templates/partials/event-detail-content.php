@@ -3,168 +3,73 @@
 /**
  * Single-event detail content, shared by the "own page" template
  * (event-detail.php) and the popup <template> embedded per card in
- * event-list.php/event-grid.php/event-upcoming.php. Renders the six
+ * event-list.php/event-grid.php/event-upcoming.php. Renders the
  * DetailDesign::ELEMENT_KEYS in the admin-configured order (see
  * SettingsPage::get()['detail_element_order']) — no CSS `order` trick here
  * since this is a single event, not a repeated list item (see DetailDesign
  * docblock).
  *
- * @var array $event Already enriched via EventListRenderer::withCalendarMeta().
- * @var array $order Validated DetailDesign::ELEMENT_KEYS permutation.
+ * Two groupings of the same elements, chosen by $detailContext:
+ *
+ *   popup — flat, every element a direct child of .ctp-events__detail, which
+ *           lays them out as a single wrapping column. The configured order is
+ *           reproduced one-to-one.
+ *   page  — the elements are grouped into .ctp-events__detail-lead (calendar
+ *           badge, title, subtitle) and .ctp-events__detail-facts (date, time,
+ *           location), with image and description outside both. That is what the two-column layout of
+ *           the own page needs: the image sits beside the whole heading block
+ *           rather than between two of its lines, and the description runs the
+ *           full width underneath. The configured order still decides the
+ *           sequence *within* each group — what it no longer decides there is
+ *           where the image and the description sit relative to the rest,
+ *           because on that page the layout answers that, not the order.
+ *
+ * @var array  $event         Already enriched via EventListRenderer::withCalendarMeta().
+ * @var array  $order         Validated DetailDesign::ELEMENT_KEYS permutation.
+ * @var string $detailContext 'popup' or 'page', set by EventListRenderer.
  */
-
-use ChurchToolsPlugin\Frontend\EventFormatter;
-use ChurchToolsPlugin\Frontend\Icons;
 
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Der Kontext kommt aus EventListRenderer, nicht aus dem Template darüber —
+// deshalb bekommt auch ein Theme mit einer alten event-detail.php-Kopie das
+// Seitenlayout. Der Rückfall hier gilt dem Fall, dass fremder Code dieses
+// Partial direkt einbindet: Die flache Fassung steht in jedem Container für
+// sich, die zweispaltige braucht .ctp-events--detail um sich herum.
+$detailContext = isset($detailContext) && $detailContext === 'page' ? 'page' : 'popup';
+
+$ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-element.php';
+
+/** @var callable(string[]): string[] $ctpKeysIn */
+$ctpKeysIn = static fn (array $group): array => array_values(
+    array_filter($order, static fn (string $key): bool => in_array($key, $group, true))
+);
 ?>
 <div
-    class="ctp-events__detail"
+    class="ctp-events__detail<?php echo $event['image_url'] === '' ? ' ctp-events__detail--no-media' : ''; ?>"
     <?php if ($event['calendar_color'] !== '') : ?>
         style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
     <?php endif; ?>
 >
-    <?php foreach ($order as $key) : ?>
-        <?php switch ($key) :
-            case 'media':
-                ?>
-                <?php if ($event['image_url'] !== '') : ?>
-                    <?php
-                    // The outer element is the full-width row the detail view's
-                    // flex layout gives it; the inner frame is what shrink-wraps
-                    // the (possibly portrait) image and carries radius, shadow
-                    // and the fallback scrim. Splitting the two is what lets a
-                    // narrow image sit centred without a full-width frame
-                    // around empty space beside it.
-                    ?>
-                    <div class="ctp-events__detail-media">
-                        <div class="ctp-events__detail-media-frame<?php echo $event['image_is_fallback'] ? ' ctp-events__detail-media-frame--fallback' : ''; ?>">
-                            <?php
-                            /*
-                             * skip-lazy/data-no-lazy: Dieses Bild steckt im
-                             * <template> jeder Kachel und wird erst beim
-                             * Oeffnen des Popups in die Seite kopiert. Ein
-                             * Lazyload-Plugin (WP Rocket & Co.) ersetzt beim
-                             * Ausliefern trotzdem das src durch einen
-                             * Platzhalter und merkt sich die echte Adresse in
-                             * data-src - seinen Beobachter bekommt der Klon
-                             * danach aber nie zu sehen, das Popup blieb also
-                             * ohne Bild. Diese beiden Kennzeichen sind die
-                             * gaengigen Ausnahmen; unabhaengig davon holt
-                             * assets/js/frontend.js beim Klonen ein bereits
-                             * ersetztes src wieder zurueck.
-                             */
-                            ?>
-                            <img
-                                src="<?php echo esc_url($event['image_url']); ?>"
-                                alt=""
-                                class="skip-lazy"
-                                data-no-lazy="1"
-                                loading="eager"
-                            />
-                        </div>
-                    </div>
-                <?php endif; ?>
-                <?php
-                break;
-
-            case 'calendar':
-                ?>
-                <?php if ($event['calendar_name'] !== '') : ?>
-                    <span class="ctp-events__eyebrow">
-                        <?php echo esc_html($event['calendar_name']); ?>
-                    </span>
-                <?php endif; ?>
-                <?php
-                break;
-
-            case 'title':
-                ?>
-                <?php
-                /*
-                 * Datums-Chip vor dem Titel, wie in den Kacheln: Er ist die
-                 * Marke, an der man einen Termin wiedererkennt, und stand
-                 * bisher nur in den Listen. Die Datumszeile weiter unten
-                 * bleibt daneben bestehen - sie nennt Wochentag und volles
-                 * Datum, der Chip ist aria-hidden und damit fuer Screenreader
-                 * nicht die zweite Stimme derselben Angabe.
-                 */
-                ?>
-                <div class="ctp-events__detail-heading">
-                    <span class="ctp-events__date-chip ctp-events__date-chip--detail" aria-hidden="true">
-                        <span class="ctp-events__day">
-                            <?php echo esc_html(EventFormatter::dayNumber($event['start_date'])); ?>
-                        </span>
-                        <span class="ctp-events__month">
-                            <?php echo esc_html(EventFormatter::monthAbbreviation($event['start_date'])); ?>
-                        </span>
-                    </span>
-                    <h2 class="ctp-events__detail-title">
-                        <?php echo esc_html($event['title']); ?>
-                        <?php if (!empty($event['all_day'])) : ?>
-                            <span class="ctp-events__badge">
-                                <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
-                            </span>
-                        <?php endif; ?>
-                    </h2>
-                </div>
-                <?php
-                break;
-
-            case 'subtitle':
-                ?>
-                <?php if ($event['subtitle'] !== '') : ?>
-                    <p class="ctp-events__subtitle"><?php echo esc_html($event['subtitle']); ?></p>
-                <?php endif; ?>
-                <?php
-                break;
-
-            case 'date':
-                ?>
-                <p class="ctp-events__meta-item ctp-events__meta-item--date">
-                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input, same trust boundary as the rest of this template's static HTML (see Icons.php docblock). ?>
-                    <?php echo Icons::calendar(); ?>
-                    <?php echo esc_html(EventFormatter::dateOnly($event)); ?>
-                </p>
-                <?php
-                break;
-
-            case 'time':
-                ?>
-                <?php if (EventFormatter::timeRange($event) !== '') : ?>
-                    <p class="ctp-events__meta-item ctp-events__meta-item--time">
-                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                        <?php echo Icons::clock(); ?>
-                        <?php echo esc_html(EventFormatter::timeRange($event)); ?>
-                    </p>
-                <?php endif; ?>
-                <?php
-                break;
-
-            case 'location':
-                ?>
-                <?php if ($event['location'] !== '') : ?>
-                    <p class="ctp-events__meta-item ctp-events__meta-item--location">
-                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                        <?php echo Icons::location(); ?>
-                        <?php echo esc_html($event['location']); ?>
-                    </p>
-                <?php endif; ?>
-                <?php
-                break;
-
-            case 'description':
-                ?>
-                <?php if ($event['description'] !== '') : ?>
-                    <div class="ctp-events__detail-description">
-                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses_post() before adding any markup of its own (see its docblock). ?>
-                        <?php echo EventFormatter::descriptionHtml($event['description']); ?>
-                    </div>
-                <?php endif; ?>
-                <?php
-                break;
-        endswitch; ?>
-    <?php endforeach; ?>
+    <?php if ($detailContext === 'page') : ?>
+        <div class="ctp-events__detail-lead">
+            <?php foreach ($ctpKeysIn(['calendar', 'title', 'subtitle']) as $key) : ?>
+                <?php require $ctpElement; ?>
+            <?php endforeach; ?>
+        </div>
+        <div class="ctp-events__detail-facts">
+            <?php foreach ($ctpKeysIn(['date', 'time', 'location']) as $key) : ?>
+                <?php require $ctpElement; ?>
+            <?php endforeach; ?>
+        </div>
+        <?php foreach ($ctpKeysIn(['media', 'description']) as $key) : ?>
+            <?php require $ctpElement; ?>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <?php foreach ($order as $key) : ?>
+            <?php require $ctpElement; ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </div>

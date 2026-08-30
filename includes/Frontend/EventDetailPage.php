@@ -98,6 +98,7 @@ final class EventDetailPage
             'pre_get_document_title',
             static fn (): string => sprintf('%s – %s', $event['title'], get_bloginfo('name'))
         );
+        add_action('wp_head', [self::class, 'maybeRenderViewportMetaTag'], 0);
 
         status_header(200);
         get_header();
@@ -105,5 +106,35 @@ final class EventDetailPage
         echo (new EventListRenderer())->renderDetail($event);
         get_footer();
         exit;
+    }
+
+    /**
+     * Block-Themes (Twenty Twenty-Two aufwärts, seit 2022 der Standard)
+     * bekommen ihr <meta name="viewport"> nicht aus dem Theme, sondern von
+     * WordPress selbst: locate_block_template() hängt dafür
+     * _block_template_viewport_meta_tag() an wp_head. Diese Funktion läuft im
+     * Template-Loader — also *nach* template_redirect, und damit nach dem
+     * exit() oben. Auf einem Block-Theme hatte diese Seite deshalb gar kein
+     * Viewport-Tag, und Telefone bauten sie in 980px Breite auf und zoomten
+     * heraus: Alles korrekt angeordnet, nur unlesbar klein. Sichtbar wird das
+     * nur auf einem echten Telefon oder in der Geräteansicht, nicht in einem
+     * schmal gezogenen Fenster — deshalb ist es bis 1.3.1 nicht aufgefallen.
+     *
+     * Nur für Block-Themes, und nur wenn WordPress das Tag nicht doch selbst
+     * beisteuert: Klassische Themes schreiben es in ihre header.php, die
+     * get_header() unten ganz normal lädt, und zwei Viewport-Tags sind
+     * schlimmer als eins.
+     */
+    public static function maybeRenderViewportMetaTag(): void
+    {
+        if (!function_exists('wp_is_block_theme') || !wp_is_block_theme()) {
+            return;
+        }
+
+        if (has_action('wp_head', '_block_template_viewport_meta_tag') !== false) {
+            return;
+        }
+
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1" />' . "\n";
     }
 }

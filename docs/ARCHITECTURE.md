@@ -10,6 +10,8 @@ Anforderungen: WordPress ≥ 6.4, PHP ≥ 8.1.
 
 Eine eigene Tabelle `{prefix}ctp_events` statt eines Custom Post Type: die Daten sind eine Kopie eines externen Systems, werden nie in WordPress redaktionell bearbeitet und nach Ablauf wieder gelöscht – der CPT-Overhead (Revisionen, Meta-Tabelle, Autosaves, Editor-UI) hätte dafür keinen Gegenwert. Der Preis dafür: die Detailseite ist eine virtuelle Rewrite-Route ohne echten `WP_Post` (siehe `Frontend\EventDetailPage`).
 
+Dieser Preis ist höher als er aussieht, und zwar auf Block-Themes. Die Route rendert auf `template_redirect` und beendet den Request dort – der Template-Loader läuft nie. In ihm sitzt aber `locate_block_template()`, und die Funktion hängt nebenbei das `<meta name="viewport">` an `wp_head` (seit WordPress 5.8) und lädt die Block-Vorlage des Themes. Beides fehlt dieser Seite deshalb: Das Viewport-Tag setzt `EventDetailPage::maybeRenderViewportMetaTag()` seit 1.4.0 selbst nach, Kopf- und Fußbereich kommen von `get_header()`/`get_footer()` – auf einem Block-Theme also aus `wp-includes/theme-compat/`, nicht aus dem Theme. Wer die Seite wirklich in ein Block-Theme einbetten will, muss den Termin in einem echten Beitrag ausliefern statt daneben.
+
 Eindeutig ist eine Zeile über `(ct_event_id, start_date)` – eine Terminserie („jeden Montag") liefert je Vorkommnis eine eigene Zeile mit derselben `ct_event_id`.
 
 Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das Upgrade beim nächsten Seitenaufruf aus, eine Reaktivierung ist nicht nötig.

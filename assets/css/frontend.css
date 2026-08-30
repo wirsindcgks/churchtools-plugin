@@ -1334,6 +1334,17 @@
     gap: 0.85rem;
 }
 
+/*
+ * Der Chip traegt `order: var(--ctp-order-media)` fuer die Kachel-Layouts, und
+ * diese Zeile ist auch ein Flex-Container - steht das Bild im Design-Tab nicht
+ * an erster Stelle, rutschte der Chip damit hinter den Titel (der Titel hat
+ * kein order und liegt bei 0). Fiel nur deshalb nie auf, weil das Bild in der
+ * Standardreihenfolge vorne steht und --ctp-order-media dort 0 ist.
+ */
+.ctp-events .ctp-events__detail-heading > .ctp-events__date-chip {
+    order: 0;
+}
+
 .ctp-events__detail-title {
     margin: 0;
     font-size: var(--ctp-font-xl);
@@ -1369,21 +1380,226 @@
     margin-bottom: 0;
 }
 
-/* ---------- "own page" wrapper (event-detail.php) ---------- */
+/* ---------- "own page" layout (event-detail.php) ---------- */
 
+/*
+ * Bis 1.3.x war das hier eine einzige Regel: max-width 42rem, sonst nichts.
+ * Zwischen get_header() und get_footer() steht diese Seite ohne den Container
+ * des Themes da - es gibt keinen echten Beitrag, um den das Theme einen legen
+ * koennte (siehe EventDetailPage) -, und so klebte der Inhalt am linken Rand
+ * des Fensters. Der Kasten hier ist also der fehlende Container, nicht
+ * Zierrat: mittig, mit Luft ringsum, in der Breite begrenzt. Ein Theme, das
+ * doch einen eigenen Container mitbringt, bekommt dadurch etwas mehr Abstand -
+ * das ist der guenstigere der beiden Fehler.
+ */
 .ctp-events--detail {
-    max-width: 42rem;
+    max-width: 62rem;
+    margin-inline: auto;
+    padding-block: clamp(1.75rem, 4vw, 3rem);
+    padding-inline: clamp(1.25rem, 5vw, 2.5rem);
 }
 
 .ctp-events__back {
     display: inline-block;
-    margin-bottom: 1rem;
+    margin-bottom: 1.75rem;
     color: var(--ctp-color-muted);
+    font-size: var(--ctp-font-sm);
+    font-weight: 600;
     text-decoration: none;
 }
 
 .ctp-events__back:hover {
     color: var(--ctp-accent);
+}
+
+/*
+ * Zwei Spalten statt der einen Spalte des Popups: Kopf links, Bild rechts -
+ * dieselbe Aufteilung, die die Hero-Kachel von „Nächster Termin" ab 768px
+ * hat (dort `grid-column: 3`). Damit ist diese Seite auch im Aufbau die
+ * grosse Fassung der Kachel, aus der man auf sie geklickt hat, und nicht
+ * deren Spiegelbild.
+ *
+ * Die Zeilenaufteilung macht die eigentliche Arbeit: Kopfblock in Zeile 1
+ * (unten buendig), Eckdaten in Zeile 2 (oben buendig), Bild ueber beide.
+ * Ist das Bild hoeher als die beiden zusammen, waechst der freie Platz
+ * zwischen den Zeilen - und weil die beiden Bloecke ihn von beiden Seiten
+ * einfassen, steht der Text am Ende mittig neben dem Bild, ohne dass eine
+ * feste Hoehe irgendwo stuende.
+ *
+ * Das Popup bleibt ausserhalb dieser Regeln (kein .ctp-events--detail davor):
+ * dort ist der Platz zu knapp fuer zwei Spalten, und die Anordnung folgt dort
+ * weiter der im Design-Tab eingestellten Reihenfolge.
+ */
+.ctp-events--detail .ctp-events__detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1.05fr;
+    align-items: start;
+    column-gap: 2.75rem;
+    row-gap: 1.25rem;
+}
+
+/* Ohne Bild gibt es nichts, was die zweite Spalte fuellen koennte - dann
+   waere sie nur ein breiter leerer Streifen rechts. Die Kennzeichnung setzt
+   das Partial, weil nur PHP weiss, ob ein Bild kommt. */
+.ctp-events--detail .ctp-events__detail--no-media {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.ctp-events--detail .ctp-events__detail > .ctp-events__detail-lead {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+}
+
+.ctp-events--detail .ctp-events__detail > .ctp-events__detail-facts {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+}
+
+.ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+    justify-content: flex-end;
+}
+
+/*
+ * Die Trennlinie laeuft ueber die volle Breite, der Text darunter nur bis zum
+ * Lesemass: Eine Linie, die mitten auf der Seite aufhoert, sieht aus wie ein
+ * Versehen, und ein Absatz ueber 62rem liest sich schlecht.
+ */
+.ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin-top: 1.5rem;
+    padding-block-start: 2.25rem;
+    border-block-start: 1px solid var(--ctp-color-border);
+    font-size: var(--ctp-font-lg);
+    line-height: 1.68;
+}
+
+.ctp-events--detail .ctp-events__detail-description p {
+    max-width: 42rem;
+}
+
+.ctp-events__detail-lead,
+.ctp-events__detail-facts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.ctp-events__detail-lead {
+    gap: 1rem;
+}
+
+.ctp-events__detail-facts {
+    gap: 0.7rem;
+    margin-top: 1.4rem;
+}
+
+/*
+ * Derselbe Grund wie bei `.ctp-events__detail > *` weiter oben, eine Ebene
+ * tiefer: .ctp-events__eyebrow, .ctp-events__subtitle und die drei
+ * .ctp-events__meta-item--* tragen ein CSS-`order` fuer die *Kachel*-Layouts.
+ * Als direkte Kinder von .ctp-events__detail waren sie davon befreit - in
+ * diesen beiden Huellen sind sie es nicht mehr, und die im Design-Tab
+ * gesetzte Kachelreihenfolge wuerde die serverseitig gerenderte Reihenfolge
+ * der Detailansicht erneut durcheinanderbringen.
+ */
+.ctp-events .ctp-events__detail-lead > *,
+.ctp-events .ctp-events__detail-facts > * {
+    order: 0;
+}
+
+.ctp-events--detail .ctp-events__detail-title {
+    font-size: clamp(1.8rem, 1rem + 2.2vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+}
+
+.ctp-events--detail .ctp-events__detail-heading {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+/* Auf der Seite ist der Untertitel der Vorspann unter einer 2,5rem hohen
+   Ueberschrift, in den Kacheln eine Nebenzeile - in Kachelgroesse verschwand
+   er hier unter dem Titel, statt ihn fortzusetzen. */
+.ctp-events--detail .ctp-events__subtitle {
+    font-size: var(--ctp-font-lg);
+}
+
+/* Chip in Hero-Groesse statt in Listengroesse: neben einer 2,5rem hohen
+   Ueberschrift verschwindet der kleine aus den Zeilen sonst. */
+.ctp-events--detail .ctp-events__date-chip--detail {
+    width: 4.1rem;
+    padding: 0.55rem 0;
+}
+
+.ctp-events--detail .ctp-events__date-chip--detail .ctp-events__day {
+    font-size: var(--ctp-font-xl);
+}
+
+.ctp-events--detail .ctp-events__detail-facts .ctp-events__meta-item {
+    gap: 0.6rem;
+}
+
+.ctp-events--detail .ctp-events__detail-facts .ctp-events__icon {
+    color: var(--ctp-accent);
+}
+
+/* Unbeschnitten wie in der Hero-Kachel - Hochkant-Flyer sind bei diesen
+   Terminen etwa die Haelfte der Bilder, und ein zugeschnittener Flyer ist
+   ein unlesbarer Flyer. */
+.ctp-events--detail .ctp-events__detail-media img {
+    max-height: 24rem;
+    object-fit: contain;
+}
+
+/*
+ * Unter 900px wird aus den zwei Spalten wieder eine. Das Bild geht dabei nach
+ * ganz oben (`order: -1`) statt an die Stelle, an der es im Quelltext steht:
+ * Auf einem Telefon ist es das, was die Seite eroeffnet, und nicht ein
+ * Nachtrag hinter den Eckdaten.
+ */
+@media (max-width: 900px) {
+    .ctp-events--detail .ctp-events__detail {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 1.5rem;
+    }
+
+    /*
+     * Jedes platzierte Kind einzeln zurueckgenommen statt in einem `> *`:
+     * Ein Media-Query erhoeht die Spezifitaet nicht, und `> *` wiegt eine
+     * Klasse weniger als `> .ctp-events__detail-media` weiter oben. Das Bild
+     * behielt damit sein `grid-column: 2`, das Raster legte dafuer eine
+     * implizite zweite Spalte an - und die Seite stand auf dem Telefon
+     * weiterhin zweispaltig, mit einer 70px schmalen Textspalte daneben.
+     */
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-lead,
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-facts,
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-media,
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-media {
+        order: -1;
+        justify-content: flex-start;
+    }
+
+    .ctp-events--detail .ctp-events__detail-facts {
+        margin-top: 0;
+    }
+
+    .ctp-events--detail .ctp-events__detail > .ctp-events__detail-description {
+        margin-top: 0.5rem;
+        padding-block-start: 1.75rem;
+    }
 }
 
 /* ---------- design presets (siehe DesignPreset.php, Design-Tab „Stil") ---------- */

@@ -415,6 +415,14 @@ final class EventListRenderer
             $designSettings['button_color_enabled'] ? $designSettings['button_color'] : ''
         );
 
+        // Wird bis in partials/event-detail-content.php durchgereicht: Die
+        // Detailansicht steht auf der eigenen Seite anders als im Popup (zwei
+        // Spalten statt einer, Titel als h1), und diese Methode ist die
+        // einzige Stelle, die den Unterschied sicher kennt. Hier statt im
+        // Template gesetzt, damit auch ein Theme mit eigener
+        // event-detail.php-Kopie das Seitenlayout bekommt.
+        $detailContext = 'page';
+
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);
         if ($template === '') {
@@ -490,6 +498,8 @@ final class EventListRenderer
 
     private function renderDetailPartial(array $event, array $order): string
     {
+        $detailContext = 'popup';
+
         ob_start();
         include CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php';
 

@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.4.0 =
+Die eigene Terminseite ist neu gestaltet: Bild rechts, Titel und Angaben links, mit eigenem Rahmen um die Seite. Behebt außerdem, dass diese Seite auf Block-Themes (Twenty Twenty-Two und neuer) auf dem Telefon winzig dargestellt wurde. Betrifft nur das Klickverhalten „Eigene Seite“. Kein Handlungsbedarf.
+
 = 1.3.1 =
 Behebt, dass „Ecken“ und eine global gesetzte Akzentfarbe auf der eigenen Terminseite nicht wirkten. Wer „Eckig“ eingestellt hat und das Klickverhalten „Eigene Seite“ nutzt, sieht diese Seiten nach dem Update entsprechend eckig – so, wie die Einstellung es angekündigt hat.
 
@@ -234,6 +237,17 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.4.0 =
+
+* Die eigene Terminseite ist neu gestaltet: ab 900 px zweispaltig mit dem Bild rechts und Titel, Kalender-Etikett und Eckdaten links – dieselbe Aufteilung wie die Kachel „Nächster Termin“
+* Der Titel steht dort jetzt groß und als Überschrift erster Ordnung, der Datums-Chip daneben in derselben Größe; die Beschreibung läuft unter einer Trennlinie über die volle Breite
+* Die Seite hat einen eigenen Rahmen bekommen – mittig, in der Breite begrenzt, mit Abstand zum Fensterrand. Bisher klebte der Inhalt am linken Rand, weil zwischen Kopf- und Fußbereich des Themes kein Container um sie herum steht
+* Termine ohne Bild fallen von selbst auf eine Spalte zurück
+* Behoben: Auf Block-Themes (Twenty Twenty-Two und neuer) fehlte dieser Seite das Viewport-Tag – Telefone stellten sie in 980 px Breite und damit unlesbar klein dar
+* Behoben: Der Datums-Chip stand in der Detailansicht hinter dem Titel, sobald das Bild im Design-Tab nicht an erster Stelle stand
+* Die im Design-Tab eingestellte Reihenfolge gilt auf der eigenen Seite jetzt innerhalb zweier Gruppen (Kopf und Eckdaten); wo Bild und Beschreibung stehen, entscheidet dort das Layout. Im Popup gilt sie unverändert für alle Felder
+* Der Autorenname in der Plugin-Übersicht verweist jetzt auf das GitHub-Profil
 
 = 1.3.1 =
 
