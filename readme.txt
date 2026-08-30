@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.5.2 =
+Wichtig für alle, die in 1.5.0 eine Terminseite eingerichtet haben: Auf einer mit einem Seitenbaukasten (WPBakery, Uncode) gebauten Elternseite stand der Termin unterhalb des bisherigen Seiteninhalts statt an dessen Stelle. Behoben.
+
 = 1.5.1 =
 Kleine Nachbesserung an 1.5.0: eine Beschriftung im Tab „Design“ wurde nicht escapt ausgegeben. Ohne sichtbare Folge. Kein Handlungsbedarf.
 
@@ -255,6 +258,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.5.2 =
+
+* Behoben: Auf einer mit einem Seitenbaukasten gebauten Elternseite stand der Termin unterhalb des bisherigen Seiteninhalts statt an dessen Stelle – der Seite war nicht anzusehen, dass sie sich geändert hatte
+* Der Inhalt wird jetzt an `post_content` ausgetauscht statt über einen `the_content`-Filter: Dort laufen alle Wege durch, auch der eigene Zeilenaufbau eines Seitenbaukastens. In der Datenbank ändert sich dabei nichts
 
 = 1.5.1 =
 

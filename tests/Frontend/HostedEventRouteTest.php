@@ -81,6 +81,17 @@ final class HostedEventRouteTest extends TestCase
     }
 
     /**
+     * Der Platzhalter, der auf der Elternseite an die Stelle ihres Inhalts
+     * tritt, ist die Innenseite dieser Route und keine öffentliche
+     * Schnittstelle. Landet er versehentlich in einer gewöhnlichen Seite —
+     * kopiert, aus einer Revision zurückgeholt —, gibt er nichts aus.
+     */
+    public function testTheContentPlaceholderRendersNothingOutsideAnEventRequest(): void
+    {
+        $this->assertSame('', EventDetailPage::renderHostedContent());
+    }
+
+    /**
      * Ohne eingestellte Elternseite hat dieser Filter nichts zu entscheiden —
      * dann greift die Regel gar nicht erst.
      */

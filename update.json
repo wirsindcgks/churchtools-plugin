@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-08-30 06:26:54",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.5.1/churchtools-plugin-v1.5.1.zip",
+    "last_updated": "2026-08-30 06:43:17",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.5.2/churchtools-plugin-v1.5.2.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Die Beschriftung „— Keine —&quot; im neuen Auswahlfeld „Adresse der Terminseite&quot; wurde nicht escapt ausgegeben.</strong> Ohne sichtbare Folge – es ist ein eigener, übersetzbarer Text und keine Eingabe –, aber <code>wp_dropdown_pages()</code> reicht ausgerechnet diesen einen seiner Parameter unescapt durch, während es alle anderen selbst behandelt. Die Codeprüfung des Projekts hat es zu Recht angemerkt</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Auf einer mit einem Seitenbaukasten gebauten Elternseite stand der Termin unterhalb des bisherigen Seiteninhalts, statt an dessen Stelle.</strong> Auf der Live-Seite (Uncode/WPBakery) sah man also erst die gewohnte Terminliste und darunter den aufgerufenen Termin – der Seite war nicht anzusehen, dass sie sich überhaupt geändert hatte. Ursache: 1.5.0 tauschte den Inhalt über einen <code>the_content</code>-Filter aus, der Seitenbaukasten baut seine Zeilen aber auf einem eigenen Weg direkt aus <code>post_content</code> auf und bekam den Filter nie zu sehen. Der Austausch geschieht jetzt an <code>post_content</code> selbst – dem Punkt, durch den alle diese Wege laufen, das klassische <code>the_content</code> ebenso wie <code>core/post-content</code> eines Block-Themes und der Zeilenaufbau eines Baukastens. Verändert wird dabei nichts in der Datenbank, sondern nur die Kopie dieses einen Aufrufs</li>\n</ul>\n<h4>Notes</h4>\n<ul>\n<li>Themes mit eigenem Titelbereich (großes Kopfbild mit dem Seitentitel, wie bei Uncode) zeigen dort weiterhin den Titel der Elternseite – „Events“ also, nicht den Namen des Termins. Das ist so gelassen: Der Kopfbereich benennt den Bereich, der Inhalt darunter den Termin. Bei Block-Themes, die ihre Überschrift als Block rendern, entfällt sie weiterhin zugunsten der Termin-Überschrift</li>\n</ul>\n"
     }
 }

@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.5.2] - 2026-08-30
+
+### Fixed
+
+- **Auf einer mit einem Seitenbaukasten gebauten Elternseite stand der Termin unterhalb des bisherigen Seiteninhalts, statt an dessen Stelle.** Auf der Live-Seite (Uncode/WPBakery) sah man also erst die gewohnte Terminliste und darunter den aufgerufenen Termin – der Seite war nicht anzusehen, dass sie sich überhaupt geändert hatte. Ursache: 1.5.0 tauschte den Inhalt über einen `the_content`-Filter aus, der Seitenbaukasten baut seine Zeilen aber auf einem eigenen Weg direkt aus `post_content` auf und bekam den Filter nie zu sehen. Der Austausch geschieht jetzt an `post_content` selbst – dem Punkt, durch den alle diese Wege laufen, das klassische `the_content` ebenso wie `core/post-content` eines Block-Themes und der Zeilenaufbau eines Baukastens. Verändert wird dabei nichts in der Datenbank, sondern nur die Kopie dieses einen Aufrufs
+
+### Notes
+
+- Themes mit eigenem Titelbereich (großes Kopfbild mit dem Seitentitel, wie bei Uncode) zeigen dort weiterhin den Titel der Elternseite – „Events“ also, nicht den Namen des Termins. Das ist so gelassen: Der Kopfbereich benennt den Bereich, der Inhalt darunter den Termin. Bei Block-Themes, die ihre Überschrift als Block rendern, entfällt sie weiterhin zugunsten der Termin-Überschrift
+
 ## [1.5.1] - 2026-08-30
 
 ### Fixed

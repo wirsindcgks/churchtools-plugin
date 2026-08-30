@@ -46,6 +46,14 @@ final class EventDetailPage
     private const SLUG_QUERY_VAR = 'ctp_event_slug';
     private const SLUG = 'churchtools-termin';
     /**
+     * Der Platzhalter, der auf der Elternseite an die Stelle ihres eigenen
+     * Inhalts tritt. Ein Shortcode und nicht fertiges Markup, weil er dadurch
+     * jeden Weg übersteht, auf dem ein Theme oder ein Seitenbaukasten den
+     * Inhalt verarbeitet — und weil `shortcode_unautop()` ihn dann von dem
+     * <p> befreit, das `wpautop()` sonst darum legt.
+     */
+    private const CONTENT_SHORTCODE = 'ctp_event_detail';
+    /**
      * Bump this when the rewrite rule itself changes, to force one more
      * flush_rewrite_rules() on the next request — same self-migrating idea as
      * Installer::DB_VERSION/maybeUpgrade(), no reactivation needed.
@@ -67,6 +75,7 @@ final class EventDetailPage
         add_action('init', [self::class, 'registerRewriteRule']);
         add_filter('query_vars', [self::class, 'addQueryVar']);
         add_filter('request', [self::class, 'resolveHostedRequest']);
+        add_shortcode(self::CONTENT_SHORTCODE, [self::class, 'renderHostedContent']);
         add_action('wp', [self::class, 'maybeHostOnPage']);
         add_action('template_redirect', [self::class, 'maybeRenderDetail']);
     }
@@ -243,7 +252,7 @@ final class EventDetailPage
         // wieder auf der Elternseite.
         remove_action('template_redirect', 'redirect_canonical');
 
-        add_filter('the_content', [self::class, 'filterHostedContent'], 20);
+        self::takeOverPageContent();
         add_filter('the_title', [self::class, 'filterHostedTitle'], 10, 2);
         add_filter('render_block', [self::class, 'filterHostedBlock'], 10, 3);
         add_filter('get_canonical_url', [self::class, 'filterHostedCanonicalUrl'], 10, 2);
@@ -253,10 +262,57 @@ final class EventDetailPage
         );
     }
 
-    public static function filterHostedContent(string $content): string
+    /**
+     * Tauscht den Inhalt der Elternseite gegen den Platzhalter aus — im
+     * Speicher, für diesen einen Request, nie in der Datenbank.
+     *
+     * Bis 1.5.1 hing das an einem `the_content`-Filter, und auf der Live-Seite
+     * (Uncode/WPBakery) reichte das nicht: Der Seitenbaukasten baut seine
+     * Zeilen auf einem eigenen Weg aus `post_content` auf, den der Filter nie
+     * zu sehen bekam. Ergebnis war eine Seite, auf der erst die gewohnte
+     * Terminliste stand und der aufgerufene Termin darunter — man sah der
+     * Seite nicht an, dass sie sich geändert hatte. Ein zweiter Filter mehr
+     * hätte das nicht behoben, weil das Problem nicht die Zahl der Filter ist,
+     * sondern dass es mehrere Wege zum selben Inhalt gibt.
+     *
+     * `post_content` ist der Punkt, durch den *alle* diese Wege laufen: das
+     * klassische `the_content`, `core/post-content` eines Block-Themes und der
+     * Zeilenaufbau eines Seitenbaukastens. Wer den Inhalt dort austauscht,
+     * muss die Wege nicht mehr einzeln kennen.
+     *
+     * Gesetzt wird auf allen drei Stellen, an denen WordPress denselben
+     * Beitrag hält: In aller Regel ist es dasselbe Objekt, aber „in aller
+     * Regel" ist beim globalen `$post` keine Zusicherung, auf die man eine
+     * leere Seite setzen möchte.
+     */
+    private static function takeOverPageContent(): void
     {
-        if (self::$hostedEvent === null || get_the_ID() !== self::hostPageId()) {
-            return $content;
+        global $wp_query, $post;
+
+        $pageId = self::hostPageId();
+        $placeholder = '[' . self::CONTENT_SHORTCODE . ']';
+
+        $candidates = array_merge(
+            [$post, $wp_query->post ?? null, get_post($pageId)],
+            $wp_query->posts ?? []
+        );
+
+        foreach ($candidates as $candidate) {
+            if ($candidate instanceof \WP_Post && $candidate->ID === $pageId) {
+                $candidate->post_content = $placeholder;
+            }
+        }
+    }
+
+    /**
+     * Der Platzhalter von oben. Steht er versehentlich in einer gewöhnlichen
+     * Seite, gibt er nichts aus — er ist keine öffentliche Schnittstelle,
+     * sondern die Innenseite dieser Route.
+     */
+    public static function renderHostedContent(): string
+    {
+        if (self::$hostedEvent === null) {
+            return '';
         }
 
         return (new EventListRenderer())->renderDetail(self::$hostedEvent, true);
