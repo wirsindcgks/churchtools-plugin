@@ -1496,15 +1496,33 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Dieselbe Umkehr in den gefuellten Zustand wie .ctp-events__load-more:hover.
-   `:focus` ist mit dabei, weil dieser Knopf per Tastatur erreichbar ist und
-   ein Link ohne sichtbare Rueckmeldung beim Fokussieren schlechter zu bedienen
-   waere als ein Button. */
+/*
+ * Dieselbe Umkehr in den gefuellten Zustand wie .ctp-events__load-more:hover.
+ * `:focus` ist mit dabei, weil dieser Knopf per Tastatur erreichbar ist und
+ * ein Link ohne sichtbare Rueckmeldung beim Fokussieren schlechter zu bedienen
+ * waere als ein Button.
+ *
+ * Und hier stehen die einzigen `!important` dieses Stylesheets. Grund ist eine
+ * Regel des Themes der Live-Seite (Uncode, style-custom.css):
+ *
+ *     .style-dark .style-light a:not(.btn-text-skin):hover { color: #00a19a }
+ *
+ * Die faerbt *jeden* Link beim Ueberfahren in die Akzentfarbe des Themes - der
+ * Knopf wurde also schwarz, seine Schrift aber tuerkis statt weiss (der
+ * Hintergrund bleibt unbehelligt, weil Themes Links keine Flaeche geben).
+ * Dagegen hilft Spezifitaet nicht: Mit `:hover` und dem `:not()` kommt diese
+ * Regel auf (0,4,1), und mehr laesst sich mit den Klassen, die hier
+ * verlaesslich zur Verfuegung stehen, nicht erreichen - ein Gleichstand haengt
+ * dann an der Ladereihenfolge der Stylesheets, und die ist nicht zugesichert.
+ *
+ * Alle drei Eigenschaften zusammen sind *ein* Zustand; sie einzeln abzusichern
+ * hiesse, auf halbem Weg einen Knopf zu bekommen, den es so nicht geben soll.
+ */
 .ctp-events .ctp-events__back:hover,
 .ctp-events .ctp-events__back:focus {
-    border-color: var(--ctp-color-button-strong);
-    background-color: var(--ctp-color-button-strong);
-    color: var(--ctp-color-button-strong-text);
+    border-color: var(--ctp-color-button-strong) !important;
+    background-color: var(--ctp-color-button-strong) !important;
+    color: var(--ctp-color-button-strong-text) !important;
     text-decoration: none;
 }
 

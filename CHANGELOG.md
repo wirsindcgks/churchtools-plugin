@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.7.2] - 2026-08-30
+
+### Fixed
+
+- **Die Schrift des Knopfes „Zurück" bleibt beim Überfahren weiß.** Auf der Live-Seite färbte das Theme sie in seine eigene Akzentfarbe: Es bringt eine Regel mit, die *jeden* Link beim Überfahren einfärbt, und die ist spezifischer als alles, was sich mit den hier verlässlich vorhandenen Klassen erreichen lässt. Die Fläche wurde also schwarz, die Schrift türkis. Der gefüllte Zustand setzt sich jetzt durch – mit den einzigen drei `!important` dieses Stylesheets, samt Begründung an Ort und Stelle
+
 ## [1.7.1] - 2026-08-30
 
 ### Changed
