@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.7.1] - 2026-08-30
+
+### Changed
+
+- **Der Knopf „Zurück" füllt sich beim Überfahren jetzt vollständig**, wie „Weitere Termine laden". Bisher hatte er den zurückhaltenderen Effekt der Eventfinder-Knöpfe – die brauchen ihn, weil bei ihnen die volle Füllung schon den *ausgewählten* Zustand bedeutet und beides unterscheidbar bleiben muss. „Zurück" hat keinen ausgewählten Zustand, also ist der deutlichere Effekt frei
+
 ## [1.7.0] - 2026-08-30
 
 ### Added

@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.7.1 =
+Kleine Anpassung: Der Knopf „Zurück“ füllt sich beim Überfahren vollständig, wie „Weitere Termine laden“. Kein Handlungsbedarf.
+
 = 1.7.0 =
 Der Knopf „Zurück“ auf der Terminseite führt jetzt an die Stelle zurück, an der man war – auf die angeklickte Kachel statt an den Seitenanfang. Im Backend sind alle Reiter gleich breit, und die Speichern-Leiste gibt es auf jedem Einstellungs-Reiter. Kein Handlungsbedarf.
 
@@ -264,6 +267,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.7.1 =
+
+* Geändert: Der Knopf „Zurück“ füllt sich beim Überfahren vollständig, wie „Weitere Termine laden“, statt nur leicht anzuziehen wie die Eventfinder-Knöpfe
 
 = 1.7.0 =
 
