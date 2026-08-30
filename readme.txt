@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.4.1 =
+Behebt, dass das Kalender-Etikett auf der eigenen Terminseite nicht an der im Design-Tab eingestellten Position stand. Betrifft nur, wer die Reihenfolge der Felder dort geändert hat.
+
 = 1.4.0 =
 Die eigene Terminseite ist neu gestaltet: Bild rechts, Titel und Angaben links, mit eigenem Rahmen um die Seite. Behebt außerdem, dass diese Seite auf Block-Themes (Twenty Twenty-Two und neuer) auf dem Telefon winzig dargestellt wurde. Betrifft nur das Klickverhalten „Eigene Seite“. Kein Handlungsbedarf.
 
@@ -237,6 +240,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.4.1 =
+
+* Behoben: Das Kalender-Etikett stand auf der eigenen Terminseite nicht an der im Design-Tab eingestellten Position – 1.4.0 sortierte die Felder der linken Spalte nach Art und überstimmte damit die eingestellte Reihenfolge
+* Die Reihenfolge aus dem Design-Tab gilt auf der eigenen Seite jetzt unverändert für alle Felder; nur Bild und Beschreibung setzt das Layout selbst (rechts bzw. unten über die volle Breite)
+* Der Textblock steht neben dem Bild mittig statt oben bündig
 
 = 1.4.0 =
 

@@ -14,15 +14,21 @@
  *   popup — flat, every element a direct child of .ctp-events__detail, which
  *           lays them out as a single wrapping column. The configured order is
  *           reproduced one-to-one.
- *   page  — the elements are grouped into .ctp-events__detail-lead (calendar
- *           badge, title, subtitle) and .ctp-events__detail-facts (date, time,
- *           location), with image and description outside both. That is what the two-column layout of
- *           the own page needs: the image sits beside the whole heading block
- *           rather than between two of its lines, and the description runs the
- *           full width underneath. The configured order still decides the
- *           sequence *within* each group — what it no longer decides there is
- *           where the image and the description sit relative to the rest,
- *           because on that page the layout answers that, not the order.
+ *   page  — everything except image and description moves into one wrapper,
+ *           .ctp-events__detail-text, in the configured order. That wrapper is
+ *           the left column of the two-column layout: the image sits beside the
+ *           whole block rather than between two of its lines, and the
+ *           description runs the full width underneath. Only for those two does
+ *           the layout override the configured position — everything else keeps
+ *           it exactly.
+ *
+ *           1.4.0 hatte diesen Block noch nach Art sortiert, in „Kopf" und
+ *           „Eckdaten". Das hat die eingestellte Reihenfolge still überstimmt:
+ *           Ein Kalender-Etikett, das im Design-Tab ganz nach hinten gezogen
+ *           war, tauchte wieder zwischen Titel und Datum auf, weil es als
+ *           „Kopf" zählte. Eine Sortierung nach Art ist eine zweite Meinung zu
+ *           einer Reihenfolge, die der Betreiber bereits angegeben hat — eine
+ *           einzige Hülle hat keine.
  *
  * @var array  $event         Already enriched via EventListRenderer::withCalendarMeta().
  * @var array  $order         Validated DetailDesign::ELEMENT_KEYS permutation.
@@ -46,6 +52,11 @@ $ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detai
 $ctpKeysIn = static fn (array $group): array => array_values(
     array_filter($order, static fn (string $key): bool => in_array($key, $group, true))
 );
+
+/** @var callable(string[]): string[] $ctpKeysOutside */
+$ctpKeysOutside = static fn (array $group): array => array_values(
+    array_filter($order, static fn (string $key): bool => !in_array($key, $group, true))
+);
 ?>
 <div
     class="ctp-events__detail<?php echo $event['image_url'] === '' ? ' ctp-events__detail--no-media' : ''; ?>"
@@ -54,13 +65,8 @@ $ctpKeysIn = static fn (array $group): array => array_values(
     <?php endif; ?>
 >
     <?php if ($detailContext === 'page') : ?>
-        <div class="ctp-events__detail-lead">
-            <?php foreach ($ctpKeysIn(['calendar', 'title', 'subtitle']) as $key) : ?>
-                <?php require $ctpElement; ?>
-            <?php endforeach; ?>
-        </div>
-        <div class="ctp-events__detail-facts">
-            <?php foreach ($ctpKeysIn(['date', 'time', 'location']) as $key) : ?>
+        <div class="ctp-events__detail-text">
+            <?php foreach ($ctpKeysOutside(['media', 'description']) as $key) : ?>
                 <?php require $ctpElement; ?>
             <?php endforeach; ?>
         </div>

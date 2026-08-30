@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.4.1] - 2026-08-30
+
+### Fixed
+
+- **Das Kalender-Etikett steht auf der eigenen Terminseite wieder da, wo es im Design-Tab hingezogen wurde.** 1.4.0 hat die Felder der linken Spalte nach Art sortiert – „Kopf" gegen „Eckdaten" – und damit die eingestellte Reihenfolge still überstimmt: Ein ans Ende gezogenes Etikett tauchte wieder zwischen Titel und Datum auf. Es gibt jetzt eine Spalte statt zweier Gruppen, und die Reihenfolge aus dem Design-Tab gilt darin unverändert für alle Felder. Nur Bild und Beschreibung setzt das Layout weiterhin selbst (rechts bzw. unten über die volle Breite). Wer die Standardreihenfolge nutzt, sieht keinen Unterschied – dort steht das Etikett ohnehin vorne
+
+### Changed
+
+- Der Textblock steht neben dem Bild jetzt mittig statt oben bündig – bei einem Hochkant-Flyer stand die untere Hälfte des Bildes sonst ohne Gegenüber da
+
 ## [1.4.0] - 2026-08-30
 
 Die eigene Terminseite, neu gebaut. Sie war die Ansicht, die am wenigsten nach

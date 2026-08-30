@@ -12,14 +12,12 @@ use DOMXPath;
 use PHPUnit\Framework\TestCase;
 
 /**
- * partials/event-detail-content.php baut dieselben Felder in zwei
- * Gruppierungen: flach fürs Popup, in .ctp-events__detail-lead/.ctp-events__detail-facts
- * gefasst für die eigene Seite. Das zweispaltige Seitenlayout hängt
- * vollständig an dieser Gruppierung — fehlt eine der beiden Hüllen, fällt
- * nicht etwa eine Regel aus, sondern die Seite fällt auf die einspaltige
- * Anordnung zurück und sieht dabei völlig intakt aus. Genau solche Fehler
- * findet kein Blick auf die Seite, sondern nur eine Behauptung über das
- * Markup.
+ * partials/event-detail-content.php baut dieselben Felder zweimal: flach fürs
+ * Popup, für die eigene Seite in .ctp-events__detail-text gefasst — die linke
+ * Spalte des zweispaltigen Layouts. Fehlt diese Hülle, fällt nicht etwa eine
+ * Regel aus, sondern die Seite fällt auf die einspaltige Anordnung zurück und
+ * sieht dabei völlig intakt aus. Genau solche Fehler findet kein Blick auf die
+ * Seite, sondern nur eine Behauptung über das Markup.
  */
 final class DetailLayoutTest extends TestCase
 {
@@ -34,21 +32,24 @@ final class DetailLayoutTest extends TestCase
         ctp_test_reset_options();
     }
 
-    public function testThePageGroupsTheHeadingBlockAndTheFacts(): void
+    public function testThePagePutsEverythingButImageAndDescriptionInOneColumn(): void
     {
         $xpath = $this->render('page');
 
         $this->assertSame(
-            ['ctp-events__eyebrow', 'ctp-events__detail-heading', 'ctp-events__subtitle'],
-            $this->childClasses($xpath, 'ctp-events__detail-lead')
-        );
-        $this->assertSame(
-            ['ctp-events__meta-item', 'ctp-events__meta-item', 'ctp-events__meta-item'],
-            $this->childClasses($xpath, 'ctp-events__detail-facts')
+            [
+                'ctp-events__eyebrow',
+                'ctp-events__detail-heading',
+                'ctp-events__subtitle',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+            ],
+            $this->childClasses($xpath, 'ctp-events__detail-text')
         );
 
-        // Das Bild gehört in keine der beiden Hüllen: Es steht in der zweiten
-        // Spalte, neben beiden, und das kann es nur als direktes Kind des
+        // Das Bild gehört nicht in die Hülle: Es steht in der zweiten Spalte,
+        // neben dem ganzen Block, und das kann es nur als direktes Kind des
         // Rasters.
         $this->assertCount(
             1,
@@ -65,8 +66,7 @@ final class DetailLayoutTest extends TestCase
     {
         $xpath = $this->render('popup');
 
-        $this->assertCount(0, $xpath->query('//*[contains(@class, "ctp-events__detail-lead")]'));
-        $this->assertCount(0, $xpath->query('//*[contains(@class, "ctp-events__detail-facts")]'));
+        $this->assertCount(0, $xpath->query('//*[contains(@class, "ctp-events__detail-text")]'));
         $this->assertCount(
             1,
             $xpath->query('//*[contains(@class, "ctp-events__detail")]/span[@class="ctp-events__eyebrow"]')
@@ -87,26 +87,52 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
-     * Die Gruppierung nimmt der Reihenfolge aus dem Design-Tab nur das
-     * Verschachteln zwischen den Gruppen — *innerhalb* einer Gruppe entscheidet
-     * weiter sie. Ohne diesen Test wäre der bequeme Fehler, die Felder in der
-     * Reihenfolge der Hülle zu schreiben statt in der eingestellten, von außen
-     * nicht zu sehen: bei der Standardreihenfolge sähe beides gleich aus.
+     * Der Fehler, den 1.4.0 ausgeliefert hat, als Test: Der Betreiber hatte das
+     * Kalender-Etikett im Design-Tab ganz nach hinten gezogen
+     * (`detail_element_order` endete auf „description, calendar"), und auf der
+     * eigenen Seite stand es trotzdem zwischen Titel und Datum. Ursache war
+     * eine Sortierung nach Art — „Kopf" gegen „Eckdaten" —, die die
+     * eingestellte Reihenfolge stillschweigend überstimmte. Mit der
+     * Standardreihenfolge wäre das nie aufgefallen: Dort steht das Etikett
+     * ohnehin vorne.
      */
-    public function testTheConfiguredOrderStillDecidesWithinEachGroup(): void
+    public function testTheConfiguredOrderSurvivesInsideTheColumn(): void
     {
-        $xpath = $this->render('page', ['media', 'subtitle', 'title', 'calendar', 'location', 'time', 'date']);
+        $xpath = $this->render('page', ['media', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'calendar']);
 
         $this->assertSame(
-            ['ctp-events__subtitle', 'ctp-events__detail-heading', 'ctp-events__eyebrow'],
-            $this->childClasses($xpath, 'ctp-events__detail-lead')
+            [
+                'ctp-events__detail-heading',
+                'ctp-events__subtitle',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+                'ctp-events__eyebrow',
+            ],
+            $this->childClasses($xpath, 'ctp-events__detail-text'),
+            'Ein ans Ende gezogenes Kalender-Etikett muss auch am Ende stehen.'
         );
+    }
+
+    /**
+     * Die Gegenprobe in die andere Richtung — eine Reihenfolge, in der die
+     * Eckdaten den Kopf durchsetzen. Auch das ist eine Angabe des Betreibers
+     * und keine, die das Layout zu glätten hat.
+     */
+    public function testEvenAnInterleavedOrderIsReproduced(): void
+    {
+        $xpath = $this->render('page', ['media', 'location', 'title', 'time', 'calendar', 'date', 'subtitle', 'description']);
+
         $this->assertSame(
-            ['location', 'time', 'date'],
-            array_map(
-                static fn (string $class): string => substr($class, strrpos($class, '--') + 2),
-                $this->childClasses($xpath, 'ctp-events__detail-facts', true)
-            )
+            [
+                'ctp-events__meta-item ctp-events__meta-item--location',
+                'ctp-events__detail-heading',
+                'ctp-events__meta-item ctp-events__meta-item--time',
+                'ctp-events__eyebrow',
+                'ctp-events__meta-item ctp-events__meta-item--date',
+                'ctp-events__subtitle',
+            ],
+            $this->childClasses($xpath, 'ctp-events__detail-text', true)
         );
     }
 
@@ -134,14 +160,13 @@ final class DetailLayoutTest extends TestCase
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
 
-        $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-lead', $css);
-        $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-facts', $css);
+        $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-text', $css);
+        $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail > .ctp-events__detail-media', $css);
         $this->assertStringContainsString('.ctp-events--detail .ctp-events__detail--no-media', $css);
         // Die Neutralisierung der Kachel-`order`-Variablen eine Ebene tiefer:
         // ohne sie sortiert die Kachelreihenfolge die Felder in den Hüllen ein
         // zweites Mal um (siehe .ctp-events__detail > * weiter oben).
-        $this->assertStringContainsString('.ctp-events .ctp-events__detail-lead > *', $css);
-        $this->assertStringContainsString('.ctp-events .ctp-events__detail-facts > *', $css);
+        $this->assertStringContainsString('.ctp-events .ctp-events__detail-text > *', $css);
     }
 
     /**
@@ -162,7 +187,7 @@ final class DetailLayoutTest extends TestCase
 
         $reset = substr($css, $start, (int) strpos($css, 'grid-row: auto;', $start) - $start);
 
-        foreach (['.ctp-events__detail-lead', '.ctp-events__detail-facts', '.ctp-events__detail-media', '.ctp-events__detail-description'] as $child) {
+        foreach (['.ctp-events__detail-text', '.ctp-events__detail-media', '.ctp-events__detail-description'] as $child) {
             $this->assertStringContainsString(
                 '.ctp-events__detail > ' . $child,
                 $reset,
