@@ -19,6 +19,7 @@
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\ReturnAnchor;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -41,7 +42,12 @@ $heroHasMedia = $hero !== null
     <?php if ($hero === null) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Keine anstehenden Termine.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
+        <?php // Sprungziel des „Zurueck"-Knopfes, siehe partials/event-list-items.php. ?>
         <div
+            <?php $ctpAnchorId = ReturnAnchor::idFor($hero); ?>
+            <?php if ($ctpAnchorId !== '') : ?>
+                id="<?php echo esc_attr($ctpAnchorId); ?>"
+            <?php endif; ?>
             class="ctp-events__hero<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__hero--clickable' : ''; ?><?php echo $heroHasMedia ? '' : ' ctp-events__hero--no-media'; ?>"
             <?php if ($hero['calendar_color'] !== '') : ?>
                 style="--ctp-accent:<?php echo esc_attr($hero['calendar_color']); ?>;"
@@ -150,7 +156,12 @@ $heroHasMedia = $hero !== null
             <p class="ctp-events__more-label"><?php esc_html_e('Weitere Termine', 'churchtools-plugin'); ?></p>
             <div class="ctp-events__list" role="list">
                 <?php foreach ($upcoming as $event) : ?>
+                    <?php // Sprungziel des „Zurueck"-Knopfes wie in den Listen, siehe partials/event-list-items.php. ?>
                     <div
+                        <?php $ctpAnchorId = ReturnAnchor::idFor($event); ?>
+                        <?php if ($ctpAnchorId !== '') : ?>
+                            id="<?php echo esc_attr($ctpAnchorId); ?>"
+                        <?php endif; ?>
                         class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
                         <?php if ($event['calendar_color'] !== '') : ?>
                             style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"

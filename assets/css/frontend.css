@@ -1426,6 +1426,44 @@
 }
 
 /*
+ * Sprungziele des „Zurueck"-Knopfes: Er zeigt auf #ctp-event-<id>, also auf
+ * die Kachel, aus der die Detailseite geoeffnet wurde. Der Abstand nach oben
+ * haelt sie unter einer angehefteten Kopfzeile des Themes frei - ohne ihn
+ * scrollt der Browser die Kachel exakt an die Fensterkante und die Kopfzeile
+ * legt sich darueber.
+ */
+.ctp-events__item,
+.ctp-events__cell,
+.ctp-events__hero {
+    scroll-margin-top: 6rem;
+}
+
+/*
+ * Ein kurzes Aufleuchten sagt, *welche* der Kacheln es war - nach einer
+ * Detailseite und einem Sprung mitten in eine lange Liste ist das nicht
+ * selbstverstaendlich. Als Animation und nicht als Dauerzustand, weil
+ * `:target` sonst bis zum naechsten Klick bestehen bliebe; wer Bewegung
+ * abbestellt hat, bekommt nur den Sprung, und der ist die eigentliche Hilfe.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    .ctp-events__item:target,
+    .ctp-events__cell:target > .ctp-events__card,
+    .ctp-events__hero:target {
+        animation: ctp-events-return 2.4s ease-out 1;
+    }
+}
+
+@keyframes ctp-events-return {
+    from {
+        box-shadow: 0 0 0 3px var(--ctp-accent);
+    }
+
+    to {
+        box-shadow: 0 0 0 3px transparent;
+    }
+}
+
+/*
  * Derselbe Knopf wie im Eventfinder, bis auf das Pfeilzeichen: gleiche
  * Auszeichnung, gleiche Groesse, gleiche Buttonfarbe aus dem Design-Tab
  * (--ctp-color-button*). Als graue Textzeile war er das einzige Bedienelement

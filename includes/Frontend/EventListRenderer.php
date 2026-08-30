@@ -396,6 +396,14 @@ final class EventListRenderer
         // ihn bis 1.5.2 an einen Ort, an dem er nie war.
         $backUrl = wp_get_referer();
         $backUrl = $backUrl !== false && $backUrl !== '' ? $backUrl : EventDetailPage::listUrl();
+        // Anker auf die angeklickte Kachel. Ohne ihn landet man beim Zurück am
+        // Seitenanfang und sucht die Stelle wieder, an der man war — bei einer
+        // Liste über mehrere Monate ist das weit oben. Der Termin kennt seine
+        // eigene ID, und die Kacheln tragen sie als id (siehe
+        // partials/event-list-items.php); die Herkunftsseite muss dafür nichts
+        // mitschicken. Liegt die Kachel jenseits der geladenen Seiten, findet
+        // der Browser das Ziel nicht und bleibt oben — wie bisher.
+        $backUrl .= ReturnAnchor::fragmentFor($rawEvent);
         // Eigene Namen statt $args['design_class']/['design_style'] wie in den
         // Listen-Templates: Diese Ansicht bekommt gar kein $args, sie rendert
         // genau einen Termin.

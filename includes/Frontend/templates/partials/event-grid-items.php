@@ -13,6 +13,7 @@
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\ReturnAnchor;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -25,7 +26,12 @@ if (!defined('ABSPATH')) {
             <?php echo esc_html(EventFormatter::monthLabel($event['start_date'])); ?>
         </div>
     <?php endif; ?>
+    <?php // Sprungziel des „Zurueck"-Knopfes, siehe event-list-items.php. ?>
     <div
+        <?php $ctpAnchorId = ReturnAnchor::idFor($event); ?>
+        <?php if ($ctpAnchorId !== '') : ?>
+            id="<?php echo esc_attr($ctpAnchorId); ?>"
+        <?php endif; ?>
         class="ctp-events__cell"
         role="listitem"
         data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"

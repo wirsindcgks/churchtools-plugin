@@ -20,6 +20,7 @@
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\ReturnAnchor;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -32,7 +33,29 @@ if (!defined('ABSPATH')) {
             <?php echo esc_html(EventFormatter::monthLabel($event['start_date'])); ?>
         </div>
     <?php endif; ?>
+    <?php
+    /*
+     * Sprungziel fuer den „Zurueck"-Knopf der Detailseite: Der Termin dort
+     * kennt seine eigene ID, haengt sie als #ctp-event-<id> an die
+     * Ruecksprung-Adresse und landet damit genau auf der Kachel, die
+     * angeklickt wurde, statt am Seitenanfang (siehe
+     * EventListRenderer::renderDetail()).
+     *
+     * Steht derselbe Termin zweimal auf einer Seite (Teaser plus vollstaendige
+     * Liste), gibt es die ID zweimal. Browser springen dann zum ersten
+     * Vorkommen - was hier genau das gewuenschte Verhalten ist.
+     *
+     * Ohne ID gar kein Attribut: Eine Zeile ohne `id` kommt aus dieser
+     * Datenbank nicht, wohl aber aus einem Theme-Override oder einem Test,
+     * der sich seine Termine selbst baut. `id="ctp-event-0"` an jeder
+     * Kachel waere dort schlechter als kein Sprungziel.
+     */
+    ?>
     <div
+        <?php $ctpAnchorId = ReturnAnchor::idFor($event); ?>
+        <?php if ($ctpAnchorId !== '') : ?>
+            id="<?php echo esc_attr($ctpAnchorId); ?>"
+        <?php endif; ?>
         class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
         data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
         data-ctp-search="<?php echo esc_attr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); ?>"

@@ -30,11 +30,40 @@ final class PopupTemplateTest extends TestCase
         // EventFormatter's date/time lines read both through get_option().
         ctp_test_set_option('date_format', 'j. F Y');
         ctp_test_set_option('time_format', 'H:i');
+        // ReturnAnchor vergibt jede id nur einmal pro Request. Hier rendert ein
+        // Prozess mehrere „Seiten" nacheinander, also je Test zurücksetzen —
+        // sonst bekäme nur das erste Layout seine Sprungziele.
+        \ChurchToolsPlugin\Frontend\ReturnAnchor::reset();
     }
 
     protected function tearDown(): void
     {
         ctp_test_reset_options();
+    }
+
+    /**
+     * Der „Zurück"-Knopf der Detailseite zeigt auf `#ctp-event-<id>` und
+     * erwartet dort die Kachel, aus der er geöffnet wurde
+     * (EventListRenderer::renderDetail()). Das ist ein Vertrag zwischen zwei
+     * Dateien, die nichts voneinander wissen: Fällt die id aus dem Markup,
+     * bleibt der Knopf funktionsfähig und springt nur wieder an den
+     * Seitenanfang — also genau der Fehler, der behoben werden sollte, ohne
+     * dass irgendetwas kaputt aussieht.
+     *
+     * @dataProvider layoutProvider
+     */
+    public function testEveryCardCarriesItsEventIdAsAnAnchorTarget(string $layout): void
+    {
+        $dom = $this->render($layout, 'page');
+
+        foreach ($this->events() as $event) {
+            $id = 'ctp-event-' . $event['id'];
+            $this->assertCount(
+                1,
+                $this->query($dom, "//*[@id='{$id}']"),
+                "{$layout}: „{$event['title']}\" hat kein Sprungziel #{$id}"
+            );
+        }
     }
 
     /**
@@ -164,6 +193,10 @@ final class PopupTemplateTest extends TestCase
     {
         return array_map(static function (string $title, int $day): array {
             return [
+                // Wie eine echte Zeile aus ctp_events: Die Kacheln tragen die
+                // ID als Sprungziel des „Zurück"-Knopfes (siehe
+                // partials/event-list-items.php).
+                'id' => 100 + $day,
                 'ct_calendar_id' => 7,
                 'title' => $title,
                 'subtitle' => $title . ' subtitle',

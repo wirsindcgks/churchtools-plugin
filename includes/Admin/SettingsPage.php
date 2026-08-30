@@ -811,7 +811,8 @@ final class SettingsPage
         uasort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
         $counts = self::calendarEventCounts();
         ?>
-        <form method="post" action="options.php" class="ctp-panel ctp-panel--wide">
+        <form method="post" action="options.php" class="ctp-settings-form">
+            <div class="ctp-panel">
             <?php settings_fields(self::PAGE_SLUG); ?>
             <h2><?php esc_html_e('Kalenderauswahl', 'churchtools-plugin'); ?></h2>
             <?php
@@ -885,7 +886,8 @@ final class SettingsPage
                 </p>
             <?php endif; ?>
 
-            <?php submit_button(); ?>
+            </div>
+            <?php $this->renderSaveBar(); ?>
         </form>
         <?php
     }
@@ -1767,17 +1769,20 @@ final class SettingsPage
      * Kalender tab) instead of a made-up placeholder name.
      */
     /**
-     * Die Leiste am Fuss des Design-Tabs. Sie klebt am unteren Fensterrand,
-     * und das ist der ganze Zweck: Der Speichern-Knopf stand bis 1.5.2 unter
-     * allem anderen — wer oben zwischen den vier Vorlagen wechselte, sah ihn
-     * nicht, und die Vorschauen daneben schalten sofort um. Es sah also aus,
-     * als waere schon gespeichert.
+     * Die Leiste am Fuss jedes Einstellungsformulars. Sie klebt am unteren
+     * Fensterrand,
+     * und das ist der ganze Zweck: Der Speichern-Knopf stand unter allem
+     * anderen. Im Design-Tab war das am deutlichsten — wer oben zwischen den
+     * vier Vorlagen wechselte, sah ihn nicht, und die Vorschauen daneben
+     * schalten sofort um; es sah also aus, als waere schon gespeichert. Auf
+     * den uebrigen Tabs ist derselbe Knopf dieselbe Sucherei, nur ohne die
+     * Verwechslung obendrauf.
      *
      * Der Zustand daneben ist keine Verzierung, sondern die Antwort auf genau
      * diese Verwechslung: „Nicht gespeicherte Aenderungen", sobald ein Feld
      * angefasst wurde (assets/js/admin-design.js setzt die Klasse).
      */
-    private function renderDesignSaveBar(): void
+    private function renderSaveBar(): void
     {
         ?>
         <div class="ctp-save-bar">
@@ -1804,7 +1809,7 @@ final class SettingsPage
     private function renderEmbedTab(): void
     {
         ?>
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Drei Wege, dieselbe Darstellung', 'churchtools-plugin'); ?></h2>
             <p class="description">
                 <?php esc_html_e('Termine lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Events“ oder über das WPBakery-Element „ChurchTools Events“ einbinden. Alle drei rendern dasselbe – was im Tab „Design“ eingestellt ist, gilt für jeden von ihnen, ohne ein weiteres Attribut. Die Optionen unten überschreiben diese Einstellungen nur für den einen Baustein, in dem sie stehen.', 'churchtools-plugin'); ?>
@@ -1859,7 +1864,7 @@ final class SettingsPage
         <?php // Beispiele zuerst: Wer hier landet, will meistens etwas kopieren
         // und nicht nachschlagen. Die vollstaendige Attributliste steht im
         // Panel darunter, fuer die selteneren Faelle. ?>
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Beispiele zum Kopieren', 'churchtools-plugin'); ?></h2>
             <p class="description">
                 <?php esc_html_e('Fertige Shortcodes für die häufigsten Fälle – der erste aktive Kalender dieser Instanz ist bereits eingesetzt.', 'churchtools-plugin'); ?>
@@ -1877,7 +1882,7 @@ final class SettingsPage
             </ul>
         </div>
 
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Alle Attribute', 'churchtools-plugin'); ?></h2>
             <p class="description">
                 <?php esc_html_e('Jedes Attribut ist optional. Weggelassen gilt der Standard aus der rechten Spalte – und wo dort auf den Tab „Design“ verwiesen wird, die dortige Einstellung.', 'churchtools-plugin'); ?>
@@ -2069,24 +2074,23 @@ final class SettingsPage
      * Funktion, und sie steht ueberall an derselben Stelle: direkt unter der
      * Tab-Navigation, ueber dem eigentlichen Inhalt.
      *
-     * $wide entscheidet ueber die Breite, und die richtet sich nach dem Panel
-     * *darunter*: die Zeile soll mit der Kachel darunter buendig abschliessen,
-     * nicht ueber sie hinausragen. Tabs mit Spalteninhalt (Uebersicht,
-     * Kalender, Events, Updates) sind breit, reine Formulare (Verbindung,
-     * Synchronisation) bleiben schmal - siehe .ctp-status-strip in admin.css.
+     * Die Breite ist die der Panels darunter, damit alles auf derselben
+     * rechten Kante endet. Bis 1.6.0 gab es dafuer einen $wide-Schalter, weil
+     * Formulartabs 960px breit waren und der Rest 1400px; seit es nur noch
+     * eine Panelbreite gibt, ist der Schalter entfallen.
      *
      * `swatch` ersetzt bei Bedarf das Dashicon durch einen Farbpunkt; die
      * Akzentfarbe im Tab „Design“ ist als Hex-Code allein nicht ablesbar.
      *
      * @param array<int, array{icon: string, value: string, label: string, tone?: string, swatch?: string}> $cards
      */
-    private static function renderStatStrip(array $cards, bool $wide = true): void
+    private static function renderStatStrip(array $cards): void
     {
         if ($cards === []) {
             return;
         }
         ?>
-        <div class="ctp-status-strip<?php echo $wide ? ' ctp-status-strip--wide' : ''; ?>">
+        <div class="ctp-status-strip">
             <div class="ctp-stat-grid">
                 <?php foreach ($cards as $card) : ?>
                     <?php $tone = $card['tone'] ?? ''; ?>
@@ -2477,7 +2481,7 @@ final class SettingsPage
         $hasUpdate = $update['version'] !== null && version_compare($update['version'], CTP_VERSION, '>');
         $releases = self::changelogReleases();
         ?>
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Plugin-Updates über GitHub', 'churchtools-plugin'); ?></h2>
             <?php
             self::renderActionBar(
@@ -2535,7 +2539,7 @@ final class SettingsPage
         </div>
 
         <?php if ($releases !== []) : ?>
-            <div class="ctp-panel ctp-panel--wide">
+            <div class="ctp-panel">
                 <h2><?php esc_html_e('Änderungen der letzten Versionen', 'churchtools-plugin'); ?></h2>
                 <?php foreach ($releases as $release) : ?>
                     <div class="ctp-release">
@@ -2589,7 +2593,7 @@ final class SettingsPage
         $health = SyncHealthNotice::problem($settings);
         $update = self::updateStatus();
         ?>
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Verbindung & Betrieb', 'churchtools-plugin'); ?></h2>
             <?php
             /*
@@ -2701,7 +2705,7 @@ final class SettingsPage
             </p>
         </div>
 
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Version', 'churchtools-plugin'); ?></h2>
             <table class="widefat striped ctp-borderless ctp-keyvalue-table">
                 <tbody>
@@ -2955,7 +2959,7 @@ final class SettingsPage
             ],
         ]);
         ?>
-        <div class="ctp-panel ctp-panel--wide">
+        <div class="ctp-panel">
             <h2><?php esc_html_e('Gespeicherte Termine', 'churchtools-plugin'); ?></h2>
             <?php $this->renderEventsFilterBar($filters, $calendars); ?>
 
@@ -3441,7 +3445,7 @@ final class SettingsPage
                  * nothing. See .ctp-design-layout in admin.css.
                  */
                 ?>
-                <form method="post" action="options.php" class="ctp-design-form" id="ctp-design-form">
+                <form method="post" action="options.php" class="ctp-settings-form">
                     <?php settings_fields(self::PAGE_SLUG); ?>
                     <?php // Volle Breite ueber den Paaren: die Stil-Grundlage, auf der beide Vorschauen aufsetzen. ?>
                     <div class="ctp-panel ctp-design-style">
@@ -3461,19 +3465,48 @@ final class SettingsPage
                     <div class="ctp-panel">
                         <?php do_settings_sections(self::PAGE_SLUG . '_design_list'); ?>
                     </div>
-                    <?php $this->renderDesignSaveBar(); ?>
+                    <?php $this->renderSaveBar(); ?>
                 </form>
             <?php else : ?>
-                <form method="post" action="options.php" class="ctp-panel">
-                    <?php
-                    settings_fields(self::PAGE_SLUG);
-                    do_settings_sections(self::PAGE_SLUG . '_' . $tab);
-                    submit_button();
-                    ?>
+                <form method="post" action="options.php" class="ctp-settings-form">
+                    <div class="ctp-panel">
+                        <?php
+                        settings_fields(self::PAGE_SLUG);
+                        do_settings_sections(self::PAGE_SLUG . '_' . $tab);
+                        ?>
+                    </div>
+                    <?php $this->renderSaveBar(); ?>
                 </form>
             <?php endif; ?>
         </div>
         <script>
+        /*
+         * Sobald ein Feld angefasst wurde, sagt die Leiste am Fuss des
+         * Formulars, dass etwas offen ist. Ohne diesen Hinweis ist der Zustand
+         * nicht zu erkennen: Im Design-Tab schalten die beiden Vorschauen beim
+         * Wechseln der Vorlage sofort um, die Seite sieht also fertig aus,
+         * obwohl noch nichts gespeichert ist.
+         *
+         * Hier im geteilten Skriptblock und nicht in admin-design.js, weil die
+         * Leiste auf jedem Tab mit einem Einstellungsformular steht und jenes
+         * Skript nur im Design-Tab geladen wird.
+         *
+         * Bewusst kein beforeunload-Dialog: Der ist auf einer
+         * Einstellungsseite mehr Bevormundung als Hilfe, und die Leiste steht
+         * ohnehin immer im Bild.
+         */
+        Array.prototype.forEach.call(document.querySelectorAll('.ctp-settings-form'), function (form) {
+            var markDirty = function () {
+                form.classList.add('ctp-settings-form--dirty');
+            };
+            form.addEventListener('change', markDirty);
+            form.addEventListener('input', markDirty);
+            // Die Reihenfolge-Editoren aendern ein verstecktes Feld per Skript,
+            // und dabei feuert `change` nicht von selbst - der Zug mit der Maus
+            // ist die Aenderung, die man am ehesten vergisst zu speichern.
+            form.addEventListener('drop', markDirty);
+        });
+
         // The instance/API-key inputs live on the "Verbindung" tab, but
         // "Kalender laden" sits on the "Kalender" tab — reading .value off a
         // getElementById() that returned null threw a TypeError there and left

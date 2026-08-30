@@ -21,12 +21,32 @@
      * Beschriftung neben einem Eingabefeld ab einer gewissen Zeilenlaenge
      * nicht besser, sondern nur weiter auseinander steht. Alles, was Spalten
      * hat - Statuszeile, Terminliste, Kalenderkacheln, Attributtabelle des
-     * Shortcodes, die Design-Vorschauen - bekommt die breite Variante, weil
-     * dort jede zusaetzliche Spalte echten Platz braucht. Vorher war der
-     * Design-Tab als einziger 1400px breit und alles andere 960px, ohne dass
-     * die Aufteilung einer Regel gefolgt waere. */
-    --ctp-admin-max-width: 960px;
-    --ctp-admin-max-width-wide: 1400px;
+     * Shortcodes, die Design-Vorschauen - brauchte die breite Variante, und so
+     * gab es zwei: 960px fuer Formulare, 1400px fuer alles andere. Beim
+     * Wechsel von „Verbindung" auf „Kalender" sprang die halbe Seite also um
+     * 440px nach aussen. Jetzt eine Breite fuer jeden Tab, und das Lesemass
+     * darunter regelt, was *innerhalb* eines Panels wie weit laufen darf. */
+    --ctp-admin-max-width: min(100%, 1440px);
+    /*
+     * Lesemass *innerhalb* eines Panels. Die Panels sind ueberall gleich
+     * breit, damit die Seite beim Wechsel des Tabs nicht springt - eine
+     * Formularzeile mit zwei Textfeldern darin auf 1440px zu ziehen waere
+     * aber das andere Extrem. Also: aussen eine Kante, innen ein Mass.
+     */
+    --ctp-admin-measure: 60rem;
+    /*
+     * Die Beschriftungsspalte der WordPress-Formulartabellen - eine Zahl fuer
+     * jedes Formular im Backend, damit die Felder ueber alle Tabs hinweg an
+     * derselben Stelle beginnen. WordPress setzt hier 200px; 180 reichen fuer
+     * die laengste Beschriftung („Bild-Seitenverhaeltnis") und lassen den
+     * schmalen Editor-Panels des Design-Tabs etwas mehr Raum.
+     *
+     * Bewusst absolut und nicht als Anteil: Eine Prozentangabe fuer die Breite
+     * einer Tabellenzelle ist bei `table-layout: auto` nur ein Vorschlag, den
+     * der Browser auch ignorieren darf - gemessen kamen aus `clamp(130px, 22%,
+     * 210px)` tatsaechlich 89px heraus.
+     */
+    --ctp-admin-label: 180px;
     /* Rueckmeldungen (siehe .ctp-inline-status) - dieselben Toene, die
      * wp-admin fuer seine eigenen Notices verwendet. */
     --ctp-admin-ok: #007017;
@@ -142,6 +162,13 @@
  * the page reads as one design instead of some sections having a card and others
  * being bare text on the wp-admin background. */
 .ctp-panel {
+    /*
+     * Innenabstand und Rand zaehlen zur Breite. Ohne das gilt die max-width
+     * fuer den *Inhalt*, und ein Panel endete 58px weiter rechts als die
+     * Statuszeile darueber, die keinen Innenabstand hat - beide sollten auf
+     * derselben Kante enden, und genau das war gemeint.
+     */
+    box-sizing: border-box;
     max-width: var(--ctp-admin-max-width);
     margin: 20px 0;
     padding: 24px 28px;
@@ -155,27 +182,18 @@
     margin-top: 0;
 }
 
-/* Panels mit Spalteninhalt: Terminliste, Kalenderkacheln, Shortcode-Referenz,
- * die Panels der Uebersicht. Siehe --ctp-admin-max-width-wide. */
-.ctp-panel--wide {
-    max-width: var(--ctp-admin-max-width-wide);
-}
 
 /* Die Statuszeile steht ausserhalb der Panels, direkt unter der
  * Tab-Navigation, und ist auf jedem Tab dasselbe Bauteil (siehe
  * SettingsPage::renderStatStrip()).
  *
  * Ihre Breite ist die des Panels darunter, damit beide auf derselben rechten
- * Kante enden: schmal ueber einem Formular, breit ueber Tabellen und Kacheln.
- * Vorher war sie immer 1400px und ragte ueber die 960px breiten
- * Formularpanels der Tabs „Verbindung“ und „Synchronisation“ hinaus. */
+ * Kante enden - seit alle Panels gleich breit sind, ist das genau eine Regel
+ * statt einer schmalen und einer breiten Fassung. */
 .ctp-status-strip {
+    box-sizing: border-box;
     max-width: var(--ctp-admin-max-width);
     margin: 20px 0 0;
-}
-
-.ctp-status-strip--wide {
-    max-width: var(--ctp-admin-max-width-wide);
 }
 
 /* Design tab only: settings form (left) and live preview (right) side by side
@@ -187,7 +205,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: 24px;
-    max-width: var(--ctp-admin-max-width-wide);
+    max-width: var(--ctp-admin-max-width);
     margin: 20px 0;
 }
 
@@ -207,25 +225,22 @@
  * mitten auf der Seite um gut 400px nach aussen. Zusammengehoeriges sieht aber
  * nur dann zusammengehoerig aus, wenn es an derselben Kante endet.
  */
-.ctp-design-form > .ctp-panel,
-.ctp-design-form > .ctp-design-layout {
-    max-width: var(--ctp-admin-max-width-wide);
-}
-
 /*
- * Die Speichern-Leiste klebt am unteren Fensterrand. Der Knopf stand vorher
- * unter allem anderen: Wer oben zwischen den vier Vorlagen wechselte, sah ihn
- * nicht - und weil die Vorschauen daneben sofort umschalten, sah es aus, als
- * waere bereits gespeichert.
+ * Die Speichern-Leiste klebt am unteren Fensterrand - auf jedem Tab mit einem
+ * Einstellungsformular. Der Knopf stand vorher unter allem anderen; im
+ * Design-Tab war das am deutlichsten, weil die Vorschauen beim Wechsel der
+ * Vorlage sofort umschalten und es dadurch aussah, als waere bereits
+ * gespeichert.
  */
 .ctp-save-bar {
+    box-sizing: border-box;
     position: sticky;
     bottom: 0;
     z-index: 20;
     display: flex;
     align-items: center;
     gap: 16px;
-    max-width: var(--ctp-admin-max-width-wide);
+    max-width: var(--ctp-admin-max-width);
     margin: 20px 0 0;
     padding: 14px 28px;
     border: 1px solid var(--ctp-admin-border);
@@ -248,11 +263,11 @@
 /* Genau eine der beiden Meldungen ist sichtbar; die Klasse am Formular
    entscheidet welche (assets/js/admin-design.js). */
 .ctp-save-bar__dirty,
-.ctp-design-form--dirty .ctp-save-bar__saved {
+.ctp-settings-form--dirty .ctp-save-bar__saved {
     display: none;
 }
 
-.ctp-design-form--dirty .ctp-save-bar__dirty {
+.ctp-settings-form--dirty .ctp-save-bar__dirty {
     display: inline;
     color: #8a6100;
     font-weight: 600;
@@ -931,14 +946,27 @@
 }
 
 /*
- * In den beiden Editor-Panels ist die Beschriftungsspalte von WordPress
- * (200px) zu breit: Die Panels sind selbst nur gut 660px breit, ein knappes
- * Drittel ginge also fuer ein bis zwei Woerter drauf, und die Erklaerungen
- * daneben brechen dadurch auf halbe Zeilenlaenge um.
+ * Eine Beschriftungsspalte fuer jedes Formular im Backend. WordPress setzt
+ * dafuer feste 200px, und die lasen sich je nach Panel verschieden: In den
+ * gut 660px breiten Editor-Panels des Design-Tabs war das ein knappes Drittel
+ * der Breite fuer ein bis zwei Woerter, und die Erklaerungen daneben brachen
+ * auf halbe Zeilenlaenge um. Der Anteil haelt das Verhaeltnis ueber alle Tabs
+ * und Fenstergroessen gleich.
  */
-.ctp-design-layout .form-table th {
-    width: 150px;
+.ctp-panel .form-table th {
+    width: var(--ctp-admin-label);
     padding-right: 12px;
+}
+
+/*
+ * Und das Lesemass innerhalb der Panels: Eine Formularzeile mit zwei
+ * Textfeldern darin auf 1440px zu ziehen, macht die Erklaerungen daneben
+ * unlesbar lang. Ausgenommen sind Tabellen mit einem selbstbeschrifteten
+ * Bedienelement (.ctp-field--full, die vier Stil-Karten) - die *sind* der
+ * Inhalt und sollen die Breite haben.
+ */
+.ctp-panel .form-table:not(:has(.ctp-field--full)) {
+    max-width: var(--ctp-admin-measure);
 }
 
 .ctp-order-list {

@@ -5,6 +5,19 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.7.0] - 2026-08-30
+
+### Added
+
+- **Der „Zurück"-Knopf führt jetzt an die Stelle zurück, an der man war** – auf die Kachel, aus der die Detailseite geöffnet wurde, statt an den Seitenanfang. Bei einer Liste über mehrere Monate ist das der Unterschied zwischen „weiterlesen" und „die Stelle wiedersuchen". Ohne Skript und ohne Zwischenspeicher: Der Termin kennt seine eigene Nummer, die Kacheln tragen sie als Sprungmarke – das funktioniert damit auch hinter einem Caching-Plugin. Die gefundene Kachel leuchtet kurz auf, damit man sie unter den übrigen wiedererkennt
+- **Die Speichern-Leiste gibt es jetzt auf jedem Einstellungs-Reiter** (Verbindung, Kalender, Synchronisation, Design), nicht mehr nur im Design-Tab
+
+### Changed
+
+- **Alle Reiter im Backend sind gleich breit.** Vorher waren „Verbindung" und „Synchronisation" 960 Pixel breit und alles andere 1400 – beim Wechsel sprang die halbe Seite um 440 Pixel nach außen. Jetzt eine Breite für alles, die dem Fenster folgt und bei 1440 Pixeln stehen bleibt; was *innerhalb* eines Panels steht, hat ein eigenes Lesemaß, damit eine Zeile mit zwei Textfeldern nicht über die ganze Breite gezogen wird
+- **Panels, Statuszeile und Speichern-Leiste enden auf derselben Kante.** Die Panels ragten 58 Pixel darüber hinaus, weil ihr Innenabstand nicht zur eingestellten Breite zählte
+- Die Beschriftungsspalte der Formulare ist auf allen Reitern gleich breit, damit die Eingabefelder überall an derselben Stelle beginnen
+
 ## [1.6.0] - 2026-08-30
 
 Der Tab „Design" ist in den letzten Runden schnell gewachsen und hat dabei

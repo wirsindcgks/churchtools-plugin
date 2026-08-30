@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.7.0 =
+Der Knopf „Zurück“ auf der Terminseite führt jetzt an die Stelle zurück, an der man war – auf die angeklickte Kachel statt an den Seitenanfang. Im Backend sind alle Reiter gleich breit, und die Speichern-Leiste gibt es auf jedem Einstellungs-Reiter. Kein Handlungsbedarf.
+
 = 1.6.0 =
 Der Tab „Design“ ist aufgeräumt: Einstellungen neu gruppiert, einheitliche Breiten, und ein Speichern-Knopf, der am Fensterrand mitläuft statt am Seitenende zu stehen. Die Shortcode-Referenz hat einen eigenen Tab „Einbinden“ bekommen. Der Knopf „Zurück“ auf der Terminseite sieht jetzt aus wie die übrigen Knöpfe und führt auf die Terminseite statt auf die Startseite. Keine Einstellung ändert ihre Wirkung.
 
@@ -261,6 +264,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.7.0 =
+
+* Neu: „Zurück“ führt auf die Kachel zurück, aus der die Detailseite geöffnet wurde, statt an den Seitenanfang – ohne Skript und damit auch hinter einem Caching-Plugin
+* Neu: Die Speichern-Leiste steht auf jedem Einstellungs-Reiter, nicht mehr nur im Design-Tab
+* Geändert: Alle Reiter im Backend sind gleich breit und folgen dem Fenster; vorher waren „Verbindung“ und „Synchronisation“ 440 Pixel schmaler als der Rest
+* Geändert: Panels, Statuszeile und Speichern-Leiste enden auf derselben Kante; die Beschriftungsspalte der Formulare ist überall gleich breit
 
 = 1.6.0 =
 
