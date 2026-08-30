@@ -390,8 +390,12 @@ final class EventListRenderer
         $order = DetailDesign::isValidOrder($designSettings['detail_element_order'])
             ? $designSettings['detail_element_order']
             : DetailDesign::DEFAULT_ORDER;
+        // Der Verweis, wenn es einen gibt — sonst die Terminseite und nicht die
+        // Startseite: Wer den Termin aus einer Suchmaschine oder einem
+        // weitergeleiteten Link öffnet, hat keinen Verweis, und „Zurück" führte
+        // ihn bis 1.5.2 an einen Ort, an dem er nie war.
         $backUrl = wp_get_referer();
-        $backUrl = $backUrl !== false && $backUrl !== '' ? $backUrl : home_url('/');
+        $backUrl = $backUrl !== false && $backUrl !== '' ? $backUrl : EventDetailPage::listUrl();
         // Eigene Namen statt $args['design_class']/['design_style'] wie in den
         // Listen-Templates: Diese Ansicht bekommt gar kein $args, sie rendert
         // genau einen Termin.

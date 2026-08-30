@@ -155,6 +155,20 @@ final class EventDetailPage
     }
 
     /**
+     * Wohin der „Zurück"-Knopf zeigt, wenn kein Verweis vorliegt — also bei
+     * jedem, der den Termin aus einer Suchmaschine, einem Newsletter oder
+     * einer weitergeleiteten Nachricht heraus öffnet. Das ist die Elternseite,
+     * wenn es eine gibt: Von dort kommen die Termine, dort geht es weiter.
+     * Ohne Elternseite bleibt nur die Startseite.
+     */
+    public static function listUrl(): string
+    {
+        $pageId = self::hostPageId();
+
+        return $pageId > 0 ? (string) get_permalink($pageId) : home_url('/');
+    }
+
+    /**
      * Falls back to a plain query-string URL when the site uses "Plain"
      * permalinks (get_option('permalink_structure') === '') — the rewrite rule
      * registered above only takes effect once pretty permalinks are enabled.

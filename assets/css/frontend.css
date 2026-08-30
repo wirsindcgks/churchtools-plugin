@@ -1425,17 +1425,47 @@
     padding-inline: 0;
 }
 
-.ctp-events__back {
-    display: inline-block;
+/*
+ * Derselbe Knopf wie im Eventfinder, bis auf das Pfeilzeichen: gleiche
+ * Auszeichnung, gleiche Groesse, gleiche Buttonfarbe aus dem Design-Tab
+ * (--ctp-color-button*). Als graue Textzeile war er das einzige Bedienelement
+ * des Plugins, das nicht wie eines aussah - und ausgerechnet das, mit dem man
+ * die Seite wieder verlaesst.
+ *
+ * Hoehere Spezifitaet als die Finder-Knoepfe (.ctp-events davor), weil dies
+ * hier ein <a> ist: Themes faerben Links und ihren Hover-Zustand, und eine
+ * Regel mit nur einer Klasse verliert gegen `.post-content a:hover`.
+ */
+.ctp-events .ctp-events__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
     margin-bottom: 1.75rem;
-    color: var(--ctp-color-muted);
-    font-size: var(--ctp-font-sm);
+    padding: 0.45rem 1.05rem;
+    border: 1px solid var(--ctp-color-button-border);
+    border-radius: var(--ctp-radius-pill);
+    background-color: var(--ctp-color-button);
+    color: var(--ctp-color-button-text);
+    font-size: var(--ctp-font-control);
     font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Dieselbe leichte Fuellung wie .ctp-events__finder-btn:hover. */
+.ctp-events .ctp-events__back:hover,
+.ctp-events .ctp-events__back:focus {
+    background-color: color-mix(in srgb, var(--ctp-color-button-strong) 8%, var(--ctp-color-button));
+    color: var(--ctp-color-button-text);
     text-decoration: none;
 }
 
-.ctp-events__back:hover {
-    color: var(--ctp-accent);
+.ctp-events .ctp-events__back:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 1px;
 }
 
 /*

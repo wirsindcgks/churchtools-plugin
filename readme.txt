@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.2
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.6.0 =
+Der Tab „Design“ ist aufgeräumt: Einstellungen neu gruppiert, einheitliche Breiten, und ein Speichern-Knopf, der am Fensterrand mitläuft statt am Seitenende zu stehen. Die Shortcode-Referenz hat einen eigenen Tab „Einbinden“ bekommen. Der Knopf „Zurück“ auf der Terminseite sieht jetzt aus wie die übrigen Knöpfe und führt auf die Terminseite statt auf die Startseite. Keine Einstellung ändert ihre Wirkung.
+
 = 1.5.2 =
 Wichtig für alle, die in 1.5.0 eine Terminseite eingerichtet haben: Auf einer mit einem Seitenbaukasten (WPBakery, Uncode) gebauten Elternseite stand der Termin unterhalb des bisherigen Seiteninhalts statt an dessen Stelle. Behoben.
 
@@ -258,6 +261,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.6.0 =
+
+* Neu: Tab „Einbinden“ mit der Shortcode-Referenz – erst die Beispiele zum Kopieren, dann die vollständige Attributliste. Bisher hing beides unter dem Tab „Design“
+* Neu: Speichern-Leiste am Fuß des Design-Tabs, die am Fensterrand klebt und anzeigt, ob Änderungen offen sind
+* Geändert: Die Einstellungen im Design-Tab sind nach Zusammengehörigkeit gruppiert; der Sammelabschnitt „Globale Einstellungen“ entfällt. „Ausgeblendete Felder“ und „Bild-Seitenverhältnis“ stehen jetzt bei der Kachel, Klickverhalten und Adresse der Terminseite bei der Detailansicht
+* Geändert: Alle Blöcke des Design-Tabs enden an derselben Kante; die Stil-Karten nutzen die volle Breite
+* Geändert: Der Knopf „Zurück“ auf der Terminseite sieht aus wie die Knöpfe des Eventfinders und folgt derselben Buttonfarbe
+* Behoben: „Zurück“ führte auf die Startseite, wenn kein Verweis vorlag – jetzt auf die eingestellte Terminseite
 
 = 1.5.2 =
 

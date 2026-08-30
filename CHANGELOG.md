@@ -5,6 +5,29 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.6.0] - 2026-08-30
+
+Der Tab „Design" ist in den letzten Runden schnell gewachsen und hat dabei
+seine Ordnung verloren: acht Felder in einem Abschnitt „Globale
+Einstellungen", der Speichern-Knopf ganz unten, die Shortcode-Referenz
+darunter noch einmal so lang wie der Rest. Diese Version räumt auf.
+
+### Added
+
+- **Neuer Tab „Einbinden"** mit der Shortcode-Referenz, die bisher unter dem Design-Tab hing. Sie gehörte dort nie hin: Man liest sie, während man eine Seite baut, nicht während man das Aussehen einstellt – und sie war das längste Stück des ohnehin längsten Bildschirms. Neu sortiert: erst die Beispiele zum Kopieren, dann die vollständige Attributliste
+- **Eine Speichern-Leiste am Fuß des Design-Tabs, die am Fensterrand klebt.** Sie sagt außerdem, ob etwas offen ist. Der Knopf stand vorher unter allem anderen – wer oben zwischen den vier Vorlagen wechselte, sah ihn nicht, und weil die Vorschauen sofort umschalten, sah es aus, als wäre schon gespeichert
+
+### Changed
+
+- **Die Einstellungen im Design-Tab sind neu gruppiert**, nach der Frage, die man gerade beantwortet: „Stil" (Vorlage) und „Farben und Formen" (Ecken, Akzent- und Buttonfarbe) stehen zusammen, „Ausgeblendete Felder" und „Bild-Seitenverhältnis" liegen jetzt bei der Kachel, zu der sie gehören, und „Bei Klick auf eine Kachel" samt „Adresse der Terminseite" bei der Detailansicht, die sie steuern. Der Sammelabschnitt „Globale Einstellungen" entfällt
+- **Alle Blöcke des Tabs enden an derselben Kante.** Die Stil-Auswahl war 960 Pixel breit, alles darunter 1400 – der rechte Rand sprang mitten auf der Seite um gut 400 Pixel nach außen
+- Die vier Stil-Karten nutzen die volle Breite: Die Beschriftungsspalte daneben hat ihnen ein Achtel abgenommen, ohne etwas zu sagen, was nicht ohnehin auf den Karten steht
+- **Der Knopf „Zurück" auf der Terminseite sieht jetzt aus wie die Knöpfe des Eventfinders** und folgt derselben Buttonfarbe aus dem Design-Tab. Als graue Textzeile war er das einzige Bedienelement des Plugins, das nicht wie eines aussah – ausgerechnet das, mit dem man die Seite wieder verlässt
+
+### Fixed
+
+- **„Zurück" führte auf die Startseite, wenn kein Verweis vorlag** – also bei jedem, der einen Termin aus einer Suchmaschine, einem Newsletter oder einer weitergeleiteten Nachricht heraus öffnet. Der Knopf führt jetzt auf die eingestellte Terminseite, wenn es eine gibt
+
 ## [1.5.2] - 2026-08-30
 
 ### Fixed

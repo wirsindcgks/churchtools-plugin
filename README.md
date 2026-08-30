@@ -96,7 +96,7 @@ Alle drei Wege benutzen denselben Unterbau und können dasselbe:
 [ctp_events calendar="Gottesdienste,Jugend" layout="list" filter="1" search="1"]
 ```
 
-Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. Im Tab *Design* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
+Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. Im Tab *Einbinden* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
 
 ### Die wichtigsten Optionen
 

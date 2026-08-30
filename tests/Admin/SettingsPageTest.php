@@ -20,6 +20,28 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
+     * Jeder Tab braucht sein Symbol: Die Navigation rendert
+     * `dashicons-<icon>` aus tabIcons() zum Schlüssel aus tabs(), und ein
+     * fehlender Eintrag ergibt kein fehlendes Symbol, sondern ein leeres
+     * Kästchen an dessen Stelle. Beim Anlegen des Tabs „Einbinden" war genau
+     * das die Stelle, die man vergisst.
+     */
+    public function testEveryTabHasAnIcon(): void
+    {
+        $tabs = array_keys($this->invokePrivate('tabs'));
+        $icons = $this->invokePrivate('tabIcons');
+
+        $this->assertContains('embed', $tabs, 'Der Tab „Einbinden" trägt die Shortcode-Referenz.');
+        $this->assertSame([], array_diff($tabs, array_keys($icons)), 'Tabs ohne Symbol.');
+        $this->assertSame([], array_diff(array_keys($icons), $tabs), 'Symbole ohne Tab.');
+    }
+
+    private function invokePrivate(string $method): array
+    {
+        return (new ReflectionMethod(SettingsPage::class, $method))->invoke(null);
+    }
+
+    /**
      * Die Elternseite der Termin-Adressen muss eine veröffentlichte *Seite*
      * sein. Alles andere hätte entweder keine öffentliche Adresse (Entwurf)
      * oder eine, die WordPress selbst schon belegt (Beitrag) — und die

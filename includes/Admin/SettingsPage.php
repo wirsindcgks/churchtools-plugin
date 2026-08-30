@@ -81,6 +81,7 @@ final class SettingsPage
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
+            'embed' => __('Einbinden', 'churchtools-plugin'),
             'events' => __('Events', 'churchtools-plugin'),
             'updates' => __('Updates', 'churchtools-plugin'),
         ];
@@ -105,6 +106,7 @@ final class SettingsPage
             'calendars' => 'calendar-alt',
             'sync' => 'update',
             'design' => 'admin-appearance',
+            'embed' => 'editor-code',
             'events' => 'list-view',
             'updates' => 'cloud-upload',
         ];
@@ -202,34 +204,64 @@ final class SettingsPage
          * solely by settings_fields(self::PAGE_SLUG) in renderPage().
          */
         /*
-         * Der Stil steht in einem eigenen Abschnitt ueber den beiden Editoren,
-         * nicht bei den globalen Einstellungen darunter: Er ist die Grundlage,
-         * auf der alles andere aufsetzt, und beide Vorschauen unten zeigen ihn
-         * unmittelbar. Bei den globalen Einstellungen stuende die Wahl unter
-         * ihrem eigenen Ergebnis.
+         * Vier Gruppen statt der bisherigen drei plus Sammelbecken. Bis 1.5.2
+         * gab es einen Abschnitt „Globale Einstellungen", in dem acht Felder
+         * lagen, die miteinander wenig zu tun hatten: das Klickverhalten neben
+         * dem Eckenstil neben dem Zeitraum pro Seite. Was zusammengehoert,
+         * stand auseinander — die Felder der Kachel unter der Detailansicht,
+         * die Adresse der Terminseite drei Felder von der Detailansicht
+         * entfernt, zu der sie gehoert.
+         *
+         * Sortiert ist jetzt nach der Frage, die der Betreiber gerade
+         * beantwortet:
+         *   1. Wie soll es grundsaetzlich aussehen?   (Vorlage, Farben, Ecken)
+         *   2. Was steht auf einer Kachel?            (Reihenfolge, Sichtbarkeit, Bildformat)
+         *   3. Was passiert beim Klick darauf?        (Detailansicht, Adresse)
+         *   4. Wie viel wird auf einmal geladen?      (Zeitraum pro Seite)
+         *
+         * Seitenslugs waehlen nur aus, welcher do_settings_sections()-Aufruf
+         * einen Abschnitt rendert; gespeichert wird weiterhin allein ueber
+         * settings_fields(self::PAGE_SLUG) in renderPage().
          */
         $designStylePage = self::PAGE_SLUG . '_design_style';
         add_settings_section('ctp_design_style', __('Stil', 'churchtools-plugin'), [self::class, 'renderDesignStyleIntro'], $designStylePage);
-        add_settings_field('design_preset', __('Vorlage', 'churchtools-plugin'), [$this, 'renderDesignPresetField'], $designStylePage, 'ctp_design_style');
+        // Ohne Beschriftungsspalte: Die vier Karten tragen ihren Namen selbst,
+        // und eine Spalte mit dem Wort „Vorlage" daneben nimmt ihnen ein Achtel
+        // der Breite, ohne etwas zu sagen (siehe .ctp-field--full in admin.css).
+        // Die Reihenfolge-Editoren behalten ihre Beschriftung dagegen: In ihren
+        // Panels stehen beschriftete Felder daneben, und eine Zeile ohne Label
+        // wirkt dort abgerissen.
+        add_settings_field('design_preset', __('Vorlage', 'churchtools-plugin'), [$this, 'renderDesignPresetField'], $designStylePage, 'ctp_design_style', ['class' => 'ctp-field--full']);
+        // Zweiter Abschnitt auf derselben Seite: Was die Vorlage vorgibt und
+        // hier ueberschrieben wird, steht damit unmittelbar unter ihr statt
+        // eine Bildschirmhoehe weiter unten.
+        add_settings_section('ctp_design_look', __('Farben und Formen', 'churchtools-plugin'), [self::class, 'renderLookIntro'], $designStylePage);
+        add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designStylePage, 'ctp_design_look');
+        add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designStylePage, 'ctp_design_look');
+        add_settings_field('button_color', __('Buttonfarbe', 'churchtools-plugin'), [$this, 'renderButtonColorField'], $designStylePage, 'ctp_design_look');
 
         $designTilePage = self::PAGE_SLUG . '_design_tile';
         add_settings_section('ctp_design_order', __('Aufbau der Kachel', 'churchtools-plugin'), '__return_false', $designTilePage);
         add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
+        // Beide betreffen ausschliesslich die Kachel: Die Sichtbarkeit arbeitet
+        // auf CardDesign::TOGGLEABLE_KEYS, und das Seitenverhaeltnis greift nur
+        // im Kachelbild (die Detailansicht begrenzt ihr Bild ueber die Hoehe).
+        add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designTilePage, 'ctp_design_order');
+        add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designTilePage, 'ctp_design_order');
 
         $designDetailPage = self::PAGE_SLUG . '_design_detail';
         add_settings_section('ctp_design_detail_order', __('Aufbau der Detailansicht', 'churchtools-plugin'), '__return_false', $designDetailPage);
+        // Das Klickverhalten steht vor der Reihenfolge, weil es die Frage davor
+        // beantwortet: Gibt es ueberhaupt eine Detailansicht, und wo oeffnet
+        // sie? Die Adresse folgt unmittelbar, sie ist die zweite Haelfte
+        // derselben Entscheidung.
+        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_detail_order');
+        add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
-        $designGlobalPage = self::PAGE_SLUG . '_design_global';
-        add_settings_section('ctp_design_global', __('Globale Einstellungen', 'churchtools-plugin'), [self::class, 'renderGlobalDesignIntro'], $designGlobalPage);
-        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('hidden_elements', __('Ausgeblendete Felder', 'churchtools-plugin'), [$this, 'renderFieldVisibilityField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('button_color', __('Buttonfarbe', 'churchtools-plugin'), [$this, 'renderButtonColorField'], $designGlobalPage, 'ctp_design_global');
-        add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designGlobalPage, 'ctp_design_global');
+        $designListPage = self::PAGE_SLUG . '_design_list';
+        add_settings_section('ctp_design_list', __('Listen', 'churchtools-plugin'), [self::class, 'renderListIntro'], $designListPage);
+        add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designListPage, 'ctp_design_list');
     }
 
     public static function defaults(): array
@@ -1202,7 +1234,7 @@ final class SettingsPage
     public static function renderDesignStyleIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Die Grundlage für alle Ansichten. Sie legt Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest – nicht aber, welche Felder erscheinen oder in welcher Reihenfolge: Das bleibt in den beiden Editoren darunter. Die Einstellungen ganz unten („Ecken“, „Akzentfarbe“, „Buttonfarbe“, „Bild-Seitenverhältnis“) gelten weiterhin über der Vorlage.', 'churchtools-plugin')
+            . esc_html__('Die Grundlage für alle Ansichten. Sie legt Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest – nicht aber, welche Felder erscheinen oder in welcher Reihenfolge. Das entscheiden die beiden Editoren weiter unten.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1284,10 +1316,22 @@ final class SettingsPage
         echo '</div>';
     }
 
-    public static function renderGlobalDesignIntro(): void
+    /**
+     * Der Vorrang zwischen Vorlage und Einzeleinstellung ist die eine Regel,
+     * die man hier kennen muss — sie steht deshalb dort, wo man sie braucht,
+     * und nicht in der Beschreibung eines der drei Felder.
+     */
+    public static function renderLookIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Diese Einstellungen gelten für alle Ansichten (Liste, Grid, „Nächster Termin“) und für jeden Shortcode, Block und WPBakery-Eintrag. Die beiden Vorschauen oben übernehmen sie unmittelbar.', 'churchtools-plugin')
+            . esc_html__('Gilt über der gewählten Vorlage: Was hier eingestellt ist, setzt sich gegen sie durch – wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden. Für alle Ansichten und jeden Shortcode, Block und WPBakery-Eintrag.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    public static function renderListIntro(): void
+    {
+        echo '<p class="description">'
+            . esc_html__('Betrifft Liste und Grid: wie viel auf einmal geladen wird und was der Knopf „Weitere Termine laden“ nachholt. Ohne Einfluss auf „Nächster Termin“ – dort zählt die Anzahl, nicht der Zeitraum.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1512,10 +1556,10 @@ final class SettingsPage
         }
 
         echo '<p class="description">'
-            . esc_html__('Startseite und Beitragsseite stehen nicht zur Wahl: Ihre Adressregel läge über der halben Website. Nur wirksam bei Klickverhalten „Eigene Seite“. Die Seite bleibt normal erreichbar und behält ihren Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin. Die bisherigen Adressen (/churchtools-termin/…) leiten dauerhaft auf die neuen weiter, bereits verschickte Links bleiben also gültig.', 'churchtools-plugin')
+            . esc_html__('Die Seite bleibt normal erreichbar und behält ihren Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin statt ihres eigenen. Bisherige Adressen leiten dauerhaft weiter.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
-            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag – auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlen der Seite dann die Vorlage des Themes sowie dessen Kopf- und Fußbereich.', 'churchtools-plugin')
+            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag, und auf einem Block-Theme fehlen der Seite dann die Vorlage des Themes samt Kopf- und Fußbereich. Startseite und Beitragsseite stehen nicht zur Wahl – ihre Adressregel läge über der halben Website.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1722,6 +1766,57 @@ final class SettingsPage
      * (same idea as the live example already shown at the bottom of the
      * Kalender tab) instead of a made-up placeholder name.
      */
+    /**
+     * Die Leiste am Fuss des Design-Tabs. Sie klebt am unteren Fensterrand,
+     * und das ist der ganze Zweck: Der Speichern-Knopf stand bis 1.5.2 unter
+     * allem anderen — wer oben zwischen den vier Vorlagen wechselte, sah ihn
+     * nicht, und die Vorschauen daneben schalten sofort um. Es sah also aus,
+     * als waere schon gespeichert.
+     *
+     * Der Zustand daneben ist keine Verzierung, sondern die Antwort auf genau
+     * diese Verwechslung: „Nicht gespeicherte Aenderungen", sobald ein Feld
+     * angefasst wurde (assets/js/admin-design.js setzt die Klasse).
+     */
+    private function renderDesignSaveBar(): void
+    {
+        ?>
+        <div class="ctp-save-bar">
+            <p class="ctp-save-bar__state">
+                <span class="ctp-save-bar__saved"><?php esc_html_e('Keine offenen Änderungen', 'churchtools-plugin'); ?></span>
+                <span class="ctp-save-bar__dirty"><?php esc_html_e('Nicht gespeicherte Änderungen', 'churchtools-plugin'); ?></span>
+            </p>
+            <?php submit_button(__('Änderungen speichern', 'churchtools-plugin'), 'primary', 'submit', false); ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Der Tab „Einbinden": die Shortcode-Referenz, die bis 1.5.2 unter dem
+     * Design-Tab hing.
+     *
+     * Sie gehoerte dort nie hin. Man liest sie, waehrend man eine *Seite*
+     * baut, nicht waehrend man das Aussehen einstellt — und sie war das
+     * laengste Stueck des ohnehin laengsten Bildschirms, sodass die
+     * Design-Einstellungen darueber im Scrollen verschwanden. Ein eigener Tab
+     * ist auffindbar (anders als WordPress' eingeklappte „Hilfe" oben rechts)
+     * und nimmt dem Design-Tab seine halbe Hoehe.
+     */
+    private function renderEmbedTab(): void
+    {
+        ?>
+        <div class="ctp-panel ctp-panel--wide">
+            <h2><?php esc_html_e('Drei Wege, dieselbe Darstellung', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Termine lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Events“ oder über das WPBakery-Element „ChurchTools Events“ einbinden. Alle drei rendern dasselbe – was im Tab „Design“ eingestellt ist, gilt für jeden von ihnen, ohne ein weiteres Attribut. Die Optionen unten überschreiben diese Einstellungen nur für den einen Baustein, in dem sie stehen.', 'churchtools-plugin'); ?>
+            </p>
+            <p class="description">
+                <?php esc_html_e('Block und WPBakery-Element bieten dieselben Optionen in ihrer eigenen Seitenleiste an. Zu eigenen Theme-Templates siehe readme.txt.', 'churchtools-plugin'); ?>
+            </p>
+        </div>
+        <?php $this->renderShortcodeReference(); ?>
+        <?php
+    }
+
     private function renderShortcodeReference(): void
     {
         $calendars = self::get()['calendars'];
@@ -1761,10 +1856,31 @@ final class SettingsPage
             ],
         ];
         ?>
+        <?php // Beispiele zuerst: Wer hier landet, will meistens etwas kopieren
+        // und nicht nachschlagen. Die vollstaendige Attributliste steht im
+        // Panel darunter, fuer die selteneren Faelle. ?>
         <div class="ctp-panel ctp-panel--wide">
-            <h2><?php esc_html_e('Verwendung: Shortcode', 'churchtools-plugin'); ?></h2>
+            <h2><?php esc_html_e('Beispiele zum Kopieren', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Termine per Shortcode in eine Seite oder einen Beitrag einbinden – dieselbe Rendering-Basis wie der Gutenberg-Block „ChurchTools Events“ und das WPBakery-Element. Die Kartengestaltung oben (Reihenfolge, Eckenstil) gilt automatisch für jeden Shortcode, ohne zusätzliches Attribut.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Fertige Shortcodes für die häufigsten Fälle – der erste aktive Kalender dieser Instanz ist bereits eingesetzt.', 'churchtools-plugin'); ?>
+            </p>
+            <ul class="ctp-shortcode-examples">
+                <?php foreach ($examples as $example) : ?>
+                    <li>
+                        <span class="ctp-shortcode-label"><?php echo esc_html($example['label']); ?></span>
+                        <code><?php echo esc_html($example['code']); ?></code>
+                        <button type="button" class="button button-small ctp-copy-shortcode" data-shortcode="<?php echo esc_attr($example['code']); ?>">
+                            <?php esc_html_e('Kopieren', 'churchtools-plugin'); ?>
+                        </button>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+
+        <div class="ctp-panel ctp-panel--wide">
+            <h2><?php esc_html_e('Alle Attribute', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Jedes Attribut ist optional. Weggelassen gilt der Standard aus der rechten Spalte – und wo dort auf den Tab „Design“ verwiesen wird, die dortige Einstellung.', 'churchtools-plugin'); ?>
             </p>
 
             <table class="widefat striped ctp-borderless">
@@ -1799,7 +1915,7 @@ final class SettingsPage
                             <?php
                             printf(
                                 /* translators: %d: globally configured number of months per page. */
-                                esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = globale Einstellung oben (aktuell %d).', 'churchtools-plugin'),
+                                esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = die Einstellung im Tab „Design“ (aktuell %d).', 'churchtools-plugin'),
                                 (int) self::get()['paging_months']
                             );
                             ?>
@@ -1820,7 +1936,7 @@ final class SettingsPage
                         <td><code>click</code></td>
                         <td>
                             <code>default</code> &middot; <code>none</code> &middot; <code>popup</code> &middot; <code>page</code>
-                            &ndash; <?php esc_html_e('überschreibt das Klickverhalten oben nur für diesen Shortcode', 'churchtools-plugin'); ?>
+                            &ndash; <?php esc_html_e('überschreibt das Klickverhalten aus dem Tab „Design“ nur für diesen Shortcode', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>default</code></td>
                     </tr>
@@ -1850,22 +1966,6 @@ final class SettingsPage
                     </tr>
                 </tbody>
             </table>
-
-            <h3><?php esc_html_e('Beispiele', 'churchtools-plugin'); ?></h3>
-            <ul class="ctp-shortcode-examples">
-                <?php foreach ($examples as $example) : ?>
-                    <li>
-                        <span class="ctp-shortcode-label"><?php echo esc_html($example['label']); ?></span>
-                        <code><?php echo esc_html($example['code']); ?></code>
-                        <button type="button" class="button button-small ctp-copy-shortcode" data-shortcode="<?php echo esc_attr($example['code']); ?>">
-                            <?php esc_html_e('Kopieren', 'churchtools-plugin'); ?>
-                        </button>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-            <p class="description">
-                <?php esc_html_e('Weitere Details zu Gutenberg-Block, WPBakery-Element und Theme-Overrides: siehe readme.txt.', 'churchtools-plugin'); ?>
-            </p>
         </div>
         <?php
     }
@@ -3317,6 +3417,8 @@ final class SettingsPage
 
             <?php if ($tab === 'status') : ?>
                 <?php $this->renderStatusOverview(); ?>
+            <?php elseif ($tab === 'embed') : ?>
+                <?php $this->renderEmbedTab(); ?>
             <?php elseif ($tab === 'events') : ?>
                 <?php
                 if ($eventId > 0) {
@@ -3339,7 +3441,7 @@ final class SettingsPage
                  * nothing. See .ctp-design-layout in admin.css.
                  */
                 ?>
-                <form method="post" action="options.php">
+                <form method="post" action="options.php" class="ctp-design-form" id="ctp-design-form">
                     <?php settings_fields(self::PAGE_SLUG); ?>
                     <?php // Volle Breite ueber den Paaren: die Stil-Grundlage, auf der beide Vorschauen aufsetzen. ?>
                     <div class="ctp-panel ctp-design-style">
@@ -3356,13 +3458,11 @@ final class SettingsPage
                         </div>
                         <?php $this->renderDetailPreview(); ?>
                     </div>
-                    <?php // Full width below the pairs: global styling with no editor of its own. ?>
-                    <div class="ctp-panel ctp-design-global">
-                        <?php do_settings_sections(self::PAGE_SLUG . '_design_global'); ?>
-                        <?php submit_button(); ?>
+                    <div class="ctp-panel">
+                        <?php do_settings_sections(self::PAGE_SLUG . '_design_list'); ?>
                     </div>
+                    <?php $this->renderDesignSaveBar(); ?>
                 </form>
-                <?php $this->renderShortcodeReference(); ?>
             <?php else : ?>
                 <form method="post" action="options.php" class="ctp-panel">
                     <?php

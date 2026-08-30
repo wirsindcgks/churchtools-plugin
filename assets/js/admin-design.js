@@ -12,6 +12,28 @@
 	'use strict';
 
 	/**
+	 * Sobald ein Feld angefasst wurde, sagt die Leiste am Fuss des Formulars,
+	 * dass etwas offen ist. Ohne diesen Hinweis ist der Zustand nicht zu
+	 * erkennen: Die beiden Vorschauen schalten beim Wechseln der Vorlage sofort
+	 * um, die Seite sieht also fertig aus, obwohl noch nichts gespeichert ist.
+	 *
+	 * Bewusst kein beforeunload-Dialog: Der ist auf einer Einstellungsseite mehr
+	 * Bevormundung als Hilfe, und die Leiste steht ohnehin immer im Bild.
+	 */
+	var designForm = document.getElementById('ctp-design-form');
+	if (designForm) {
+		var markDirty = function () {
+			designForm.classList.add('ctp-design-form--dirty');
+		};
+		designForm.addEventListener('change', markDirty);
+		designForm.addEventListener('input', markDirty);
+		// Die Reihenfolge-Editoren aendern ein verstecktes Feld per Skript, und
+		// dabei feuert `change` nicht von selbst - der Zug mit der Maus ist die
+		// Aenderung, die man am ehesten vergisst zu speichern.
+		designForm.addEventListener('drop', markDirty);
+	}
+
+	/**
 	 * Detail view order (popup/own page) — structurally the same drag&drop as
 	 * the card order below, but simpler: no separators, and no CSS `order`
 	 * math to mirror, since DetailDesign applies the order directly while
