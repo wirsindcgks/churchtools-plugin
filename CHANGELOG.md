@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.5.1] - 2026-08-30
+
+### Fixed
+
+- **Die Beschriftung „— Keine —" im neuen Auswahlfeld „Adresse der Terminseite" wurde nicht escapt ausgegeben.** Ohne sichtbare Folge – es ist ein eigener, übersetzbarer Text und keine Eingabe –, aber `wp_dropdown_pages()` reicht ausgerechnet diesen einen seiner Parameter unescapt durch, während es alle anderen selbst behandelt. Die Codeprüfung des Projekts hat es zu Recht angemerkt
+
 ## [1.5.0] - 2026-08-30
 
 Termine bekommen eine lesbare Adresse unter einer bestehenden Seite – und

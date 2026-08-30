@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.5.1 =
+Kleine Nachbesserung an 1.5.0: eine Beschriftung im Tab „Design“ wurde nicht escapt ausgegeben. Ohne sichtbare Folge. Kein Handlungsbedarf.
+
 = 1.5.0 =
 Neu: Termine können unter der Adresse einer bestehenden Seite liegen (`/termine/gottesdienst-06-09-2026/`) und werden dann als deren Inhalt ausgeliefert – mit Vorlage, Kopf- und Fußbereich des Theme. Auf Block-Themes (Twenty Twenty-Two und neuer) behebt das, dass die Terminseite bisher außerhalb der Theme-Vorlage stand. Einzurichten im Tab „Design“ unter „Adresse der Terminseite“; ohne diese Einstellung bleibt alles wie bisher. Alte Adressen leiten dauerhaft weiter.
 
@@ -252,6 +255,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.5.1 =
+
+* Behoben: Die Beschriftung „— Keine —“ im Auswahlfeld „Adresse der Terminseite“ wurde nicht escapt ausgegeben – ohne sichtbare Folge, aber `wp_dropdown_pages()` behandelt ausgerechnet diesen Parameter nicht selbst
 
 = 1.5.0 =
 

@@ -1477,10 +1477,21 @@ final class SettingsPage
         $settings = self::get();
         $current = (int) $settings['detail_page_id'];
 
+        /*
+         * phpcs kennt wp_dropdown_pages() als ausgebende Funktion und verlangt
+         * deshalb escapte Argumente. Die besorgt hier WordPress selbst: name,
+         * id, class und option_none_value laufen dort durch esc_attr(), die
+         * Seitentitel durch esc_html(). Ausgerechnet show_option_none wird
+         * *nicht* escapt (wp-includes/post-template.php, Zeile mit
+         * `$parsed_args['show_option_none']` im Options-Markup) - deshalb steht
+         * darin unten esc_html__() statt __(), und nur deshalb ist die
+         * Abschaltung hier vollständig.
+         */
+        // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
         wp_dropdown_pages([
             'name' => self::OPTION_KEY . '[detail_page_id]',
             'selected' => $current,
-            'show_option_none' => __('— Keine — eigene Adresse ohne Elternseite', 'churchtools-plugin'),
+            'show_option_none' => esc_html__('— Keine — eigene Adresse ohne Elternseite', 'churchtools-plugin'),
             'option_none_value' => '0',
             'post_status' => 'publish',
             // Gar nicht erst zur Auswahl stellen, was der Sanitizer daneben
@@ -1490,6 +1501,7 @@ final class SettingsPage
                 (int) get_option('page_for_posts'),
             ])),
         ]);
+        // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
         if ($current > 0 && get_post_status($current) === 'publish') {
             printf(
