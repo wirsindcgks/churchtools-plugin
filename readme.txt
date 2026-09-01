@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.2
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,7 +78,7 @@ Die Zeitraumlänge ist global im „Design“-Tab einstellbar (Standard: 2 Monat
 
 Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ im Sync-Tab) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
 
-Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte „Du suchst …“-Werkzeugleiste mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren.
+Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte „Du suchst …“-Werkzeugleiste mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
 
 = Gutenberg-Block =
 
@@ -169,6 +169,9 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Upgrade Notice ==
+
+= 1.8.0 =
+Geht ein Zeitraum des Eventfinders leer aus – „Diesen Monat" am Monatsende, „Diese Woche" am Sonntagabend –, stehen jetzt bis zu drei der nächsten Termine darunter, mit einem Satz davor, der sagt warum. Außerdem behalten Kacheln im Grid die eingestellte Spaltenbreite, wenn es weniger Termine als Spalten gibt – ein einzelner Suchtreffer zog sich bisher über die volle Breite. Kein Handlungsbedarf.
 
 = 1.7.2 =
 Behebt, dass die Schrift des Knopfes „Zurück“ beim Überfahren die Akzentfarbe des Theme annahm statt weiß zu bleiben. Kein Handlungsbedarf.
@@ -270,6 +273,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.8.0 =
+
+* Neu: Ein leerer Zeitraum im Eventfinder zeigt bis zu drei der nächsten Termine danach, angekündigt mit „In diesem Monat stehen keine Termine mehr an. Die nächsten Termine:" – statt einer leeren Liste, die aussieht, als gäbe es gar keine Termine. Gilt ebenso für „Diese Woche" und „Dieses Wochenende"
+* Geändert: Im Grid behalten Kacheln die eingestellte Spaltenbreite, auch wenn weniger Termine als Spalten da sind – ein einzelner Suchtreffer wurde bisher über die volle Breite gezogen
 
 = 1.7.2 =
 

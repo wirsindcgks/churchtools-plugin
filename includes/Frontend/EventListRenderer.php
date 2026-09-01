@@ -32,6 +32,14 @@ final class EventListRenderer
      */
     private const MATCH_LIMIT = 100;
 
+    /**
+     * Wie viele Termine der Ausblick zeigt, wenn ein Zeitraum leer ausgeht
+     * (siehe renderMatches()). Bewusst klein: Er ist der Hinweis darauf, dass es
+     * überhaupt weitergeht, nicht die zweite Liste - wer die will, klickt
+     * „Jederzeit".
+     */
+    private const OUTLOOK_LIMIT = 3;
+
     public function render(array $args): string
     {
         $args = $this->prepareArgs($args);
@@ -162,6 +170,10 @@ final class EventListRenderer
      * MATCH_LIMIT would start silently swallowing events. That case stays with
      * the paged path (renderItems()), which has a cursor for exactly this.
      *
+     * Eine leere Antwort bleibt leer, bekommt aber einen beschrifteten Ausblick
+     * untergestellt - siehe unten, warum sie nicht stattdessen stillschweigend
+     * über den Zeitraum hinausgreift.
+     *
      * @return array{html: string, count: int, next_page: null, next_offset: int}
      */
     public function renderMatches(array $args, string $search, string $timeframe): array
@@ -182,7 +194,45 @@ final class EventListRenderer
             $bounds['before'] ?? null,
             self::MATCH_LIMIT
         );
-        $events = $this->withCalendarMeta($events, $args['click_behavior'], $designSettings['detail_element_order']);
+
+        /*
+         * Am 28. eines Monats ist „Diesen Monat" oft leer - zu Recht, denn die
+         * Frage lautet ja „ab heute bis Monatsende". Wer nicht daran denkt,
+         * dass Monatsende ist, liest die leere Liste aber als „hier gibt es
+         * keine Termine". Dieselbe Klippe hat „Diese Woche" am Sonntagabend und
+         * „Dieses Wochenende" in der Nacht zum Montag.
+         *
+         * Den Zeitraum daraufhin stillschweigend zu verbreitern, wäre der
+         * naheliegende Ausweg und der falsche: Eine engere Frage mit einem
+         * breiteren Ergebnis zu beantworten, verbietet sich dieses Plugin an
+         * anderer Stelle ausdrücklich (EventsEndpoint::narrowToCalendar()).
+         * Also bleibt die Antwort leer und bekommt beschriftet untergestellt,
+         * was *nach* dem Zeitraum kommt - dieselbe Frage ohne die Zeitgrenze,
+         * Kalenderauswahl und Suchbegriff also unverändert.
+         *
+         * Untergrenze ist die Obergrenze des Zeitraums: Zwischen jetzt und ihr
+         * liegt ohnehin nichts, sonst wäre die Trefferliste nicht leer - aber
+         * so steht in der Abfrage, was der Block behauptet.
+         */
+        $outlook = $events === [] && $bounds !== null
+            ? EventQueryCache::findMatching(
+                $args['calendar_ids'],
+                $search,
+                $bounds['before'],
+                null,
+                self::OUTLOOK_LIMIT
+            )
+            : [];
+        // Ist auch danach nichts mehr da, gibt es nichts anzukündigen: Dann ist
+        // die leere Liste die ganze Wahrheit und das „Keine Termine gefunden."
+        // der Werkzeugleiste die richtige Antwort (assets/js/frontend.js).
+        $isOutlook = $outlook !== [];
+
+        $events = $this->withCalendarMeta(
+            $isOutlook ? $outlook : $events,
+            $args['click_behavior'],
+            $designSettings['detail_element_order']
+        );
 
         // Month dividers stay off for a *search*: hits are scattered across the
         // whole horizon, so grouping them by month would produce a heading per
@@ -190,14 +240,29 @@ final class EventListRenderer
         // stretch of days instead, so there they group as usefully as on the
         // paged list — and "Diesen Monat" spanning two headings is how a
         // visitor sees that the month runs into the next one.
-        $args['month_dividers'] = $search === '' && $args['month_dividers'];
+        //
+        // Im Ausblick bleiben sie ebenfalls aus: Das sind höchstens
+        // OUTLOOK_LIMIT Kacheln, jede mit ihrem vollen Datum, und die
+        // Überschrift darüber sagt bereits, was sie sind. Eine
+        // Monatsüberschrift über einer einzelnen Kachel wäre Lärm statt
+        // Gliederung.
+        $args['month_dividers'] = !$isOutlook && $search === '' && $args['month_dividers'];
         $currentMonthKey = null;
 
         ob_start();
+        if ($isOutlook) {
+            $outlookTimeframe = $timeframe;
+            $outlookIsSearch = $search !== '';
+            require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/timeframe-outlook.php';
+        }
         require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-' . $args['layout'] . '-items.php';
 
         return [
             'html' => (string) ob_get_clean(),
+            // Die Zahl der ausgegebenen Kacheln, nicht die der Treffer im
+            // gefragten Zeitraum: Der Wert steht neben `html` und muss
+            // beschreiben, was darin steht. Ob es Treffer oder Ausblick sind,
+            // sagt die Auszeichnung im Markup.
             'count' => count($events),
             'next_page' => null,
             'next_offset' => 0,

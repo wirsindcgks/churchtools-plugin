@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ChurchTools Events 1.7.2\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-08-30 10:57:23+0000\n"
+"POT-Creation-Date: 2026-09-01 09:46:59+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1333,6 +1333,38 @@ msgstr ""
 
 #: includes/Frontend/templates/partials/modal.php:23
 msgid "Schließen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:42
+msgid "In dieser Woche gibt es dazu keine Termine mehr."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:43
+msgid "An diesem Wochenende gibt es dazu keine Termine mehr."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:44
+msgid "In diesem Monat gibt es dazu keine Termine mehr."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:47
+msgid "In dieser Woche stehen keine Termine mehr an."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:48
+msgid "An diesem Wochenende stehen keine Termine mehr an."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:49
+msgid "In diesem Monat stehen keine Termine mehr an."
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:64
+msgid "Die nächsten passenden Termine:"
+msgstr ""
+
+#: includes/Frontend/templates/partials/timeframe-outlook.php:65
+msgid "Die nächsten Termine:"
 msgstr ""
 
 #: includes/Frontend/templates/partials/toolbar.php:35

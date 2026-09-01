@@ -28,7 +28,7 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
 ![Ansicht „Nächster Termin" mit großer Kachel und Folgeterminen](docs/screenshots/naechster-termin.png)
 
-**Eventfinder** — geführter Einstieg statt Dropdown: ein Knopf je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche.
+**Eventfinder** — geführter Einstieg statt Dropdown: ein Knopf je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche. Geht ein Zeitraum leer aus („Diesen Monat" am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
 
 ![Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste](docs/screenshots/eventfinder.png)
 

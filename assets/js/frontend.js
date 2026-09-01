@@ -372,6 +372,7 @@
 				clearPending(container, token);
 
 				if (!payload || !payload.success || !payload.data) {
+					dropOutlook(list);
 					updateEmptyMessage(container);
 
 					return;
@@ -395,8 +396,35 @@
 				// if narrower, answer to the same question — including, now
 				// that nobody is still looking, an empty one.
 				clearPending(container, token);
+				dropOutlook(list);
 				updateEmptyMessage(container);
 			});
+	}
+
+	/**
+	 * Nimmt die Überleitung eines Ausblicks aus der Liste („In diesem Monat
+	 * stehen keine Termine mehr an.", siehe partials/timeframe-outlook.php).
+	 *
+	 * Sie gehört zu genau der Antwort, mit der sie kam. Eine gelungene Antwort
+	 * ersetzt sie ohnehin mit `list.innerHTML`; hier geht es um die beiden
+	 * Wege, auf denen *keine* Antwort ankommt und die vorige Liste stehen
+	 * bleibt — dann stünde der Satz über den Terminen einer Frage, die gar
+	 * nicht mehr gestellt ist. Kacheln, die nicht mehr passen, sind dort das
+	 * kleinere Übel; ein Satz, der etwas Falsches *behauptet*, ist keins.
+	 *
+	 * Deshalb erst hier und nicht schon vor der Anfrage: Der Block hält im
+	 * Grid über `grid-column: 1 / -1` alle Spalten offen. Nimmt man ihn weg,
+	 * solange die Antwort noch unterwegs ist, klappt `auto-fit` die leeren
+	 * Spuren ein und die einzelne verbliebene Kachel springt für die Dauer der
+	 * Anfrage auf die volle Breite — ein sichtbares Zucken bei jedem Wechsel,
+	 * gegen einen Satz, der nur im Fehlerfall überhaupt stehen bleibt.
+	 */
+	function dropOutlook(list) {
+		var outlook = list.querySelector('.ctp-events__outlook');
+
+		if (outlook) {
+			outlook.parentNode.removeChild(outlook);
+		}
 	}
 
 	/**

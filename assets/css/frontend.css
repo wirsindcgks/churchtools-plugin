@@ -435,6 +435,43 @@
 }
 
 /*
+ * Die Ueberleitung ueber dem Ausblick, wenn ein Zeitraum des Eventfinders leer
+ * ausgeht (siehe partials/timeframe-outlook.php). Sie steht *anstelle* der
+ * Treffer und muss sich deshalb absetzen, ohne selbst wie eine Kachel
+ * auszusehen - kein Rahmen, keine Flaeche, nur Text.
+ *
+ * Der Grundsatz zurueckhaltend (--ctp-color-muted: es ist eine Absage), die
+ * Ankuendigung darunter in derselben Form wie ein Monatstrenner - sie tut ja
+ * dasselbe, sie ueberschreibt eine Gruppe von Kacheln.
+ */
+.ctp-events__outlook {
+    margin-block: 0 calc(var(--ctp-gap) * 0.35);
+}
+
+.ctp-events--grid .ctp-events__outlook {
+    grid-column: 1 / -1;
+}
+
+.ctp-events__outlook-notice {
+    margin: 0;
+    font-size: var(--ctp-font-md);
+    color: var(--ctp-color-muted);
+}
+
+.ctp-events__outlook-heading {
+    margin-block: calc(var(--ctp-gap) * 0.35) 0;
+    font-size: var(--ctp-font-md);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ctp-color-text);
+}
+
+.ctp-events--grid .ctp-events__outlook-heading {
+    font-size: var(--ctp-font-lg);
+}
+
+/*
  * Bewusst <div role="list"> statt <ul> und <div role="listitem"> statt <li>
  * (siehe die Templates). Das ist kein Geschmack, sondern das Ergebnis eines
  * verlorenen Spezifitaetskampfes: Uncode - das Theme auf der ersten
@@ -695,21 +732,35 @@
  * breakpoints (2 columns at 480px, --ctp-columns at 780px) keyed off the
  * *viewport*, so a grid embedded in a narrow column/sidebar still forced
  * the full column count and squeezed each card, even on a wide screen.
- * "RAM" pattern instead — auto-fit with a floor per track, so the actual
+ * "RAM" pattern instead — auto-fill with a floor per track, so the actual
  * column count adapts to whatever width the grid really has:
  *   - calc(...) is the width one of exactly --ctp-columns equal tracks
  *     would get in the full container (the "target" size at max columns).
  *   - max(--ctp-card-min, that) never lets a card get narrower than the
- *     floor, which is what makes auto-fit drop to fewer (wider) columns
+ *     floor, which is what makes the grid drop to fewer (wider) columns
  *     once the container can't fit --ctp-columns tracks at the floor.
  *   - min(..., 100%) is pure overflow safety for a container narrower
  *     than --ctp-card-min itself (falls back to one full-width column
  *     instead of forcing horizontal overflow).
+ *
+ * `auto-fill`, nicht `auto-fit`: Beide rechnen dieselbe Spaltenzahl aus, die
+ * drei Punkte oben gelten also für beide. Der Unterschied zeigt sich nur,
+ * wenn weniger Kacheln da sind als Spalten — `auto-fit` lässt die leeren
+ * Spuren zusammenfallen, und die verbliebene Kachel zieht sich über die
+ * ganze Breite. Ein einzelner Suchtreffer war so 1165 statt 367 Pixel breit
+ * und sah aus wie ein anderes Layout, nicht wie dieselbe Ansicht mit einem
+ * Ergebnis. Mit `auto-fill` behält jede Kachel die eingestellte
+ * Spaltenbreite (--ctp-columns), und rechts daneben bleibt Platz frei.
+ *
+ * Das fiel lange nicht auf, weil fast immer etwas mit `grid-column: 1 / -1`
+ * danebensteht — ein Monatstrenner oder die Überleitung eines Ausblicks —
+ * und die Spuren dadurch offenhält. Übrig blieb genau der Fall ohne beides:
+ * die Suche, die ihre Monatstrenner selbst abschaltet.
  */
 .ctp-events--grid .ctp-events__list {
     display: grid;
     grid-template-columns: repeat(
-        auto-fit,
+        auto-fill,
         minmax(
             min(
                 max(var(--ctp-card-min), calc((100% - (var(--ctp-columns) - 1) * var(--ctp-gap)) / var(--ctp-columns))),
@@ -1403,7 +1454,7 @@
      * Themes, und der ist bei manchen Themes 650px breit, auch auf einem
      * 1600px-Bildschirm. Eine Fensterabfrage haette dort zwei Spalten
      * aufgemacht, wo keine hinpassen. Dieselbe Ueberlegung wie beim
-     * Grid-Layout weiter oben, nur mit @container statt mit auto-fit.
+     * Grid-Layout weiter oben, nur mit @container statt mit auto-fill.
      */
     container-type: inline-size;
     container-name: ctp-detail;

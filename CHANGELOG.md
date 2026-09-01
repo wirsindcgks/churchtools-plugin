@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.8.0] - 2026-09-01
+
+### Added
+
+- **Ein leerer Zeitraum im Eventfinder endet nicht mehr in einer Sackgasse.** Wer am 28. auf „Diesen Monat" klickt, bekam eine leere Liste – richtig beantwortet, aber wer nicht daran denkt, dass Monatsende ist, liest sie als „hier gibt es keine Termine". Dieselbe Klippe hatte „Diese Woche" am Sonntagabend und „Dieses Wochenende" in der Nacht zum Montag. Die Antwort bleibt jetzt leer, bekommt aber bis zu drei der nächsten Termine untergestellt, angekündigt als das, was sie sind: „In diesem Monat stehen keine Termine mehr an. Die nächsten Termine:". Der Zeitraum wird also *nicht* stillschweigend verbreitert – das hieße, eine engere Frage mit einem breiteren Ergebnis zu beantworten. Kalenderauswahl und Suchbegriff nimmt der Ausblick mit; nur die Zeitgrenze fällt weg, und mit aktiver Suche sagt der Satz auch das („gibt es dazu keine Termine mehr")
+
+### Changed
+
+- **Im Grid behalten Kacheln die eingestellte Spaltenbreite, auch wenn es weniger Termine als Spalten gibt.** Ein einzelner Suchtreffer zog sich bisher über die volle Breite – bei drei eingestellten Spalten 1165 statt 367 Pixel – und sah dadurch aus wie ein anderes Layout statt wie dieselbe Ansicht mit einem Ergebnis. Ursache war `auto-fit` im Raster, das leere Spalten zusammenfallen lässt; jetzt steht dort `auto-fill`, das sie stehen lässt. An der Spaltenzahl selbst ändert sich nichts: Beide rechnen sie gleich aus, die Anpassung an schmale Container (drei Spalten ab 900 Pixeln, zwei ab 768, eine ab 480) bleibt unverändert – nachgemessen über vier Spalteneinstellungen und neun Containerbreiten
+
 ## [1.7.2] - 2026-08-30
 
 ### Fixed
