@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.9.0] - 2026-09-01
+
+### Changed
+
+- **Termine liefern ihre Bilder jetzt in der Größe aus, in der sie tatsächlich angezeigt werden.** Bisher bekam jede Kachel dieselbe Datei – WordPress' `large`, bis zu 1024 Pixel breit – und zwar auch dort, wo die Kachel 365 Pixel misst oder bei vier Spalten nur 267. Es gab kein `srcset`, das Endgerät hatte also keine Wahl. Neu sind zwei eigene Bildbreiten (400 und 600 Pixel) plus `srcset`/`sizes` in Kachel-, „Nächster Termin"- und Detailansicht. Gemessen an den 19 Kacheln der Testseite: **1224 KB vorher, 409 KB nachher** auf einem gewöhnlichen Bildschirm (−67 %), 981 KB auf einem mit doppelter oder dreifacher Pixeldichte (−20 %). Keine Gerätekategorie lädt mehr als vorher
+- **Die Kachel-Liste ist bei 800 Pixeln gedeckelt, die Detailansicht nicht.** Ohne diesen Deckel hätte ein Handy mit dreifacher Pixeldichte in der Kachel plötzlich die 1086er-Stufe geladen – korrekt gerechnet, aber mehr als die 724 vorher, und damit das Gegenteil des Ziels. In der Detailansicht ist der Flyer dagegen der Inhalt und wird gelesen, dort bleibt die volle Auswahl bis zum Original
+
+### Added
+
+- **Bereits importierte Bilder bekommen die neuen Breiten nachträglich**, in Zehnerschritten am Sync-Lauf statt in einem Rutsch beim ersten Seitenaufruf nach dem Update – ein Bestand von 500 Bildern ist bei stündlichem Sync in gut zwei Tagen durch, ohne dass irgendwo etwas spürbar langsamer wird. Ist nichts mehr offen, kostet der Durchlauf eine einzige Abfrage
+
 ## [1.8.0] - 2026-09-01
 
 ### Added

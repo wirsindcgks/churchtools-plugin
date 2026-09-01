@@ -16,6 +16,7 @@
  * @var array $args
  */
 
+use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
@@ -55,7 +56,15 @@ $heroHasMedia = $hero !== null
         >
             <?php if ($heroHasMedia) : ?>
                 <div class="ctp-events__hero-media<?php echo $hero['image_is_fallback'] ? ' ctp-events__hero-media--fallback' : ''; ?>">
-                    <img src="<?php echo esc_url($hero['image_url']); ?>" alt="" loading="lazy" />
+                    <img
+                        src="<?php echo esc_url($hero['image_url']); ?>"
+                        <?php if (($hero['image_srcset'] ?? '') !== '') : ?>
+                            srcset="<?php echo esc_attr($hero['image_srcset']); ?>"
+                            sizes="<?php echo esc_attr(CardImage::heroSizes()); ?>"
+                        <?php endif; ?>
+                        alt=""
+                        loading="lazy"
+                    />
                 </div>
             <?php endif; ?>
             <?php

@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,9 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.9.0 =
+Terminbilder werden jetzt in der Größe ausgeliefert, in der sie angezeigt werden, statt immer in voller Breite – auf der Testseite 409 statt 1224 KB für eine Bildschirmseite voller Kacheln. Bereits importierte Bilder bekommen die neuen Breiten nach und nach über den Sync-Lauf; bis dahin sieht alles aus wie bisher. Kein Handlungsbedarf.
+
 = 1.8.0 =
 Geht ein Zeitraum des Eventfinders leer aus – „Diesen Monat" am Monatsende, „Diese Woche" am Sonntagabend –, stehen jetzt bis zu drei der nächsten Termine darunter, mit einem Satz davor, der sagt warum. Außerdem behalten Kacheln im Grid die eingestellte Spaltenbreite, wenn es weniger Termine als Spalten gibt – ein einzelner Suchtreffer zog sich bisher über die volle Breite. Kein Handlungsbedarf.
 
@@ -273,6 +276,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.9.0 =
+
+* Geändert: Terminbilder kommen in der Größe, in der sie angezeigt werden (`srcset`/`sizes` plus zwei eigene Bildbreiten) – gemessen 409 statt 1224 KB für 19 Kacheln auf einem gewöhnlichen Bildschirm, 981 KB bei hoher Pixeldichte
+* Geändert: In der Detailansicht bleibt die volle Bildqualität – dort ist der Flyer der Inhalt, in der Kachel nur die Vorschau
+* Neu: Vorhandene Bilder bekommen die neuen Breiten nachträglich über den Sync-Lauf, in kleinen Schritten statt in einem Rutsch
 
 = 1.8.0 =
 

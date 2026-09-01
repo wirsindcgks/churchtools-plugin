@@ -11,6 +11,7 @@
  * @var string $detailContext 'popup' or 'page', see event-detail-content.php.
  */
 
+use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
 
@@ -50,6 +51,10 @@ if (!defined('ABSPATH')) {
                     ?>
                     <img
                         src="<?php echo esc_url($event['image_url']); ?>"
+                        <?php if (($event['image_srcset_full'] ?? '') !== '') : ?>
+                            srcset="<?php echo esc_attr($event['image_srcset_full']); ?>"
+                            sizes="<?php echo esc_attr(CardImage::detailSizes()); ?>"
+                        <?php endif; ?>
                         alt=""
                         class="skip-lazy"
                         data-no-lazy="1"

@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
+use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
 use DateTimeImmutable;
 use RuntimeException;
@@ -566,6 +567,11 @@ final class SyncEngine
         }
 
         update_post_meta((int) $attachmentId, '_ctp_source_image_url', $url);
+        // Beim Import sind die Zusatzgroessen aus CardImage::SIZES schon
+        // mitgeschrieben worden (registriert an after_setup_theme, also lange
+        // vor diesem Cron-Lauf). Der Vermerk haelt das fest, damit
+        // ImageSizeBackfill dieses Bild gar nicht erst anfasst.
+        update_post_meta((int) $attachmentId, CardImage::VERSION_META_KEY, CardImage::SIZES_VERSION);
 
         return (int) $attachmentId;
     }

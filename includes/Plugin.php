@@ -9,10 +9,12 @@ use ChurchToolsPlugin\Admin\SyncHealthNotice;
 use ChurchToolsPlugin\Blocks\EventListBlock;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
+use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventDetailPage;
 use ChurchToolsPlugin\Frontend\EventsEndpoint;
 use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
+use ChurchToolsPlugin\Sync\ImageSizeBackfill;
 use ChurchToolsPlugin\Sync\RetentionCleanup;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use ChurchToolsPlugin\Update\GitHubUpdateChecker;
@@ -53,8 +55,10 @@ final class Plugin
         (new WpBakeryIntegration())->register();
 
         EventDetailPage::registerHooks();
+        CardImage::registerHooks();
         SyncEngine::registerHooks();
         RetentionCleanup::registerHooks();
+        ImageSizeBackfill::registerHooks();
         GitHubUpdateChecker::register();
     }
 }

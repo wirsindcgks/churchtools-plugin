@@ -5,6 +5,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Automatischer Abgleich** per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") kommen als einzelne Termine an, abgesagte verschwinden wieder.
 - **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
 - **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder.
+- **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
 - **Termindetails** wahlweise als Popup oder als eigene Termin-Seite.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.

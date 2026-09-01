@@ -10,6 +10,7 @@
  * @var string|null $currentMonthKey Divider bookkeeping, carried in from the caller.
  */
 
+use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
@@ -47,7 +48,15 @@ if (!defined('ABSPATH')) {
             <?php if (!in_array('media', $args['hidden_elements'], true)) : ?>
                 <div class="ctp-events__media<?php echo $event['image_is_fallback'] ? ' ctp-events__media--fallback' : ''; ?>">
                     <?php if ($event['image_url'] !== '') : ?>
-                        <img src="<?php echo esc_url($event['image_url']); ?>" alt="" loading="lazy" />
+                        <img
+                            src="<?php echo esc_url($event['image_url']); ?>"
+                            <?php if (($event['image_srcset'] ?? '') !== '') : ?>
+                                srcset="<?php echo esc_attr($event['image_srcset']); ?>"
+                                sizes="<?php echo esc_attr(CardImage::gridSizes((int) $args['columns'])); ?>"
+                            <?php endif; ?>
+                            alt=""
+                            loading="lazy"
+                        />
                     <?php endif; ?>
                     <span class="ctp-events__date-badge" aria-hidden="true">
                         <span class="ctp-events__day">

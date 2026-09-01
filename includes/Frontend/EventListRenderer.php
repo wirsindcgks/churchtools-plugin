@@ -550,11 +550,23 @@ final class EventListRenderer
             $event['calendar_color'] = $calendar['color'] ?? '';
             $event['calendar_name'] = $calendar['name'] ?? '';
 
+            // Zwei Listen, weil dieselben Termindaten drei verschieden grosse
+            // Bildflaechen bedienen: In der Kachel ist der Flyer ein
+            // Vorschaubild und die Liste gedeckelt, in der Detailansicht ist er
+            // der Inhalt und bekommt die volle Leiter (siehe
+            // CardImage::CARD_MAX_SRCSET_WIDTH). Beide leer, solange die Quelle
+            // die urspruengliche ChurchTools-Adresse ist - von einem fremd
+            // gehosteten Bild gibt es keine eigenen Groessen anzubieten.
+            $event['image_srcset'] = '';
+            $event['image_srcset_full'] = '';
+
             $attachmentId = (int) ($event['attachment_id'] ?? 0);
             if ($attachmentId > 0) {
                 $attachmentUrl = wp_get_attachment_image_url($attachmentId, 'large');
                 if ($attachmentUrl !== false) {
                     $event['image_url'] = $attachmentUrl;
+                    $event['image_srcset'] = CardImage::srcsetFor($attachmentId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
+                    $event['image_srcset_full'] = CardImage::srcsetFor($attachmentId);
                 }
             }
 
@@ -565,6 +577,8 @@ final class EventListRenderer
                     $defaultImageUrl = wp_get_attachment_image_url($defaultImageId, 'large');
                     if ($defaultImageUrl !== false) {
                         $event['image_url'] = $defaultImageUrl;
+                        $event['image_srcset'] = CardImage::srcsetFor($defaultImageId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
+                        $event['image_srcset_full'] = CardImage::srcsetFor($defaultImageId);
                         $event['image_is_fallback'] = true;
                     }
                 }

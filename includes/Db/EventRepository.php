@@ -735,6 +735,47 @@ class EventRepository
     }
 
     /**
+     * Selbst importierte Bilder, die die Zusatzgroessen aus CardImage::SIZES noch
+     * nicht haben - fuer den nachtraeglichen Durchlauf (siehe ImageSizeBackfill).
+     *
+     * Erkannt am Fehlen des Postmeta CardImage::VERSION_META_KEY in der aktuellen
+     * Fassung, nicht am Inhalt der Bild-Metadaten: Ob eine Groesse darin steckt,
+     * liesse sich nur nach dem Deserialisieren pruefen, also erst nachdem man
+     * jedes Bild einzeln geladen hat. So beantwortet eine einzige Abfrage die
+     * Frage "ist ueberhaupt noch etwas zu tun?", und wenn nichts mehr offen ist,
+     * kostet der Durchlauf genau diese eine Abfrage.
+     *
+     * Wie orphanedAttachmentIds() ueber '_ctp_source_image_url' auf die Bilder
+     * begrenzt, die dieses Plugin selbst angelegt hat - fremde Anhaenge der
+     * Mediathek gehen es nichts an. Und wie dort gedeckelt, damit ein grosser
+     * Rueckstand ueber mehrere Laeufe abgearbeitet wird statt einen Cron-Lauf in
+     * hunderte Bildskalierungen zu verwandeln.
+     *
+     * @return int[]
+     */
+    public function attachmentIdsMissingSizes(string $sizesVersion, string $versionMetaKey, int $limit = 10): array
+    {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->postmeta is a WordPress-provided table name, not request input; every value below goes through prepare().
+        $sql = "SELECT src.post_id FROM {$wpdb->postmeta} src
+                LEFT JOIN {$wpdb->postmeta} done
+                  ON done.post_id = src.post_id
+                 AND done.meta_key = %s
+                 AND done.meta_value = %s
+                WHERE src.meta_key = %s
+                  AND done.post_id IS NULL
+                LIMIT %d";
+
+        $params = [$versionMetaKey, $sizesVersion, '_ctp_source_image_url', max(1, $limit)];
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see above.
+        $ids = $wpdb->get_col($wpdb->prepare($sql, ...$params));
+
+        return array_map('intval', $ids ?: []);
+    }
+
+    /**
      * Returns the distinct ct_event_id => attachment_id pairs among rows matching
      * $whereSql — read *before* a delete runs, so deleteOrphanedAttachments() can
      * check afterwards whether each series still has any row left.
