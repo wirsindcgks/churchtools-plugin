@@ -200,6 +200,17 @@ function ctp_test_reset_transients(): void
  * otherwise), not a simplified stand-in, since the exact null-vs-'' distinction is
  * what sanitizeSettings() branches on.
  */
+/**
+ * WordPress' absint(): Betrag der Ganzzahl. Gebraucht von
+ * SettingsPage::sanitizeCalendars().
+ *
+ * @param mixed $maybeInt
+ */
+function absint($maybeInt): int
+{
+    return abs((int) $maybeInt);
+}
+
 function sanitize_hex_color(string $color): ?string
 {
     if ($color === '') {

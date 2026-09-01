@@ -596,4 +596,71 @@ final class SettingsPageTest extends TestCase
         $this->assertSame('', SettingsPage::getDecryptedApiKey());
         $this->assertTrue(SettingsPage::apiKeyDecryptionFailed());
     }
+
+    /**
+     * `isPublic` ist ChurchTools' eigene Angabe zum Kalender und muss den Weg
+     * in die Einstellungen finden - ohne sie kann der Hinweis im Tab
+     * „Kalender" nicht entstehen.
+     */
+    public function testMergeCalendarsCarriesTheChurchToolsPublicFlag(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Intern', 'isPublic' => false],
+            ['id' => 8, 'name' => 'Gottesdienste', 'isPublic' => true],
+        ]);
+
+        $this->assertFalse($merged[7]['is_public']);
+        $this->assertTrue($merged[8]['is_public']);
+    }
+
+    /**
+     * Fehlt das Feld ganz (aeltere Instanz, geaenderte Antwortform), gilt der
+     * Kalender als oeffentlich. Andersherum stuende nach dem naechsten
+     * „Kalender laden" auf jedem einzelnen Kalender eine Warnung - und eine
+     * Warnung, die immer erscheint, liest bald niemand mehr.
+     */
+    public function testACalendarWithoutThePublicFlagCountsAsPublic(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [['id' => 9, 'name' => 'Alt']]);
+
+        $this->assertTrue($merged[9]['is_public']);
+    }
+
+    /**
+     * Das Speichern des Formulars darf die Angabe nicht verlieren: Es gibt
+     * kein Feld dafuer, sie kommt also nur aus $existing.
+     */
+    public function testSanitizeCalendarsKeepsThePublicFlagAcrossASave(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'sanitizeCalendars');
+
+        $existing = [
+            7 => ['name' => 'Intern', 'enabled' => true, 'color' => '#123456', 'default_color' => '#123456', 'is_public' => false],
+        ];
+
+        $saved = $method->invoke(null, [7 => ['enabled' => '1', 'color' => '#654321']], $existing);
+
+        $this->assertFalse($saved[7]['is_public']);
+    }
+
+    /**
+     * Gemeldet wird nur, was auch tatsaechlich veroeffentlicht wird: ein
+     * angehakter Kalender. Ein nicht angehakter, nicht oeffentlicher Kalender
+     * ist kein Widerspruch, sondern der Normalfall.
+     */
+    public function testOnlyEnabledNonPublicCalendarsAreReported(): void
+    {
+        ctp_test_set_option('ctp_settings', ['calendars' => [
+            7 => ['name' => 'Intern aktiv', 'enabled' => true, 'is_public' => false],
+            8 => ['name' => 'Intern inaktiv', 'enabled' => false, 'is_public' => false],
+            9 => ['name' => 'Oeffentlich aktiv', 'enabled' => true, 'is_public' => true],
+            10 => ['name' => 'Ohne Angabe', 'enabled' => true],
+        ]]);
+
+        $this->assertSame([7 => 'Intern aktiv'], SettingsPage::nonPublicEnabledCalendars());
+    }
 }

@@ -273,6 +273,33 @@ final class SyncEngineTest extends TestCase
         ], $overrides);
     }
 
+    /**
+     * ChurchTools' Option „nur fuer angemeldete Benutzer" (`isInternal`) ist
+     * die einzige Stelle, an der die Gemeinde am Termin selbst sagt, dass er
+     * nicht nach draussen soll. Wird sie ignoriert, veroeffentlicht ein
+     * unbeaufsichtigter Cron-Lauf einen internen Termin - der Fehler faellt
+     * niemandem auf, weil niemand hinsieht.
+     */
+    public function testSkipsAppointmentsMarkedInternal(): void
+    {
+        $envelope = $this->envelope(['appointment' => ['base' => ['isInternal' => true]]]);
+
+        $this->assertNull($this->mapOccurrence($envelope));
+    }
+
+    /**
+     * Die Gegenprobe zum Test darueber: Ein *nicht* gesetztes Haekchen darf
+     * nichts aussortieren. ChurchTools liefert das Feld an jedem Termin mit,
+     * in den Daten der Testinstanz durchgehend als `false` - eine zu strenge
+     * Pruefung (isset statt empty) haette damit den gesamten Bestand entfernt.
+     */
+    public function testKeepsAppointmentsWithTheInternalFlagExplicitlyFalse(): void
+    {
+        $envelope = $this->envelope(['appointment' => ['base' => ['isInternal' => false]]]);
+
+        $this->assertNotNull($this->mapOccurrence($envelope));
+    }
+
     public function testMapsAllFieldsFromTheRealApiShape(): void
     {
         $row = $this->mapOccurrence($this->envelope());

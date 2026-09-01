@@ -731,6 +731,10 @@ final class SettingsPage
                 // with ChurchTools' own color on every "Kalender laden".
                 'default_color' => $existing[$id]['default_color'] ?? $existing[$id]['color'],
                 'default_image_id' => absint($row['default_image_id'] ?? 0),
+                // Ebenfalls kein Formularfeld: Das ist ChurchTools' Angabe,
+                // hier waere sie nur eine Meinung. mergeCalendars() haelt sie
+                // bei jedem „Kalender laden" aktuell.
+                'is_public' => (bool) ($existing[$id]['is_public'] ?? true),
             ];
         }
 
@@ -805,6 +809,38 @@ final class SettingsPage
      * Feldnamen sind unveraendert (ctp_settings[calendars][ID][...]), also
      * greifen settings_fields() und sanitizeCalendars() genau wie zuvor.
      */
+    /**
+     * Angehakte Kalender, die ChurchTools selbst nicht als oeffentlich fuehrt.
+     *
+     * Bewusst nur gemeldet und nicht stillschweigend uebergangen: Anders als
+     * ein interner Termin (den SyncEngine::mapOccurrence() gar nicht erst
+     * speichert) ist ein angehakter Kalender eine ausdrueckliche Entscheidung
+     * im WordPress-Backend. Verschwaende sein Inhalt wortlos, suchte man den
+     * Grund an der falschen Stelle - und die Person, die das Haekchen gesetzt
+     * hat, sitzt genau dort, wo dieser Hinweis erscheint.
+     *
+     * @return array<int, string> Kalender-ID => Name
+     */
+    public static function nonPublicEnabledCalendars(): array
+    {
+        $found = [];
+
+        foreach (self::get()['calendars'] as $id => $calendar) {
+            if (empty($calendar['enabled'])) {
+                continue;
+            }
+
+            // Fehlendes Feld gilt als oeffentlich - siehe mergeCalendars().
+            if (($calendar['is_public'] ?? true)) {
+                continue;
+            }
+
+            $found[(int) $id] = (string) ($calendar['name'] ?? (string) $id);
+        }
+
+        return $found;
+    }
+
     private function renderCalendarsTab(): void
     {
         $calendars = self::get()['calendars'];
@@ -841,6 +877,22 @@ final class SettingsPage
                             esc_html__('Der automatische Kalenderabgleich ist zuletzt fehlgeschlagen (%1$s): %2$s', 'churchtools-plugin'),
                             esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $calendarError['time'])),
                             esc_html(wp_html_excerpt($calendarError['message'], 400, '…'))
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <?php $nonPublic = self::nonPublicEnabledCalendars(); ?>
+            <?php if ($nonPublic !== []) : ?>
+                <?php // Zahl-neutral formuliert: bin/make-pot.php kann keine Plurale (_n). ?>
+                <div class="notice notice-warning inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: %s: comma-separated list of calendar names */
+                            esc_html__('Hier aktiv, in ChurchTools aber nicht als öffentlich geführt: %s. Die Termine erscheinen trotzdem auf der Website – entweder hier abwählen oder in ChurchTools öffentlich stellen.', 'churchtools-plugin'),
+                            esc_html(implode(', ', $nonPublic))
                         );
                         ?>
                     </p>
@@ -4144,6 +4196,12 @@ final class SettingsPage
                 'color' => (string) ($existing[$id]['color'] ?? $remoteColor),
                 'default_color' => $remoteColor,
                 'default_image_id' => (int) ($existing[$id]['default_image_id'] ?? 0),
+                // ChurchTools' eigene Einschaetzung, nicht unsere: Ein Kalender
+                // ohne `isPublic` ist dort nicht zur Veroeffentlichung gedacht.
+                // Fehlt das Feld ganz (aeltere Instanz, geaenderte Antwortform),
+                // gilt bewusst `true` - ein Fehlalarm auf jedem Kalender waere
+                // schlimmer als ein ausbleibender Hinweis.
+                'is_public' => (bool) ($calendar['isPublic'] ?? true),
             ];
         }
 

@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.10.0] - 2026-09-01
+
+### Added
+
+- **Termine, die ChurchTools als „nur für angemeldete Benutzer" führt, kommen nicht mehr auf die Website.** ChurchTools liefert diese Angabe an jedem Termin mit (`isInternal`, auf der Serie und damit für alle Wiederholungen); das Plugin hat sie bisher an keiner Stelle ausgewertet — ein gesetztes Häkchen wäre unbemerkt öffentlich geworden. Solche Termine werden jetzt gar nicht erst gespeichert, und eine Serie, die nachträglich intern gestellt wird, räumt der nächste Sync von selbst wieder ab. In den Daten der Testinstanz war die Angabe bei 39 Terminen und Serien nirgends gesetzt — die Änderung ändert also heute nichts und schließt eine Tür, die offen stand.
+- **Der Tab „Kalender" meldet einen Widerspruch zwischen beiden Systemen.** Ist hier ein Kalender aktiv, den ChurchTools nicht als öffentlich führt, steht das jetzt als Hinweis über der Liste. Bewusst gemeldet statt still übergangen: Anders als beim einzelnen Termin ist das Häkchen eine ausdrückliche Entscheidung im WordPress-Backend — verschwänden die Termine wortlos, würde man den Grund an der falschen Stelle suchen. Fehlt die Angabe in der Antwort ganz, gilt der Kalender als öffentlich; eine Warnung auf jedem Kalender wäre schlimmer als keine.
+
 ## [1.9.0] - 2026-09-01
 
 ### Changed

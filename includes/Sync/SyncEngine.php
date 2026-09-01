@@ -440,6 +440,23 @@ final class SyncEngine
             return null;
         }
 
+        /*
+         * ChurchTools kennt am Termin die Option „nur fuer angemeldete
+         * Benutzer" (`isInternal`, auf `base` und damit serienweit). Sie ist
+         * eine Aussage der Gemeinde darueber, was *nicht* nach draussen soll -
+         * WordPress darf sie nicht ueberstimmen, auch nicht ueber den Umweg
+         * eines angehakten Kalenders.
+         *
+         * Weggelassen statt gespeichert-und-beim-Anzeigen-gefiltert: Was hier
+         * null zurueckgibt, landet nicht in $keepOccurrenceKeys, und
+         * deleteOrphans() raeumt eine bis dahin oeffentliche Serie deshalb von
+         * selbst ab, sobald das Haekchen gesetzt wird. Ein zweiter Filter im
+         * Frontend waere eine zweite Stelle, an der man ihn vergessen kann.
+         */
+        if (!empty($base['isInternal'])) {
+            return null;
+        }
+
         $image = $base['image'] ?? null;
         $imageUrl = is_array($image) ? (string) ($image['fileUrl'] ?? '') : '';
         $location = self::formatAddress(is_array($base['address'] ?? null) ? $base['address'] : null);
