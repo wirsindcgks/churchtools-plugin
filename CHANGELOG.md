@@ -5,6 +5,20 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.15.0] - 2026-09-02
+
+### Changed
+
+- **Der Eventfinder ist überarbeitet, und der Anlass war eine Messung.** Auf einem 375 Pixel breiten Schirm brachen die zwölf Kategorien der Referenzinstanz auf sechs Zeilen und die vier Zeiträume auf drei: Der Eventfinder war 525 Pixel hoch und damit **65 % des Bildschirms**, bevor ein einziger Termin zu sehen war. Jetzt sind es 187 Pixel, und die erste Kachel steht auf dem ersten Bildschirm.
+- **Umbruch oder Schieben entscheidet das Ergebnis, nicht die Fensterbreite.** Würde eine Knopfreihe auf drei Zeilen anwachsen, wird sie stattdessen zu einer einzeiligen Leiste, die sich seitlich schieben lässt. Eine feste Schwelle wie „unter 782 Pixel“ ging daran vorbei: Mit vier Kategorien bricht auf einem Handy gar nichts um, mit zwanzig auf einem breiten Schirm sehr wohl. Dass rechts und links mehr kommt, sagen ein Verlauf am Rand und ein Pfeil in jede Richtung – der Pfeil ist zugleich der Weg dorthin für alle, die nicht wischen. Seine Ecken folgen der Einstellung „Rund/Eckig“ aus dem Design-Reiter.
+- **Bleibt es beim Umbruch, wird ein einzelner Knopf in der letzten Zeile vermieden.** Die Reihe wird dann schrittweise schmaler gemacht, bis mindestens drei nebeneinander stehen – ein einzelner Knopf unter einer vollen Zeile sieht angehängt aus. Gemessen an der Referenzinstanz: drei bis sechs in der letzten Zeile über alle üblichen Breiten. Beobachtet wird dafür die Breite der Leiste selbst und nicht nur die des Fensters, damit auch eine einklappende Seitenspalte oder ein Baukasten-Raster die Aufteilung nachzieht.
+- **Die Zeitraum-Knöpfe bleiben immer einzeilig.** Vier Zeiträume sind eine geschlossene Skala von „Jederzeit“ bis „Diesen Monat“; beim Umbruch zerfällt sie in zwei Hälften, die wie zwei verschiedene Fragen aussehen.
+- **Wording:** Über den Kategorien steht jetzt die Frage „Welche Angebote sprechen dich an?“ statt „Du suchst …“, und die Abschnittsüberschrift „Thema“ ist weggefallen – die Knöpfe tragen ihre Auskunft selbst. „Zeitraum“ bleibt: Ohne sie hätten die Zeiträume keine Zuordnung und sähen wie eine zweite Reihe Kategorien aus.
+
+### Fixed
+
+- **Ein Termin, dessen Bild sich nicht aus ChurchTools laden ließ, zeigte ein kaputtes Bild.** Das Plugin hat in diesem Fall die ChurchTools-Adresse ersatzweise ausgeliefert. Das kann nicht funktionieren: Der Import lädt mit `download_url()`, also ohne Anmeldung und damit genau so, wie es auch der Browser eines Besuchers täte – was der Import nicht laden konnte, kann der Besucher erst recht nicht (auf der Referenzinstanz antwortet eine solche Adresse mit HTTP 401). Der Rückfall lieferte also ein garantiert kaputtes Bild und verhinderte obendrein das Standardbild des Kalenders, weil das Feld ja belegt war. Ohne importierten Anhang bleibt es jetzt leer, und die Kachel zeigt Standardbild oder Kalenderfarbe.
+
 ## [1.14.0] - 2026-09-02
 
 ### Changed

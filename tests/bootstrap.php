@@ -201,6 +201,17 @@ function ctp_test_reset_transients(): void
  * what sanitizeSettings() branches on.
  */
 /**
+ * WordPress' home_url(): Basisadresse der Seite. Gebraucht ueber
+ * EventDetailPage::urlForEvent(), das EventListRenderer::withCalendarMeta() an
+ * jeder Zeile aufruft - die Adresse selbst prueft hier kein Test, sie darf nur
+ * nicht fatal fehlen.
+ */
+function home_url(string $path = ''): string
+{
+    return 'https://beispiel.test' . ($path === '' ? '' : '/' . ltrim($path, '/'));
+}
+
+/**
  * WordPress' absint(): Betrag der Ganzzahl. Gebraucht von
  * SettingsPage::sanitizeCalendars().
  *

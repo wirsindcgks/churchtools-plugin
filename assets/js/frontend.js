@@ -528,7 +528,7 @@
 	/**
 	 * Eventfinder calendar/timeframe buttons (partials/eventfinder.php): each
 	 * `.ctp-events__finder-group` is a mutually-exclusive toggle group (native
-	 * `<select>` semantics without a `<select>`, so "Du suchst …" buttons can
+	 * `<select>` semantics without a `<select>`, so the eventfinder buttons can
 	 * carry a label instead of an option), scoped per group so the calendar
 	 * group and the timeframe group don't clear each other.
 	 */
@@ -744,5 +744,270 @@
 		restoreLazyImages(content);
 		body.appendChild(content);
 		dialog.showModal();
+	}
+
+	/*
+	 * Blaetterknopf und Randverlauf der Knopfleisten (partials/eventfinder.php).
+	 *
+	 * Auf schmalen Schirmen liegen Themen und Zeitraeume in je einer
+	 * einzeiligen Leiste, die seitlich geschoben wird - zwoelf Knoepfe brachen
+	 * dort sonst auf sechs Zeilen und der Eventfinder war 65 % des Bildschirms
+	 * hoch, bevor ein Termin zu sehen war.
+	 *
+	 * Dass sich die Reihe schieben laesst, sagt der Verlauf am rechten Rand; er
+	 * steht in CSS und damit auch ohne Skript. Der Knopf kommt hier dazu: Er ist
+	 * der Weg nach rechts fuer alle, die nicht wischen (Maus, Tastatur), und
+	 * steht im Markup mit `hidden` - ohne JavaScript waere er ein Bedienelement,
+	 * das nichts tut, und das ist schlimmer als keines.
+	 */
+	/**
+	 * Wie viele Zeilen eine Knopfreihe belegt, und wie viele Knoepfe in der
+	 * letzten stehen. Beides ist nur nach dem Layout zu beantworten - deshalb
+	 * entscheidet das hier und nicht eine Medienabfrage.
+	 */
+	/*
+	 * Wie viele Knoepfe die letzte Zeile mindestens tragen soll, bevor das
+	 * Verengen aufhoert. Zwei waren die erste Fassung und sahen immer noch
+	 * angehaengt aus; drei lesen sich als angefangene Zeile (Nutzerentscheidung
+	 * 2026-09-02).
+	 */
+	var ZIEL_LETZTE_ZEILE = 3;
+
+	function finderRows(group) {
+		var tops = [];
+
+		Array.prototype.forEach.call(group.querySelectorAll('.ctp-events__finder-btn'), function (button) {
+			var top = Math.round(button.getBoundingClientRect().top);
+
+			if (tops.indexOf(top) === -1) {
+				tops.push(top);
+			}
+		});
+
+		return tops;
+	}
+
+	function finderLastRowCount(group) {
+		var buttons = Array.prototype.slice.call(group.querySelectorAll('.ctp-events__finder-btn'));
+
+		if (buttons.length === 0) {
+			return 0;
+		}
+
+		var lastTop = Math.round(buttons[buttons.length - 1].getBoundingClientRect().top);
+
+		return buttons.filter(function (button) {
+			return Math.round(button.getBoundingClientRect().top) === lastTop;
+		}).length;
+	}
+
+	/*
+	 * Entscheidet je Leiste zwischen Umbruch und Schiebemodus - und raeumt im
+	 * Umbruch die haesslichste Variante weg.
+	 *
+	 * Ab drei Zeilen wird geschoben. Eine feste Fensterbreite als Schwelle ging
+	 * daran vorbei: Mit vier Kategorien bricht auf einem Handy gar nichts um,
+	 * mit zwanzig auf einem breiten Schirm sehr wohl. Gemessen wird deshalb das
+	 * Ergebnis, nicht seine Ursache.
+	 *
+	 * Bleiben es zwei Zeilen und in der zweiten steht ein *einzelner* Knopf,
+	 * wird die Reihe schrittweise schmaler gemacht, bis mindestens zwei
+	 * nebeneinander stehen. Ein einzelner Knopf unter einer vollen Zeile sieht
+	 * angehaengt aus (Nutzerbefund 2026-09-02); zwei oder drei lesen sich als
+	 * angefangene Zeile. Die Untergrenze von 70 % verhindert, dass aus dem
+	 * Aufraeumen eine schmale Saeule wird, und entstuende dabei eine dritte
+	 * Zeile, wird der letzte Schritt zurueckgenommen.
+	 */
+	function layoutFinderStrips() {
+		var strips = document.querySelectorAll('.ctp-events__finder-strip');
+
+		Array.prototype.forEach.call(strips, function (strip) {
+			var group = strip.querySelector('.ctp-events__finder-group');
+
+			if (!group) {
+				return;
+			}
+
+			// Erst in den Umbruch zuruecksetzen, sonst misst der naechste Lauf
+			// den Schiebemodus des vorigen (dort gibt es immer genau eine Zeile).
+			strip.classList.remove('ctp-events__finder-strip--scroll');
+			group.style.maxWidth = '';
+
+			// Reihen, die immer einzeilig bleiben sollen, stellen keine Frage -
+			// sie schieben grundsaetzlich (siehe partials/eventfinder.php).
+			if (strip.classList.contains('ctp-events__finder-strip--nowrap')) {
+				strip.classList.add('ctp-events__finder-strip--scroll');
+
+				return;
+			}
+
+			if (finderRows(group).length >= 3) {
+				strip.classList.add('ctp-events__finder-strip--scroll');
+
+				return;
+			}
+
+			if (finderRows(group).length !== 2 || finderLastRowCount(group) >= ZIEL_LETZTE_ZEILE) {
+				return;
+			}
+
+			// Das beste Zwischenergebnis mitfuehren: Wird das Ziel nie erreicht,
+			// ist eine letzte Zeile mit zwei Knoepfen immer noch besser als eine
+			// mit einem - nur die volle Breite zurueckzunehmen waere Aufgeben.
+			var bestesMass = '';
+			var bestesErgebnis = finderLastRowCount(group);
+
+			for (var prozent = 96; prozent >= 70; prozent -= 4) {
+				group.style.maxWidth = prozent + '%';
+
+				if (finderRows(group).length > 2) {
+					break;
+				}
+
+				var letzte = finderLastRowCount(group);
+
+				if (letzte >= ZIEL_LETZTE_ZEILE) {
+					return;
+				}
+
+				if (letzte > bestesErgebnis) {
+					bestesErgebnis = letzte;
+					bestesMass = prozent + '%';
+				}
+			}
+
+			group.style.maxWidth = bestesMass;
+		});
+	}
+
+	function updateFinderScrollButtons() {
+		var strips = document.querySelectorAll('.ctp-events__finder-strip');
+
+
+		Array.prototype.forEach.call(strips, function (strip) {
+			var group = strip.querySelector('.ctp-events__finder-group');
+			var next = strip.querySelector('.ctp-events__finder-scroll--next');
+			var prev = strip.querySelector('.ctp-events__finder-scroll--prev');
+
+			if (!group || !next || !prev) {
+				return;
+			}
+
+			/*
+			 * Der Lauscher haengt direkt an der Leiste und wird einmal gesetzt.
+			 * Zuerst stand er delegiert am Dokument in der Erfassungsphase -
+			 * fuer scroll, das nicht aufsteigt, ist das der uebliche Weg und
+			 * waere auch richtig gewesen. Direkt am Element ist es schlicht
+			 * kuerzer und braucht die Erklaerung nicht.
+			 */
+			if (!group.dataset.ctpScrollWatched) {
+				group.dataset.ctpScrollWatched = '1';
+				group.addEventListener('scroll', updateFinderScrollButtons, { passive: true });
+			}
+
+			// Ein Pixel Toleranz: Bei gebrochenen Breiten liegt scrollLeft an
+			// den Anschlaegen regelmaessig knapp daneben, und ein Knopf bliebe
+			// sonst dort stehen, wo es nicht weitergeht.
+			var amEnde = group.scrollWidth - group.clientWidth - group.scrollLeft <= 1;
+			var amAnfang = group.scrollLeft <= 1;
+
+			next.hidden = amEnde;
+			prev.hidden = amAnfang;
+
+			// Dieselben Zustaende steuern die Verlaeufe an den Raendern. Die
+			// stehen in CSS und damit auch ohne Skript - hier werden sie nur
+			// dort weggenommen, wo wirklich nichts mehr kommt.
+			strip.classList.toggle('ctp-events__finder-strip--end', amEnde);
+			strip.classList.toggle('ctp-events__finder-strip--start', amAnfang);
+		});
+	}
+
+	document.addEventListener('click', function (event) {
+		var button = event.target.closest('.ctp-events__finder-scroll');
+
+		if (!button) {
+			return;
+		}
+
+		var group = button.parentElement.querySelector('.ctp-events__finder-group');
+
+		if (!group) {
+			return;
+		}
+
+		// Vier Fuenftel statt der vollen Breite, damit der zuletzt sichtbare
+		// Knopf nach dem Blaettern noch angeschnitten stehen bleibt - so bleibt
+		// erkennbar, dass man sich innerhalb einer Leiste bewegt hat.
+		var weite = Math.round(group.clientWidth * 0.8);
+
+		if (button.classList.contains('ctp-events__finder-scroll--prev')) {
+			weite = -weite;
+		}
+
+		group.scrollBy({ left: weite, behavior: 'smooth' });
+	});
+
+	window.addEventListener('resize', function () {
+		layoutFinderStrips();
+		updateFinderScrollButtons();
+	});
+
+	/*
+	 * Dreimal gerechnet, und das ist kein Uebermass: Beim ersten Lauf steht das
+	 * Skript im Fuss und die Schrift des Themes ist noch nicht geladen - die
+	 * Knoepfe sind dann schmaler als spaeter, die Leiste laeuft noch nicht ueber,
+	 * und der Blaetterknopf bliebe fuer immer verborgen, weil kein Ereignis
+	 * mehr kommt. Genau so ist es beim Nachmessen aufgefallen.
+	 */
+	function refreshFinderLayout() {
+		layoutFinderStrips();
+		updateFinderScrollButtons();
+	}
+
+	/*
+	 * Beobachtet die Breite der Leisten selbst statt nur die des Fensters. Der
+	 * Eventfinder steht nicht immer ueber die volle Seite: In einer Spalte, in
+	 * einem Seitenbaukasten-Raster oder neben einer ein- und ausklappbaren
+	 * Seitenleiste aendert sich seine Breite, ohne dass das Fenster sich
+	 * bewegt - `resize` bliebe dann aus, und die Reihe behielte eine
+	 * Aufteilung, die zu ihrer alten Breite gehoerte.
+	 *
+	 * Der Beobachter meldet auch die Aenderung, die die Routine selbst
+	 * ausloest (sie setzt max-width). Deshalb der Wachhund: Waehrend die
+	 * Routine laeuft, wird ihre eigene Rueckmeldung verworfen - sonst riefen
+	 * sich die beiden gegenseitig endlos auf.
+	 */
+	var layoutLaeuft = false;
+
+	function beobachteLeisten() {
+		if (typeof ResizeObserver !== 'function') {
+			return;
+		}
+
+		var beobachter = new ResizeObserver(function () {
+			if (layoutLaeuft) {
+				return;
+			}
+
+			layoutLaeuft = true;
+			refreshFinderLayout();
+			// Erst im naechsten Durchlauf freigeben, damit die eigenen
+			// Aenderungen dieser Runde nicht als neue Anlaesse zurueckkommen.
+			setTimeout(function () {
+				layoutLaeuft = false;
+			}, 0);
+		});
+
+		Array.prototype.forEach.call(document.querySelectorAll('.ctp-events__finder-strip'), function (strip) {
+			beobachter.observe(strip);
+		});
+	}
+
+	refreshFinderLayout();
+	beobachteLeisten();
+	window.addEventListener('load', refreshFinderLayout);
+
+	if (document.fonts && document.fonts.ready) {
+		document.fonts.ready.then(refreshFinderLayout);
 	}
 })();

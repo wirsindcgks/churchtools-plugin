@@ -523,11 +523,10 @@ final class EventListRenderer
     /**
      * Adds the calendar's configured name/color to each event row so templates can
      * show them without every override having to know about SettingsPage/options.
-     * Also resolves image_url to the imported WP attachment when one exists, so
-     * templates never have to hotlink the ChurchTools-hosted original — falls back
-     * to the raw ChurchTools URL only for rows synced before the image import
-     * (attachment_id not yet set) or where the download failed. If the event still
-     * has no image at that point, falls back to the calendar's admin-configured
+     * Also resolves image_url to the imported WP attachment; ohne Anhang bleibt
+     * das Feld leer, die ChurchTools-Adresse wird nie ausgeliefert (Begruendung
+     * unten an der Stelle). If the event has no image at that point, falls back
+     * to the calendar's admin-configured
      * "Standardbild" (default_image_id, Calendars tab) — image_is_fallback marks
      * that case so templates/CSS can visually distinguish a generic calendar photo
      * from a real per-event one (e.g. a tinted overlay). The CSS gradient in
@@ -560,14 +559,35 @@ final class EventListRenderer
             $event['image_srcset'] = '';
             $event['image_srcset_full'] = '';
 
+            /*
+             * Ohne importierten Anhang gibt es kein Bild - die ChurchTools-
+             * Adresse wird *nicht* ersatzweise ausgeliefert.
+             *
+             * Sie stand hier frueher als Rueckfall fuer Zeilen, deren Import
+             * ausstand oder fehlschlug. Das kann nicht funktionieren:
+             * importImage() laedt mit download_url(), also ohne Anmeldung und
+             * damit genau so, wie es auch der Browser eines Besuchers taete.
+             * Was der Import nicht herunterladen konnte, kann der Besucher erst
+             * recht nicht - auf der Referenzinstanz antwortet eine solche
+             * Adresse mit HTTP 401. Der Rueckfall lieferte also ein garantiert
+             * kaputtes Bild und verhinderte obendrein das Standardbild des
+             * Kalenders, weil `image_url` ja belegt war (Nutzerbefund
+             * 2026-09-02: „Beim 3. Event scheint etwas am Bild kaputt zu
+             * sein").
+             */
+            $attachmentUrl = false;
             $attachmentId = (int) ($event['attachment_id'] ?? 0);
+
             if ($attachmentId > 0) {
                 $attachmentUrl = wp_get_attachment_image_url($attachmentId, 'large');
-                if ($attachmentUrl !== false) {
-                    $event['image_url'] = $attachmentUrl;
-                    $event['image_srcset'] = CardImage::srcsetFor($attachmentId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
-                    $event['image_srcset_full'] = CardImage::srcsetFor($attachmentId);
-                }
+            }
+
+            if ($attachmentUrl !== false) {
+                $event['image_url'] = $attachmentUrl;
+                $event['image_srcset'] = CardImage::srcsetFor($attachmentId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
+                $event['image_srcset_full'] = CardImage::srcsetFor($attachmentId);
+            } else {
+                $event['image_url'] = '';
             }
 
             $event['image_is_fallback'] = false;

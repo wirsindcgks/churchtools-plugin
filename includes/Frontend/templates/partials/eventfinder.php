@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Guided "Du suchst …" toolbar for the list/grid layouts — button-based
+ * Gefuehrte Werkzeugleiste fuer die Layouts list/grid — Knopfleisten fuer
  * shortcuts for calendar and timeframe, plus (wenn "search" eingeschaltet
  * ist) ein Suchfeld, in place of the plain filter dropdown/search input from
  * partials/toolbar.php (opt-in via the shortcode/block/WPBakery "eventfinder"
@@ -32,27 +32,32 @@ if (!defined('ABSPATH')) {
 }
 
 /*
- * The two section headings ("Thema"/"Zeitraum") double as the accessible name
- * of the button group under each — aria-labelledby rather than a hard-coded
- * aria-label, so screen readers announce the same words that are on screen.
- * IDs come from wp_unique_id() because a page can carry more than one
- * [ctp_events eventfinder="1"] instance and duplicate IDs would point every
- * group at the first one's heading.
+ * Die Ueberschriften sind zugleich der zugaengliche Name der Knopfgruppe
+ * darunter - aria-labelledby statt eines fest verdrahteten aria-label, damit
+ * Screenreader dieselben Worte vorlesen, die auf dem Schirm stehen. Die IDs
+ * kommen aus wp_unique_id(), weil eine Seite mehr als einen
+ * [ctp_events eventfinder="1"] tragen kann und doppelte IDs jede Gruppe auf die
+ * Ueberschrift der ersten zeigen liessen.
+ *
+ * Die Themenreihe hat seit 2026-09-02 keine eigene sichtbare Ueberschrift mehr
+ * (Nutzerentscheidung: „Thema streichen, das sollte dann selbsterklaerend
+ * sein") - ihren Namen leiht ihr deshalb die Frage darueber, die dieselbe
+ * Auskunft gibt und ohnehin dasteht.
  */
-$topicHeadingId = wp_unique_id('ctp-finder-topic-');
+$questionId = wp_unique_id('ctp-finder-question-');
 $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
 ?>
 <div class="ctp-events__toolbar ctp-events__eventfinder" data-ctp-toolbar-config="<?php echo esc_attr((string) wp_json_encode($args['toolbar_config'])); ?>">
-    <p class="ctp-events__finder-label"><?php esc_html_e('Du suchst …', 'churchtools-plugin'); ?></p>
+    <p class="ctp-events__finder-label" id="<?php echo esc_attr($questionId); ?>">
+        <?php esc_html_e('Welche Angebote sprechen dich an?', 'churchtools-plugin'); ?>
+    </p>
     <?php if ($filterCalendars !== []) : ?>
         <div class="ctp-events__finder-row">
-            <span class="ctp-events__finder-row-label" id="<?php echo esc_attr($topicHeadingId); ?>">
-                <?php esc_html_e('Thema', 'churchtools-plugin'); ?>
-            </span>
+            <div class="ctp-events__finder-strip">
             <div
                 class="ctp-events__finder-group"
                 role="group"
-                aria-labelledby="<?php echo esc_attr($topicHeadingId); ?>"
+                aria-labelledby="<?php echo esc_attr($questionId); ?>"
             >
                 <button
                     type="button"
@@ -72,12 +77,68 @@ $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
                     ><?php echo esc_html($filterCalendar['name']); ?></button>
                 <?php endforeach; ?>
             </div>
+            <?php
+            /*
+             * Zwei Blaetterknoepfe, je einer pro Richtung. Sie sind erst da, wenn
+             * das Skript sie einschaltet - ohne JavaScript scrollt die Leiste
+             * weiterhin mit dem Finger, aber ein Knopf, der dann nichts tut,
+             * waere schlimmer als keiner. Der nach links erscheint erst, sobald
+             * tatsaechlich etwas hinter einem liegt.
+             */
+            ?>
+            <button
+                type="button"
+                class="ctp-events__finder-scroll ctp-events__finder-scroll--prev"
+                aria-label="<?php esc_attr_e('Vorherige Themen anzeigen', 'churchtools-plugin'); ?>"
+                hidden
+            >
+                <span aria-hidden="true">&lsaquo;</span>
+            </button>
+            <button
+                type="button"
+                class="ctp-events__finder-scroll ctp-events__finder-scroll--next"
+                aria-label="<?php esc_attr_e('Weitere Themen anzeigen', 'churchtools-plugin'); ?>"
+                hidden
+            >
+                <span aria-hidden="true">&rsaquo;</span>
+            </button>
+            </div>
         </div>
     <?php endif; ?>
-    <div class="ctp-events__finder-row">
+    <div class="ctp-events__finder-row ctp-events__finder-row--timeframe">
+        <?php
+        /*
+         * Dieselbe schiebbare Leiste wie bei den Themen. Ein Segmentschalter
+         * stand hier einen Nachmittag lang und ist verworfen: Auf schmalen
+         * Schirmen brachen die Segmentbreiten weg und die Knoepfe klebten
+         * aneinander, und die kurzen Beschriftungen, die er erzwang („Woche"
+         * statt „Diese Woche"), waren fuer sich genommen nicht verstaendlich -
+         * beides vom Nutzer gemeldet. Vier gleich aussehende Pillen wie oben
+         * sind langweiliger und funktionieren.
+         *
+         * Die Ueberschrift „Zeitraum" ist am 2026-09-02 zurueckgeholt worden
+         * (Nutzerentscheidung). Sie hat hier eine andere Aufgabe als das
+         * gestrichene „Thema": Die Themen stehen unter der Frage, die sie
+         * benennt - die Zeitraeume haetten sonst gar keine Zuordnung und saehen
+         * wie eine zweite Reihe Themen aus. Zusammen mit der Trennlinie darueber
+         * trennt sie die beiden Fragen sichtbar voneinander.
+         */
+        ?>
         <span class="ctp-events__finder-row-label" id="<?php echo esc_attr($timeframeHeadingId); ?>">
             <?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?>
         </span>
+        <?php
+        /*
+         * `--nowrap` heisst: Diese Reihe bleibt immer einzeilig und schiebt sich
+         * lieber, statt umzubrechen. Bei den Themen entscheidet das Skript nach
+         * der Zahl der Zeilen; hier waere dieselbe Rechnung falsch. Vier
+         * Zeitraeume sind eine geschlossene Skala von „jederzeit" bis „diesen
+         * Monat", und die zerfaellt beim Umbruch in zwei Haelften, die wie zwei
+         * verschiedene Fragen aussehen (Nutzerbefund 2026-09-02: „Diese sollen
+         * immer 1 Zeile sein").
+         */
+        ?>
+        <div class="ctp-events__finder-strip ctp-events__finder-strip--nowrap">
         <div
             class="ctp-events__finder-group"
             role="group"
@@ -107,6 +168,23 @@ $timeframeHeadingId = wp_unique_id('ctp-finder-timeframe-');
                 data-ctp-finder-timeframe="month"
                 aria-pressed="false"
             ><?php esc_html_e('Diesen Monat', 'churchtools-plugin'); ?></button>
+        </div>
+        <button
+            type="button"
+            class="ctp-events__finder-scroll ctp-events__finder-scroll--prev"
+            aria-label="<?php esc_attr_e('Vorherige Zeiträume anzeigen', 'churchtools-plugin'); ?>"
+            hidden
+        >
+            <span aria-hidden="true">&lsaquo;</span>
+        </button>
+        <button
+            type="button"
+            class="ctp-events__finder-scroll ctp-events__finder-scroll--next"
+            aria-label="<?php esc_attr_e('Weitere Zeiträume anzeigen', 'churchtools-plugin'); ?>"
+            hidden
+        >
+            <span aria-hidden="true">&rsaquo;</span>
+        </button>
         </div>
     </div>
     <?php if ($args['search']) : ?>

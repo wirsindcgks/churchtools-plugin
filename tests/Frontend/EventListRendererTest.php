@@ -43,4 +43,36 @@ final class EventListRendererTest extends TestCase
         // Kein Fatal Error bis hierher ist das Ergebnis.
         $this->addToAssertionCount(1);
     }
+
+    /**
+     * Ohne importierten Anhang darf die ChurchTools-Adresse nicht ersatzweise
+     * ausgeliefert werden: Der Import laedt mit download_url() und damit ohne
+     * Anmeldung, genau wie der Browser eines Besuchers. Was dort scheiterte,
+     * scheitert auch dort - auf der Referenzinstanz mit HTTP 401. Der frueher
+     * hier stehende Rueckfall lieferte ein garantiert kaputtes Bild und
+     * verhinderte zugleich das Standardbild des Kalenders.
+     */
+    public function testDropsTheRemoteImageUrlWhenNothingWasImported(): void
+    {
+        $method = new ReflectionMethod(EventListRenderer::class, 'withCalendarMeta');
+        $renderer = new EventListRenderer();
+
+        $events = $method->invoke($renderer, [[
+            'id' => 1,
+            'ct_event_id' => 6781,
+            'ct_calendar_id' => 32,
+            'title' => 'Kindergottesdienst',
+            'subtitle' => '',
+            'description' => '',
+            'start_date' => '2026-09-06 10:30:00',
+            'end_date' => '2026-09-06 12:00:00',
+            'all_day' => 0,
+            'location' => '',
+            'image_url' => 'https://musterkirche.church.tools/?q=public/filedownload&id=9244',
+            'attachment_id' => 0,
+        ]], 'none', []);
+
+        $this->assertSame('', $events[0]['image_url']);
+        $this->assertSame('', $events[0]['image_srcset']);
+    }
 }

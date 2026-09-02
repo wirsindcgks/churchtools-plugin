@@ -187,17 +187,28 @@
     font-style: italic;
 }
 
-/* ---------- eventfinder: guided "Du suchst …" toolbar, replaces the plain
+/* ---------- eventfinder: gefuehrte Werkzeugleiste, ersetzt die einfache
    filter/search toolbar above when opted into (list/grid layouts only, see
    EventListRenderer::render()) ---------- */
 
 .ctp-events__eventfinder {
-    /* Column instead of .ctp-events__toolbar's row-wrap default — "Thema" and
-       "Zeitraum" are stacked sections here (each with its own heading), not
-       items wrapping into the same line. */
+    /* Spalte statt der Zeile mit Umbruch, die .ctp-events__toolbar vorgibt: Hier
+       liegen die Reihen uebereinander, sie sind keine Elemente derselben Zeile. */
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+    /*
+     * Riegel gegen waagerechten Ueberlauf. Die Themenleiste darunter ist auf
+     * schmalen Schirmen breiter als der Schirm - sie *soll* scrollen. Fehlt an
+     * irgendeiner Stelle dieser Kette die Erlaubnis zu schrumpfen, dehnt sie
+     * stattdessen ihre Vorfahren, und dann wird die ganze Seite an dieser einen
+     * Stelle breit, waehrend alles andere in Handybreite steht. Genau so ist es
+     * gemeldet worden. Die drei Zeilen kosten nichts und schliessen den Fall an
+     * der Wurzel aus, statt ihn eine Ebene tiefer zu reparieren.
+     */
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 /*
@@ -217,27 +228,52 @@
     text-align: center;
 }
 
-/* One section per filter dimension ("Thema"/"Zeitraum", plus the search field
-   as a third) — a thin top border between consecutive sections (not around the
-   whole block) is the "optical separation" between the dimensions the toolbar
-   label alone doesn't provide. */
+/*
+ * Eine Reihe je Filterdimension. Die Trennlinie zwischen ihnen ist am
+ * 2026-09-02 weggefallen: Seit die Ueberschriften „Thema" und „Zeitraum" weg
+ * sind und der Zeitraum in einem Segmentschalter sitzt, sind das nicht mehr
+ * drei beschriftete Abschnitte, sondern eine Bedienleiste - und in einer
+ * Bedienleiste trennt der Abstand, nicht der Strich. Das Suchfeld darunter
+ * behaelt seine Linie: Es ist eine andere Art von Eingabe.
+ */
 .ctp-events__finder-row {
-    /* Column, so the heading gets a line of its own and its buttons start on
-       the next one — the heading used to sit inline to the left of them, which
-       read as a form label rather than as the section title it is. */
+    /* Spalte, damit die Ueberschrift eine eigene Zeile bekommt und ihre Knoepfe
+       auf der naechsten beginnen. */
     display: flex;
     flex-direction: column;
     align-items: center;
+    /*
+     * Feste Breite statt inhaltsabhaengiger - und zwar auf *jeder* Ebene dieser
+     * Kette (Reihe, Leiste, Gruppe) und bei jeder Fensterbreite.
+     *
+     * Ohne sie bemisst sich jedes dieser Elemente an seinem Inhalt, und eine
+     * nicht umbrechende Knopfreihe ist breiter als jeder Bildschirm. Drei vom
+     * Nutzer gemeldete Fehler kamen daher: Das Raster der Themen fiel auf dem
+     * Desktop auf eine Spalte zusammen (ein Raster ohne definierte Breite kennt
+     * keine Spaltenzahl), die zentrierte Ueberschrift wurde in einem viel zu
+     * breiten Kasten zentriert und hing dadurch rechts am Rand, und der
+     * Blaetterknopf blieb aus, weil das Skript in diesem Kasten mass, dass
+     * rechts nichts fehle.
+     */
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     gap: 0.55rem;
     margin-block-start: 0.95rem;
-    padding-block-start: 0.95rem;
-    border-block-start: 1px solid var(--ctp-color-border);
+}
+
+/*
+ * Die Zeitraum-Reihe traegt ihre Trennung allein in der Ueberschrift. Eine Linie
+ * stand hier zwischenzeitlich zusaetzlich und ist auf Nutzerentscheidung wieder
+ * gefallen (2026-09-02): Das Wort genuegt, und ohne den Strich liest sich der
+ * Eventfinder als eine Leiste statt als zwei gestapelte Kaesten.
+ */
+.ctp-events__finder-row--timeframe {
+    padding-block-start: 0.35rem;
 }
 
 .ctp-events__finder-row:first-of-type {
     margin-block-start: 0;
-    padding-block-start: 0;
-    border-block-start: none;
 }
 
 .ctp-events__finder-row-label {
@@ -251,6 +287,189 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    /*
+     * Zentriert die Gruppe selbst, nicht nur ihren Inhalt. Klingt doppelt
+     * gemoppelt neben `justify-content: center`, ist es aber nicht: Sobald die
+     * Layout-Routine die Reihe verengt, um den einzelnen Knopf in der letzten
+     * Zeile zu vermeiden (siehe assets/js/frontend.js), ist die Gruppe schmaler
+     * als die Leiste - und sass ohne diese Zeile linksbuendig darin. Der ganze
+     * Knopfblock stand dann sichtbar neben der Mitte, waehrend die Ueberschrift
+     * darueber mittig blieb.
+     */
+    margin-inline: auto;
+}
+
+/*
+ * Die Leiste, in der eine Knopfreihe liegt: Sie traegt den Blaetterknopf und den
+ * Verlauf am rechten Rand und muss dafuer der Bezugspunkt ihrer Lage sein.
+ */
+.ctp-events__finder-strip {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    /*
+     * Ohne diese Zeile sprengt die Leiste ihren Container. Ein Flex-Element hat
+     * `min-width: auto` und wird damit nie schmaler als sein Inhalt - die
+     * zwoelf Themenknoepfe in einer nicht umbrechenden Reihe sind aber breiter
+     * als jeder Bildschirm. Die Folge war beim Nachmessen sichtbar: Der ganze
+     * Eventfinder wurde breiter als das Fenster, der Segmentschalter darunter
+     * (Breite 100 % eines zu breiten Elternteils) lief rechts aus dem Bild, und
+     * der Blaetterknopf sass am rechten Rand einer Leiste, die es gar nicht auf
+     * den Schirm schaffte.
+     */
+    min-width: 0;
+}
+
+/*
+ * Der Blaetterknopf sitzt am rechten Rand *ueber* der Leiste. Er ist rund und
+ * gefuellt, damit er nicht wie ein weiterer Themenknopf aussieht, und er
+ * erscheint nur, wenn tatsaechlich noch etwas folgt - das entscheidet
+ * assets/js/frontend.js, weil CSS es nicht wissen kann.
+ */
+/*
+ * Die Pfeile in den Verlaeufen. Der Verlauf allein war zu leise - gemeldet war,
+ * dass nicht zu erkennen ist, dass sich die Reihe schieben laesst. Ein
+ * gefuelltes Zeichen darin sagt es unmissverstaendlich und ist zugleich der Weg
+ * fuer alle, die nicht wischen.
+ *
+ * Die Ecken kommen aus dem Design-Reiter: --ctp-radius-pill ist der Radius, den
+ * CardDesign::cssVariables() bei der Einstellung „Eckig" flach zieht. Ein festes
+ * `border-radius: 50%` stand hier zuerst und war falsch - der Knopf blieb rund,
+ * waehrend ringsum alles eckig wurde.
+ *
+ * `z-index`, weil der Verlauf als ::after des Elternteils *nach* den Knoepfen
+ * gemalt wird und sie sonst ueberzoege.
+ */
+.ctp-events__finder-scroll {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0 0 0.12em;
+    border: 1px solid var(--ctp-color-button-strong);
+    border-radius: var(--ctp-radius-pill);
+    background-color: var(--ctp-color-button-strong);
+    color: var(--ctp-color-button-strong-text);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ctp-events__finder-scroll--next {
+    inset-inline-end: 0;
+}
+
+.ctp-events__finder-scroll--prev {
+    inset-inline-start: 0;
+}
+
+.ctp-events__finder-scroll:hover {
+    background-color: color-mix(in srgb, var(--ctp-color-button-strong) 82%, #fff);
+}
+
+.ctp-events__finder-scroll:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 1px;
+}
+
+/*
+ * Schiebemodus. Ob eine Knopfreihe umbricht oder seitlich geschoben wird,
+ * entscheidet nicht mehr eine Fensterbreite, sondern das Ergebnis des Umbruchs
+ * selbst: Ab drei Zeilen schaltet assets/js/frontend.js hier um
+ * (Nutzerentscheidung 2026-09-02). Eine feste Schwelle wie „unter 782 Pixel"
+ * ging daran vorbei - mit vier Kategorien bricht auf einem Handy gar nichts um,
+ * mit zwanzig auf einem breiten Schirm sehr wohl.
+ *
+ * Dass diese Entscheidung an JavaScript haengt, kostet nichts: Ohne Skript
+ * filtern die Knoepfe ohnehin nicht, der Eventfinder ist dann als Ganzes
+ * wirkungslos.
+ */
+.ctp-events__finder-strip--scroll .ctp-events__finder-group {
+    flex-wrap: nowrap;
+    /*
+     * Mittig, solange der Inhalt passt - und das geht ueber die Breite, nicht
+     * ueber `justify-content: center`: Ein zentrierter Flex-Container, der
+     * ueberlaeuft, schneidet am Anfang ab, und der erste Knopf waere nicht mehr
+     * erreichbar. Mit `width: auto` schrumpft die Gruppe stattdessen auf ihren
+     * Inhalt und wird von den automatischen Aussenabstaenden zentriert; laeuft
+     * sie ueber, fuellt sie die Breite und schiebt von links.
+     */
+    width: auto;
+    margin-inline: auto;
+    justify-content: flex-start;
+    overflow-x: auto;
+    /* Damit der Fokusring des ersten Knopfes nicht abgeschnitten wird -
+       overflow-x erzwingt overflow-y: auto. */
+    padding-block: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ctp-events__finder-strip--scroll .ctp-events__finder-group::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ohne diese Zeile schrumpfen die Knoepfe, statt ueberzulaufen - flex-shrink
+   steht standardmaessig auf 1, und eine Leiste aus zerquetschten Knoepfen waere
+   kein Fortschritt. */
+.ctp-events__finder-strip--scroll .ctp-events__finder-btn {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+}
+
+/*
+ * Ueberschriften und Knopfreihen stehen mittig, auf jeder Breite - es gibt hier
+ * keine Ausnahme fuer schmale Schirme mehr (Nutzerentscheidung 2026-09-02:
+ * „Immer mittig/zentriert"). Zwei Fassungen davor lagen daneben: Zuerst hing
+ * die Ausrichtung am Schiebemodus, und seit die Zeitraum-Reihe immer schiebt,
+ * traf das immer zu - der ganze Block wurde auch auf dem Desktop linksbuendig.
+ * Danach stand hier eine Medienabfrage, die schmale Schirme linksbuendig
+ * setzte; auch die ist weg.
+ *
+ * Eine Leiste, die *ueberlaeuft*, beginnt trotzdem links - anders geht es
+ * nicht, ein zentrierter Scrollbereich schneidet seinen Anfang ab. Sichtbar
+ * wird der Unterschied nur dort, wo ohnehin geschoben wird.
+ */
+
+/*
+ * Die Verlaeufe an den Raendern sagen „hier geht es weiter". Sie gehoeren zum
+ * Schiebemodus und verschwinden am jeweiligen Anschlag, weil dort nichts mehr
+ * liegt - welcher Anschlag erreicht ist, traegt das Skript als Klasse ein.
+ */
+.ctp-events__finder-strip--scroll::before,
+.ctp-events__finder-strip--scroll::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    width: 4.5rem;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.ctp-events__finder-strip--scroll::after {
+    inset-inline-end: 0;
+    background: linear-gradient(to right, transparent, var(--ctp-color-surface) 55%);
+}
+
+.ctp-events__finder-strip--scroll::before {
+    inset-inline-start: 0;
+    background: linear-gradient(to left, transparent, var(--ctp-color-surface) 55%);
+}
+
+.ctp-events__finder-strip--end::after,
+.ctp-events__finder-strip--start::before {
+    opacity: 0;
 }
 
 /* Column direction again: flex-basis is a *height* here, so the plain
@@ -292,6 +511,15 @@
     font-weight: 600;
     line-height: 1.35;
     cursor: pointer;
+    /*
+     * Nie ein Umbruch im Knopf. Ein Raster aus gleich breiten Spalten stand
+     * hier kurz und ist verworfen: Es loeste zwar den einzelnen Knopf in der
+     * letzten Zeile, zwang aber lange Beschriftungen in zwei Zeilen, sobald die
+     * Spalten schmal wurden. Ungleich breite Knoepfe mit einzeiligem Text lesen
+     * sich besser als gleich breite mit umgebrochenem (Nutzerentscheidung
+     * 2026-09-02).
+     */
+    white-space: nowrap;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 

@@ -2276,7 +2276,7 @@ final class SettingsPage
                     <tr>
                         <td><code>eventfinder</code></td>
                         <td>
-                            <?php esc_html_e('Geführte „Du suchst …“-Buttons für Kalender/Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden', 'churchtools-plugin'); ?>
+                            <?php esc_html_e('Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>0</code></td>
                     </tr>
