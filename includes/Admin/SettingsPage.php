@@ -947,6 +947,29 @@ final class SettingsPage
                 );
                 ?>
 
+                <?php
+                /*
+                 * Die Raumangabe entsteht beim Sync und steht danach als Wert in
+                 * der Termintabelle - anders als eine Kalenderfarbe, die bei
+                 * jedem Seitenaufruf neu gerendert wird. Ohne diesen Hinweis
+                 * sieht das Speichern folgenlos aus, und genau so ist es
+                 * gemeldet worden.
+                 */
+                ?>
+                <div class="notice notice-info inline">
+                    <p>
+                        <?php esc_html_e('Änderungen auf dieser Seite wirken sich erst mit der nächsten Synchronisation auf die Website aus – der Ort wird beim Abgleich zum Termin geschrieben, nicht beim Anzeigen. Nach dem Speichern wird ein Lauf automatisch angestoßen; mit dem Knopf darunter geht es sofort.', 'churchtools-plugin'); ?>
+                    </p>
+                </div>
+
+                <?php
+                self::renderActionBar(
+                    'ctp-run-sync',
+                    __('Jetzt synchronisieren', 'churchtools-plugin'),
+                    __('Erst speichern, dann synchronisieren – dieser Knopf verwirft ungespeicherte Änderungen nicht, arbeitet aber mit dem gespeicherten Stand.', 'churchtools-plugin')
+                );
+                ?>
+
                 <?php if ($resources === []) : ?>
                     <div class="notice notice-info inline">
                         <p>

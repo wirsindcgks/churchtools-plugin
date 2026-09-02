@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.13.1] - 2026-09-02
+
+### Fixed
+
+- **Eine geänderte Raumauswahl wirkte sich erst bis zu eine Stunde später aus.** Gemeldet als „der Wechsel des neuen Radio Buttons zeigt nicht direkt zu greifen“, und der Befund war genau das: Gespeichert wurde korrekt, nur blieb die Website unverändert. Der Grund ist die Bauart – anders als etwa eine Kalenderfarbe, die bei jedem Seitenaufruf neu gerendert wird, entsteht der Ort beim Abgleich und steht danach als Wert in der Termintabelle. Wer die Auswahl oder die Regel ändert, ändert damit nichts an dem, was schon geschrieben ist. Ein Speichern, das die Haken oder die Regel wirklich verändert, stößt jetzt zehn Sekunden später einen eigenen Lauf an; der planmäßige Zeitplan bleibt davon unberührt, und ein Speichern ohne Änderung an den Räumen löst nichts aus (auch der stündliche Listenabgleich nicht, der nur Namen und Sortierung nachzieht).
+- **Und der Reiter sagt es jetzt.** Über der Liste steht, dass Änderungen mit der nächsten Synchronisation greifen und automatisch eine angestoßen wird; darunter gibt es einen eigenen Knopf „Jetzt synchronisieren“, damit man nicht dafür den Reiter wechseln muss.
+
 ## [1.13.0] - 2026-09-02
 
 ### Added

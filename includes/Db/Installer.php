@@ -55,6 +55,64 @@ final class Installer
         if ($previous !== $current) {
             self::ensureSchedules();
         }
+
+        if (self::roomSettingsChanged($oldValue, $newValue)) {
+            self::scheduleImmediateSync();
+        }
+    }
+
+    /**
+     * Die Raumangabe entsteht beim Sync und steht danach als Wert in der
+     * Termintabelle - anders als etwa eine Kalenderfarbe, die bei jedem
+     * Seitenaufruf neu gerendert wird. Wer die Auswahl oder die Regel aendert,
+     * sah deshalb bis zum naechsten planmaessigen Lauf gar nichts, bei
+     * stuendlichem Sync also bis zu eine Stunde lang (Nutzerbefund 2026-09-02:
+     * „Der Wechsel des neuen Radio Buttons zeigt nicht direkt zu greifen").
+     *
+     * @param mixed $oldValue
+     * @param mixed $newValue
+     */
+    public static function roomSettingsChanged($oldValue, $newValue): bool
+    {
+        $old = is_array($oldValue) ? $oldValue : [];
+        $new = is_array($newValue) ? $newValue : [];
+
+        // Nur die Haken vergleichen: Name und Sortierschluessel kommen bei jedem
+        // Abgleich frisch aus ChurchTools, und ein dort umbenannter Raum ist
+        // kein Grund, ausser der Reihe zu synchronisieren.
+        $ticks = static function (array $settings): array {
+            $enabled = [];
+
+            foreach (($settings['resources'] ?? []) as $id => $resource) {
+                if (!empty($resource['enabled'])) {
+                    $enabled[] = (int) $id;
+                }
+            }
+
+            sort($enabled);
+
+            return $enabled;
+        };
+
+        if ($ticks($old) !== $ticks($new)) {
+            return true;
+        }
+
+        return (string) ($old['rooms_mode'] ?? '') !== (string) ($new['rooms_mode'] ?? '');
+    }
+
+    /**
+     * Ein einzelner Lauf gleich nach dem Speichern, nicht der Sync im selben
+     * Request: Der holt Termine und Buchungen und braucht dafuer Sekunden - die
+     * Einstellungsseite haette sie zu warten.
+     *
+     * Der planmaessige Lauf bleibt davon unberuehrt; WordPress vertraegt einen
+     * Einzeltermin auf demselben Hook. Zehn Sekunden Abstand, damit das
+     * Speichern samt Weiterleitung sicher durch ist, bevor der Lauf beginnt.
+     */
+    private static function scheduleImmediateSync(): void
+    {
+        wp_schedule_single_event(time() + 10, 'ctp_run_sync');
     }
 
     /**

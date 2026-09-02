@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.13.0",
+    "version": "1.13.1",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-09-02 13:10:47",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.13.0/churchtools-plugin-v1.13.0.zip",
+    "last_updated": "2026-09-02 13:19:44",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.13.1/churchtools-plugin-v1.13.1.zip",
     "sections": {
-        "changelog": "<h4>Added</h4>\n<ul>\n<li><strong>Die Ortsangabe kann jetzt alle gebuchten Räume nennen.</strong> Bisher gab es zwei Stellungen: nennen, wenn genau ein ausgewählter Raum gebucht ist, oder nur, wenn sonst gar keiner belegt ist. Beide lassen eine Veranstaltung über mehrere Räume ohne Angabe. Die dritte Stellung zeigt, was ChurchTools liefert – alle ausgewählten gebuchten Räume, durch Komma getrennt und in ChurchTools’ eigener Sortierung, damit dieselbe Serie sich nicht von Woche zu Woche anders liest, nur weil jemand anders gebucht hat.</li>\n<li><strong>Wie gut sie taugt, hängt an der Auswahl, und das ist ausdrücklich so gemeint.</strong> Mit drei ausgewählten Räumen bleibt die längste Zeile der Referenzinstanz bei 38 Zeichen („Raum A, Raum B, Raum C“); mit neun ausgewählten wächst sie auf 143 Zeichen und acht Namen. Die Beschreibung im Reiter sagt das, gedeckelt wird nichts: In einer Stellung, die ausdrücklich „alles anzeigen“ heißt, wäre eine stille Kürzung das Gegenteil dessen, was sie verspricht.</li>\n</ul>\n<h4>Changed</h4>\n<ul>\n<li><strong>Aus dem Kästchen von 1.12.0 ist eine Auswahl aus drei Stellungen geworden.</strong> Wer damals „nur anzeigen, wenn sonst kein weiterer Raum gebucht ist“ gesetzt hatte, bleibt darauf – die alte Einstellung wird weiter gelesen, solange keine neue gespeichert ist, und auch das Speichern eines anderen Reiters schreibt sie nicht still um.</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Eine geänderte Raumauswahl wirkte sich erst bis zu eine Stunde später aus.</strong> Gemeldet als „der Wechsel des neuen Radio Buttons zeigt nicht direkt zu greifen“, und der Befund war genau das: Gespeichert wurde korrekt, nur blieb die Website unverändert. Der Grund ist die Bauart – anders als etwa eine Kalenderfarbe, die bei jedem Seitenaufruf neu gerendert wird, entsteht der Ort beim Abgleich und steht danach als Wert in der Termintabelle. Wer die Auswahl oder die Regel ändert, ändert damit nichts an dem, was schon geschrieben ist. Ein Speichern, das die Haken oder die Regel wirklich verändert, stößt jetzt zehn Sekunden später einen eigenen Lauf an; der planmäßige Zeitplan bleibt davon unberührt, und ein Speichern ohne Änderung an den Räumen löst nichts aus (auch der stündliche Listenabgleich nicht, der nur Namen und Sortierung nachzieht).</li>\n<li><strong>Und der Reiter sagt es jetzt.</strong> Über der Liste steht, dass Änderungen mit der nächsten Synchronisation greifen und automatisch eine angestoßen wird; darunter gibt es einen eigenen Knopf „Jetzt synchronisieren“, damit man nicht dafür den Reiter wechseln muss.</li>\n</ul>\n"
     }
 }

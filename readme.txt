@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.13.0
+Stable tag: 1.13.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -276,6 +276,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.13.1 =
+
+* Behoben: Eine geänderte Raumauswahl oder -regel wirkte bis zur nächsten planmäßigen Synchronisation nicht – jetzt wird nach dem Speichern sofort ein Lauf angestoßen
+* Neu: Der Reiter „Räume“ sagt, dass die Angabe beim Abgleich entsteht, und hat einen eigenen Knopf „Jetzt synchronisieren“
 
 = 1.13.0 =
 
