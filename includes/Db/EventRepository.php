@@ -113,6 +113,20 @@ class EventRepository
     }
 
     /**
+     * Termine mit einer Ortsangabe - die Zahl, an der im Tab „Raeume" abzulesen
+     * ist, ob eine geaenderte Auswahl etwas bewirkt hat. Ohne sie ist der Erfolg
+     * einer Einstellung nur auf der Website nachzusehen.
+     */
+    public function countWithLocation(): int
+    {
+        global $wpdb;
+
+        return (int) $wpdb->get_var(
+            $wpdb->prepare("SELECT COUNT(*) FROM %i WHERE location <> ''", $this->table)
+        );
+    }
+
+    /**
      * Gespeicherte Termine je Kalender, aufgeschluesselt nach "kommend" und
      * "gesamt" - die Zahl, die im Tab „Kalender“ neben jedem Eintrag steht.
      * Ohne sie sieht eine Kalenderliste, in der ein Kalender seit Monaten

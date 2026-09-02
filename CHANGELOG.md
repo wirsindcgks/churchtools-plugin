@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.14.0] - 2026-09-02
+
+### Changed
+
+- **Der Reiter „Räume“ übernimmt eine Änderung jetzt selbst.** 1.13.1 hatte das Problem erkannt – die Ortsangabe entsteht beim Abgleich, eine geänderte Auswahl wirkt also nicht beim Speichern – und mit einem Hinweis plus einem Knopf beantwortet. Das war die falsche Antwort: Nach dem Speichern landet man am Seitenanfang und musste den Knopf erst suchen („Man muss dann nach dem Speichern erst an den Seitenanfang“). Kommt die Seite jetzt von einem Speichern zurück, startet der Abgleich von allein; daneben steht, dass er läuft, und danach, dass er durch ist. Der Knopf heißt nur noch „Änderungen übernehmen“ und bleibt für den Fall, dass jemand ohne Speichern nachsehen will.
+- **Und es gibt endlich eine Rückmeldung, ob die Auswahl etwas bewirkt.** Unter dem Knopf steht, wie viele der gespeicherten Termine eine Ortsangabe haben – nach jedem Übernehmen frisch. Vorher war das nur auf der Website selbst nachzusehen, und wer zwischen den drei Stellungen vergleichen wollte, musste dafür die Seite wechseln.
+
+### Notes
+
+- Der Reiter bekam dafür einen eigenen Handler statt des vorhandenen Sync-Knopfs: Der lädt bei Erfolg die Seite neu, und nach einem Speichern trüge die Adresse dann weiterhin `settings-updated` – der Lauf hätte sich endlos selbst neu gestartet
+
 ## [1.13.1] - 2026-09-02
 
 ### Fixed

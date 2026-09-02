@@ -951,24 +951,31 @@ final class SettingsPage
                 /*
                  * Die Raumangabe entsteht beim Sync und steht danach als Wert in
                  * der Termintabelle - anders als eine Kalenderfarbe, die bei
-                 * jedem Seitenaufruf neu gerendert wird. Ohne diesen Hinweis
-                 * sieht das Speichern folgenlos aus, und genau so ist es
-                 * gemeldet worden.
+                 * jedem Seitenaufruf neu gerendert wird. Gemeldet wurde das als
+                 * „der Wechsel zeigt nicht direkt zu greifen", und der zweite
+                 * Anlauf (ein Hinweis plus ein Knopf oben) war auch noch keine
+                 * gute Antwort: Nach dem Speichern landet man am Seitenanfang
+                 * und musste den Knopf erst suchen.
+                 *
+                 * Jetzt uebernimmt die Seite selbst. Kommt sie mit
+                 * `settings-updated` zurueck - also direkt nach dem Speichern -,
+                 * laeuft der Abgleich von allein an, und darunter steht, was
+                 * dabei herausgekommen ist. Der Knopf bleibt fuer den Fall, dass
+                 * jemand ohne Aenderung nachsehen will.
                  */
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur die Frage „kommt die Seite von einem Speichern?"; WordPress haengt den Parameter selbst an, und ausgeloest wird davon ein Lesevorgang, der auch per Knopf jederzeit erlaubt ist.
+                $justSaved = isset($_GET['settings-updated']);
                 ?>
-                <div class="notice notice-info inline">
-                    <p>
-                        <?php esc_html_e('Änderungen auf dieser Seite wirken sich erst mit der nächsten Synchronisation auf die Website aus – der Ort wird beim Abgleich zum Termin geschrieben, nicht beim Anzeigen. Nach dem Speichern wird ein Lauf automatisch angestoßen; mit dem Knopf darunter geht es sofort.', 'churchtools-plugin'); ?>
-                    </p>
+                <div class="ctp-rooms-apply" data-auto="<?php echo $justSaved ? '1' : '0'; ?>">
+                    <?php
+                    self::renderActionBar(
+                        'ctp-sync-rooms',
+                        __('Änderungen übernehmen', 'churchtools-plugin'),
+                        __('Der Ort wird beim Abgleich zum Termin geschrieben, nicht beim Anzeigen – eine Änderung hier wird deshalb erst mit dem nächsten Abgleich sichtbar. Nach dem Speichern startet er von selbst.', 'churchtools-plugin')
+                    );
+                    ?>
+                    <p class="description" id="ctp-rooms-summary"><?php echo esc_html(self::locationSummary()); ?></p>
                 </div>
-
-                <?php
-                self::renderActionBar(
-                    'ctp-run-sync',
-                    __('Jetzt synchronisieren', 'churchtools-plugin'),
-                    __('Erst speichern, dann synchronisieren – dieser Knopf verwirft ungespeicherte Änderungen nicht, arbeitet aber mit dem gespeicherten Stand.', 'churchtools-plugin')
-                );
-                ?>
 
                 <?php if ($resources === []) : ?>
                     <div class="notice notice-info inline">
@@ -3929,6 +3936,68 @@ final class SettingsPage
                 });
         });
 
+        /*
+         * Der Tab „Raeume": uebernimmt nach dem Speichern von selbst. Eigener
+         * Handler statt des Knopfs unten, weil der bei Erfolg die Seite neu
+         * laedt - nach einem Speichern truege die Adresse dann weiterhin
+         * `settings-updated`, und der Lauf startete endlos neu. Hier wird
+         * stattdessen die Zeile darunter aktualisiert.
+         */
+        (function () {
+            var block = document.querySelector('.ctp-rooms-apply');
+            var button = document.getElementById('ctp-sync-rooms');
+
+            if (!block || !button) {
+                return;
+            }
+
+            var result = document.getElementById('ctp-sync-rooms-result');
+            var summary = document.getElementById('ctp-rooms-summary');
+
+            function uebernehmen() {
+                button.disabled = true;
+                ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Übernehme…', 'churchtools-plugin')); ?>');
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'ctp_run_sync',
+                        nonce: '<?php echo esc_js(wp_create_nonce('ctp_run_sync')); ?>',
+                    }),
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        button.disabled = false;
+
+                        if (data.success) {
+                            ctpSetStatus(result, 'ok', '<?php echo esc_js(__('Übernommen', 'churchtools-plugin')); ?>');
+
+                            if (summary && data.data && data.data.location_summary) {
+                                summary.textContent = data.data.location_summary;
+                            }
+
+                            return;
+                        }
+
+                        ctpSetStatus(result, 'error', (data.data && data.data.message)
+                            ? data.data.message
+                            : '<?php echo esc_js(__('Übernehmen fehlgeschlagen', 'churchtools-plugin')); ?>');
+                    })
+                    .catch(function () {
+                        button.disabled = false;
+                        ctpSetStatus(result, 'error', '<?php echo esc_js(__('Übernehmen fehlgeschlagen', 'churchtools-plugin')); ?>');
+                    });
+            }
+
+            button.addEventListener('click', uebernehmen);
+
+            if (block.dataset.auto === '1') {
+                uebernehmen();
+            }
+        })();
+
         document.getElementById('ctp-run-sync')?.addEventListener('click', function () {
             var button = this;
             var result = document.getElementById('ctp-run-sync-result');
@@ -4516,6 +4585,7 @@ final class SettingsPage
             wp_send_json_success([
                 'message' => __('Kein Kalender ist aktiv – die gespeicherten Termine wurden entfernt.', 'churchtools-plugin'),
                 'count' => (new EventRepository())->count(),
+                'location_summary' => self::locationSummary(),
                 'last_sync' => mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) get_option('ctp_last_sync', '')),
             ]);
         }
@@ -4534,8 +4604,31 @@ final class SettingsPage
         wp_send_json_success([
             'message' => __('Synchronisation abgeschlossen.', 'churchtools-plugin'),
             'count' => (new EventRepository())->count(),
+            'location_summary' => self::locationSummary(),
             'last_sync' => mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) get_option('ctp_last_sync', '')),
         ]);
+    }
+
+    /**
+     * Ein Satz statt zweier Zahlen: Er beantwortet die Frage, mit der jemand den
+     * Tab „Raeume" verlaesst - hat die Auswahl etwas bewirkt? Zahl-neutral
+     * formuliert, weil bin/make-pot.php keine Plurale kann.
+     */
+    private static function locationSummary(): string
+    {
+        $repository = new EventRepository();
+        $gesamt = $repository->count();
+
+        if ($gesamt === 0) {
+            return __('Es sind noch keine Termine gespeichert.', 'churchtools-plugin');
+        }
+
+        return sprintf(
+            /* translators: 1: number of events with a location, 2: total number of stored events */
+            __('Ortsangabe vorhanden: %1$d von %2$d gespeicherten Terminen.', 'churchtools-plugin'),
+            $repository->countWithLocation(),
+            $gesamt
+        );
     }
 
     /**

@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.13.1",
+    "version": "1.14.0",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-09-02 13:19:44",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.13.1/churchtools-plugin-v1.13.1.zip",
+    "last_updated": "2026-09-02 13:34:56",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.14.0/churchtools-plugin-v1.14.0.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Eine geänderte Raumauswahl wirkte sich erst bis zu eine Stunde später aus.</strong> Gemeldet als „der Wechsel des neuen Radio Buttons zeigt nicht direkt zu greifen“, und der Befund war genau das: Gespeichert wurde korrekt, nur blieb die Website unverändert. Der Grund ist die Bauart – anders als etwa eine Kalenderfarbe, die bei jedem Seitenaufruf neu gerendert wird, entsteht der Ort beim Abgleich und steht danach als Wert in der Termintabelle. Wer die Auswahl oder die Regel ändert, ändert damit nichts an dem, was schon geschrieben ist. Ein Speichern, das die Haken oder die Regel wirklich verändert, stößt jetzt zehn Sekunden später einen eigenen Lauf an; der planmäßige Zeitplan bleibt davon unberührt, und ein Speichern ohne Änderung an den Räumen löst nichts aus (auch der stündliche Listenabgleich nicht, der nur Namen und Sortierung nachzieht).</li>\n<li><strong>Und der Reiter sagt es jetzt.</strong> Über der Liste steht, dass Änderungen mit der nächsten Synchronisation greifen und automatisch eine angestoßen wird; darunter gibt es einen eigenen Knopf „Jetzt synchronisieren“, damit man nicht dafür den Reiter wechseln muss.</li>\n</ul>\n"
+        "changelog": "<h4>Changed</h4>\n<ul>\n<li><strong>Der Reiter „Räume“ übernimmt eine Änderung jetzt selbst.</strong> 1.13.1 hatte das Problem erkannt – die Ortsangabe entsteht beim Abgleich, eine geänderte Auswahl wirkt also nicht beim Speichern – und mit einem Hinweis plus einem Knopf beantwortet. Das war die falsche Antwort: Nach dem Speichern landet man am Seitenanfang und musste den Knopf erst suchen („Man muss dann nach dem Speichern erst an den Seitenanfang“). Kommt die Seite jetzt von einem Speichern zurück, startet der Abgleich von allein; daneben steht, dass er läuft, und danach, dass er durch ist. Der Knopf heißt nur noch „Änderungen übernehmen“ und bleibt für den Fall, dass jemand ohne Speichern nachsehen will.</li>\n<li><strong>Und es gibt endlich eine Rückmeldung, ob die Auswahl etwas bewirkt.</strong> Unter dem Knopf steht, wie viele der gespeicherten Termine eine Ortsangabe haben – nach jedem Übernehmen frisch. Vorher war das nur auf der Website selbst nachzusehen, und wer zwischen den drei Stellungen vergleichen wollte, musste dafür die Seite wechseln.</li>\n</ul>\n<h4>Notes</h4>\n<ul>\n<li>Der Reiter bekam dafür einen eigenen Handler statt des vorhandenen Sync-Knopfs: Der lädt bei Erfolg die Seite neu, und nach einem Speichern trüge die Adresse dann weiterhin <code>settings-updated</code> – der Lauf hätte sich endlos selbst neu gestartet</li>\n</ul>\n"
     }
 }
