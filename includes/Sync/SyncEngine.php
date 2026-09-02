@@ -387,7 +387,7 @@ final class SyncEngine
             return RoomLookup::fromBookings([], []);
         }
 
-        $exclusiveOnly = SettingsPage::roomsExclusiveOnly();
+        $mode = SettingsPage::roomsMode();
 
         /*
          * Im strengen Modus muessen die Buchungen *aller* bekannten Raeume
@@ -398,13 +398,13 @@ final class SyncEngine
          * die angehakten ab, und der strenge Modus blieb dadurch wirkungslos,
          * ohne dass ein Test das zeigen konnte.
          */
-        $fetchIds = $exclusiveOnly ? SettingsPage::knownResourceIds() : $resourceIds;
+        $fetchIds = $mode === RoomLookup::MODE_EXCLUSIVE ? SettingsPage::knownResourceIds() : $resourceIds;
 
         try {
             return RoomLookup::fromBookings(
                 $client->getBookings($fetchIds, $from, $to),
                 $resourceIds,
-                $exclusiveOnly
+                $mode
             );
         } catch (Throwable) {
             return RoomLookup::fromBookings([], []);

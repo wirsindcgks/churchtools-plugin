@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.13.0] - 2026-09-02
+
+### Added
+
+- **Die Ortsangabe kann jetzt alle gebuchten Räume nennen.** Bisher gab es zwei Stellungen: nennen, wenn genau ein ausgewählter Raum gebucht ist, oder nur, wenn sonst gar keiner belegt ist. Beide lassen eine Veranstaltung über mehrere Räume ohne Angabe. Die dritte Stellung zeigt, was ChurchTools liefert – alle ausgewählten gebuchten Räume, durch Komma getrennt und in ChurchTools’ eigener Sortierung, damit dieselbe Serie sich nicht von Woche zu Woche anders liest, nur weil jemand anders gebucht hat.
+- **Wie gut sie taugt, hängt an der Auswahl, und das ist ausdrücklich so gemeint.** Mit drei ausgewählten Räumen bleibt die längste Zeile der Referenzinstanz bei 38 Zeichen („Raum A, Raum B, Raum C“); mit neun ausgewählten wächst sie auf 143 Zeichen und acht Namen. Die Beschreibung im Reiter sagt das, gedeckelt wird nichts: In einer Stellung, die ausdrücklich „alles anzeigen“ heißt, wäre eine stille Kürzung das Gegenteil dessen, was sie verspricht.
+
+### Changed
+
+- **Aus dem Kästchen von 1.12.0 ist eine Auswahl aus drei Stellungen geworden.** Wer damals „nur anzeigen, wenn sonst kein weiterer Raum gebucht ist“ gesetzt hatte, bleibt darauf – die alte Einstellung wird weiter gelesen, solange keine neue gespeichert ist, und auch das Speichern eines anderen Reiters schreibt sie nicht still um.
+
 ## [1.12.0] - 2026-09-02
 
 ### Added

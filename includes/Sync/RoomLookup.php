@@ -40,6 +40,29 @@ final class RoomLookup
     private const STATUS_CONFIRMED = 2;
 
     /**
+     * Nur wenn der Raum den Termin allein traegt: Auch eine Buchung eines
+     * *nicht* angehakten Raums laesst die Zeile verstummen. Nennt nie einen
+     * Raum, waehrend nebenher weitere belegt sind.
+     */
+    public const MODE_EXCLUSIVE = 'exclusive';
+
+    /**
+     * Der Standard: Genau ein angehakter Raum genuegt, gleichgueltig was
+     * daneben belegt ist. Der Haken sagt ja bereits, welcher Raum nennenswert
+     * ist.
+     */
+    public const MODE_SINGLE = 'single';
+
+    /**
+     * Alle angehakten gebuchten Raeume, in der Reihenfolge, in der sie
+     * uebergeben wurden (ChurchTools' eigene Sortierung). Taugt genau so weit,
+     * wie die Auswahl klein ist: An den echten Daten sind es mit drei Haken
+     * hoechstens drei Namen und 38 Zeichen, mit allen fuenfzehn im Extremfall
+     * zehn Namen und 217.
+     */
+    public const MODE_ALL = 'all';
+
+    /**
      * Schluessel „<Termin-ID>|<Datum>" auf den Raumnamen. Vorkommnisse mit
      * mehreren verschiedenen angehakten Raeumen stehen hier gar nicht erst
      * drin - siehe fromBookings().
@@ -54,13 +77,24 @@ final class RoomLookup
      * @param array $envelopes        Antwort von Client::getBookings()
      * @param int[] $enabledResourceIds Im Backend angehakte Ressourcen
      */
-    public static function fromBookings(array $envelopes, array $enabledResourceIds, bool $exclusiveOnly = false): self
-    {
+    /**
+     * @param array    $envelopes          Antwort von Client::getBookings()
+     * @param int[]    $enabledResourceIds Angehakte Ressourcen; ihre Reihenfolge
+     *                                     ist im Modus „alle" die Anzeigereihenfolge
+     * @param string   $mode               Eine der MODE_*-Konstanten
+     */
+    public static function fromBookings(
+        array $envelopes,
+        array $enabledResourceIds,
+        string $mode = self::MODE_SINGLE
+    ): self {
         if ($enabledResourceIds === []) {
             return new self([]);
         }
 
-        $enabled = array_flip(array_map('intval', $enabledResourceIds));
+        // array_flip haelt zugleich die Reihenfolge fest: Der Wert ist die
+        // Position, nach der die Namen im Modus „alle" sortiert werden.
+        $enabled = array_flip(array_map('intval', array_values($enabledResourceIds)));
 
         /** @var array<string, array<int, string>> $byOccurrence */
         $byOccurrence = [];
@@ -116,6 +150,17 @@ final class RoomLookup
         $rooms = [];
 
         foreach ($byOccurrence as $key => $names) {
+            if ($mode === self::MODE_ALL) {
+                // Nach der Reihenfolge der Auswahl sortiert, nicht nach der
+                // Reihenfolge der Buchungen: Sonst haengt die Zeile daran, wer
+                // wann gebucht hat, und dieselbe Serie liest sich von Woche zu
+                // Woche anders.
+                uksort($names, static fn (int $a, int $b): int => $enabled[$a] <=> $enabled[$b]);
+                $rooms[$key] = implode(', ', $names);
+
+                continue;
+            }
+
             if (count($names) !== 1) {
                 continue;
             }
@@ -126,7 +171,7 @@ final class RoomLookup
             // echten Daten sind es 50 gegen 81 Termine, und die 31 Zeilen
             // dazwischen sind die, in denen der genannte Raum einer von vier
             // oder neun gebuchten ist.
-            if ($exclusiveOnly && count($alleGebuchten[$key] ?? []) > 1) {
+            if ($mode === self::MODE_EXCLUSIVE && count($alleGebuchten[$key] ?? []) > 1) {
                 continue;
             }
 

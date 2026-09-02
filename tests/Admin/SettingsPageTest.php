@@ -9,6 +9,7 @@ use ChurchToolsPlugin\Frontend\DesignPreset;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Security\Crypto;
 use PHPUnit\Framework\TestCase;
+use ChurchToolsPlugin\Sync\RoomLookup;
 use ReflectionMethod;
 
 final class SettingsPageTest extends TestCase
@@ -771,5 +772,42 @@ final class SettingsPageTest extends TestCase
 
         $this->assertFalse($sanitized[23]['enabled']);
         $this->assertFalse($sanitized[24]['enabled']);
+    }
+
+    /**
+     * Die Auswahlreihenfolge ist im Modus „alle Raeume nennen" zugleich die
+     * Anzeigereihenfolge, deshalb kommt sie in ChurchTools' eigener Ordnung.
+     */
+    public function testEnabledResourcesComeInChurchToolsOwnOrder(): void
+    {
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            25 => ['name' => 'Kleiner Raum', 'enabled' => true, 'sort_key' => 29],
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+            24 => ['name' => 'Foyer', 'enabled' => true, 'sort_key' => 10],
+        ]]);
+
+        $this->assertSame([23, 24, 25], SettingsPage::enabledResourceIds());
+    }
+
+    /**
+     * Aus dem Kaestchen von 1.12.0 ist eine Auswahl aus drei Stellungen
+     * geworden. Wer damals streng eingestellt war, bleibt es.
+     */
+    public function testTheOldExclusiveCheckboxStillDecidesWhenNoModeIsStored(): void
+    {
+        ctp_test_set_option('ctp_settings', ['rooms_exclusive' => true]);
+        $this->assertSame(RoomLookup::MODE_EXCLUSIVE, SettingsPage::roomsMode());
+
+        ctp_test_set_option('ctp_settings', ['rooms_exclusive' => false]);
+        $this->assertSame(RoomLookup::MODE_SINGLE, SettingsPage::roomsMode());
+    }
+
+    public function testAStoredModeWinsAndNonsenseFallsBackToTheDefault(): void
+    {
+        ctp_test_set_option('ctp_settings', ['rooms_mode' => RoomLookup::MODE_ALL]);
+        $this->assertSame(RoomLookup::MODE_ALL, SettingsPage::roomsMode());
+
+        ctp_test_set_option('ctp_settings', ['rooms_mode' => 'ausgedacht']);
+        $this->assertSame(RoomLookup::MODE_SINGLE, SettingsPage::roomsMode());
     }
 }

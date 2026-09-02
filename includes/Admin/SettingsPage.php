@@ -14,6 +14,7 @@ use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\Crypto;
+use ChurchToolsPlugin\Sync\RoomLookup;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use ChurchToolsPlugin\Update\GitHubUpdateChecker;
 use Throwable;
@@ -298,12 +299,18 @@ final class SettingsPage
              */
             'resources' => [],
             /**
-             * Streng oder grosszuegig: Ist er gesetzt, nennt das Plugin einen
-             * Raum nur, wenn ueberhaupt kein weiterer gebucht ist - sonst
-             * genuegt, dass genau ein *angehakter* Raum gebucht ist. An den
-             * Daten der Referenzinstanz sind das 50 gegen 81 Termine.
+             * Wie streng die Ortsangabe aus den Buchungen gebildet wird - eine
+             * der RoomLookup::MODE_*-Konstanten. An den Daten der
+             * Referenzinstanz: „exclusive" 50, „single" 81, „all" 85 Termine
+             * (bei drei angehakten Raeumen).
+             *
+             * Der Standardwert ist bewusst leer und nicht MODE_SINGLE: Sonst
+             * stuende hier nach dem Zusammenfuehren mit den Vorgaben immer ein
+             * gueltiger Modus, und der Rueckfall auf das Kaestchen aus 1.12.0
+             * (`rooms_exclusive`) kaeme nie zum Zug. Aufgeloest wird in
+             * resolveRoomsMode().
              */
-            'rooms_exclusive' => false,
+            'rooms_mode' => '',
             'sync_interval' => 'hourly',
             // Ein volles Jahr, nicht ein halbes: Der Gemeindekalender ist ein
             // Jahreszyklus (Weihnachten, Ostern, Konfirmation, Freizeiten), und
@@ -618,12 +625,7 @@ final class SettingsPage
             'resources' => array_key_exists('resources', $input)
                 ? self::sanitizeResources((array) $input['resources'], $existing['resources'] ?? [])
                 : ($existing['resources'] ?? []),
-            // Wie jedes Kaestchen: Der Reiter schickt das Feld immer mit (das
-            // Formular traegt die ganze Raumauswahl), ein fehlendes Feld heisst
-            // deshalb „von einem anderen Reiter gespeichert" und nicht „aus".
-            'rooms_exclusive' => array_key_exists('resources', $input)
-                ? !empty($input['rooms_exclusive'])
-                : (bool) ($existing['rooms_exclusive'] ?? false),
+            'rooms_mode' => self::sanitizeRoomsMode($input, $existing),
             'sync_interval' => $syncInterval,
             'sync_days_ahead' => array_key_exists('sync_days_ahead', $input)
                 ? max(1, (int) $input['sync_days_ahead'])
@@ -1012,23 +1014,55 @@ final class SettingsPage
                         <?php esc_html_e('Sparsam anhaken: Je mehr Räume ausgewählt sind, desto häufiger sind mehrere davon gleichzeitig gebucht – und desto öfter bleibt die Ortsangabe deshalb leer. Am Anfang sind die wenigen Räume richtig, die für sich allein einen Termin verorten.', 'churchtools-plugin'); ?>
                     </p>
 
-                    <h3><?php esc_html_e('Wenn nebenher weitere Räume gebucht sind', 'churchtools-plugin'); ?></h3>
+                    <h3><?php esc_html_e('Wenn für einen Termin mehrere Räume gebucht sind', 'churchtools-plugin'); ?></h3>
 
-                    <p>
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="<?php echo esc_attr(self::OPTION_KEY); ?>[rooms_exclusive]"
-                                value="1"
-                                <?php checked(self::roomsExclusiveOnly()); ?>
-                            >
-                            <?php esc_html_e('Nur anzeigen, wenn für den Termin sonst kein weiterer Raum gebucht ist', 'churchtools-plugin'); ?>
-                        </label>
-                    </p>
+                    <?php $mode = self::roomsMode(); ?>
+                    <fieldset>
+                        <p>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="<?php echo esc_attr(self::OPTION_KEY); ?>[rooms_mode]"
+                                    value="<?php echo esc_attr(RoomLookup::MODE_ALL); ?>"
+                                    <?php checked($mode, RoomLookup::MODE_ALL); ?>
+                                >
+                                <?php esc_html_e('Alle ausgewählten Räume nennen, durch Komma getrennt', 'churchtools-plugin'); ?>
+                            </label><br>
+                            <span class="description">
+                                <?php esc_html_e('Zeigt, was ChurchTools liefert. Die Zeile wächst mit der Auswahl – bei wenigen ausgewählten Räumen bleibt sie kurz, bei vielen kann aus der Ortsangabe eine Aufzählung werden.', 'churchtools-plugin'); ?>
+                            </span>
+                        </p>
 
-                    <p class="description">
-                        <?php esc_html_e('Ohne Haken genügt es, dass genau ein ausgewählter Raum gebucht ist – auch wenn daneben nicht ausgewählte Räume belegt sind. Das trifft mehr Termine, nennt bei einer Veranstaltung über mehrere Räume aber nur den einen, den Sie ausgewählt haben. Mit Haken schweigt die Ortsangabe in solchen Fällen und nennt nur Räume, die den Termin allein tragen.', 'churchtools-plugin'); ?>
-                    </p>
+                        <p>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="<?php echo esc_attr(self::OPTION_KEY); ?>[rooms_mode]"
+                                    value="<?php echo esc_attr(RoomLookup::MODE_SINGLE); ?>"
+                                    <?php checked($mode, RoomLookup::MODE_SINGLE); ?>
+                                >
+                                <?php esc_html_e('Nur nennen, wenn genau ein ausgewählter Raum gebucht ist', 'churchtools-plugin'); ?>
+                            </label><br>
+                            <span class="description">
+                                <?php esc_html_e('Nicht ausgewählte Räume zählen dabei nicht mit: Sind daneben weitere belegt, erscheint trotzdem der eine ausgewählte.', 'churchtools-plugin'); ?>
+                            </span>
+                        </p>
+
+                        <p>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="<?php echo esc_attr(self::OPTION_KEY); ?>[rooms_mode]"
+                                    value="<?php echo esc_attr(RoomLookup::MODE_EXCLUSIVE); ?>"
+                                    <?php checked($mode, RoomLookup::MODE_EXCLUSIVE); ?>
+                                >
+                                <?php esc_html_e('Nur nennen, wenn für den Termin sonst kein weiterer Raum gebucht ist', 'churchtools-plugin'); ?>
+                            </label><br>
+                            <span class="description">
+                                <?php esc_html_e('Die vorsichtigste Einstellung: Jede weitere Buchung lässt die Ortsangabe aus, auch die eines nicht ausgewählten Raums.', 'churchtools-plugin'); ?>
+                            </span>
+                        </p>
+                    </fieldset>
                 <?php endif; ?>
             </div>
             <?php $this->renderSaveBar(); ?>
@@ -4273,6 +4307,9 @@ final class SettingsPage
      */
     private const ROOM_TYPE_KEY = 'resource.type.room';
 
+    /** Erlaubte Werte fuer `rooms_mode` - alles andere faellt auf den Standard zurueck. */
+    private const ROOM_MODES = [RoomLookup::MODE_EXCLUSIVE, RoomLookup::MODE_SINGLE, RoomLookup::MODE_ALL];
+
     /**
      * Zwilling von refreshCalendars(). Zwei Unterschiede zum Kalenderabgleich,
      * beide beabsichtigt:
@@ -4542,12 +4579,48 @@ final class SettingsPage
     }
 
     /**
-     * Streng oder grosszuegig - siehe die Beschreibung der Einstellung im Tab
-     * „Raeume" und den Vergleich in RoomLookup::fromBookings().
+     * Wie die Ortsangabe aus den Buchungen gebildet wird - siehe die
+     * Beschreibung im Tab „Raeume" und die MODE_*-Konstanten.
+     *
+     * Der Rueckfall auf `rooms_exclusive` ist die Bruecke aus 1.12.0, wo an
+     * dieser Stelle noch ein Kaestchen stand: Eine Installation, die damals
+     * streng eingestellt war, bleibt es.
      */
-    public static function roomsExclusiveOnly(): bool
+    public static function roomsMode(): string
     {
-        return (bool) (self::get()['rooms_exclusive'] ?? false);
+        return self::resolveRoomsMode(self::get());
+    }
+
+    private static function resolveRoomsMode(array $settings): string
+    {
+        $mode = (string) ($settings['rooms_mode'] ?? '');
+
+        if (in_array($mode, self::ROOM_MODES, true)) {
+            return $mode;
+        }
+
+        return !empty($settings['rooms_exclusive']) ? RoomLookup::MODE_EXCLUSIVE : RoomLookup::MODE_SINGLE;
+    }
+
+    /**
+     * Der Reiter schickt das Feld immer mit (das Formular traegt die ganze
+     * Raumauswahl), ein fehlendes `resources` heisst deshalb „von einem anderen
+     * Reiter gespeichert" und laesst die Einstellung unangetastet.
+     */
+    private static function sanitizeRoomsMode(array $input, array $existing): string
+    {
+        // Ueber resolveRoomsMode() und nicht direkt aus $existing: Sonst
+        // schriebe das Speichern eines *anderen* Reiters die Bruecke aus 1.12.0
+        // still auf den Standard um.
+        $bestehend = self::resolveRoomsMode($existing);
+
+        if (!array_key_exists('resources', $input)) {
+            return $bestehend;
+        }
+
+        $gewaehlt = (string) ($input['rooms_mode'] ?? '');
+
+        return in_array($gewaehlt, self::ROOM_MODES, true) ? $gewaehlt : $bestehend;
     }
 
     /**
@@ -4558,15 +4631,15 @@ final class SettingsPage
      */
     public static function enabledResourceIds(): array
     {
-        $enabled = [];
+        $resources = array_filter(self::get()['resources'] ?? [], static fn (array $r): bool => !empty($r['enabled']));
 
-        foreach ((self::get()['resources'] ?? []) as $id => $resource) {
-            if (!empty($resource['enabled'])) {
-                $enabled[] = (int) $id;
-            }
-        }
+        // In ChurchTools' eigener Ordnung, weil diese Reihenfolge im Modus
+        // „alle Raeume nennen" die Anzeigereihenfolge ist - sonst haengt die
+        // Zeile daran, wer wann gebucht hat.
+        uasort($resources, static fn (array $a, array $b): int
+            => [$a['sort_key'] ?? 0, $a['name']] <=> [$b['sort_key'] ?? 0, $b['name']]);
 
-        return $enabled;
+        return array_map('intval', array_keys($resources));
     }
 
     private static function mergeCalendars(array $existing, array $remoteCalendars): array

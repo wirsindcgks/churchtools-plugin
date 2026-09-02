@@ -177,7 +177,7 @@ final class RoomLookupTest extends TestCase
         $lookup = RoomLookup::fromBookings([
             $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
             $this->booking(['resourceId' => 26, 'resource' => ['name' => 'Seminarraum 1']]),
-        ], [23], true);
+        ], [23], RoomLookup::MODE_EXCLUSIVE);
 
         $this->assertSame('', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
     }
@@ -190,7 +190,7 @@ final class RoomLookupTest extends TestCase
     {
         $lookup = RoomLookup::fromBookings([
             $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
-        ], [23], true);
+        ], [23], RoomLookup::MODE_EXCLUSIVE);
 
         $this->assertSame('Grosser Saal', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
     }
@@ -204,7 +204,54 @@ final class RoomLookupTest extends TestCase
         $lookup = RoomLookup::fromBookings([
             $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
             $this->booking(['resourceId' => 26, 'statusId' => 1, 'resource' => ['name' => 'Seminarraum 1']]),
-        ], [23], true);
+        ], [23], RoomLookup::MODE_EXCLUSIVE);
+
+        $this->assertSame('Grosser Saal', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
+    }
+
+    /**
+     * Der dritte Modus zeigt, was ChurchTools liefert - alle angehakten
+     * gebuchten Raeume. Taugt so weit, wie die Auswahl klein ist.
+     */
+    public function testTheAllModeListsEveryBookedSelectedRoom(): void
+    {
+        $lookup = RoomLookup::fromBookings([
+            $this->booking(['resourceId' => 24, 'resource' => ['name' => 'Foyer']]),
+            $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
+        ], [23, 24], RoomLookup::MODE_ALL);
+
+        $this->assertSame('Grosser Saal, Foyer', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
+    }
+
+    /**
+     * Sortiert wird nach der Reihenfolge der Auswahl, nicht nach der der
+     * Buchungen - sonst haengt die Zeile daran, wer wann gebucht hat, und
+     * dieselbe Serie liest sich von Woche zu Woche anders.
+     */
+    public function testTheAllModeOrdersByTheSelectionNotByTheBookings(): void
+    {
+        $envelopes = [
+            $this->booking(['resourceId' => 24, 'resource' => ['name' => 'Foyer']]),
+            $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
+        ];
+
+        $this->assertSame(
+            'Foyer, Grosser Saal',
+            RoomLookup::fromBookings($envelopes, [24, 23], RoomLookup::MODE_ALL)
+                ->forOccurrence(6739, '2026-11-01 10:30:00')
+        );
+    }
+
+    /**
+     * Auch im Modus „alle" bleiben nicht angehakte Raeume draussen - er zeigt,
+     * was ChurchTools liefert *und* ausgewaehlt ist.
+     */
+    public function testTheAllModeStillRespectsTheSelection(): void
+    {
+        $lookup = RoomLookup::fromBookings([
+            $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
+            $this->booking(['resourceId' => 26, 'resource' => ['name' => 'Seminarraum 1']]),
+        ], [23], RoomLookup::MODE_ALL);
 
         $this->assertSame('Grosser Saal', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
     }
