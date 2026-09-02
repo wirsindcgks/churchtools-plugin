@@ -637,19 +637,54 @@ final class SyncEngine
         return (new DateTimeImmutable($isoZuluDate))->setTimezone(wp_timezone())->format('Y-m-d H:i:s');
     }
 
+    /*
+     * ChurchTools liefert die Adresse als Objekt mit getrennten Feldern und setzt
+     * die Zeile erst in seiner eigenen Oberflaeche zusammen. Wir setzen sie hier,
+     * und zwar bewusst nicht genau wie ChurchTools:
+     *
+     * - `addition` (UI: "Zusatz") kommt mit. Es benennt Gebaeude oder Halle und
+     *   ist die einzige Angabe, die vor Ort gebraucht wird und sich aus der
+     *   Adresse nicht erraten laesst.
+     * - `district` (UI: "Stadtteil") kommt mit, haengt aber an der Stadt statt
+     *   ein eigenes Glied zu sein. Ein Teilort ist haeufig der Name, unter dem
+     *   Ortsfremde den Ort ueberhaupt einordnen, waehrend die politische
+     *   Gemeinde in der PLZ-Zeile ihnen nichts sagt (Nutzerhinweis 2026-09-02).
+     *   "75038 Musterstadt-Musterdorf" ist zugleich die postalisch uebliche
+     *   Schreibweise und bleibt kuerzer als ein weiteres Komma-Glied.
+     * - `country` bleibt weg: Die API liefert den Laendercode ("DE"), und ein
+     *   Code in einer Adresszeile ist schlechter als gar nichts. Eine
+     *   Uebersetzungstabelle waere Aufwand fuer einen Fall, den es hier nicht
+     *   gibt - eine Gemeinde traegt Termine im eigenen Land ein.
+     * - `meetingAt` bleibt weg, weil es kein eigenes Feld ist: Die Antwort fuehrt
+     *   es in ihrem eigenen `@deprecated`-Verzeichnis als Altnamen von `name`.
+     */
     private static function formatAddress(?array $address): string
     {
         if ($address === null) {
             return '';
         }
 
-        $cityLine = trim(($address['zip'] ?? '') . ' ' . ($address['city'] ?? ''));
+        $city = trim((string) ($address['city'] ?? ''));
+        $district = trim((string) ($address['district'] ?? ''));
 
-        $parts = array_filter([
-            $address['name'] ?? null,
-            $address['street'] ?? null,
-            $cityLine !== '' ? $cityLine : null,
-        ]);
+        if ($district !== '' && stripos($city, $district) === false) {
+            $city = $city === '' ? $district : $city . '-' . $district;
+        }
+
+        $cityLine = trim(trim((string) ($address['zip'] ?? '')) . ' ' . $city);
+
+        $parts = array_filter(
+            array_map(
+                static fn ($value): string => trim((string) $value),
+                [
+                    $address['name'] ?? '',
+                    $address['street'] ?? '',
+                    $address['addition'] ?? '',
+                    $cityLine,
+                ]
+            ),
+            static fn (string $value): bool => $value !== ''
+        );
 
         return implode(', ', $parts);
     }

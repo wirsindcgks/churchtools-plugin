@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-09-01 20:13:06",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.10.0/churchtools-plugin-v1.10.0.zip",
+    "last_updated": "2026-09-02 11:14:24",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.11.0/churchtools-plugin-v1.11.0.zip",
     "sections": {
-        "changelog": "<h4>Added</h4>\n<ul>\n<li><strong>Termine, die ChurchTools als „nur für angemeldete Benutzer&quot; führt, kommen nicht mehr auf die Website.</strong> ChurchTools liefert diese Angabe an jedem Termin mit (<code>isInternal</code>, auf der Serie und damit für alle Wiederholungen); das Plugin hat sie bisher an keiner Stelle ausgewertet — ein gesetztes Häkchen wäre unbemerkt öffentlich geworden. Solche Termine werden jetzt gar nicht erst gespeichert, und eine Serie, die nachträglich intern gestellt wird, räumt der nächste Sync von selbst wieder ab. In den Daten der Testinstanz war die Angabe bei 39 Terminen und Serien nirgends gesetzt — die Änderung ändert also heute nichts und schließt eine Tür, die offen stand.</li>\n<li><strong>Der Tab „Kalender&quot; meldet einen Widerspruch zwischen beiden Systemen.</strong> Ist hier ein Kalender aktiv, den ChurchTools nicht als öffentlich führt, steht das jetzt als Hinweis über der Liste. Bewusst gemeldet statt still übergangen: Anders als beim einzelnen Termin ist das Häkchen eine ausdrückliche Entscheidung im WordPress-Backend — verschwänden die Termine wortlos, würde man den Grund an der falschen Stelle suchen. Fehlt die Angabe in der Antwort ganz, gilt der Kalender als öffentlich; eine Warnung auf jedem Kalender wäre schlimmer als keine.</li>\n</ul>\n"
+        "changelog": "<h4>Changed</h4>\n<ul>\n<li><strong>Die Ortszeile zeigt jetzt auch Zusatz und Stadtteil.</strong> ChurchTools liefert die Adresse als Objekt mit getrennten Feldern und setzt die Zeile erst in seiner eigenen Oberfläche zusammen; das Plugin setzt sie selbst und hat dabei bisher nur Name, Straße und PLZ/Ort benutzt. Neu dazu: der <strong>Zusatz</strong> (in ChurchTools „Zusatz“, meist Gebäude oder Halle) – die einzige Angabe, die vor Ort gebraucht wird und sich aus der Adresse nicht erraten lässt, denn Straße und PLZ findet eine Karten-App, das Gebäude nicht. Und der <strong>Stadtteil</strong>, angehängt an die Stadt statt als eigenes Glied: „75038 Musterstadt-Musterdorf“. Das ist die postalisch übliche Schreibweise und setzt den Teilort dorthin, wo Ortsfremde den Ortsnamen suchen – auf dem Land ist der Teilort oft der Name, unter dem der Ort überhaupt bekannt ist, während die politische Gemeinde in der PLZ-Zeile nichts sagt (Nutzerhinweis, der diese Änderung ausgelöst hat). Steht der Teilort schon im Stadtnamen, wird er nicht doppelt angehängt</li>\n<li><strong>Der Ländercode bleibt draußen.</strong> Die API liefert <code>country</code> als Code (<code>DE</code>), nicht als Name; ein Code in einer Adresszeile ist schlechter als gar nichts, und eine Übersetzungstabelle wäre Aufwand für einen Fall, den es nicht gibt – eine Gemeinde trägt Termine im eigenen Land ein. Ebenfalls bewusst draußen bleibt <code>meetingAt</code>: Die Antwort führt es in ihrem eigenen <code>@deprecated</code>-Verzeichnis als Altnamen von <code>name</code>, es ist also kein zweites Feld</li>\n</ul>\n"
     }
 }

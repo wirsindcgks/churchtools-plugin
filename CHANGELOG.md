@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.11.0] - 2026-09-02
+
+### Changed
+
+- **Die Ortszeile zeigt jetzt auch Zusatz und Stadtteil.** ChurchTools liefert die Adresse als Objekt mit getrennten Feldern und setzt die Zeile erst in seiner eigenen Oberfläche zusammen; das Plugin setzt sie selbst und hat dabei bisher nur Name, Straße und PLZ/Ort benutzt. Neu dazu: der **Zusatz** (in ChurchTools „Zusatz“, meist Gebäude oder Halle) – die einzige Angabe, die vor Ort gebraucht wird und sich aus der Adresse nicht erraten lässt, denn Straße und PLZ findet eine Karten-App, das Gebäude nicht. Und der **Stadtteil**, angehängt an die Stadt statt als eigenes Glied: „75038 Musterstadt-Musterdorf“. Das ist die postalisch übliche Schreibweise und setzt den Teilort dorthin, wo Ortsfremde den Ortsnamen suchen – auf dem Land ist der Teilort oft der Name, unter dem der Ort überhaupt bekannt ist, während die politische Gemeinde in der PLZ-Zeile nichts sagt (Nutzerhinweis, der diese Änderung ausgelöst hat). Steht der Teilort schon im Stadtnamen, wird er nicht doppelt angehängt
+- **Der Ländercode bleibt draußen.** Die API liefert `country` als Code (`DE`), nicht als Name; ein Code in einer Adresszeile ist schlechter als gar nichts, und eine Übersetzungstabelle wäre Aufwand für einen Fall, den es nicht gibt – eine Gemeinde trägt Termine im eigenen Land ein. Ebenfalls bewusst draußen bleibt `meetingAt`: Die Antwort führt es in ihrem eigenen `@deprecated`-Verzeichnis als Altnamen von `name`, es ist also kein zweites Feld
+
 ## [1.10.0] - 2026-09-01
 
 ### Added

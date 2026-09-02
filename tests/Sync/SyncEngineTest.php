@@ -316,6 +316,101 @@ final class SyncEngineTest extends TestCase
     }
 
     /**
+     * Die Adresse kommt als Objekt mit getrennten Feldern, nicht als fertige
+     * Zeile - formatAddress() setzt sie zusammen. Der Zusatz (UI: "Zusatz")
+     * benennt Gebaeude oder Halle und gehoert dazu: Strasse und PLZ findet eine
+     * Karten-App, das Gebaeude nicht.
+     */
+    public function testPutsTheAdditionBetweenStreetAndCity(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => ['addition' => 'Haus B']]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, Haus B, 75015 Bretten', $row['location']);
+    }
+
+    /**
+     * Ein Teilort ist haeufig der Name, unter dem Ortsfremde den Ort einordnen,
+     * waehrend die politische Gemeinde in der PLZ-Zeile ihnen nichts sagt. Er
+     * haengt deshalb an der Stadt statt ein eigenes Komma-Glied zu sein - das
+     * ist zugleich die postalisch uebliche Schreibweise.
+     */
+    public function testAppendsTheDistrictToTheCity(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => ['district' => 'Ruit']]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten-Ruit', $row['location']);
+    }
+
+    /**
+     * Steht der Teilort schon in der Stadt, darf er nicht ein zweites Mal
+     * angehaengt werden - sonst entstuende "Bretten-Ruit-Ruit", sobald jemand
+     * beide Felder gleich pflegt.
+     */
+    public function testDoesNotRepeatADistrictTheCityAlreadyNames(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => ['city' => 'Bretten-Ruit', 'district' => 'Ruit']]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten-Ruit', $row['location']);
+    }
+
+    /**
+     * Ohne Stadt traegt der Teilort die Zeile allein, statt sie mit einem
+     * fuehrenden Bindestrich zu beginnen.
+     */
+    public function testUsesTheDistrictAloneWhenTheCityIsMissing(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => ['city' => '', 'district' => 'Ruit']]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Ruit', $row['location']);
+    }
+
+    /**
+     * Zwei Felder der Antwort bleiben bewusst draussen: `country` liefert einen
+     * Laendercode, und ein Code in einer Adresszeile ist schlechter als gar
+     * nichts; `meetingAt` ist kein eigenes Feld, sondern laut dem
+     * `@deprecated`-Verzeichnis derselben Antwort der Altname von `name`.
+     */
+    public function testLeavesOutTheCountryCodeAndTheDeprecatedMeetingAtAlias(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => [
+                'country' => 'DE',
+                'meetingAt' => 'Gemeindehaus',
+            ]]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten', $row['location']);
+    }
+
+    /**
+     * `base.address` ist ein Objekt - oder `null`, und das ist der haeufigere
+     * Fall. Ein Termin ohne Ort bekommt eine leere Zeile, keinen Rest an
+     * Trennzeichen.
+     */
+    public function testLeavesTheLocationEmptyWithoutAnAddress(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => null]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('', $row['location']);
+    }
+
+    /**
      * ChurchTools returns Zulu/UTC timestamps; toMysqlDate() must convert them into
      * the site's configured timezone (Europe/Berlin here, see tests/bootstrap.php),
      * not just reformat the UTC value as-is.
