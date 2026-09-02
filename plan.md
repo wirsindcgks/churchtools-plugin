@@ -307,12 +307,35 @@ Bestanden haben drei Kandidaten: Gruppen (`/api/groups` liefert `imageUrl`, `mee
 
   **Die Redaktionsregel dreht sich damit um.** Nicht „Adressen an allen 38 Terminsätzen pflegen", sondern: **Adresse nur dort pflegen, wo der Termin außerhalb des eigenen Hauses stattfindet.** Das ist deutlich weniger Arbeit und zugleich richtiger. Heute ist genau das ungepflegt: Unter den 14 Zeilen ohne alles stehen zwei Wochenendfreizeiten – also die Termine, bei denen eine Adresse wirklich etwas beiträgt –, während die zwei gepflegten Adressen die des eigenen Hauses sind und im Footer ohnehin stehen.
 
+  **Nutzeridee vom 2026-09-02: die Ressourcen im Backend wählbar machen – und das löst den Mehrfachfall**
+
+  Die Frage war, ob man im Backend auswählen kann, welche Ressourcen angezeigt werden. Sie beantwortet nebenbei den schwersten offenen Punkt des Entwurfs. Gemessen, wie oft jede Ressource **allein** gebucht ist und wie oft **eine von mehreren**: Drei Räume tragen nahezu alle Einzelfälle (21, 16 und 13 von 55), während die kleineren Räume fast nur im Bündel vorkommen – einer davon 37-mal im Bündel und **kein einziges Mal** allein. Eine Auswahl ist also nicht bloß Aufräumen, sie ist genau die Unterscheidung zwischen einem Raum, der einen Termin verortet, und einem, der bloß mitgebucht wird.
+
+  Mit einer **Auswahl plus Reihenfolge** (der erste gebuchte Raum der Liste gewinnt) statt der starren Regel „genau ein Raum":
+
+  | Auswahl | Zeilen mit Raumangabe |
+  | --- | --- |
+  | Regel „genau ein Raum", ohne Auswahl | 55 von 121 |
+  | die drei Räume, die allein vorkommen | 86 von 121 |
+  | dieselben plus einer | 90 von 121 |
+  | alle Räume, nach Größe geordnet | 107 von 121 |
+
+  107 ist die Obergrenze – das sind alle Termine, die überhaupt eine bestätigte Buchung haben. Die 14 ohne Buchung bleiben in jedem Fall ohne Raum.
+
+  **Der Preis, und er gehört benannt**: Eine Reihenfolge *behauptet* einen Raum, wo mehrere gebucht sind. Die Daten sagen nicht, welcher der Hauptraum ist – die Reihenfolge im Backend ist genau dieses Urteil, und es ist ein menschliches. Das ist die Stärke der Idee und zugleich ihre Verantwortung. Wie stark die Reihenfolge wirkt, zeigt die Simulation: In der letzten Variante entfallen auf einen einzigen Raum 42 der 107 Angaben, nur weil er weit oben steht.
+
+  **Es ist kein neuer Eingriff, sondern ein bekannter.** Welche Kalender auf die Website dürfen, entscheidet das Backend seit jeher – die Auswahl der Räume ist dieselbe Art von Entscheidung, eine Ebene tiefer. Damit fällt auch der Vorbehalt weg, WordPress würde hier etwas über ChurchTools hinaus behaupten.
+
+  **Gestalt, nah an dem, was schon existiert**: `mergeResources()`/`sanitizeResources()` als Zwillinge von `mergeCalendars()`/`sanitizeCalendars()` (Name aus der API, `enabled` und Reihenfolge aus den Einstellungen, wie dort über das Speichern getragen), ein Reiter „Räume" nach dem Muster des Kalender-Reiters, und für die Reihenfolge das Drag-and-Drop, das der Design-Reiter schon hat. Fällt kein ausgewählter Raum an, greift die Adresse – die Regel für auswärtige Termine bleibt unberührt.
+
+  **Zwei der vier offenen Punkte unten erledigt die Auswahl mit**: die Testressource und der Ressourcentyp „item" werden schlicht nicht angehakt.
+
   **Vier offene Punkte vor dem Bau**
 
-  - [ ] **Klammer-Codes in den Raumnamen.** 12 der 15 Räume tragen eine interne Hausnummerierung im Namen. Wegschneiden ist Raterei (das Plugin kann nicht wissen, was Code und was Name ist), Drinlassen setzt die Nummerierung auf eine öffentliche Seite. Dritte Möglichkeit: In ChurchTools trägt jede Ressource ein eigenes Feld `iCalLocation` – hier überall identisch mit `name`, also heute keine Hilfe, aber der vorgesehene Ort für eine öffentliche Schreibweise.
+  - [ ] **Klammer-Codes in den Raumnamen.** Durch die Auswahl entschärft, aber nicht gelöst – ein ausgewählter Raum trägt seinen Code weiterhin im Namen. 12 der 15 Räume tragen eine interne Hausnummerierung im Namen. Wegschneiden ist Raterei (das Plugin kann nicht wissen, was Code und was Name ist), Drinlassen setzt die Nummerierung auf eine öffentliche Seite. Dritte Möglichkeit: In ChurchTools trägt jede Ressource ein eigenes Feld `iCalLocation` – hier überall identisch mit `name`, also heute keine Hilfe, aber der vorgesehene Ort für eine öffentliche Schreibweise.
   - [ ] **Weit entfernte Termine haben noch keine Buchung.** Eine Serie am Rand des Sync-Fensters zeigt deshalb keinen Raum, dieselbe Serie in zwei Monaten schon. Das ist inhaltlich richtig (es *ist* noch nichts gebucht), sieht in der Liste aber nach Lücke aus.
   - [ ] **Soll die Adresse unterdrückt werden, wenn ein Raum da ist?** Der Entwurf sagt ja. Das ist eine Anzeigeentscheidung, keine Datenentscheidung – aber es ist das erste Mal, dass WordPress etwas *nicht* zeigt, das ChurchTools liefert. Bewusst festhalten.
-  - [ ] **Nur Raumtyp „room" berücksichtigen** und die Testressource ausschließen; `/api/resource/masterdata` liefert auch Typ „item" (Technik u. Ä.), der nie eine Ortsangabe ist.
+  - [x] **~~Nur Raumtyp „room" berücksichtigen und die Testressource ausschließen~~ – erledigt durch die Auswahl im Backend: Nicht angehakt heißt nicht angezeigt. Als Vorbelegung bleibt es trotzdem sinnvoll, nur Räume überhaupt zur Auswahl zu stellen.** Ursprünglich: `/api/resource/masterdata` liefert auch Typ „item" (Technik u. Ä.), der nie eine Ortsangabe ist.
 
   **Aufwand**: ein zweiter Sync-Pfad neben den Terminen – Ressourcen einmal je Lauf holen, Buchungen im selben Fenster, bestätigte auf (Termin-ID, Datum) zusammenfassen und in eine neue Spalte schreiben. Die Anzeige selbst ist geschenkt: Die Ortszeile mit Icon, Design-Schalter und Sortierposition existiert bereits, sie bekäme nur eine zweite Quelle.
 
