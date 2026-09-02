@@ -307,26 +307,30 @@ Bestanden haben drei Kandidaten: Gruppen (`/api/groups` liefert `imageUrl`, `mee
 
   **Die Redaktionsregel dreht sich damit um.** Nicht „Adressen an allen 38 Terminsätzen pflegen", sondern: **Adresse nur dort pflegen, wo der Termin außerhalb des eigenen Hauses stattfindet.** Das ist deutlich weniger Arbeit und zugleich richtiger. Heute ist genau das ungepflegt: Unter den 14 Zeilen ohne alles stehen zwei Wochenendfreizeiten – also die Termine, bei denen eine Adresse wirklich etwas beiträgt –, während die zwei gepflegten Adressen die des eigenen Hauses sind und im Footer ohnehin stehen.
 
-  **Nutzeridee vom 2026-09-02: die Ressourcen im Backend wählbar machen – und das löst den Mehrfachfall**
+  **Nutzeridee vom 2026-09-02: die Ressourcen im Backend wählbar machen – und sie ersetzt den Entwurf oben**
 
-  Die Frage war, ob man im Backend auswählen kann, welche Ressourcen angezeigt werden. Sie beantwortet nebenbei den schwersten offenen Punkt des Entwurfs. Gemessen, wie oft jede Ressource **allein** gebucht ist und wie oft **eine von mehreren**: Drei Räume tragen nahezu alle Einzelfälle (21, 16 und 13 von 55), während die kleineren Räume fast nur im Bündel vorkommen – einer davon 37-mal im Bündel und **kein einziges Mal** allein. Eine Auswahl ist also nicht bloß Aufräumen, sie ist genau die Unterscheidung zwischen einem Raum, der einen Termin verortet, und einem, der bloß mitgebucht wird.
+  Die Frage war, ob sich zentral festlegen lässt, welche Ressourcen angezeigt werden, und ausdrücklich: „Je Event wäre die schlechteste Option, da wieder manuelle Arbeit nötig ist." Je Event kommt nicht vor – die Buchungen liefert ChurchTools, das Plugin liest sie beim Sync. Die Frage ist nur, wie die Auswahl aussieht.
 
-  Mit einer **Auswahl plus Reihenfolge** (der erste gebuchte Raum der Liste gewinnt) statt der starren Regel „genau ein Raum":
+  **Erster Anlauf – Auswahl plus Reihenfolge – und warum er verworfen ist.** Der Gedanke war, den Mehrfachfall über eine Prioritätenliste aufzulösen: der erste gebuchte Raum der Liste gewinnt. Abdeckung dabei bis zu 107 von 121, mit ChurchTools' eigenem `sortKey` als Vorbelegung. **Die Simulation zeigt aber, was dabei herauskommt**: ein Ferienprogramm mit zehn gebuchten Räumen erscheint als „Foyer", ein Weihnachtstreffen mit neun als „Küche", und dieselbe Kinderserie zeigt von Woche zu Woche einen anderen Raum, weil das gebuchte Bündel wechselt. Die Reihenfolge rät, und sie rät sichtbar falsch. Verworfen.
 
-  | Auswahl | Zeilen mit Raumangabe |
-  | --- | --- |
-  | Regel „genau ein Raum", ohne Auswahl | 55 von 121 |
-  | die drei Räume, die allein vorkommen | 86 von 121 |
-  | dieselben plus einer | 90 von 121 |
-  | alle Räume, nach Größe geordnet | 107 von 121 |
+  **Der Entwurf, der bleibt: Auswahl ohne Reihenfolge, und eine Regel, die nie rät.** Ein Haken heißt „dieser Raum ist es wert, öffentlich genannt zu werden". Ist genau **ein angehakter** Raum bestätigt gebucht, wird er gezeigt; sind es zwei, schweigt das Plugin und überlässt die Zeile der Adresse.
 
-  107 ist die Obergrenze – das sind alle Termine, die überhaupt eine bestätigte Buchung haben. Die 14 ohne Buchung bleiben in jedem Fall ohne Raum.
+  | angehakt | zeigt einen Raum | schweigt trotz Buchung |
+  | --- | --- | --- |
+  | die drei Räume, die allein vorkommen | **81 von 121** | 5 |
+  | dieselben plus einer | 81 | 9 |
+  | alle 14 | 55 | 52 |
+  | *heute, allein aus der Adresse* | *12* | – |
 
-  **Der Preis, und er gehört benannt**: Eine Reihenfolge *behauptet* einen Raum, wo mehrere gebucht sind. Die Daten sagen nicht, welcher der Hauptraum ist – die Reihenfolge im Backend ist genau dieses Urteil, und es ist ein menschliches. Das ist die Stärke der Idee und zugleich ihre Verantwortung. Wie stark die Reihenfolge wirkt, zeigt die Simulation: In der letzten Variante entfallen auf einen einzigen Raum 42 der 107 Angaben, nur weil er weit oben steht.
+  Die 26 Zeilen, die gegenüber dem Raten-Modell fehlen, sind genau die, in denen es falsch geraten hätte. Die 81 verteilen sich über sieben Kalender, nicht nur die großen.
 
-  **Es ist kein neuer Eingriff, sondern ein bekannter.** Welche Kalender auf die Website dürfen, entscheidet das Backend seit jeher – die Auswahl der Räume ist dieselbe Art von Entscheidung, eine Ebene tiefer. Damit fällt auch der Vorbehalt weg, WordPress würde hier etwas über ChurchTools hinaus behaupten.
+  **Aufwand für den Betreiber**: einmalig etwa drei Haken. Keine Reihenfolge, kein Drag-and-Drop, nichts je Kalender, nichts je Termin. Ein neuer Raum in ChurchTools erscheint später unangehakt – wie heute ein neuer Kalender. `sortKey` dient nur noch dazu, die Liste im Backend sinnvoll zu sortieren, nicht mehr als Entscheidungsgrundlage.
 
-  **Gestalt, nah an dem, was schon existiert**: `mergeResources()`/`sanitizeResources()` als Zwillinge von `mergeCalendars()`/`sanitizeCalendars()` (Name aus der API, `enabled` und Reihenfolge aus den Einstellungen, wie dort über das Speichern getragen), ein Reiter „Räume" nach dem Muster des Kalender-Reiters, und für die Reihenfolge das Drag-and-Drop, das der Design-Reiter schon hat. Fällt kein ausgewählter Raum an, greift die Adresse – die Regel für auswärtige Termine bleibt unberührt.
+  **Eine Verfeinerung je Kalender wäre möglich und lohnt nicht.** Die Mehrfachfälle sitzen zu 46 von 52 in zwei Kalendern; mit drei Haken bleiben aber ohnehin nur fünf Termine stumm. Die Zwischenstufe wäre Bedienoberfläche für einen Fall, den die einfachere Regel schon erledigt.
+
+  **Es ist kein neuer Eingriff, sondern ein bekannter.** Welche Kalender auf die Website dürfen, entscheidet das Backend seit jeher – die Auswahl der Räume ist dieselbe Art von Entscheidung, eine Ebene tiefer.
+
+  **Gestalt, nah an dem, was schon existiert**: `mergeResources()`/`sanitizeResources()` als Zwillinge von `mergeCalendars()`/`sanitizeCalendars()`, ein Reiter „Räume" nach dem Muster des Kalender-Reiters samt „von ChurchTools laden"-Knopf. Die Ortszeile im Frontend bleibt unverändert – sie bekommt nur eine zweite Quelle: Raum, wenn einer feststeht, sonst Adresse. Damit ist auch keine Schemaänderung nötig.
 
   **Zwei der vier offenen Punkte unten erledigt die Auswahl mit**: die Testressource und der Ressourcentyp „item" werden schlicht nicht angehakt.
 
