@@ -5,6 +5,18 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.12.0] - 2026-09-02
+
+### Added
+
+- **Der Ort eines Termins kann jetzt aus den Raumbuchungen kommen.** ChurchTools führt am Termin eine Adresse – in der Praxis die des Gebäudes – und daneben die Räume, die dafür gebucht werden; das Plugin hat bisher nur die Adresse gelesen. An den Daten der Referenzinstanz gemessen war das die falsche Hälfte: 12 von 121 Terminen trugen eine Adresse, aber 107 eine bestätigte Raumbuchung. Neu ist der Reiter **„Räume“** mit einer Liste zum Anhaken. Ein Haken heißt „dieser Raum ist es wert, öffentlich genannt zu werden“; ist für einen Termin genau einer davon bestätigt gebucht, steht er als Ortsangabe da. Sind es mehrere, bleibt die Angabe leer – eine Aufzählung aller gebuchten Räume ist keine Ortsangabe, sondern eine Inventarliste. Ist gar keiner gebucht, gilt weiterhin die Adresse aus ChurchTools, und genau das trägt Termine an auswärtigen Orten. Der Aufwand ist einmalig: drei Haken auf der Referenzinstanz, danach nichts je Termin. Die Liste hält der Sync selbst aktuell, ein neuer Raum erscheint dort unangehakt wie ein neuer Kalender
+- **Dazu eine Option für den strengeren Fall.** Ohne sie genügt, dass genau ein *ausgewählter* Raum gebucht ist – auch wenn daneben nicht ausgewählte belegt sind (an den echten Daten 81 von 119 Zeilen, davon 31, in denen der genannte Raum einer von vier oder neun gebuchten ist). Mit ihr zählt jede Buchung mit, und die Angabe erscheint nur, wenn der Raum den Termin allein trägt (50 von 119). Die Wahl ist bewusst dem Betreiber überlassen: Ob „einer von vier Räumen, und zwar der, den wir öffentlich nennen“ eine Hilfe oder eine Irreführung ist, hängt daran, wie die Gemeinde ihre Räume bucht
+
+### Notes
+
+- Ohne angehakte Räume fragt der Sync die Buchungen gar nicht erst ab – für Installationen, die das Ressourcenmodul nicht nutzen, kostet die Neuerung keine einzige zusätzliche Anfrage. Der Zugriff hängt in ChurchTools nicht am allgemeinen Recht für das Ressourcen-Modul, sondern an der Freigabe einzelner Ressourcen („Ressource sehen“)
+- Verworfen wurde eine Prioritätenliste, aus der bei mehreren gebuchten Räumen der oberste gewinnt. Sie erreichte mehr Termine (107), behauptete aber sichtbar Falsches: ein Ferienprogramm mit zehn gebuchten Räumen erschien unter dem Namen eines Nebenraums, und dieselbe Serie zeigte von Woche zu Woche einen anderen Raum, weil das gebuchte Bündel wechselt
+
 ## [1.11.0] - 2026-09-02
 
 ### Changed

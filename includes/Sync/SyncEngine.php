@@ -11,6 +11,7 @@ use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
 use DateTimeImmutable;
+use DateTimeInterface;
 use RuntimeException;
 use Throwable;
 
@@ -51,6 +52,7 @@ final class SyncEngine
         // noch einmal abgefragt wird und ein dort neu angelegter sofort in der
         // Auswahl auftaucht.
         self::refreshCalendarList();
+        self::refreshResourceList();
 
         $calendarIds = SettingsPage::getEnabledCalendarIds();
 
@@ -127,6 +129,28 @@ final class SyncEngine
                 'time' => current_time('mysql'),
                 'message' => $exception->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Haelt die Raumliste des Tabs „Raeume" aktuell, damit ein in ChurchTools
+     * neu angelegter Raum dort von selbst auftaucht - unangehakt, wie ein neuer
+     * Kalender.
+     *
+     * Fehler bleiben hier ohne Folgen und ohne Meldung, anders als beim
+     * Kalenderabgleich: Die Raumliste ist eine Zutat, keine Grundlage. Ein
+     * API-Key ohne Freigabe fuer Ressourcen ist der Normalfall fuer jede
+     * Installation, die diese Funktion nicht benutzt - daraus jede Stunde eine
+     * Fehlermeldung im Backend zu machen, waere Laerm ueber eine Abwesenheit.
+     * Wer Raeume ausgewaehlt hat und deren Liste veraltet, sieht es am
+     * Zeitstempel „zuletzt geladen" auf dem Tab.
+     */
+    private static function refreshResourceList(): void
+    {
+        try {
+            SettingsPage::refreshResources(new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey()));
+        } catch (Throwable) {
+            return;
         }
     }
 
@@ -295,11 +319,27 @@ final class SyncEngine
         // not once per row.
         $seriesImageUrls = [];
 
+        $rooms = self::lookUpRooms($client, $from, $to);
+
         foreach ($appointmentEnvelopes as $envelope) {
             $row = self::mapOccurrence($envelope);
 
             if ($row === null) {
                 continue;
+            }
+
+            /*
+             * Der Raum schlaegt die Adresse, wo einer feststeht. Das Adressfeld
+             * am Termin bezeichnet in der Praxis das Gebaeude - und dessen
+             * Anschrift steht auf der Website ohnehin im Fussbereich, waehrend
+             * der Raum die Auskunft ist, die dort fehlt. Steht keiner fest,
+             * bleibt die Zeile bei der Adresse; das ist der Fall, der
+             * auswaertige Termine traegt.
+             */
+            $room = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
+
+            if ($room !== '') {
+                $row['location'] = $room;
             }
 
             $ctEventId = $row['ct_event_id'];
@@ -326,6 +366,48 @@ final class SyncEngine
         // very run has already been written to its series' rows.
         foreach ($repository->orphanedAttachmentIds() as $attachmentId) {
             wp_delete_attachment($attachmentId, true);
+        }
+    }
+
+    /**
+     * Die Raumbuchungen des Fensters, oder eine leere Zuordnung.
+     *
+     * Ohne ausgewaehlte Raeume wird gar nicht erst gefragt: Das
+     * Ressourcenmodul kostet eine Installation, die es nicht benutzt, damit
+     * keine einzige Anfrage. Und ein Fehlschlag beendet den Lauf nicht - der
+     * Terminabgleich ist die Aufgabe dieses Laufs, der Raum eine Verfeinerung.
+     * Die Termine behalten dann ihre Adresse, was vor dieser Funktion der
+     * einzige Zustand war.
+     */
+    private static function lookUpRooms(Client $client, DateTimeInterface $from, DateTimeInterface $to): RoomLookup
+    {
+        $resourceIds = SettingsPage::enabledResourceIds();
+
+        if ($resourceIds === []) {
+            return RoomLookup::fromBookings([], []);
+        }
+
+        $exclusiveOnly = SettingsPage::roomsExclusiveOnly();
+
+        /*
+         * Im strengen Modus muessen die Buchungen *aller* bekannten Raeume
+         * abgefragt werden, nicht nur die der angehakten: Die Frage lautet dort
+         * „ist nebenher noch etwas belegt?", und die laesst sich aus einer
+         * Antwort, die nur die angehakten Raeume enthaelt, nicht beantworten.
+         * Genau daran ist die erste Fassung gescheitert - sie fragte immer nur
+         * die angehakten ab, und der strenge Modus blieb dadurch wirkungslos,
+         * ohne dass ein Test das zeigen konnte.
+         */
+        $fetchIds = $exclusiveOnly ? SettingsPage::knownResourceIds() : $resourceIds;
+
+        try {
+            return RoomLookup::fromBookings(
+                $client->getBookings($fetchIds, $from, $to),
+                $resourceIds,
+                $exclusiveOnly
+            );
+        } catch (Throwable) {
+            return RoomLookup::fromBookings([], []);
         }
     }
 

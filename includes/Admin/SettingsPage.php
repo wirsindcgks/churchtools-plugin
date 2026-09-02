@@ -30,6 +30,15 @@ final class SettingsPage
      */
     private const OPTION_CALENDARS_FETCHED = 'ctp_calendars_fetched';
 
+    /**
+     * Dasselbe fuer die Raumliste. Sie kommt aus einem anderen Modul und
+     * haengt an einer eigenen Freigabe des API-Keys - eine leere Liste kann
+     * deshalb auch heissen „darf dieser Key nicht sehen" statt „gibt es
+     * nicht", und dann ist der Zeitstempel die einzige Auskunft darueber, ob
+     * ueberhaupt schon einmal nachgesehen wurde.
+     */
+    private const OPTION_RESOURCES_FETCHED = 'ctp_resources_fetched';
+
     private const PAGE_SLUG = 'churchtools-plugin';
 
     /**
@@ -51,6 +60,7 @@ final class SettingsPage
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('wp_ajax_ctp_test_connection', [$this, 'ajaxTestConnection']);
         add_action('wp_ajax_ctp_fetch_calendars', [$this, 'ajaxFetchCalendars']);
+        add_action('wp_ajax_ctp_fetch_resources', [$this, 'ajaxFetchResources']);
         add_action('wp_ajax_ctp_run_sync', [$this, 'ajaxRunSync']);
         add_action('wp_ajax_ctp_check_updates', [$this, 'ajaxCheckUpdates']);
     }
@@ -79,6 +89,7 @@ final class SettingsPage
             'status' => __('Übersicht', 'churchtools-plugin'),
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
+            'rooms' => __('Räume', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
             'embed' => __('Einbinden', 'churchtools-plugin'),
@@ -104,6 +115,7 @@ final class SettingsPage
             'status' => 'dashboard',
             'connection' => 'admin-links',
             'calendars' => 'calendar-alt',
+            'rooms' => 'location-alt',
             'sync' => 'update',
             'design' => 'admin-appearance',
             'embed' => 'editor-code',
@@ -276,6 +288,22 @@ final class SettingsPage
              *   'default_image_id' => int (attachment ID) ]
              */
             'calendars' => [],
+            /**
+             * Keyed by ChurchTools resource ID:
+             * [ 'name' => string, 'enabled' => bool, 'sort_key' => int ]
+             *
+             * Ein Haken heisst „dieser Raum ist es wert, oeffentlich genannt zu
+             * werden". Leer ist der Normalzustand: Ohne Auswahl fragt der Sync
+             * die Buchungen gar nicht erst ab.
+             */
+            'resources' => [],
+            /**
+             * Streng oder grosszuegig: Ist er gesetzt, nennt das Plugin einen
+             * Raum nur, wenn ueberhaupt kein weiterer gebucht ist - sonst
+             * genuegt, dass genau ein *angehakter* Raum gebucht ist. An den
+             * Daten der Referenzinstanz sind das 50 gegen 81 Termine.
+             */
+            'rooms_exclusive' => false,
             'sync_interval' => 'hourly',
             // Ein volles Jahr, nicht ein halbes: Der Gemeindekalender ist ein
             // Jahreszyklus (Weihnachten, Ostern, Konfirmation, Freizeiten), und
@@ -587,6 +615,15 @@ final class SettingsPage
             'calendars' => array_key_exists('calendars', $input)
                 ? self::sanitizeCalendars((array) $input['calendars'], $existing['calendars'])
                 : $existing['calendars'],
+            'resources' => array_key_exists('resources', $input)
+                ? self::sanitizeResources((array) $input['resources'], $existing['resources'] ?? [])
+                : ($existing['resources'] ?? []),
+            // Wie jedes Kaestchen: Der Reiter schickt das Feld immer mit (das
+            // Formular traegt die ganze Raumauswahl), ein fehlendes Feld heisst
+            // deshalb „von einem anderen Reiter gespeichert" und nicht „aus".
+            'rooms_exclusive' => array_key_exists('resources', $input)
+                ? !empty($input['rooms_exclusive'])
+                : (bool) ($existing['rooms_exclusive'] ?? false),
             'sync_interval' => $syncInterval,
             'sync_days_ahead' => array_key_exists('sync_days_ahead', $input)
                 ? max(1, (int) $input['sync_days_ahead'])
@@ -709,6 +746,33 @@ final class SettingsPage
      * IDs we already know about from a previous fetch — the `name` label itself is
      * never taken from user input, it is carried over from $existing.
      */
+    /**
+     * Zwilling von sanitizeCalendars(): Nur IDs, die schon bekannt sind, kommen
+     * durch - alles andere waere ein Formularfeld, das jemand erfunden hat. Name
+     * und Sortierschluessel sind keine Eingabefelder, sie stammen aus
+     * ChurchTools und werden nur mitgetragen; einstellbar ist genau der Haken.
+     */
+    private static function sanitizeResources(array $input, array $existing): array
+    {
+        $resources = [];
+
+        foreach ($input as $id => $row) {
+            $id = (int) $id;
+
+            if (!isset($existing[$id])) {
+                continue;
+            }
+
+            $resources[$id] = [
+                'name' => (string) $existing[$id]['name'],
+                'enabled' => !empty($row['enabled']),
+                'sort_key' => (int) ($existing[$id]['sort_key'] ?? 0),
+            ];
+        }
+
+        return $resources;
+    }
+
     private static function sanitizeCalendars(array $input, array $existing): array
     {
         $calendars = [];
@@ -839,6 +903,137 @@ final class SettingsPage
         }
 
         return $found;
+    }
+
+    /**
+     * Der Tab „Raeume". Eine Liste mit Haken, sonst nichts - und das ist die
+     * ganze Bedienung dieser Funktion.
+     *
+     * Warum es keine Reihenfolge gibt: Der verworfene Gegenentwurf war eine
+     * Prioritaetenliste, aus der bei mehreren gebuchten Raeumen der oberste
+     * gewinnt. Sie erreichte mehr Termine, behauptete aber sichtbar Falsches -
+     * ein Ferienprogramm mit zehn gebuchten Raeumen erschien unter dem Namen
+     * eines Nebenraums, und dieselbe Serie zeigte von Woche zu Woche einen
+     * anderen Raum, weil das gebuchte Buendel wechselt. Ein Haken allein sagt
+     * genug: „Dieser Raum ist es wert, oeffentlich genannt zu werden."
+     */
+    private function renderRoomsTab(): void
+    {
+        $resources = self::get()['resources'] ?? [];
+
+        // ChurchTools' eigene Ordnung: grosse Raeume oben, Testressourcen unten.
+        uasort($resources, static function (array $a, array $b): int {
+            return [$a['sort_key'] ?? 0, $a['name']] <=> [$b['sort_key'] ?? 0, $b['name']];
+        });
+
+        $fetched = (string) get_option(self::OPTION_RESOURCES_FETCHED, '');
+        ?>
+        <form method="post" action="options.php" class="ctp-settings-form">
+            <div class="ctp-panel">
+                <?php settings_fields(self::PAGE_SLUG); ?>
+                <h2><?php esc_html_e('Räume in der Ortsangabe', 'churchtools-plugin'); ?></h2>
+
+                <p class="description">
+                    <?php esc_html_e('ChurchTools führt am Termin eine Adresse – in der Praxis die des Gebäudes – und daneben die Räume, die dafür gebucht werden. Angehakte Räume erscheinen als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus: Eine Aufzählung aller gebuchten Räume ist keine Ortsangabe. Ist keiner gebucht, gilt weiterhin die Adresse aus ChurchTools.', 'churchtools-plugin'); ?>
+                </p>
+
+                <?php
+                self::renderActionBar(
+                    'ctp-fetch-resources',
+                    __('Räume von ChurchTools laden', 'churchtools-plugin'),
+                    __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Knopf holt sie sofort. Die Haken bleiben dabei erhalten.', 'churchtools-plugin')
+                );
+                ?>
+
+                <?php if ($resources === []) : ?>
+                    <div class="notice notice-info inline">
+                        <p>
+                            <?php esc_html_e('Es sind keine Räume bekannt. Entweder verwendet die Instanz keine Ressourcen, oder der API-Key ist nicht für sie freigegeben – die Freigabe heißt in ChurchTools „Ressource sehen“ und ist von der allgemeinen Berechtigung für das Ressourcen-Modul getrennt.', 'churchtools-plugin'); ?>
+                        </p>
+                    </div>
+                <?php else : ?>
+                    <?php if ($fetched !== '') : ?>
+                        <p class="description">
+                            <?php
+                            printf(
+                                /* translators: %s: date and time the room list was last fetched */
+                                esc_html__('Zuletzt geladen: %s', 'churchtools-plugin'),
+                                esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $fetched))
+                            );
+                            ?>
+                        </p>
+                    <?php endif; ?>
+
+                    <table class="widefat striped ctp-rooms-table">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?php esc_html_e('Als Ortsangabe zeigen', 'churchtools-plugin'); ?></th>
+                                <th scope="col"><?php esc_html_e('Raum', 'churchtools-plugin'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($resources as $id => $resource) : ?>
+                                <tr>
+                                    <td>
+                                        <?php
+                                        /*
+                                         * Verstecktes Feld vor jedem Kaestchen: Ein
+                                         * leeres Kaestchen sendet gar nichts, und ohne
+                                         * diese Null waere das Abwaehlen des letzten
+                                         * Raums nicht speicherbar - sanitizeSettings()
+                                         * saehe dann keinen `resources`-Schluessel und
+                                         * truege die alten Haken unveraendert weiter.
+                                         */
+                                        ?>
+                                        <input
+                                            type="hidden"
+                                            name="<?php echo esc_attr(self::OPTION_KEY); ?>[resources][<?php echo esc_attr((string) $id); ?>][enabled]"
+                                            value="0"
+                                        >
+                                        <input
+                                            type="checkbox"
+                                            id="ctp-resource-<?php echo esc_attr((string) $id); ?>"
+                                            name="<?php echo esc_attr(self::OPTION_KEY); ?>[resources][<?php echo esc_attr((string) $id); ?>][enabled]"
+                                            value="1"
+                                            <?php checked(!empty($resource['enabled'])); ?>
+                                        >
+                                    </td>
+                                    <td>
+                                        <label for="ctp-resource-<?php echo esc_attr((string) $id); ?>">
+                                            <?php echo esc_html($resource['name']); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+
+                    <p class="description">
+                        <?php esc_html_e('Sparsam anhaken: Je mehr Räume ausgewählt sind, desto häufiger sind mehrere davon gleichzeitig gebucht – und desto öfter bleibt die Ortsangabe deshalb leer. Am Anfang sind die wenigen Räume richtig, die für sich allein einen Termin verorten.', 'churchtools-plugin'); ?>
+                    </p>
+
+                    <h3><?php esc_html_e('Wenn nebenher weitere Räume gebucht sind', 'churchtools-plugin'); ?></h3>
+
+                    <p>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="<?php echo esc_attr(self::OPTION_KEY); ?>[rooms_exclusive]"
+                                value="1"
+                                <?php checked(self::roomsExclusiveOnly()); ?>
+                            >
+                            <?php esc_html_e('Nur anzeigen, wenn für den Termin sonst kein weiterer Raum gebucht ist', 'churchtools-plugin'); ?>
+                        </label>
+                    </p>
+
+                    <p class="description">
+                        <?php esc_html_e('Ohne Haken genügt es, dass genau ein ausgewählter Raum gebucht ist – auch wenn daneben nicht ausgewählte Räume belegt sind. Das trifft mehr Termine, nennt bei einer Veranstaltung über mehrere Räume aber nur den einen, den Sie ausgewählt haben. Mit Haken schweigt die Ortsangabe in solchen Fällen und nennt nur Räume, die den Termin allein tragen.', 'churchtools-plugin'); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+            <?php $this->renderSaveBar(); ?>
+        </form>
+        <?php
     }
 
     private function renderCalendarsTab(): void
@@ -3485,6 +3680,8 @@ final class SettingsPage
                 ?>
             <?php elseif ($tab === 'calendars') : ?>
                 <?php $this->renderCalendarsTab(); ?>
+            <?php elseif ($tab === 'rooms') : ?>
+                <?php $this->renderRoomsTab(); ?>
             <?php elseif ($tab === 'updates') : ?>
                 <?php $this->renderUpdatesTab(); ?>
             <?php elseif ($tab === 'design') : ?>
@@ -3632,6 +3829,34 @@ final class SettingsPage
                     nonce: '<?php echo esc_js(wp_create_nonce('ctp_fetch_calendars')); ?>',
                     instance: ctpFieldValue('ctp-instance'),
                     api_key: ctpFieldValue('ctp-api-key'),
+                }),
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        window.location.reload();
+                        return;
+                    }
+                    button.disabled = false;
+                    ctpSetStatus(result, 'error', (data.data && data.data.message)
+                        ? data.data.message
+                        : '<?php echo esc_js(__('Laden fehlgeschlagen', 'churchtools-plugin')); ?>');
+                });
+        });
+
+        document.getElementById('ctp-fetch-resources')?.addEventListener('click', function () {
+            var button = this;
+            var result = document.getElementById('ctp-fetch-resources-result');
+            button.disabled = true;
+            ctpSetStatus(result, 'busy', '<?php echo esc_js(__('Lade…', 'churchtools-plugin')); ?>');
+
+            fetch(ajaxurl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    action: 'ctp_fetch_resources',
+                    nonce: '<?php echo esc_js(wp_create_nonce('ctp_fetch_resources')); ?>',
                 }),
             })
                 .then(function (response) { return response.json(); })
@@ -3955,6 +4180,35 @@ final class SettingsPage
         }
     }
 
+    public function ajaxFetchResources(): void
+    {
+        check_ajax_referer('ctp_fetch_resources', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Keine Berechtigung.', 'churchtools-plugin')], 403);
+        }
+
+        $connection = self::effectiveConnection();
+
+        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
+            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
+        }
+
+        if ($connection['instance'] === '' || $connection['api_key'] === '') {
+            wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
+        }
+
+        try {
+            $result = self::refreshResources(new Client($connection['base_url'], $connection['api_key']));
+        } catch (Throwable $exception) {
+            wp_send_json_error(['message' => $exception->getMessage()]);
+
+            return;
+        }
+
+        wp_send_json_success(['count' => $result['count']]);
+    }
+
     public function ajaxFetchCalendars(): void
     {
         check_ajax_referer('ctp_fetch_calendars', 'nonce');
@@ -4012,6 +4266,66 @@ final class SettingsPage
      *
      * @return array{status: 'updated'|'empty', count: int, changed: bool, message: string}
      */
+    /**
+     * ChurchTools benennt die Ressourcentypen ueber Uebersetzungsschluessel;
+     * `resource.type.room` ist der Raum. Am Schluessel erkannt und nicht am
+     * angezeigten Namen, weil der uebersetzt und umbenannt werden kann.
+     */
+    private const ROOM_TYPE_KEY = 'resource.type.room';
+
+    /**
+     * Zwilling von refreshCalendars(). Zwei Unterschiede zum Kalenderabgleich,
+     * beide beabsichtigt:
+     *
+     * Eine leere Antwort ist hier *kein* Alarmfall. Ein API-Key ohne Freigabe
+     * fuer Ressourcen bekommt legitim eine leere Liste, und der Normalzustand
+     * dieses Plugins ist, dass niemand Raeume ausgewaehlt hat. Anders als bei
+     * den Kalendern haengt an der Liste auch nichts, was verloren gehen koennte
+     * (keine Farben, keine Standardbilder) - der Haken ueberlebt in $existing,
+     * solange die ID wiederkommt.
+     *
+     * Und gefiltert wird auf Raeume: Gegenstaende sind nie eine Ortsangabe.
+     * Findet sich kein Raumtyp - eine Instanz, die ihre Typen anders benannt
+     * hat -, gelten alle Typen, damit die Liste nicht wortlos leer bleibt.
+     */
+    public static function refreshResources(Client $client): array
+    {
+        $settings = self::get();
+        $masterdata = $client->getResourceMasterdata();
+
+        $roomTypeIds = [];
+
+        foreach ($masterdata['resourceTypes'] as $type) {
+            if ((string) ($type['name'] ?? '') === self::ROOM_TYPE_KEY) {
+                $roomTypeIds[] = (int) ($type['id'] ?? 0);
+            }
+        }
+
+        if ($roomTypeIds === []) {
+            $roomTypeIds = array_map(static fn (array $type): int => (int) ($type['id'] ?? 0), $masterdata['resourceTypes']);
+        }
+
+        $merged = self::mergeResources($settings['resources'] ?? [], $masterdata['resources'], $roomTypeIds);
+        $changed = $merged !== ($settings['resources'] ?? []);
+
+        if ($changed) {
+            // Wie bei refreshCalendars(): sanitizeSettings() haengt an jedem
+            // update_option() dieser Option und wuerde frisch geholte, noch
+            // unbekannte IDs an der eigenen Allowlist wieder herausfiltern.
+            remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
+            update_option(self::OPTION_KEY, array_merge($settings, ['resources' => $merged]));
+            add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
+        }
+
+        update_option(self::OPTION_RESOURCES_FETCHED, current_time('mysql'));
+
+        return [
+            'status' => 'updated',
+            'count' => count($merged),
+            'changed' => $changed,
+        ];
+    }
+
     public static function refreshCalendars(Client $client): array
     {
         $settings = self::get();
@@ -4177,6 +4491,84 @@ final class SettingsPage
      * "Auf Standardfarbe zurücksetzen" button (renderCalendarCard()) keeps pointing
      * at ChurchTools' actual color even if it changed there since the last fetch.
      */
+    /**
+     * Zwilling von mergeCalendars(). Der Haken bleibt beim Betreiber, Name und
+     * Sortierschluessel kommen bei jedem Abgleich frisch aus ChurchTools - ein
+     * umbenannter Raum heisst damit auch hier neu, ohne dass jemand etwas tun
+     * muss.
+     *
+     * Gegenstaende bleiben draussen. `/api/resource/masterdata` fuehrt neben
+     * Raeumen auch Technik und Aehnliches; als Ortsangabe kommt davon nichts in
+     * Frage, und eine Liste, in der man sie erst wegsehen muss, waere schlechter
+     * als eine kurze. Erkannt wird das am Typ, nicht am Namen.
+     *
+     * @param int[] $roomTypeIds IDs der Ressourcentypen, die Raeume sind
+     */
+    private static function mergeResources(array $existing, array $remoteResources, array $roomTypeIds): array
+    {
+        $merged = [];
+        $rooms = array_flip(array_map('intval', $roomTypeIds));
+
+        foreach ($remoteResources as $resource) {
+            $id = (int) ($resource['id'] ?? 0);
+
+            if ($id === 0 || !isset($rooms[(int) ($resource['resourceTypeId'] ?? 0)])) {
+                continue;
+            }
+
+            $merged[$id] = [
+                'name' => (string) ($resource['name'] ?? ''),
+                'enabled' => (bool) ($existing[$id]['enabled'] ?? false),
+                // ChurchTools' eigene Ordnung, nur zum Sortieren der Liste im
+                // Backend - grosse Raeume oben, Testressourcen unten. Sie
+                // entscheidet nichts, siehe RoomLookup.
+                'sort_key' => (int) ($resource['sortKey'] ?? 0),
+            ];
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Alle bekannten Raeume, angehakt oder nicht. Gebraucht wird das fuer den
+     * strengen Modus: Um zu wissen, ob *nebenher* noch ein Raum belegt ist, muss
+     * der Sync auch die Buchungen der nicht angehakten Raeume sehen.
+     *
+     * @return int[]
+     */
+    public static function knownResourceIds(): array
+    {
+        return array_map('intval', array_keys(self::get()['resources'] ?? []));
+    }
+
+    /**
+     * Streng oder grosszuegig - siehe die Beschreibung der Einstellung im Tab
+     * „Raeume" und den Vergleich in RoomLookup::fromBookings().
+     */
+    public static function roomsExclusiveOnly(): bool
+    {
+        return (bool) (self::get()['rooms_exclusive'] ?? false);
+    }
+
+    /**
+     * Die im Backend angehakten Raeume. Ist nichts angehakt, fragt der Sync die
+     * Buchungen gar nicht erst ab - das Ressourcenmodul kostet dann nichts.
+     *
+     * @return int[]
+     */
+    public static function enabledResourceIds(): array
+    {
+        $enabled = [];
+
+        foreach ((self::get()['resources'] ?? []) as $id => $resource) {
+            if (!empty($resource['enabled'])) {
+                $enabled[] = (int) $id;
+            }
+        }
+
+        return $enabled;
+    }
+
     private static function mergeCalendars(array $existing, array $remoteCalendars): array
     {
         $merged = [];

@@ -54,6 +54,50 @@ final class Client
         ]);
     }
 
+    /**
+     * Ressourcen und Ressourcentypen der Instanz in einem Aufruf - die API
+     * liefert beides zusammen, und ohne die Typen laesst sich ein Raum nicht von
+     * einem Gegenstand unterscheiden (jede Ressource nennt nur ihre
+     * `resourceTypeId`).
+     *
+     * Zugriff haengt nicht am Modulrecht `churchresource.view`, sondern an der
+     * Freigabe einzelner Ressourcen (`view resource`) - ein Key ohne jede
+     * Freigabe bekommt hier leere Listen statt eines Fehlers.
+     *
+     * @return array{resources: array, resourceTypes: array}
+     */
+    public function getResourceMasterdata(): array
+    {
+        $masterdata = $this->request('GET', '/api/resource/masterdata');
+
+        return [
+            'resources' => is_array($masterdata['resources'] ?? null) ? $masterdata['resources'] : [],
+            'resourceTypes' => is_array($masterdata['resourceTypes'] ?? null) ? $masterdata['resourceTypes'] : [],
+        ];
+    }
+
+    /**
+     * Raumbuchungen im Zeitfenster. `resource_ids` ist Pflicht - ohne sie
+     * antwortet die API mit 400 („Die Eingabe muss ein Array sein.") -, ein
+     * leerer Aufruf waere also nur ein teurer Fehler.
+     *
+     * Die Buchungen kommen in derselben Huelle wie Termine (`base` fuer die
+     * Serie, `calculated` fuer das einzelne Vorkommnis) und tragen in
+     * `base.appointmentId` den Termin, zu dem sie gehoeren.
+     */
+    public function getBookings(array $resourceIds, DateTimeInterface $from, DateTimeInterface $to): array
+    {
+        if ($resourceIds === []) {
+            return [];
+        }
+
+        return $this->request('GET', '/api/bookings', [
+            'resource_ids' => $resourceIds,
+            'from' => $from->format('Y-m-d'),
+            'to' => $to->format('Y-m-d'),
+        ]);
+    }
+
     private function request(string $method, string $path, array $query = []): array
     {
         $url = trailingslashit($this->baseUrl) . ltrim($path, '/');

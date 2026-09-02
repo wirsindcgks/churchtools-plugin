@@ -663,4 +663,113 @@ final class SettingsPageTest extends TestCase
 
         $this->assertSame([7 => 'Intern aktiv'], SettingsPage::nonPublicEnabledCalendars());
     }
+
+    /**
+     * Gegenstaende sind nie eine Ortsangabe. Erkannt wird das am Typ und nicht
+     * am Namen - die Liste soll kurz sein, ohne dass jemand Technik erst
+     * wegsehen muss.
+     */
+    public function testMergeResourcesKeepsOnlyRooms(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 23, 'name' => 'Grosser Saal', 'resourceTypeId' => 2, 'sortKey' => 5],
+            ['id' => 51, 'name' => 'Beamer', 'resourceTypeId' => 1, 'sortKey' => 5],
+        ], [2]);
+
+        $this->assertSame([23], array_keys($merged));
+        $this->assertSame('Grosser Saal', $merged[23]['name']);
+        $this->assertSame(5, $merged[23]['sort_key']);
+    }
+
+    /**
+     * Der Haken gehoert dem Betreiber, Name und Sortierschluessel gehoeren
+     * ChurchTools: Ein dort umbenannter Raum heisst nach dem Abgleich auch hier
+     * neu, ohne seinen Haken zu verlieren.
+     */
+    public function testMergeResourcesKeepsTheTickAndTakesTheNewName(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+
+        $merged = $method->invoke(null, [
+            23 => ['name' => 'Alter Name', 'enabled' => true, 'sort_key' => 99],
+        ], [
+            ['id' => 23, 'name' => 'Neuer Name', 'resourceTypeId' => 2, 'sortKey' => 5],
+        ], [2]);
+
+        $this->assertTrue($merged[23]['enabled']);
+        $this->assertSame('Neuer Name', $merged[23]['name']);
+        $this->assertSame(5, $merged[23]['sort_key']);
+    }
+
+    /**
+     * Wie bei den Kalendern: Nur bekannte IDs kommen durch, und Name wie
+     * Sortierschluessel stammen aus $existing statt aus dem Formular - sie sind
+     * keine Eingabefelder.
+     */
+    public function testSanitizeResourcesOnlyAcceptsKnownIdsAndKeepsTheirNames(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'sanitizeResources');
+
+        $sanitized = $method->invoke(null, [
+            23 => ['enabled' => '1', 'name' => 'Untergeschobener Name'],
+            99 => ['enabled' => '1'],
+        ], [
+            23 => ['name' => 'Grosser Saal', 'enabled' => false, 'sort_key' => 5],
+        ]);
+
+        $this->assertSame([23], array_keys($sanitized));
+        $this->assertTrue($sanitized[23]['enabled']);
+        $this->assertSame('Grosser Saal', $sanitized[23]['name']);
+        $this->assertSame(5, $sanitized[23]['sort_key']);
+    }
+
+    /**
+     * Ein abgehakter Raum verschwindet aus der Auswahl - ohne diese Zeile
+     * fragte der Sync weiterhin dessen Buchungen ab.
+     */
+    public function testOnlyTickedResourcesCount(): void
+    {
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+            24 => ['name' => 'Foyer', 'enabled' => false, 'sort_key' => 10],
+        ]]);
+
+        $this->assertSame([23], SettingsPage::enabledResourceIds());
+    }
+
+    /**
+     * Der Normalzustand jeder Installation, die diese Funktion nicht benutzt.
+     * Er entscheidet mehr als eine leere Liste: SyncEngine::lookUpRooms() fragt
+     * dann gar nicht erst nach Buchungen.
+     */
+    public function testWithoutAnyResourcesTheSelectionIsEmpty(): void
+    {
+        ctp_test_set_option('ctp_settings', []);
+
+        $this->assertSame([], SettingsPage::enabledResourceIds());
+    }
+
+    /**
+     * Ein leeres Kaestchen sendet nichts. Der Reiter stellt deshalb jedem ein
+     * verstecktes `enabled=0` voran - ohne das waere das Abwaehlen des letzten
+     * Raums nicht speicherbar, weil `resources` dann ganz fehlte und
+     * sanitizeSettings() die alten Haken unveraendert weitertruege.
+     */
+    public function testUntickingEveryRoomIsSaved(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'sanitizeResources');
+
+        $sanitized = $method->invoke(null, [
+            23 => ['enabled' => '0'],
+            24 => ['enabled' => '0'],
+        ], [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+            24 => ['name' => 'Foyer', 'enabled' => true, 'sort_key' => 10],
+        ]);
+
+        $this->assertFalse($sanitized[23]['enabled']);
+        $this->assertFalse($sanitized[24]['enabled']);
+    }
 }
