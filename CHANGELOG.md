@@ -5,6 +5,26 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.16.0] - 2026-09-03
+
+### Added
+
+- **Jeder Termin hat jetzt eine Adresse, der auch eine Suchmaschine folgen kann.** In der Voreinstellung „Popup" war der Titel einer Kachel ein Knopf, und ein Knopf hat kein Ziel: Der Detailinhalt lag daneben in einem `<template>`, dessen Inhalt kein Browser rendert und keine Suchmaschine liest. Die Termine hatten längst eine eigene Adresse – nur führte kein Verweis dorthin, und niemandem fiel das auf, weil das Popup ja aufging. Jetzt ist der Auslöser in beiden Klickarten ein Verweis auf die Terminseite; im Popup-Betrieb fängt das Skript den Klick ab und öffnet wie bisher den Dialog. Sichtbar ändert sich dadurch nichts – außer dass Mittelklick und „In neuem Tab öffnen" jetzt tun, was sie überall sonst tun.
+- **Strukturierte Daten unter jeder Terminliste und auf jeder Terminseite** (schema.org/Event als JSON-LD). Der sichtbare Teil einer Kachel ist für einen Menschen eindeutig und für eine Maschine nicht: „Sa, 6. September 2026" und „19:30–22:00" sind Text, aus dem niemand zuverlässig einen Zeitpunkt mit Zeitzone gewinnt. Der Block sagt Beginn und Ende mit Zeitzonenversatz, Ort, Bild, Beschreibung und Adresse des Termins – die Voraussetzung dafür, dass eine Suchmaschine einen Termin als Termin behandelt statt als Absatz. Ganztägige Termine tragen nur das Datum, abgesagte kommen gar nicht erst in der Tabelle an.
+- **Eine Termin-Sitemap unter `/churchtools-termine-sitemap.xml`**, in der robots.txt angekündigt. Sie beantwortet ein Problem, das man dem Frontend nicht ansieht: Eine Liste zeigt ihr erstes Zeitfenster, alles Weitere kommt über „Weitere Termine laden" – einen Knopf, der nachlädt, und ein Crawler klickt nicht. Auf der Referenzinstanz stehen damit 118 statt eine Handvoll Termine zur Auffindung bereit. Eine eigene Datei statt der WordPress-Sitemap, weil Yoast und Rank Math `wp-sitemap.xml` abschalten und ein dort eingehängter Anbieter ausgerechnet auf diesen Seiten stillläge. Bei der Klickart „Nichts" bleibt sie leer – wer Termine bewusst nicht verlinkt, soll sie nicht über eine Datei angeboten bekommen.
+- **Terminseiten bekommen ihren eigenen Kopf:** Seitentitel, Kurzbeschreibung, Vorschaubild, Open-Graph-Angaben und Canonical. Der Grund ist die Bauart – ein Termin hat keinen eigenen Beitrag, und alles, was WordPress in den Kopf schreibt, holt es aus dem Beitrag, hier also aus der Elternseite. Geteilte Termine sahen deshalb alle gleich aus, und die Kurzbeschreibung war die der Terminliste. Sie beginnt jetzt mit Datum, Uhrzeit und Ort – genau das, was eine Suchmaschine sonst als Letztes abschneidet.
+- **Verträglichkeit mit Yoast SEO und Rank Math.** Beide setzen Titel und Canonical selbst und hätten die eigenen Angaben überschrieben – im Fall des Canonical mit der Adresse der Terminliste, was einer Suchmaschine sagt „diese Seite ist nur eine Kopie jener". Das Plugin reicht den Termin jetzt in deren Filter. Für andere SEO-Plugins (SEOPress, AIOSEO, The SEO Framework) gilt: Sie werden erkannt, damit nichts doppelt im Kopf steht, ihre Werte bleiben aber die der Elternseite; die strukturierten Daten und die Sitemap sind davon unberührt.
+
+### Changed
+
+- **Das Bild auf der Terminseite trägt den Termintitel als Bildbeschreibung**, sofern es das eigene Bild des Termins ist. Dort ist der Flyer der Inhalt und nicht die Verzierung, und er ist das, was die Bildersuche zu diesem Termin findet. Das Standardbild eines Kalenders bleibt ohne Beschreibung – es zeigt nicht diesen Termin, es steht nur da, wo keiner ist.
+
+### Notes
+
+- Die Kachelbilder in Liste und Raster bleiben ohne Bildbeschreibung: Dort steht der Titel als Text daneben, und eine Wiederholung desselben Wortlauts wäre für einen Screenreader eine zweite Stimme derselben Angabe.
+- Überschriftenebenen in den Kacheln (`<h3>` statt `<span>`) sind bewusst nicht angefasst: Der Nutzen wäre gering, seit die strukturierten Daten die maschinenlesbare Auskunft übernehmen, und das Risiko liegt in fremden Themes, deren Überschriften-Stile das Kachellayout verschieben.
+- Die Rewrite-Regel der Sitemap kommt über einen angehobenen Versionsstempel in die Regeln (`REWRITE_VERSION`), es ist also keine Neuaktivierung nötig – beim ersten Seitenaufruf nach dem Update steht die Adresse.
+
 ## [1.15.0] - 2026-09-02
 
 ### Changed

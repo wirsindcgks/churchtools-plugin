@@ -563,7 +563,9 @@
 	 *   the page (see the <template class="ctp-events__detail-template">
 	 *   embedded per card by EventListRenderer::withCalendarMeta()/templates),
 	 *   so clicking a trigger just clones it into the shared <dialog> and calls
-	 *   showModal(), no fetch involved.
+	 *   showModal(), no fetch involved. Der Auslöser ist dabei ein Verweis auf
+	 *   die Terminseite und kein Knopf - er trägt `data-ctp-modal`, und erst
+	 *   dieser Handler macht aus dem Verweis den Dialog (siehe ClickTrigger).
 	 * - Closing that dialog, via its button or a click on the backdrop.
 	 *
 	 * All scoped per .ctp-events container (like the filter above) so multiple
@@ -580,7 +582,20 @@
 
 		var trigger = event.target.closest('.ctp-events__card-trigger');
 
-		if (trigger && trigger.tagName === 'BUTTON') {
+		if (trigger && trigger.getAttribute('data-ctp-modal') === '1') {
+			/*
+			 * Der Auslöser ist auch im Popup-Betrieb ein Verweis auf die
+			 * Terminseite (siehe Frontend\ClickTrigger) - nur dieser Zweig
+			 * macht daraus den Dialog. Modifier-Klicks bleiben dabei dem
+			 * Browser überlassen: Cmd/Strg/Shift/Alt heißt „in neuem Tab",
+			 * „in neuem Fenster", „Ziel speichern", und das soll die Adresse
+			 * öffnen und nicht ein Fenster, das im neuen Tab gar nicht steht.
+			 */
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+				return;
+			}
+
+			event.preventDefault();
 			openDetailModal(trigger);
 
 			return;

@@ -106,7 +106,10 @@ final class EventListRenderer
         ob_start();
         include $template;
 
-        return (string) ob_get_clean();
+        // Die strukturierten Daten hängen hier und nicht im Template: Ein
+        // Theme darf jedes dieser Templates überschreiben, und eine solche
+        // Kopie hätte sie sonst still verloren (siehe EventSchema).
+        return (string) ob_get_clean() . EventSchema::listScript($events, $args['click_behavior']);
     }
 
     /**
@@ -517,7 +520,8 @@ final class EventListRenderer
         ob_start();
         include $template;
 
-        return (string) ob_get_clean();
+        // Siehe render(): auch hier neben dem Template und nicht darin.
+        return (string) ob_get_clean() . EventSchema::detailScript($event);
     }
 
     /**
@@ -549,60 +553,21 @@ final class EventListRenderer
             $event['calendar_color'] = $calendar['color'] ?? '';
             $event['calendar_name'] = $calendar['name'] ?? '';
 
+            $image = self::resolveImage($event, $calendar);
+            $event['image_url'] = $image['url'];
+            $event['image_is_fallback'] = $image['is_fallback'];
+
             // Zwei Listen, weil dieselben Termindaten drei verschieden grosse
             // Bildflaechen bedienen: In der Kachel ist der Flyer ein
             // Vorschaubild und die Liste gedeckelt, in der Detailansicht ist er
             // der Inhalt und bekommt die volle Leiter (siehe
-            // CardImage::CARD_MAX_SRCSET_WIDTH). Beide leer, solange die Quelle
-            // die urspruengliche ChurchTools-Adresse ist - von einem fremd
-            // gehosteten Bild gibt es keine eigenen Groessen anzubieten.
-            $event['image_srcset'] = '';
-            $event['image_srcset_full'] = '';
-
-            /*
-             * Ohne importierten Anhang gibt es kein Bild - die ChurchTools-
-             * Adresse wird *nicht* ersatzweise ausgeliefert.
-             *
-             * Sie stand hier frueher als Rueckfall fuer Zeilen, deren Import
-             * ausstand oder fehlschlug. Das kann nicht funktionieren:
-             * importImage() laedt mit download_url(), also ohne Anmeldung und
-             * damit genau so, wie es auch der Browser eines Besuchers taete.
-             * Was der Import nicht herunterladen konnte, kann der Besucher erst
-             * recht nicht - auf der Referenzinstanz antwortet eine solche
-             * Adresse mit HTTP 401. Der Rueckfall lieferte also ein garantiert
-             * kaputtes Bild und verhinderte obendrein das Standardbild des
-             * Kalenders, weil `image_url` ja belegt war (Nutzerbefund
-             * 2026-09-02: „Beim 3. Event scheint etwas am Bild kaputt zu
-             * sein").
-             */
-            $attachmentUrl = false;
-            $attachmentId = (int) ($event['attachment_id'] ?? 0);
-
-            if ($attachmentId > 0) {
-                $attachmentUrl = wp_get_attachment_image_url($attachmentId, 'large');
-            }
-
-            if ($attachmentUrl !== false) {
-                $event['image_url'] = $attachmentUrl;
-                $event['image_srcset'] = CardImage::srcsetFor($attachmentId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
-                $event['image_srcset_full'] = CardImage::srcsetFor($attachmentId);
-            } else {
-                $event['image_url'] = '';
-            }
-
-            $event['image_is_fallback'] = false;
-            if ($event['image_url'] === '') {
-                $defaultImageId = (int) ($calendar['default_image_id'] ?? 0);
-                if ($defaultImageId > 0) {
-                    $defaultImageUrl = wp_get_attachment_image_url($defaultImageId, 'large');
-                    if ($defaultImageUrl !== false) {
-                        $event['image_url'] = $defaultImageUrl;
-                        $event['image_srcset'] = CardImage::srcsetFor($defaultImageId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE);
-                        $event['image_srcset_full'] = CardImage::srcsetFor($defaultImageId);
-                        $event['image_is_fallback'] = true;
-                    }
-                }
-            }
+            // CardImage::CARD_MAX_SRCSET_WIDTH). Beide leer, wenn es kein
+            // eigenes Bild in der Mediathek gibt - von einem Bild, das nicht
+            // hier liegt, gibt es keine eigenen Groessen anzubieten.
+            $event['image_srcset'] = $image['id'] > 0
+                ? CardImage::srcsetFor($image['id'], CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE)
+                : '';
+            $event['image_srcset_full'] = $image['id'] > 0 ? CardImage::srcsetFor($image['id']) : '';
 
             $event['detail_url'] = EventDetailPage::urlForEvent($event);
 
@@ -613,6 +578,55 @@ final class EventListRenderer
         unset($event);
 
         return $events;
+    }
+
+    /**
+     * Welches Bild zu einem Termin gehoert, in einer Antwort: die Adresse, die
+     * Anhang-ID dahinter (fuer die Groessenlisten) und ob es das Standardbild
+     * des Kalenders ist statt eines eigenen.
+     *
+     * Ohne importierten Anhang gibt es kein Bild - die ChurchTools-Adresse wird
+     * *nicht* ersatzweise ausgeliefert.
+     *
+     * Sie stand hier frueher als Rueckfall fuer Zeilen, deren Import ausstand
+     * oder fehlschlug. Das kann nicht funktionieren: importImage() laedt mit
+     * download_url(), also ohne Anmeldung und damit genau so, wie es auch der
+     * Browser eines Besuchers taete. Was der Import nicht herunterladen konnte,
+     * kann der Besucher erst recht nicht - auf der Referenzinstanz antwortet
+     * eine solche Adresse mit HTTP 401. Der Rueckfall lieferte also ein
+     * garantiert kaputtes Bild und verhinderte obendrein das Standardbild des
+     * Kalenders, weil `image_url` ja belegt war (Nutzerbefund 2026-09-02: „Beim
+     * 3. Event scheint etwas am Bild kaputt zu sein").
+     *
+     * Eigene Methode, seit die Vorschau beim Teilen dieselbe Frage stellt wie
+     * die Kachel (Frontend\DetailSeo::imageUrl()) - und zwar im <head>, also
+     * lange bevor irgendetwas gerendert ist.
+     *
+     * @param array<string, mixed>      $event
+     * @param array<string, mixed>|null $calendar
+     *
+     * @return array{id: int, url: string, is_fallback: bool}
+     */
+    public static function resolveImage(array $event, ?array $calendar): array
+    {
+        $attachmentId = (int) ($event['attachment_id'] ?? 0);
+
+        if ($attachmentId > 0) {
+            $url = wp_get_attachment_image_url($attachmentId, 'large');
+            if ($url !== false) {
+                return ['id' => $attachmentId, 'url' => (string) $url, 'is_fallback' => false];
+            }
+        }
+
+        $defaultImageId = (int) ($calendar['default_image_id'] ?? 0);
+        if ($defaultImageId > 0) {
+            $url = wp_get_attachment_image_url($defaultImageId, 'large');
+            if ($url !== false) {
+                return ['id' => $defaultImageId, 'url' => (string) $url, 'is_fallback' => true];
+            }
+        }
+
+        return ['id' => 0, 'url' => '', 'is_fallback' => false];
     }
 
     private function renderDetailPartial(array $event, array $order): string

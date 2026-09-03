@@ -57,8 +57,13 @@ final class EventDetailPage
      * Bump this when the rewrite rule itself changes, to force one more
      * flush_rewrite_rules() on the next request — same self-migrating idea as
      * Installer::DB_VERSION/maybeUpgrade(), no reactivation needed.
+     *
+     * Zählt auch für Regeln, die woanders dazukommen: Der Aufruf von
+     * flush_rewrite_rules() unten schreibt den gesamten Regelsatz, und
+     * EventSitemap hängt seine Regel auf dieselbe Aktion (mit Priorität 9,
+     * also vorher). „3" ist die Sitemap-Adresse aus 1.16.0.
      */
-    private const REWRITE_VERSION = '2';
+    private const REWRITE_VERSION = '3';
 
     /**
      * Der Termin, auf den die aufgerufene Adresse zeigt, sobald
@@ -270,10 +275,12 @@ final class EventDetailPage
         add_filter('the_title', [self::class, 'filterHostedTitle'], 10, 2);
         add_filter('render_block', [self::class, 'filterHostedBlock'], 10, 3);
         add_filter('get_canonical_url', [self::class, 'filterHostedCanonicalUrl'], 10, 2);
-        add_filter(
-            'pre_get_document_title',
-            static fn (): string => sprintf('%s – %s', $event['title'], get_bloginfo('name'))
-        );
+        // Dokumenttitel, Kurzbeschreibung, Vorschaubild — und dieselben Werte
+        // in den Filtern von Yoast und Rank Math, wo eines davon im Haus ist.
+        // Ohne das trüge jede Terminseite die Angaben der Elternseite (siehe
+        // DetailSeo). Das Canonical kommt hier weiter von WordPress selbst, es
+        // gibt ja einen Beitrag — die Zeile darüber biegt es auf den Termin um.
+        DetailSeo::registerForEvent($event);
     }
 
     /**
@@ -411,10 +418,10 @@ final class EventDetailPage
             exit;
         }
 
-        add_filter(
-            'pre_get_document_title',
-            static fn (): string => sprintf('%s – %s', $event['title'], get_bloginfo('name'))
-        );
+        // Wie oben, mit einem Unterschied: Auf dieser Route gibt es keinen
+        // Beitrag, aus dem WordPress ein Canonical bauen könnte — also setzt
+        // DetailSeo es selbst (das zweite Argument).
+        DetailSeo::registerForEvent($event, true);
         add_action('wp_head', [self::class, 'maybeRenderViewportMetaTag'], 0);
 
         status_header(200);

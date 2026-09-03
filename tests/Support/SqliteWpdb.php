@@ -50,7 +50,8 @@ final class SqliteWpdb
                 attachment_id INTEGER NULL,
                 title TEXT NOT NULL DEFAULT \'\',
                 subtitle TEXT NOT NULL DEFAULT \'\',
-                location TEXT NOT NULL DEFAULT \'\'
+                location TEXT NOT NULL DEFAULT \'\',
+                updated_at TEXT NOT NULL DEFAULT \'\'
             )'
         );
     }
@@ -70,8 +71,8 @@ final class SqliteWpdb
     ): void {
         $statement = $this->pdo->prepare(
             'INSERT INTO `wp_ctp_events`
-                (ct_event_id, ct_calendar_id, start_date, end_date, attachment_id, title, subtitle, location)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                (ct_event_id, ct_calendar_id, start_date, end_date, attachment_id, title, subtitle, location, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
         $statement->execute([
@@ -83,6 +84,9 @@ final class SqliteWpdb
             $text['title'] ?? '',
             $text['subtitle'] ?? '',
             $text['location'] ?? '',
+            // Wann der Abgleich die Zeile zuletzt angefasst hat - die Angabe,
+            // die als <lastmod> in der Termin-Sitemap steht (EventSitemap).
+            $text['updated_at'] ?? '',
         ]);
     }
 

@@ -47,6 +47,13 @@ if (!defined('ABSPATH')) {
                      * gaengigen Ausnahmen; unabhaengig davon holt
                      * assets/js/frontend.js beim Klonen ein bereits
                      * ersetztes src wieder zurueck.
+                     *
+                     * alt: der Titel, aber nur beim eigenen Bild. Auf dieser
+                     * Seite ist der Flyer der Inhalt und nicht die
+                     * Verzierung, und er ist das, was die Bildersuche zu
+                     * diesem Termin findet. Das Standardbild eines Kalenders
+                     * bleibt ohne Beschreibung - es zeigt nicht diesen
+                     * Termin, es steht nur da, wo keiner ist.
                      */
                     ?>
                     <img
@@ -55,7 +62,7 @@ if (!defined('ABSPATH')) {
                             srcset="<?php echo esc_attr($event['image_srcset_full']); ?>"
                             sizes="<?php echo esc_attr(CardImage::detailSizes()); ?>"
                         <?php endif; ?>
-                        alt=""
+                        alt="<?php echo $event['image_is_fallback'] ? '' : esc_attr($event['title']); ?>"
                         class="skip-lazy"
                         data-no-lazy="1"
                         loading="eager"

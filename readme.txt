@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.15.0
+Stable tag: 1.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,6 +19,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …“-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL.
 * **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
 * **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
@@ -145,6 +146,21 @@ Ungetestet. Technisch legt es seine Tabelle mit dem Tabellenpräfix der jeweilig
 
 Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es im Tab „Übersicht“ ausdrücklich; der Key muss dann im Tab „Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
 
+= Werden die Termine von Suchmaschinen gefunden? =
+
+Ja, und dafür ist ab 1.16.0 nichts einzustellen:
+
+* Jede Kachel verweist auf die Adresse ihres Termins – auch bei der Klickart „Popup“, wo der Klick weiterhin das Fenster öffnet und nur ein Crawler (oder ein Mittelklick) der Adresse folgt.
+* Unter jeder Terminliste und auf jeder Terminseite stehen strukturierte Daten nach schema.org/Event: Beginn und Ende mit Zeitzone, Ort, Bild, Beschreibung.
+* Unter `/churchtools-termine-sitemap.xml` liegt eine Sitemap aller kommenden Termine, in der robots.txt angekündigt. Sie ist der Weg zu allem, was erst hinter „Weitere Termine laden“ steht – dort klickt keine Suchmaschine.
+* Terminseiten tragen einen eigenen Seitentitel, eine eigene Kurzbeschreibung (Datum, Uhrzeit, Ort zuerst), das Bild des Termins als Vorschau und ein Canonical auf sich selbst.
+
+Empfehlung bleibt die Einstellung *Terminseite* im Design-Tab: Ohne sie liegen die Termine unter `/churchtools-termin/<id>/` und damit außerhalb der Vorlage des Theme – als Ziel eines Suchtreffers ist eine Seite mit Kopf- und Fußbereich die bessere Landung.
+
+Mit **Yoast SEO** oder **Rank Math** greifen deren Angaben; das Plugin füllt sie mit den Daten des Termins (Titel, Beschreibung, Canonical, Vorschau). Andere SEO-Plugins (SEOPress, All in One SEO, The SEO Framework) werden erkannt, damit nichts doppelt im Seitenkopf steht – ihre Titel und Canonicals bleiben dann aber die der Terminliste. Strukturierte Daten und Sitemap sind davon unberührt.
+
+Bei der Klickart „Nichts“ bleibt alles aus: keine Verweise, keine Sitemap-Einträge – wer Termine bewusst nicht anklickbar macht, bekommt sie auch nicht angeboten.
+
 = Was kann das Plugin bewusst nicht? =
 
 * Mehrere ChurchTools-Instanzen (siehe oben)
@@ -153,6 +169,7 @@ Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel ve
 * Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
 * Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
 * Die Drag-and-drop-Sortierung im Tab „Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
+* Titel und Canonical einer Terminseite an SEOPress, All in One SEO oder The SEO Framework übergeben – unterstützt sind Yoast SEO und Rank Math
 
 == Datenschutz ==
 
@@ -276,6 +293,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.16.0 =
+
+* Neu: Jeder Termin hat jetzt eine Adresse, der auch eine Suchmaschine folgen kann – auch in der Voreinstellung „Popup“, wo der Titel bisher ein Knopf ohne Ziel war
+* Neu: Strukturierte Daten (schema.org/Event) unter jeder Terminliste und auf jeder Terminseite – die Voraussetzung dafür, dass Google einen Termin als Termin behandelt
+* Neu: Eine Termin-Sitemap unter /churchtools-termine-sitemap.xml, angekündigt in der robots.txt – damit auch Termine gefunden werden, die erst hinter „Weitere Termine laden“ stehen
+* Neu: Terminseiten bekommen eigenen Seitentitel, Kurzbeschreibung, Vorschaubild und Canonical – beim Teilen erscheint der Termin statt der Terminliste
+* Neu: Verträglich mit Yoast SEO und Rank Math – deren Titel, Beschreibung, Canonical und Vorschau werden mit den Angaben des Termins gefüllt
+* Geändert: Das Bild auf der Terminseite trägt den Termintitel als Bildbeschreibung, sofern es das eigene Bild des Termins ist
 
 = 1.15.0 =
 

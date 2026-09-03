@@ -33,6 +33,9 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 | `Frontend\EventListRenderer` | Zentrale Rendering-Logik; wählt je nach `layout` eines von drei theme-überschreibbaren Templates. |
 | `Frontend\EventWindow` / `EventPager` | Monatsfenster-Paging: welcher Zeitraum eine „Seite" ist und wie „Weitere Termine laden" weiterschaltet. |
 | `Frontend\EventQueryCache` | Transient-Cache vor den Lese-Queries, invalidiert per Versionszähler nach jedem Sync. |
+| `Frontend\EventSchema` | Strukturierte Daten (schema.org/Event als JSON-LD) neben dem Markup – eine `ItemList` je Ansicht, ein `Event` auf der Terminseite. |
+| `Frontend\DetailSeo` | Titel, Kurzbeschreibung, Vorschaubild und Canonical einer Terminseite – selbst geschrieben oder, wo Yoast/Rank Math im Haus sind, in deren Filter gereicht. |
+| `Frontend\EventSitemap` | Eigene XML-Sitemap der Termine unter `/churchtools-termine-sitemap.xml`, angekündigt in der robots.txt. |
 | `Frontend\EventsEndpoint` | Öffentlicher, lesender AJAX-Endpunkt hinter dem Nachladen-Button (bewusst ohne Nonce, siehe Klassen-Docblock). |
 | `Frontend\CardDesign` / `DetailDesign` | Übersetzen die Design-Tab-Einstellungen in CSS-Custom-Properties bzw. eine Feld-Reihenfolge. |
 | `Update\GitHubUpdateChecker` | Bindet `yahnis-elsts/plugin-update-checker` an die GitHub Releases dieses Repos. |
@@ -49,11 +52,24 @@ Shortcode, Gutenberg-Block und WPBakery-Element rufen alle `EventListRenderer::r
 
 `yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`. Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
 
+## Auffindbarkeit
+
+Drei Entscheidungen, die sich aus „kein Custom Post Type" ergeben und deshalb hier stehen:
+
+**Der Klickauslöser ist immer ein `<a href>`** (`Frontend\ClickTrigger`), auch in der Voreinstellung „Popup". Ein `<button>` hat kein Ziel, dem ein Crawler folgen könnte, und der vorgerenderte Detailinhalt daneben steht in einem `<template>` – dessen Inhalt rendert kein Browser und liest keine Suchmaschine. Den Dialog macht `assets/js/frontend.js` daraus, erkennbar an `data-ctp-modal`; Modifier-Klicks bleiben dem Browser überlassen.
+
+**Die strukturierten Daten hängen am Renderer, nicht am Template** (`EventListRenderer::render()`/`renderDetail()`): Jedes Layout-Template ist theme-überschreibbar, eine Kopie hätte den Block sonst still verloren. Nachgeladene Seiten bekommen keinen – sie entstehen erst nach einem Klick.
+
+**Die Sitemap ist eine eigene Datei und kein Anbieter für `wp-sitemap.xml`.** Yoast und Rank Math schalten die WordPress-Sitemap ab; ein dort eingehängter Anbieter läge ausgerechnet auf den Seiten still, die am meisten Wert auf Auffindbarkeit legen. Ihre Rewrite-Regel hängt auf `init` mit Priorität 9, also vor `EventDetailPage::registerRewriteRule()`, das den Regelsatz bei Bedarf schreibt (`REWRITE_VERSION`).
+
+**SEO-Plugins** setzen Titel und Canonical selbst. Für Yoast (`wpseo_*`) und Rank Math (`rank_math/*`) reicht `DetailSeo` den Termin in deren Filter; die Registrierung kostet nichts, wenn das Plugin fehlt, weil der Hook dann nie ausgelöst wird. Andere SEO-Plugins werden nur *erkannt* (an ihren Konstanten), damit die eigenen Kopfzeilen nicht doppelt danebenstehen.
+
 ## Bewusste Grenzen
 
 - **Eine ChurchTools-Instanz pro WordPress-Installation** (entschieden 2026-08-18). Kalender-IDs sind nur pro Instanz eindeutig; Mehrfach-Instanzen würden Schema, Settings und jede Shortcode-Option betreffen. Einstiegspunkt für eine spätere Änderung wäre `SettingsPage::OPTION_KEY` plus eine Instanz-Spalte in `ctp_events`.
 - **Multisite ungetestet.** Die Tabelle hängt am Site-Präfix, eine netzwerkweite Aktivierung legt sie nicht für bestehende Sites an.
 - **Kein Monatskalender-Layout, keine REST-API, kein systematischer Barrierefreiheits-Pass, keine visuellen Regressionstests.**
+- **SEO-Plugin-Verträglichkeit nur für Yoast und Rank Math.** Für SEOPress, AIOSEO und The SEO Framework bleiben Titel und Canonical einer Terminseite die der Elternseite; strukturierte Daten und Sitemap sind davon unberührt. Einstiegspunkt für eine Erweiterung ist `DetailSeo::registerForEvent()`.
 - **Der API-Key ist an `AUTH_KEY` gebunden** und überlebt einen Salt-Wechsel nicht – das ist Absicht (die Datenbank allein reicht nicht zum Entschlüsseln), wird erkannt und im Backend gemeldet.
 
 ## Entwicklung

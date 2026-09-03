@@ -1872,7 +1872,7 @@ final class SettingsPage
             . esc_html__('Die Seite bleibt normal erreichbar und behält ihren Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin statt ihres eigenen. Bisherige Adressen leiten dauerhaft weiter.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
-            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag, und auf einem Block-Theme fehlen der Seite dann die Vorlage des Themes samt Kopf- und Fußbereich. Startseite und Beitragsseite stehen nicht zur Wahl – ihre Adressregel läge über der halben Website.', 'churchtools-plugin')
+            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag, und auf einem Block-Theme fehlen der Seite dann die Vorlage des Themes samt Kopf- und Fußbereich. Das ist auch die Seite, auf der ein Suchtreffer landet – Termine sind für Suchmaschinen auffindbar, gleich welche Adresse sie haben. Startseite und Beitragsseite stehen nicht zur Wahl – ihre Adressregel läge über der halben Website.', 'churchtools-plugin')
             . '</p>';
     }
 

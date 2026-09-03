@@ -163,6 +163,27 @@ final class EventFormatter
     }
 
     /**
+     * Eine Beschreibung als eine Zeile Klartext: ohne Auszeichnung, ohne
+     * Zeilenumbrüche, ohne doppelte Leerzeichen. Das brauchen die beiden
+     * Angaben, die eine Maschine liest und niemand sieht — die
+     * Kurzbeschreibung im Kopf der Terminseite (DetailSeo) und die
+     * Beschreibung in den strukturierten Daten (EventSchema).
+     *
+     * Das Leerzeichen vor jedem „<" ist der Grund, warum es diese Methode
+     * gibt und nicht bloß einen Aufruf von wp_strip_all_tags(): ChurchTools
+     * kann HTML liefern, und „<p>Erste Zeile</p><p>Zweite" wird ohne diesen
+     * Schritt zu „Erste ZeileZweite". Zwei Wörter, die im Original nichts
+     * miteinander zu tun haben, stehen dann als eines da — und zwar genau in
+     * der Zeile, die in der Trefferliste einer Suchmaschine erscheint.
+     */
+    public static function plainText(string $text): string
+    {
+        $text = wp_strip_all_tags(str_replace('<', ' <', $text));
+
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
+    }
+
+    /**
      * wp_trim_words() already strips tags itself (descriptions can contain HTML,
      * see descriptionHtml() below), so the result here is plain text — callers
      * still esc_html() it like every other field. Line breaks fall away with it,

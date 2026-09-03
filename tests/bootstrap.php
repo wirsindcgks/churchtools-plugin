@@ -411,3 +411,109 @@ function wp_trim_words(string $text, int $numWords = 55, ?string $more = null): 
 
     return implode(' ', $words);
 }
+
+/**
+ * Der Name der Website, so weit die Kopfzeilen einer Terminseite ihn brauchen
+ * (Frontend\DetailSeo, Frontend\EventSchema). WordPress liest ihn aus der
+ * Option „blogname" — Tests setzen sie über ctp_test_set_option().
+ */
+function get_bloginfo(string $show = '', string $filter = 'raw'): string
+{
+    return $show === 'name' ? (string) get_option('blogname', '') : '';
+}
+
+/**
+ * WordPress' wp_json_encode(), auf den Teil reduziert, den die strukturierten
+ * Daten brauchen: kodieren mit den übergebenen Flags. Die Tiefenprüfung und
+ * die UTF-8-Reparatur des Originals fehlen — beides betrifft Eingaben, die
+ * EventSchema gar nicht bauen kann.
+ *
+ * @param mixed $data
+ *
+ * @return string|false
+ */
+function wp_json_encode($data, int $options = 0, int $depth = 512)
+{
+    return json_encode($data, $options, $depth);
+}
+
+/**
+ * Escaping für XML-Textinhalte (WordPress ab 5.5), gebraucht von der
+ * Termin-Sitemap.
+ */
+function esc_xml(string $text): string
+{
+    return htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * WordPress' esc_url_raw(): dieselbe Bereinigung wie esc_url(), aber ohne die
+ * HTML-Entitäten — genau richtig für eine Adresse, die gleich in XML steht und
+ * dort von esc_xml() behandelt wird. Hier auf das Trimmen reduziert; welche
+ * Protokolle erlaubt sind, ist WordPress' Sache und nicht die dieses Plugins.
+ */
+function esc_url_raw(string $url): string
+{
+    return trim($url);
+}
+
+/**
+ * Die Mediathek, so weit die Bildauflösung sie befragt
+ * (EventListRenderer::resolveImage()): Welche Adresse hat Anhang X in Größe Y?
+ * Tests legen sie über ctp_test_set_attachment_url() an; unbekannte Anhänge
+ * antworten wie im Original mit false.
+ */
+$GLOBALS['ctp_test_attachments'] = [];
+
+function ctp_test_set_attachment_url(int $attachmentId, string $url): void
+{
+    $GLOBALS['ctp_test_attachments'][$attachmentId] = $url;
+}
+
+function ctp_test_reset_attachments(): void
+{
+    $GLOBALS['ctp_test_attachments'] = [];
+}
+
+/**
+ * @param string|int[] $size
+ *
+ * @return string|false
+ */
+function wp_get_attachment_image_url(int $attachmentId, $size = 'thumbnail')
+{
+    return $GLOBALS['ctp_test_attachments'][$attachmentId] ?? false;
+}
+
+/**
+ * Hook-Registrierungen, aufgezeichnet statt ausgeführt: Frontend\DetailSeo
+ * hängt sich in die Filter von Yoast und Rank Math, und dass es die richtigen
+ * sind, ist genau die Zusage, die ohne installiertes Fremd-Plugin sonst
+ * niemand prüft.
+ */
+$GLOBALS['ctp_test_hooks'] = [];
+
+function add_filter(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
+{
+    $GLOBALS['ctp_test_hooks'][$hook][] = $callback;
+
+    return true;
+}
+
+function add_action(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
+{
+    return add_filter($hook, $callback, $priority, $acceptedArgs);
+}
+
+/**
+ * @return array<int, callable>
+ */
+function ctp_test_hook_callbacks(string $hook): array
+{
+    return $GLOBALS['ctp_test_hooks'][$hook] ?? [];
+}
+
+function ctp_test_reset_hooks(): void
+{
+    $GLOBALS['ctp_test_hooks'] = [];
+}

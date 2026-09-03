@@ -11,6 +11,7 @@ use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventDetailPage;
+use ChurchToolsPlugin\Frontend\EventSitemap;
 use ChurchToolsPlugin\Frontend\EventsEndpoint;
 use ChurchToolsPlugin\Frontend\Shortcode;
 use ChurchToolsPlugin\Integrations\WpBakeryIntegration;
@@ -55,6 +56,7 @@ final class Plugin
         (new WpBakeryIntegration())->register();
 
         EventDetailPage::registerHooks();
+        EventSitemap::registerHooks();
         CardImage::registerHooks();
         SyncEngine::registerHooks();
         RetentionCleanup::registerHooks();
