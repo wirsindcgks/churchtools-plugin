@@ -1,5 +1,7 @@
 # ChurchTools Events
 
+[![Downloads](https://img.shields.io/github/downloads/wirsindcgks/churchtools-plugin/total?label=Downloads "Abrufe der Release-Pakete – automatische Updates zählen mit, es sind also keine Installationszahlen")](https://github.com/wirsindcgks/churchtools-plugin/releases)
+
 Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an — als Liste, als Kachelraster oder als „Nächster Termin". Termine werden einmal in ChurchTools gepflegt und erscheinen auf der Website von selbst.
 
 - **Automatischer Abgleich** per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") kommen als einzelne Termine an, abgesagte verschwinden wieder.
