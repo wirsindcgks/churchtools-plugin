@@ -122,6 +122,8 @@ Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [rea
 
 **Filter und Suche laufen im Browser** und funktionieren deshalb auch hinter einem Caching-Plugin. Was jenseits des geladenen Zeitraums liegt, holt das Plugin bei Bedarf nach.
 
+**Ein Caching-Plugin braucht eine Ausnahme.** Zusammengefasstes JavaScript („Minify“/„Combine“) sollte `assets/js/frontend.js` und `assets/css/frontend.css` auslassen. Das Plugin hängt seine Versionsnummer an beide Adressen, ein Update erneuert sie damit von selbst; in einer zusammengefassten Datei entfällt dieser Mechanismus, und wiederkehrende Besucher können nach einem Update noch tagelang das alte Skript benutzen. Dasselbe gilt für „JavaScript erst bei der ersten Interaktion laden“ – diese erste Interaktion ist der Klick auf einen Termin. Näheres im FAQ-Teil der [readme.txt](readme.txt).
+
 **Die Adresse eines Termins besteht aus Titel und Datum** (`gottesdienst-06-09-2026`), nicht aus einer Nummer und nicht aus dem Titel allein: „Gottesdienst" gibt es jedes Wochenende, ein Titel benennt also eine Serie und nicht einen Termin. Ändert sich der Titel in ChurchTools, ändert sich die Adresse mit. Wird die Elternseite nachträglich gesetzt, leiten die bisherigen Adressen dauerhaft auf die neuen weiter.
 
 **Alte Termine räumen sich selbst weg**, samt importierter Bilder, nach der im Tab *Synchronisation* eingestellten Frist.

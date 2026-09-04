@@ -62,6 +62,8 @@ Drei Entscheidungen, die sich aus „kein Custom Post Type" ergeben und deshalb 
 
 **Die Sitemap ist eine eigene Datei und kein Anbieter für `wp-sitemap.xml`.** Yoast und Rank Math schalten die WordPress-Sitemap ab; ein dort eingehängter Anbieter läge ausgerechnet auf den Seiten still, die am meisten Wert auf Auffindbarkeit legen. Ihre Rewrite-Regel hängt auf `init` mit Priorität 9, also vor `EventDetailPage::registerRewriteRule()`, das den Regelsatz bei Bedarf schreibt (`REWRITE_VERSION`).
 
+**Markup und Skript müssen zusammenpassen, und das ist keine Selbstverständlichkeit.** Der Popup-Auslöser ist ein `<a href>`, den `frontend.js` an `data-ctp-modal` erkennt – laufen die beiden auseinander, führt der Klick zur Terminseite statt in den Dialog (neues Markup, altes Skript) oder tut gar nichts (altes Markup, neues Skript). Genau das passiert, wenn ein Optimierungs-Plugin `assets/js/frontend.js` in eine zusammengefasste Datei packt: Der Cache-Bruch über `?ver=CTP_VERSION` entfällt dann, und der Name der zusammengefassten Datei bleibt bei W3 Total Cache auch nach einer Änderung gleich (auf der Referenzinstanz beobachtet, 2026-09-04, mit `max-age` von einem Jahr). Die Ausnahme für diese Datei steht als Empfehlung im FAQ-Teil der readme.txt; wer das Frontend-JS ändert, sollte den Fall im Kopf behalten.
+
 **SEO-Plugins** setzen Titel und Canonical selbst. Für Yoast (`wpseo_*`) und Rank Math (`rank_math/*`) reicht `DetailSeo` den Termin in deren Filter; die Registrierung kostet nichts, wenn das Plugin fehlt, weil der Hook dann nie ausgelöst wird. Andere SEO-Plugins werden nur *erkannt* (an ihren Konstanten), damit die eigenen Kopfzeilen nicht doppelt danebenstehen.
 
 ## Bewusste Grenzen

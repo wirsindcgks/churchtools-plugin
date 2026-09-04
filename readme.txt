@@ -161,6 +161,25 @@ Mit **Yoast SEO** oder **Rank Math** greifen deren Angaben; das Plugin füllt si
 
 Bei der Klickart „Nichts“ bleibt alles aus: keine Verweise, keine Sitemap-Einträge – wer Termine bewusst nicht anklickbar macht, bekommt sie auch nicht angeboten.
 
+= Verträgt sich das Plugin mit Caching- und Optimierungs-Plugins? =
+
+Mit einem Seiten-Cache (W3 Total Cache, WP Rocket, LiteSpeed Cache und andere) ohne Weiteres: Kalenderfilter, Suche und Eventfinder laufen im Browser, eine ausgelieferte Seite bleibt also vollständig bedienbar, und weitere Termine holt das Plugin über einen eigenen Endpunkt nach.
+
+Eine Einstellung braucht dagegen Aufmerksamkeit – **JavaScript zusammenfassen** („Minify“, „Combine JS“). Nehmen Sie diese beiden Dateien davon aus:
+
+`wp-content/plugins/churchtools-plugin/assets/js/frontend.js`
+`wp-content/plugins/churchtools-plugin/assets/css/frontend.css`
+
+Der Grund steht in der Adresse: Das Plugin hängt seine Versionsnummer an beide an (`frontend.js?ver=1.16.0`). Nach einem Update lautet die Adresse anders, und jeder Browser lädt die Datei neu – der Cache-Bruch ist eingebaut. Wandern die Dateien in eine zusammengefasste Datei, entfällt er: Deren Name bleibt bei manchen Plugins auch dann gleich, wenn sich der Inhalt geändert hat, und ausgeliefert wird sie oft mit einer Lebensdauer von einem Jahr. Wiederkehrende Besucher benutzen dann weiter das alte Skript, obwohl die Seite bereits das neue Markup ausliefert. Sichtbar wird das zum Beispiel daran, dass ein Klick auf einen Termin die Terminseite öffnet statt des Popups – im privaten Fenster funktioniert dieselbe Seite einwandfrei, was die Suche in die Irre führt.
+
+Aus demselben Grund gehört `frontend.js` nicht in eine Einstellung, die JavaScript **erst bei der ersten Interaktion** lädt („Delay JavaScript“, „JS bis zur Interaktion verzögern“): Diese erste Interaktion ist der Klick auf einen Termin, und der landet dann auf der Terminseite statt im Popup.
+
+Die Ausnahme wirkt sofort und für alle: Die zusammengefasste Datei enthält danach eine Datei weniger, bekommt dadurch einen neuen Namen und wird von jedem Browser neu geladen. Niemand muss warten, bis eine alte Fassung in seinem Zwischenspeicher abläuft.
+
+Der Preis ist gering: Die Skriptdatei ist rund 36 KB groß, komprimiert etwa 14 KB, und wird ein Jahr lang zwischengespeichert – die Versionsnummer in der Adresse macht das gefahrlos.
+
+Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und `data-no-lazy`, damit ein Lazyload-Plugin es nicht durch einen Platzhalter ersetzt – der Klon im geöffneten Fenster bekäme dessen Beobachter nie zu sehen und bliebe leer.
+
 = Was kann das Plugin bewusst nicht? =
 
 * Mehrere ChurchTools-Instanzen (siehe oben)
