@@ -1,6 +1,11 @@
 # ChurchTools Events
 
+[![Version](https://img.shields.io/github/v/release/wirsindcgks/churchtools-plugin?label=Version)](https://github.com/wirsindcgks/churchtools-plugin/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/wirsindcgks/churchtools-plugin/total?label=Downloads "Abrufe der Release-Pakete – automatische Updates zählen mit, es sind also keine Installationszahlen")](https://github.com/wirsindcgks/churchtools-plugin/releases)
+[![Tests](https://img.shields.io/github/actions/workflow/status/wirsindcgks/churchtools-plugin/ci.yml?branch=main&label=Tests "PHPUnit und PHPCS auf dem Hauptzweig")](https://github.com/wirsindcgks/churchtools-plugin/actions/workflows/ci.yml)
+![WordPress](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwirsindcgks%2Fchurchtools-plugin%2Fmain%2Fupdate.json&query=%24.requires&label=WordPress&prefix=%E2%89%A5)
+![PHP](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwirsindcgks%2Fchurchtools-plugin%2Fmain%2Fupdate.json&query=%24.requires_php&label=PHP&prefix=%E2%89%A5)
+[![Lizenz](https://img.shields.io/github/license/wirsindcgks/churchtools-plugin?label=Lizenz)](LICENSE)
 
 Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an — als Liste, als Kachelraster oder als „Nächster Termin". Termine werden einmal in ChurchTools gepflegt und erscheinen auf der Website von selbst.
 
