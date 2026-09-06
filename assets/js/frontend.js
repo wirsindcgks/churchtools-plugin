@@ -566,6 +566,8 @@
 	 *   showModal(), no fetch involved. Der Auslöser ist dabei ein Verweis auf
 	 *   die Terminseite und kein Knopf - er trägt `data-ctp-modal`, und erst
 	 *   dieser Handler macht aus dem Verweis den Dialog (siehe ClickTrigger).
+	 * - Der „Teilen"-Knopf der Detailansicht — siehe shareEvent(). Er steckt in
+	 *   demselben Markup und gilt damit im Popup wie auf der eigenen Seite.
 	 * - Closing that dialog, via its button or a click on the backdrop.
 	 *
 	 * All scoped per .ctp-events container (like the filter above) so multiple
@@ -597,6 +599,14 @@
 
 			event.preventDefault();
 			openDetailModal(trigger);
+
+			return;
+		}
+
+		var shareButton = event.target.closest('.ctp-events__share-btn');
+
+		if (shareButton) {
+			shareEvent(shareButton);
 
 			return;
 		}
@@ -759,6 +769,92 @@
 		restoreLazyImages(content);
 		body.appendChild(content);
 		dialog.showModal();
+	}
+
+	/*
+	 * Der „Teilen"-Knopf (partials/event-detail-element.php, Fall 'share').
+	 *
+	 * Zwei Wege, und der erste ist der, den das Gerät selbst mitbringt:
+	 * navigator.share() öffnet auf einem Telefon das Teilen-Menü des
+	 * Betriebssystems - WhatsApp, Signal, Mail, alles, was dort ohnehin
+	 * installiert ist. Damit braucht es keine eigene Liste von Netzwerken, die
+	 * gepflegt werden müsste, und es wird nichts an einen Dritten gemeldet,
+	 * solange niemand den Knopf drückt.
+	 *
+	 * Wo es die Schnittstelle nicht gibt (Desktop-Firefox und alles ohne
+	 * HTTPS), wird die Adresse in die Zwischenablage gelegt. Bewusst kein
+	 * document.execCommand('copy') als dritte Stufe - dieselbe Entscheidung wie
+	 * beim „Kopieren"-Knopf im Tab „Einbinden".
+	 *
+	 * Bleibt auch das aus, wird die Adresse angezeigt, statt dass der Knopf
+	 * nichts tut: Zum Markieren und Kopieren von Hand reicht das, und ein
+	 * Bedienelement ohne jede Wirkung ist im Frontend schlimmer als im Backend.
+	 */
+	var shareTimers = new WeakMap();
+
+	function shareEvent(button) {
+		var url = button.getAttribute('data-ctp-share-url') || '';
+		var title = button.getAttribute('data-ctp-share-title') || '';
+
+		if (url === '') {
+			return;
+		}
+
+		if (navigator.share) {
+			navigator.share({ title: title, url: url }).catch(function (error) {
+				// Der Abbruch durch den Nutzer ist kein Fehlschlag - dann
+				// stattdessen zu kopieren wäre genau das, was er gerade nicht
+				// wollte. Jeder andere Fehler heißt: Der Weg stand nur auf dem
+				// Papier zur Verfügung.
+				if (error && error.name === 'AbortError') {
+					return;
+				}
+
+				copyShareUrl(button, url);
+			});
+
+			return;
+		}
+
+		copyShareUrl(button, url);
+	}
+
+	function copyShareUrl(button, url) {
+		var done = button.getAttribute('data-ctp-share-done') || '';
+
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(url).then(function () {
+				showShareFeedback(button, done);
+			}).catch(function () {
+				showShareFeedback(button, url);
+			});
+
+			return;
+		}
+
+		showShareFeedback(button, url);
+	}
+
+	/**
+	 * Schreibt die Rückmeldung neben den Knopf und nimmt sie nach ein paar
+	 * Sekunden wieder weg. Das Ziel trägt `role="status"`, die Meldung wird
+	 * also auch vorgelesen - ohne sie hätte der Klick am Rechner überhaupt
+	 * keine wahrnehmbare Wirkung.
+	 */
+	function showShareFeedback(button, text) {
+		var wrapper = button.closest('.ctp-events__share');
+		var feedback = wrapper ? wrapper.querySelector('.ctp-events__share-feedback') : null;
+
+		if (!feedback) {
+			return;
+		}
+
+		feedback.textContent = text;
+
+		clearTimeout(shareTimers.get(feedback));
+		shareTimers.set(feedback, setTimeout(function () {
+			feedback.textContent = '';
+		}, 4000));
 	}
 
 	/*

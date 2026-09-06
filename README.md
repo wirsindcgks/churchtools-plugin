@@ -13,7 +13,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
 - **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder.
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
-- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite.
+- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit „Teilen"-Knopf — auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
 - **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.

@@ -33,7 +33,10 @@
  * @var array  $event         Already enriched via EventListRenderer::withCalendarMeta().
  * @var array  $order         Validated DetailDesign::ELEMENT_KEYS permutation.
  * @var string $detailContext 'popup' or 'page', set by EventListRenderer.
+ * @var bool   $shareEnabled  Einstellung `detail_share_enabled`, siehe unten.
  */
+
+use ChurchToolsPlugin\Frontend\DetailDesign;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -46,16 +49,37 @@ if (!defined('ABSPATH')) {
 // sich, die zweispaltige braucht .ctp-events--detail um sich herum.
 $detailContext = isset($detailContext) && $detailContext === 'page' ? 'page' : 'popup';
 
+/*
+ * „share" steht seit 1.17.0 fest in DetailDesign::ELEMENT_KEYS, ist aber der
+ * einzige Schlüssel, dessen Ausgabe an einer eigenen Einstellung hängt (siehe
+ * DetailDesign). Der Schlüssel fliegt hier aus der Reihenfolge, statt dass der
+ * Knopf per CSS versteckt würde: Ein leeres Element bekäme in der flachen
+ * Popup-Anordnung über `.ctp-events__detail > *` trotzdem seine volle Zeile
+ * zugeteilt — dieselbe Begründung, aus der die Kachel ausgeblendete Felder gar
+ * nicht erst ausgibt (siehe CardDesign).
+ *
+ * Der Rückfall auf „aus" gilt demselben Fall wie der oben: Wer dieses Partial
+ * direkt einbindet, hat die Einstellung nicht mitgeschickt. Aus heißt dann
+ * unverändertes Verhalten, und das ist die richtige Richtung für einen Knopf,
+ * der ohnehin ausdrücklich eingeschaltet werden muss.
+ */
+$ctpOrder = !empty($shareEnabled)
+    ? $order
+    : array_values(array_filter(
+        $order,
+        static fn (string $key): bool => $key !== DetailDesign::SHARE_KEY
+    ));
+
 $ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-element.php';
 
 /** @var callable(string[]): string[] $ctpKeysIn */
 $ctpKeysIn = static fn (array $group): array => array_values(
-    array_filter($order, static fn (string $key): bool => in_array($key, $group, true))
+    array_filter($ctpOrder, static fn (string $key): bool => in_array($key, $group, true))
 );
 
 /** @var callable(string[]): string[] $ctpKeysOutside */
 $ctpKeysOutside = static fn (array $group): array => array_values(
-    array_filter($order, static fn (string $key): bool => !in_array($key, $group, true))
+    array_filter($ctpOrder, static fn (string $key): bool => !in_array($key, $group, true))
 );
 ?>
 <div
@@ -74,7 +98,7 @@ $ctpKeysOutside = static fn (array $group): array => array_values(
             <?php require $ctpElement; ?>
         <?php endforeach; ?>
     <?php else : ?>
-        <?php foreach ($order as $key) : ?>
+        <?php foreach ($ctpOrder as $key) : ?>
             <?php require $ctpElement; ?>
         <?php endforeach; ?>
     <?php endif; ?>

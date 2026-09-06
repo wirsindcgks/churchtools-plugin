@@ -58,6 +58,77 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
+     * Der Teilen-Knopf steht fest in DetailDesign::ELEMENT_KEYS, gibt aber nur
+     * etwas aus, wenn die Einstellung ihn einschaltet. Ausgeschaltet fällt sein
+     * Schlüssel aus der Reihenfolge, statt ein leeres Element zu hinterlassen —
+     * das bekäme in der flachen Popup-Anordnung über `.ctp-events__detail > *`
+     * trotzdem seine volle Zeile zugeteilt.
+     *
+     * @dataProvider detailContextProvider
+     */
+    public function testTheShareButtonOnlyAppearsWhenItIsSwitchedOn(string $detailContext): void
+    {
+        $off = $this->render($detailContext);
+        $this->assertCount(0, $off->query('//*[contains(@class, "ctp-events__share")]'), 'ausgeschaltet: kein Knopf');
+        $this->assertCount(0, $off->query('//div[@data-key="share"]'), 'und auch keine leere Hülle');
+
+        $on = $this->render($detailContext, null, 'https://example.test/flyer.jpg', true);
+        $buttons = $on->query('//button[contains(@class, "ctp-events__share-btn")]');
+
+        $this->assertCount(1, $buttons);
+        $this->assertInstanceOf(DOMElement::class, $buttons[0]);
+        $this->assertSame(
+            'https://example.test/termin/gottesdienst',
+            $buttons[0]->getAttribute('data-ctp-share-url'),
+            'geteilt wird die Adresse des Termins, nicht die der Seite'
+        );
+    }
+
+    /**
+     * Auf der eigenen Seite läuft der Knopf mit der Textspalte, nicht mit Bild
+     * und Beschreibung — sonst stünde er im zweispaltigen Raster in einer
+     * eigenen Zeile unter der Beschreibung statt bei den Angaben, zu denen er
+     * gehört.
+     */
+    public function testThePageKeepsTheShareButtonInTheTextColumn(): void
+    {
+        $xpath = $this->render('page', null, 'https://example.test/flyer.jpg', true);
+
+        $this->assertSame(
+            [
+                'ctp-events__eyebrow',
+                'ctp-events__detail-heading',
+                'ctp-events__subtitle',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+                'ctp-events__meta-item',
+                'ctp-events__share',
+            ],
+            $this->childClasses($xpath, 'ctp-events__detail-text')
+        );
+    }
+
+    /**
+     * Der Knopf ist verschiebbar wie jedes andere Feld — die Reihenfolge aus
+     * dem Design-Tab entscheidet, nicht seine Stelle im Schlüsselsatz.
+     */
+    public function testTheShareButtonFollowsTheConfiguredOrder(): void
+    {
+        $order = ['share', 'media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'];
+        $xpath = $this->render('popup', $order, 'https://example.test/flyer.jpg', true);
+
+        $children = $xpath->query('//*[@class="ctp-events__detail"]/*');
+        $this->assertInstanceOf(DOMNodeList::class, $children);
+        $this->assertInstanceOf(DOMElement::class, $children[0]);
+        $this->assertStringContainsString('ctp-events__share', $children[0]->getAttribute('class'));
+    }
+
+    public function detailContextProvider(): array
+    {
+        return ['popup' => ['popup'], 'page' => ['page']];
+    }
+
+    /**
      * Die Gegenprobe: Im Popup bleibt alles direktes Kind von
      * .ctp-events__detail. Dort ist der Platz zu knapp für zwei Spalten, und
      * die Reihenfolge aus dem Design-Tab gilt dort ohne Einschränkung.
@@ -204,8 +275,12 @@ final class DetailLayoutTest extends TestCase
      *                             die diese Testumgebung bewusst nicht nachbaut
      *                             (siehe DetailPageDesignTest).
      */
-    private function render(string $detailContext, ?array $order = null, string $imageUrl = 'https://example.test/flyer.jpg'): DOMXPath
-    {
+    private function render(
+        string $detailContext,
+        ?array $order = null,
+        string $imageUrl = 'https://example.test/flyer.jpg',
+        bool $shareEnabled = false
+    ): DOMXPath {
         $event = [
             'ct_calendar_id' => 7,
             'title' => 'Gottesdienst',

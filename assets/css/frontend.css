@@ -1811,6 +1811,115 @@
 }
 
 /*
+ * Der „Teilen"-Knopf der Detailansicht (partials/event-detail-element.php,
+ * Fall 'share').
+ *
+ * Masse und Form nimmt er vom Kalender-Chip (.ctp-events__eyebrow): dieselbe
+ * Polsterung, derselbe Schriftgrad, dieselbe Pillenform. Der erste Anlauf hat
+ * ihn stattdessen wie den „Zurueck"-Knopf gebaut - eine Stufe groesser und
+ * kraeftiger -, und damit war das kleinste Element der Ansicht ausgerechnet
+ * das, was am lautesten rief. Ein Teilen-Knopf ist ein Angebot am Rand, keine
+ * Handlungsaufforderung: Er soll gefunden werden, wenn man ihn sucht, und
+ * sonst nicht auffallen.
+ *
+ * Die *Farbe* nimmt er bewusst NICHT vom Chip. --ctp-accent ist die
+ * Identitaetsfarbe eines Kalenders (siehe die Token-Begruendung oben) - ein
+ * Bedienelement daran zu haengen hiesse, dass sich Knopf und Kalenderplakette
+ * nicht getrennt gestalten lassen. Er bleibt deshalb auf dem neutralen
+ * Haarstrich und folgt im Zugriff der eingestellten Buttonfarbe.
+ */
+/*
+ * Rechtsbuendig, und zwar mit *einer* Regel fuer beide Anordnungen: Die
+ * Detailansicht ist im Popup ein Zeilen-Flex und auf der eigenen Seite ein
+ * Spalten-Flex, und `margin-inline-start: auto` schluckt in beiden Faellen den
+ * freien Platz davor - in der Zeile bis zum Zeilenende, in der Spalte bis zum
+ * rechten Rand. Ein `align-self: flex-end` haette nur die Spalte getroffen und
+ * im Popup die *senkrechte* Ausrichtung verstellt.
+ */
+.ctp-events__share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    margin-inline-start: auto;
+    gap: 0.4rem 0.65rem;
+}
+
+/*
+ * Im Popup ist die Detailansicht ein Zeilen-Flex, in dem jedes Kind ueber
+ * `.ctp-events__detail > *` eine volle Zeile beansprucht. Fuer einen Knopf ist
+ * das die falsche Vorgabe - er wuerde ueber die ganze Breite gezogen. Also
+ * dieselbe Ausnahme, die die Kalender-Pille dort schon hat.
+ */
+.ctp-events .ctp-events__detail > .ctp-events__share {
+    flex: 0 0 auto;
+}
+
+/* Polsterung, Schriftgrad, Laufweite und Form sind wortgleich mit
+   .ctp-events__eyebrow - die beiden sollen nebeneinander als ein Paar lesen. */
+.ctp-events .ctp-events__share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: var(--ctp-radius-pill);
+    background-color: transparent;
+    color: var(--ctp-color-muted);
+    appearance: none;
+    font: inherit;
+    font-size: var(--ctp-font-xs);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    /* Bewusst *keine* eigene Zeilenhoehe: `font: inherit` oben reicht die des
+       Umfelds durch, und genau die bekommt der Kalender-Chip als <span> auch.
+       Ein eigener Wert (1.45 im ersten Anlauf) machte den Knopf um ein Pixel
+       niedriger als den Chip - nebeneinander auf einer Zeile sieht man das. */
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/*
+ * Im Zugriff wird er deutlich, aber nicht laut: Rand und Schrift gehen auf die
+ * eingestellte Buttonfarbe, die Flaeche bekommt nur eine Ahnung davon. Die
+ * volle Umkehr in eine gefuellte Pille (wie bei „Zurueck" oder „Weitere
+ * Termine laden") waere fuer ein Angebot am Rand zu viel Gewicht.
+ *
+ * `!important` aus demselben Grund wie bei `.ctp-events__back:hover` oben:
+ * Themes faerben `button:hover` regelmaessig pauschal ein.
+ */
+.ctp-events .ctp-events__share-btn:hover,
+.ctp-events .ctp-events__share-btn:focus {
+    border-color: var(--ctp-color-button-strong) !important;
+    background-color: color-mix(in srgb, var(--ctp-color-button-strong) 7%, transparent) !important;
+    color: var(--ctp-color-button-strong) !important;
+}
+
+.ctp-events .ctp-events__share-btn:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 2px;
+}
+
+/*
+ * „Link kopiert" - oder, wo auch die Zwischenablage fehlt, die Adresse selbst.
+ * Die kann lang sein und muss umbrechen duerfen, sonst sprengt sie im Popup
+ * den Dialog. `:empty` haelt den Platz frei, solange nichts gemeldet ist: ohne
+ * die Regel schoebe der leere Kasten den Knopf bereits aus der Mitte.
+ */
+.ctp-events .ctp-events__share-feedback {
+    font-size: var(--ctp-font-xs);
+    color: var(--ctp-color-muted);
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.ctp-events .ctp-events__share-feedback:empty {
+    display: none;
+}
+
+/*
  * Eine Spalte ist der Ausgangszustand, zwei sind die Ausnahme - und nicht
  * umgekehrt. Das ist mehr als Geschmack: In 1.4.0 stand die Zweispaltigkeit
  * in der Grundregel und wurde in einer Medienabfrage zurueckgenommen. Eine

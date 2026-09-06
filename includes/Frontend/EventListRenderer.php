@@ -511,6 +511,11 @@ final class EventListRenderer
         // event-detail.php-Kopie das Seitenlayout bekommt.
         $detailContext = 'page';
 
+        // Wie $detailContext bis ins Partial durchgereicht (event-detail.php
+        // bindet es ein, und `include` teilt sich den Geltungsbereich) — also
+        // auch dann, wenn ein Theme eine eigene event-detail.php mitbringt.
+        $shareEnabled = (bool) $designSettings['detail_share_enabled'];
+
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);
         if ($template === '') {
@@ -544,7 +549,9 @@ final class EventListRenderer
      */
     private function withCalendarMeta(array $events, string $clickBehavior = 'none', array $detailOrder = []): array
     {
-        $calendars = SettingsPage::get()['calendars'];
+        $settings = SettingsPage::get();
+        $calendars = $settings['calendars'];
+        $shareEnabled = (bool) $settings['detail_share_enabled'];
         $order = DetailDesign::isValidOrder($detailOrder) ? $detailOrder : DetailDesign::DEFAULT_ORDER;
         self::primeAttachmentCache($events, $calendars);
 
@@ -572,7 +579,7 @@ final class EventListRenderer
             $event['detail_url'] = EventDetailPage::urlForEvent($event);
 
             if ($clickBehavior === 'popup') {
-                $event['detail_html'] = $this->renderDetailPartial($event, $order);
+                $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled);
             }
         }
         unset($event);
@@ -629,7 +636,7 @@ final class EventListRenderer
         return ['id' => 0, 'url' => '', 'is_fallback' => false];
     }
 
-    private function renderDetailPartial(array $event, array $order): string
+    private function renderDetailPartial(array $event, array $order, bool $shareEnabled = false): string
     {
         $detailContext = 'popup';
 

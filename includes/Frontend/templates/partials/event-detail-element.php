@@ -175,4 +175,46 @@ if (!defined('ABSPATH')) {
         <?php endif; ?>
         <?php
         break;
+
+    case 'share':
+        ?>
+        <?php
+        /*
+         * Ob dieser Fall überhaupt drankommt, entscheidet
+         * event-detail-content.php anhand der Einstellung
+         * `detail_share_enabled` — hier steht nur noch die Frage, ob es eine
+         * Adresse zu teilen gibt. Die setzt EventListRenderer::withCalendarMeta()
+         * für jeden Termin; leer ist sie nur, wenn fremder Code sich seine
+         * Termine selbst baut (ein Theme-Override, ein Test).
+         *
+         * Kein `id` irgendwo in diesem Block: Dasselbe Markup steckt im
+         * <template> *jeder* Kachel einer Liste, und doppelte IDs sind
+         * ungültiges HTML — dieselbe Falle, die ReturnAnchor für die
+         * Sprungziele löst.
+         *
+         * Die Beschriftung der Rückmeldung reist als data-Attribut mit, statt
+         * über wp_localize_script(): Das Frontend-Skript bekommt bisher gar
+         * keine Daten von PHP, und eine Zeichenkette rechtfertigt diesen Weg
+         * nicht.
+         */
+        ?>
+        <?php if (($event['detail_url'] ?? '') !== '') : ?>
+            <div class="ctp-events__share">
+                <button
+                    type="button"
+                    class="ctp-events__share-btn"
+                    data-ctp-share-url="<?php echo esc_url($event['detail_url']); ?>"
+                    data-ctp-share-title="<?php echo esc_attr($event['title']); ?>"
+                    data-ctp-share-done="<?php esc_attr_e('Link kopiert', 'churchtools-plugin'); ?>"
+                >
+                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                    <?php echo Icons::share(); ?>
+                    <?php esc_html_e('Teilen', 'churchtools-plugin'); ?>
+                </button>
+                <?php // role="status" meldet den Wechsel des Textes von selbst — ohne das bliebe „Link kopiert" für Screenreader unbemerkt, und der Klick hätte dort gar keine Rückmeldung. ?>
+                <span class="ctp-events__share-feedback" role="status"></span>
+            </div>
+        <?php endif; ?>
+        <?php
+        break;
 endswitch;

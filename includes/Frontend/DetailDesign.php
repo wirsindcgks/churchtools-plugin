@@ -14,11 +14,27 @@ namespace ChurchToolsPlugin\Frontend;
  *
  * Deliberately no spacer/divider separator support here (unlike CardDesign) —
  * scope cut for the first version of this feature, see plan.md.
+ *
+ * "share" ist der einzige Schlüssel, der nicht immer etwas ausgibt: Ob der
+ * „Teilen"-Knopf erscheint, entscheidet die eigene Einstellung
+ * `detail_share_enabled` (Design-Tab), nicht seine Anwesenheit in der
+ * Reihenfolge. Er steht trotzdem *fest* im Schlüsselsatz und wird nicht bei
+ * Bedarf ein- und ausgetragen — dadurch bleiben Drag&Drop, „Standard
+ * wiederherstellen" und die Vorschau in assets/js/admin-design.js unverändert,
+ * die alle einen festen Schlüsselsatz voraussetzen. Ein Schlüssel, den es mal
+ * gibt und mal nicht, hätte jede dieser drei Mechaniken angefasst.
  */
 final class DetailDesign
 {
-    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'];
+    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'];
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
+
+    /**
+     * Der Schlüssel, den es vor 1.17.0 noch nicht gab. Steht hier als Konstante,
+     * weil ihn drei Stellen kennen müssen: das Anhängen unten, das Überspringen
+     * in partials/event-detail-content.php und die Vorschau im Design-Tab.
+     */
+    public const SHARE_KEY = 'share';
 
     /**
      * Same widening CardDesign::upgradeOrder() does for the card order, for
@@ -26,13 +42,27 @@ final class DetailDesign
      * single "meta" entry here too, and both orders are stored per site, so
      * both can still arrive on the old shape long after an update.
      *
+     * Dazu die zweite Verbreiterung, die es nur hier gibt: Jede vor 1.17.0
+     * gespeicherte Reihenfolge kennt "share" nicht, und isValidOrder() prüft
+     * auf eine *vollständige* Permutation — ohne das Anhängen fiele damit jede
+     * Bestandsseite auf DEFAULT_ORDER zurück und verlöre ihre eingestellte
+     * Anordnung. Angehängt wird ans Ende: Der Knopf gehört unter den Termin,
+     * nicht zwischen dessen Angaben. Läuft wie die Meta-Verbreiterung bei
+     * jedem Lesen (SettingsPage::get()), nicht als einmalige Migration.
+     *
      * @param string[] $order
      *
      * @return string[]
      */
     public static function upgradeOrder(array $order): array
     {
-        return CardDesign::upgradeOrder($order);
+        $order = CardDesign::upgradeOrder($order);
+
+        if (!in_array(self::SHARE_KEY, $order, true)) {
+            $order[] = self::SHARE_KEY;
+        }
+
+        return $order;
     }
 
     /**

@@ -72,6 +72,33 @@
 		});
 	}
 
+	/*
+	 * Der „Teilen"-Knopf ist der einzige Block der Detailvorschau, dessen
+	 * Sichtbarkeit nicht an seiner Position hängt, sondern an einem eigenen
+	 * Haekchen (Einstellung `detail_share_enabled`). Seine Zeile bleibt dabei
+	 * immer in der Reihenfolge-Liste stehen - er laesst sich also auch
+	 * ausgeschaltet schon dorthin ziehen, wo er spaeter stehen soll.
+	 *
+	 * Dasselbe Muster wie updateVisibility() weiter unten fuer die Kachel: das
+	 * native `hidden`-Attribut, nicht style.display.
+	 */
+	var shareInput = document.getElementById('ctp-design-detail-share');
+
+	function updateDetailShare() {
+		if (!detailPreview || !shareInput) {
+			return;
+		}
+		var block = detailPreview.querySelector('[data-key="share"]');
+		if (block) {
+			block.hidden = !shareInput.checked;
+		}
+	}
+
+	if (shareInput) {
+		shareInput.addEventListener('change', updateDetailShare);
+	}
+	updateDetailShare();
+
 	/**
 	 * Hides the "Aufbau der Detailansicht" editor and its preview panel while
 	 * "Keine" is selected — the setting has no visible effect in that case.

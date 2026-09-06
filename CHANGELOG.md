@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.17.0] - 2026-09-06
+
+### Added
+
+- **Ein „Teilen"-Knopf in Popup und eigener Terminseite** – standardmäßig aus, einzuschalten im Design-Tab unter „Aufbau der Detailansicht". Auf dem Telefon öffnet er das Teilen-Menü des Geräts, mit WhatsApp, Signal, Mail und allem, was dort ohnehin installiert ist; am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Es gibt dafür kein Drittanbieter-Skript und kein Zählpixel: Solange niemand den Knopf drückt, wird nichts an ein Netzwerk gemeldet. Die Voraussetzung dafür stand schon – jeder Termin hat seit 1.5.0 eine eigene Adresse und seit 1.16.0 einen eigenen Kopf mit Vorschaubild, ein geteilter Link zeigt also Bild und Titel des Termins.
+- Der Knopf ist **im Design-Tab frei platzierbar** wie jedes andere Feld der Detailansicht – er steht als „Teilen-Knopf" in derselben Drag&Drop-Liste und lässt sich auch dorthin ziehen, während er noch ausgeschaltet ist. **Die Kacheln bekommen ihn nicht**: Er gehört zum geöffneten Termin, nicht in eine Liste.
+
+### Fixed
+
+- **Ein veraltetes Formular setzte die Reihenfolge der Detailansicht auf den Standard zurück.** Wer den Design-Tab in einem Browser-Tab offen hatte, der noch von vor einem Update stammte – oder eine zwischengespeicherte Fassung der Seite vor sich –, verlor beim Speichern einer ganz anderen Einstellung seine eingestellte Anordnung, weil die abgeschickte Liste den Feldbestand der neueren Fassung nicht kannte. Sie wird jetzt vor der Prüfung ergänzt statt verworfen. Betraf auch die Umstellung von „Eckdaten" auf Datum/Uhrzeit/Ort aus einer früheren Version.
+
 ## [1.16.0] - 2026-09-03
 
 ### Added

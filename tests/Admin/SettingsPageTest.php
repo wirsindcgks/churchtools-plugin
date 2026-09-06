@@ -409,11 +409,46 @@ final class SettingsPageTest extends TestCase
             ['date', 'time', 'location', 'media', 'calendar', 'title', 'subtitle', 'excerpt'],
             $settings['element_order']
         );
+        // „share" kommt aus derselben Verbreiterung mit (DetailDesign::upgradeOrder()),
+        // und aus demselben Grund: Ohne ihn wäre die gelesene Reihenfolge
+        // unvollständig und fiele auf die Standardanordnung zurück.
         $this->assertSame(
-            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'],
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'],
             $settings['detail_element_order']
         );
         $this->assertSame(['date', 'time', 'location'], $settings['hidden_elements']);
+    }
+
+    /**
+     * Der Teilen-Knopf ist ausdrücklich einzuschalten – eine Bestandsseite, die
+     * nur aktualisiert, bekommt ihn nicht. Dass er in der Reihenfolge steht,
+     * heißt also noch nicht, dass er erscheint.
+     */
+    public function testShareButtonIsOffUntilItIsSwitchedOn(): void
+    {
+        $this->assertFalse(SettingsPage::defaults()['detail_share_enabled']);
+        $this->assertFalse(SettingsPage::sanitizeSettings([])['detail_share_enabled']);
+        $this->assertTrue(SettingsPage::sanitizeSettings(['detail_share_enabled' => '1'])['detail_share_enabled']);
+    }
+
+    /**
+     * Ein Formular, das vor der Erweiterung des Schlüsselsatzes gerendert
+     * wurde – ein alter Browser-Tab, eine zwischengespeicherte Admin-Seite –,
+     * schickt die Reihenfolge ohne „share" ab. Ohne die Verbreiterung im
+     * Sanitizer schnappte das auf die Standardanordnung, und der Betreiber
+     * verlöre seine eingestellte Anordnung beim Speichern einer ganz anderen
+     * Einstellung.
+     */
+    public function testStaleOrderSubmitKeepsItsArrangementInsteadOfSnappingToTheDefault(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings([
+            'detail_element_order' => 'description,media,title,calendar,location,time,date,subtitle',
+        ]);
+
+        $this->assertSame(
+            ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle', 'share'],
+            $sanitized['detail_element_order']
+        );
     }
 
     public function testSanitizeSettingsDefaultsButtonColorToDisabled(): void

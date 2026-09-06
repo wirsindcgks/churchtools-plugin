@@ -270,6 +270,10 @@ final class SettingsPage
         // derselben Entscheidung.
         add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designDetailPage, 'ctp_design_detail_order');
+        // Vor der Reihenfolge, aus demselben Grund wie das Klickverhalten
+        // darüber: „Gibt es den Knopf überhaupt?" ist die Frage vor „wo steht
+        // er?". In der Liste darunter lässt er sich danach frei verschieben.
+        add_settings_field('detail_share_enabled', __('Teilen-Knopf', 'churchtools-plugin'), [$this, 'renderDetailShareField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $designListPage = self::PAGE_SLUG . '_design_list';
@@ -342,6 +346,14 @@ final class SettingsPage
             // selbst, nur weil aktualisiert wurde.
             'detail_page_id' => 0,
             'detail_element_order' => DetailDesign::DEFAULT_ORDER,
+            /**
+             * Der „Teilen"-Knopf in Popup und eigener Terminseite. Aus, und
+             * zwar aus zwei Gründen: Dasselbe Opt-in-Muster tragen `filter`,
+             * `search`, `month_dividers` und `eventfinder` schon, und ohne den
+             * Standard „aus" bekäme jede Bestandsseite beim Update ungefragt
+             * ein neues Bedienelement in ihre Termine.
+             */
+            'detail_share_enabled' => false,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
         ];
     }
@@ -662,6 +674,12 @@ final class SettingsPage
             'detail_element_order' => array_key_exists('detail_element_order', $input)
                 ? self::sanitizeDetailElementOrder(self::orderInput($input['detail_element_order']))
                 : $existing['detail_element_order'],
+            // Checkbox mit vorangestelltem Hidden-Feld, wie
+            // keep_data_on_uninstall — ohne das käme ein abgehaktes Kästchen
+            // gar nicht erst im $input an und würde als „unverändert" gelesen.
+            'detail_share_enabled' => array_key_exists('detail_share_enabled', $input)
+                ? (bool) $input['detail_share_enabled']
+                : $existing['detail_share_enabled'],
             'paging_months' => array_key_exists('paging_months', $input)
                 ? EventWindow::sanitizeMonths((int) $input['paging_months'])
                 : $existing['paging_months'],
@@ -715,6 +733,16 @@ final class SettingsPage
      * Same "present but malformed value snaps to the default, absent value falls
      * back to $existing" rule as sanitizeElementOrder() above, for the detail
      * view's own (separator-free) key set.
+     *
+     * Der upgradeOrder()-Aufruf vor der Prüfung ist der Unterschied zur
+     * Kachel-Fassung, und er gilt einem schmalen, aber stillen Fall: Ein
+     * Formular, das *vor* einer Erweiterung des Schlüsselsatzes gerendert
+     * wurde, schickt die alte Reihenfolge ab — aus einem Browser-Tab, der seit
+     * gestern offen ist, oder aus einer zwischengespeicherten Admin-Seite.
+     * Ohne die Verbreiterung schnappte das auf DEFAULT_ORDER, und der
+     * Betreiber verlöre beim Speichern einer ganz anderen Einstellung seine
+     * eingestellte Anordnung. Betrifft „meta" aus 1.x genauso wie „share" aus
+     * 1.17.0.
      */
     private static function sanitizeDetailElementOrder(string $raw): array
     {
@@ -723,6 +751,7 @@ final class SettingsPage
             $keys,
             static fn (string $key): bool => (bool) preg_match('/^[a-z0-9-]+$/', $key)
         ));
+        $keys = DetailDesign::upgradeOrder($keys);
 
         return DetailDesign::isValidOrder($keys) ? $keys : DetailDesign::DEFAULT_ORDER;
     }
@@ -1877,6 +1906,29 @@ final class SettingsPage
     }
 
     /**
+     * Das Häkchen, an dem der „Teilen"-Knopf hängt. Seine Stelle in der
+     * Detailansicht bestimmt dagegen die Reihenfolge-Liste darunter — der
+     * Schlüssel „share" steht dort immer, ob das Häkchen gesetzt ist oder
+     * nicht (Begründung siehe DetailDesign).
+     */
+    public function renderDetailShareField(): void
+    {
+        printf('<input type="hidden" name="%1$s[detail_share_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" id="ctp-design-detail-share" name="%1$s[detail_share_enabled]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty(self::get()['detail_share_enabled']), true, false),
+            esc_html__('„Teilen“-Knopf in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail …), am Rechner kopiert er die Adresse des Termins in die Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel – es wird nichts an ein Netzwerk gemeldet, solange niemand den Knopf drückt.', 'churchtools-plugin')
+            . '</p>';
+        echo '<p class="description">'
+            . esc_html__('Die Kacheln bekommen ihn nicht: Er gehört zum geöffneten Termin, nicht in eine Liste. Wo genau er in der Detailansicht steht, wird in der Reihenfolge darunter festgelegt.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
      * German labels for DetailDesign::ELEMENT_KEYS. Same shape as
      * elementOrderLabels() above, but describing the detail view's own field
      * set (full description instead of an excerpt, no separate calendar/media
@@ -1893,6 +1945,7 @@ final class SettingsPage
             'time' => __('Uhrzeit', 'churchtools-plugin'),
             'location' => __('Ort', 'churchtools-plugin'),
             'description' => __('Beschreibung', 'churchtools-plugin'),
+            'share' => __('Teilen-Knopf', 'churchtools-plugin'),
         ];
     }
 
@@ -2046,7 +2099,16 @@ final class SettingsPage
                 . Icons::location() . ' ' . esc_html__('Gemeindehaus', 'churchtools-plugin') . '</p>',
             'description' => '<div class="ctp-events__detail-description"><p>'
                 . esc_html__('Vollständige Terminbeschreibung, wie sie in Popup und eigener Seite erscheint …', 'churchtools-plugin') . '</p></div>',
+            // Dieselben Klassen wie im Frontend (siehe
+            // partials/event-detail-element.php), damit die Vorschau denselben
+            // Regeln folgt statt einer nachgebauten Annäherung — ohne die
+            // data-Attribute, denn hier wird nichts geteilt.
+            'share' => '<div class="ctp-events__share"><button type="button" class="ctp-events__share-btn">'
+                . Icons::share() . esc_html__('Teilen', 'churchtools-plugin') . '</button></div>',
         ];
+        // Der einzige Schlüssel, dessen Sichtbarkeit nicht an seiner Position
+        // hängt. admin-design.js hält das Attribut danach am Häkchen aktuell.
+        $shareEnabled = !empty($settings['detail_share_enabled']);
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
@@ -2060,7 +2122,7 @@ final class SettingsPage
                     style="<?php echo esc_attr($style); ?>"
                 >
                     <?php foreach ($order as $key) : ?>
-                        <div data-key="<?php echo esc_attr($key); ?>">
+                        <div data-key="<?php echo esc_attr($key); ?>" <?php echo $key === DetailDesign::SHARE_KEY && !$shareEnabled ? 'hidden' : ''; ?>>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
                             <?php echo $blocks[$key] ?? ''; ?>
                         </div>

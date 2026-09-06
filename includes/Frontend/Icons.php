@@ -44,4 +44,19 @@ final class Icons
             . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
             . '<circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
     }
+
+    /**
+     * Die drei verbundenen Knoten, das gebräuchlichste Teilen-Zeichen außerhalb
+     * von iOS. Bewusst nicht das Apple-Symbol (Kasten mit Pfeil nach oben): Das
+     * steht auf Android und im Web für „hochladen".
+     */
+    public static function share(): string
+    {
+        return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            . '<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle>'
+            . '<circle cx="18" cy="19" r="3"></circle>'
+            . '<line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line>'
+            . '<line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg>';
+    }
 }

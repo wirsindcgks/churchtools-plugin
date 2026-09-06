@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.16.0
+Stable tag: 1.17.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …“-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
-* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL.
+* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Knopf – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
 * **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
@@ -312,6 +312,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.17.0 =
+
+* Neu: Ein „Teilen“-Knopf in Popup und eigener Terminseite – auf dem Telefon das Teilen-Menü des Geräts, am Rechner die Adresse in der Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel
+* Neu: Der Knopf ist standardmäßig aus und wird im Design-Tab eingeschaltet; dort lässt er sich auch per Drag&Drop platzieren wie jedes andere Feld der Detailansicht. Die Kacheln bekommen ihn nicht
+* Behoben: Ein veraltetes Formular (offener Browser-Tab, zwischengespeicherte Admin-Seite) setzte beim Speichern die Reihenfolge der Detailansicht auf den Standard zurück
 
 = 1.16.0 =
 

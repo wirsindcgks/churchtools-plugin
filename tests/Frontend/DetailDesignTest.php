@@ -16,7 +16,7 @@ final class DetailDesignTest extends TestCase
 
     public function testIsValidOrderAcceptsAnyPermutation(): void
     {
-        $order = ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
+        $order = ['description', 'media', 'share', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
 
         $this->assertTrue(DetailDesign::isValidOrder($order));
     }
@@ -51,9 +51,42 @@ final class DetailDesignTest extends TestCase
         $upgraded = DetailDesign::upgradeOrder(['media', 'calendar', 'title', 'subtitle', 'meta', 'description']);
 
         $this->assertSame(
-            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description'],
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'],
             $upgraded
         );
         $this->assertTrue(DetailDesign::isValidOrder($upgraded));
+    }
+
+    /**
+     * Der Fall, der jede Bestandsseite betrifft: Eine vor 1.17.0 gespeicherte
+     * Reihenfolge kennt „share" nicht. Ohne das Anhängen fiele sie durch
+     * isValidOrder() und die Detailansicht schnappte auf DEFAULT_ORDER zurück —
+     * der Betreiber verlöre also seine eingestellte Anordnung, ohne etwas
+     * getan zu haben.
+     */
+    public function testUpgradeOrderAppendsTheShareKeyToAnOrderStoredBeforeItExisted(): void
+    {
+        $stored = ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
+
+        $this->assertFalse(DetailDesign::isValidOrder($stored), 'Vorbedingung: ohne „share" ist die Reihenfolge unvollständig');
+
+        $upgraded = DetailDesign::upgradeOrder($stored);
+
+        $this->assertSame(array_merge($stored, ['share']), $upgraded);
+        $this->assertTrue(DetailDesign::isValidOrder($upgraded));
+    }
+
+    /**
+     * Läuft bei jedem Lesen (SettingsPage::get()), nicht als einmalige
+     * Migration — ein zweiter Durchlauf darf deshalb keinen zweiten Knopf
+     * erzeugen. Und eine bereits verschobene Position bleibt, wo der Betreiber
+     * sie hingezogen hat: Angehängt wird nur, was fehlt.
+     */
+    public function testUpgradeOrderLeavesAnExistingShareKeyWhereItIs(): void
+    {
+        $order = ['media', 'calendar', 'title', 'share', 'subtitle', 'date', 'time', 'location', 'description'];
+
+        $this->assertSame($order, DetailDesign::upgradeOrder($order));
+        $this->assertSame($order, DetailDesign::upgradeOrder(DetailDesign::upgradeOrder($order)));
     }
 }
