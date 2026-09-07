@@ -318,6 +318,7 @@ Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von C
 * Neu: Ein „Teilen“-Knopf in Popup und eigener Terminseite – auf dem Telefon das Teilen-Menü des Geräts, am Rechner die Adresse in der Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel
 * Neu: Der Knopf ist standardmäßig aus und wird im Design-Tab eingeschaltet; dort lässt er sich auch per Drag&Drop platzieren wie jedes andere Feld der Detailansicht. Die Kacheln bekommen ihn nicht
 * Behoben: Ein veraltetes Formular (offener Browser-Tab, zwischengespeicherte Admin-Seite) setzte beim Speichern die Reihenfolge der Detailansicht auf den Standard zurück
+* Behoben: Die Termin-Sitemap leitete auf Seiten mit sprechenden Permalinks per 301 auf eine Variante mit Schrägstrich um – die in der robots.txt genannte Adresse antwortet jetzt direkt
 
 = 1.16.0 =
 

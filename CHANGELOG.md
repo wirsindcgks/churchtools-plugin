@@ -5,7 +5,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
-## [1.17.0] - 2026-09-06
+## [1.17.0] - 2026-09-07
 
 ### Added
 
@@ -14,6 +14,7 @@ Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Fixed
 
+- **Die Termin-Sitemap leitete auf sich selbst um.** Auf Seiten mit sprechenden Permalinks – deren Struktur endet üblicherweise auf einem Schrägstrich – hielt WordPress auch `/churchtools-termine-sitemap.xml` für eine Adresse, der einer fehlt, und schickte sie per 301 auf `…-sitemap.xml/`. Die Datei kam danach an, Suchmaschinen folgen einer Weiterleitung; unsauber war, dass die in der robots.txt angekündigte Adresse nicht die war, die antwortet. Die Sitemap wird jetzt ausgeliefert, bevor WordPress zum Umleiten kommt.
 - **Ein veraltetes Formular setzte die Reihenfolge der Detailansicht auf den Standard zurück.** Wer den Design-Tab in einem Browser-Tab offen hatte, der noch von vor einem Update stammte – oder eine zwischengespeicherte Fassung der Seite vor sich –, verlor beim Speichern einer ganz anderen Einstellung seine eingestellte Anordnung, weil die abgeschickte Liste den Feldbestand der neueren Fassung nicht kannte. Sie wird jetzt vor der Prüfung ergänzt statt verworfen. Betraf auch die Umstellung von „Eckdaten" auf Datum/Uhrzeit/Ort aus einer früheren Version.
 
 ## [1.16.0] - 2026-09-03

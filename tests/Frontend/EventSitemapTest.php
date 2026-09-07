@@ -45,6 +45,36 @@ final class EventSitemapTest extends TestCase
         ctp_test_reset_options();
     }
 
+    /**
+     * Gefunden, als die Route zum ersten Mal wirklich über HTTP aufgerufen
+     * wurde: `/churchtools-termine-sitemap.xml` antwortete mit 301 auf
+     * `…-sitemap.xml/`. Endet die Permalink-Struktur auf einem Schrägstrich —
+     * bei `/%postname%/` also der Normalfall —, hält `redirect_canonical`
+     * auch diese Adresse für eine, der einer fehlt.
+     *
+     * Die Datei kam danach an, Suchmaschinen folgen einer 301. Kaputt war es
+     * also nicht, nur unsauber: Die Adresse in der robots.txt war nicht die,
+     * die antwortet. Genau deshalb fällt so etwas ohne Test nicht auf.
+     *
+     * Bei gleicher Priorität entschiede die Reihenfolge der Registrierung, und
+     * die gehört WordPress — `redirect_canonical` hängt in default-filters.php
+     * und damit lange vor jedem Plugin. Eine kleinere Zahl ist die einzige
+     * Zusage, die man selbst in der Hand hat.
+     */
+    public function testTheSitemapRendersBeforeWordPressCanRedirectTheAddress(): void
+    {
+        EventSitemap::registerHooks();
+
+        $prioritaet = ctp_test_hook_priority('template_redirect', [EventSitemap::class, 'maybeRenderSitemap']);
+
+        $this->assertNotNull($prioritaet, 'Der Renderer hängt gar nicht an template_redirect.');
+        $this->assertLessThan(
+            10,
+            $prioritaet,
+            'Der Renderer muss vor redirect_canonical (Priorität 10) laufen, sonst wird die Sitemap-Adresse umgeleitet.'
+        );
+    }
+
     public function testEveryUpcomingEventOfAnEnabledCalendarIsListed(): void
     {
         $this->wpdb->seedEvent(7, '2026-09-06 19:30:00', '2026-09-06 21:00:00', null, null, ['title' => 'Gottesdienst']);

@@ -495,7 +495,11 @@ $GLOBALS['ctp_test_hooks'] = [];
 
 function add_filter(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
 {
-    $GLOBALS['ctp_test_hooks'][$hook][] = $callback;
+    // Die Priorität kommt mit in den Speicher, seit sie selbst eine Zusage ist:
+    // Der Sitemap-Renderer muss vor `redirect_canonical` (10) laufen, sonst
+    // schickt WordPress die Adresse per 301 auf eine Variante mit
+    // Schrägstrich (siehe Frontend\EventSitemap::registerHooks()).
+    $GLOBALS['ctp_test_hooks'][$hook][] = ['callback' => $callback, 'priority' => $priority];
 
     return true;
 }
@@ -510,7 +514,22 @@ function add_action(string $hook, $callback, int $priority = 10, int $acceptedAr
  */
 function ctp_test_hook_callbacks(string $hook): array
 {
-    return $GLOBALS['ctp_test_hooks'][$hook] ?? [];
+    return array_column($GLOBALS['ctp_test_hooks'][$hook] ?? [], 'callback');
+}
+
+/**
+ * Die Priorität, mit der $callback an $hook hängt — null, wenn er dort gar
+ * nicht hängt.
+ */
+function ctp_test_hook_priority(string $hook, $callback): ?int
+{
+    foreach ($GLOBALS['ctp_test_hooks'][$hook] ?? [] as $eintrag) {
+        if ($eintrag['callback'] === $callback) {
+            return $eintrag['priority'];
+        }
+    }
+
+    return null;
 }
 
 function ctp_test_reset_hooks(): void

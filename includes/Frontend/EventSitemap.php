@@ -58,7 +58,18 @@ final class EventSitemap
         // (REWRITE_VERSION).
         add_action('init', [self::class, 'registerRewriteRule'], 9);
         add_filter('query_vars', [self::class, 'addQueryVar']);
-        add_action('template_redirect', [self::class, 'maybeRenderSitemap']);
+        // Priorität 9, also vor `redirect_canonical` (10). Endet die
+        // Permalink-Struktur der Seite auf einem Schrägstrich — was sie bei
+        // der üblichen Einstellung `/%postname%/` tut —, dann hält WordPress
+        // auch diese Adresse für eine, der einer fehlt, und schickt
+        // `/churchtools-termine-sitemap.xml` per 301 auf
+        // `/churchtools-termine-sitemap.xml/`. Die Datei kommt danach zwar an
+        // (Suchmaschinen folgen der Weiterleitung), aber die Adresse, die in
+        // der robots.txt steht, ist dann nicht die, die antwortet. Bei
+        // gleicher Priorität entschiede die Reihenfolge der Registrierung, und
+        // die gehört WordPress: `redirect_canonical` hängt in
+        // default-filters.php und damit lange vor diesem Plugin.
+        add_action('template_redirect', [self::class, 'maybeRenderSitemap'], 9);
         add_filter('robots_txt', [self::class, 'announceInRobotsTxt'], 10, 2);
     }
 
