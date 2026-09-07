@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.17.1] - 2026-09-07
+
+### Fixed
+
+- **Lange Terminnamen liefen aus ihrer Spalte.** Auf der eigenen Terminseite steht der Name in der linken Spalte, also auf halber Seitenbreite – ein langes deutsches Kompositum wie „Kinderferienprogramm" passte dort nicht hinein und ragte über den Rand hinaus, bis es am Bild daneben klebte (gemessen: 51 Pixel über die Spalte, 7 Pixel Überlappung). Der Name wird jetzt nach den Regeln der Seitensprache getrennt, statt am Stück stehen zu bleiben. Gilt für alle drei Stellen, an denen ein Terminname erscheint – Kachel, große Kachel der Ansicht „Nächster Termin" und Detailansicht –, an den beiden ersten vorsorglich: Dort ging es sich bisher knapp aus, bei einem etwas längeren Namen nicht mehr.
+
 ## [1.17.0] - 2026-09-07
 
 ### Added

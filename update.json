@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.17.0",
+    "version": "1.17.1",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-09-07 08:31:44",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.17.0/churchtools-plugin-v1.17.0.zip",
+    "last_updated": "2026-09-07 09:20:26",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.17.1/churchtools-plugin-v1.17.1.zip",
     "sections": {
-        "changelog": "<h4>Added</h4>\n<ul>\n<li><strong>Ein „Teilen&quot;-Knopf in Popup und eigener Terminseite</strong> – standardmäßig aus, einzuschalten im Design-Tab unter „Aufbau der Detailansicht&quot;. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, mit WhatsApp, Signal, Mail und allem, was dort ohnehin installiert ist; am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert&quot;. Es gibt dafür kein Drittanbieter-Skript und kein Zählpixel: Solange niemand den Knopf drückt, wird nichts an ein Netzwerk gemeldet. Die Voraussetzung dafür stand schon – jeder Termin hat seit 1.5.0 eine eigene Adresse und seit 1.16.0 einen eigenen Kopf mit Vorschaubild, ein geteilter Link zeigt also Bild und Titel des Termins.</li>\n<li>Der Knopf ist <strong>im Design-Tab frei platzierbar</strong> wie jedes andere Feld der Detailansicht – er steht als „Teilen-Knopf&quot; in derselben Drag&amp;Drop-Liste und lässt sich auch dorthin ziehen, während er noch ausgeschaltet ist. <strong>Die Kacheln bekommen ihn nicht</strong>: Er gehört zum geöffneten Termin, nicht in eine Liste.</li>\n</ul>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Die Termin-Sitemap leitete auf sich selbst um.</strong> Auf Seiten mit sprechenden Permalinks – deren Struktur endet üblicherweise auf einem Schrägstrich – hielt WordPress auch <code>/churchtools-termine-sitemap.xml</code> für eine Adresse, der einer fehlt, und schickte sie per 301 auf <code>…-sitemap.xml/</code>. Die Datei kam danach an, Suchmaschinen folgen einer Weiterleitung; unsauber war, dass die in der robots.txt angekündigte Adresse nicht die war, die antwortet. Die Sitemap wird jetzt ausgeliefert, bevor WordPress zum Umleiten kommt.</li>\n<li><strong>Ein veraltetes Formular setzte die Reihenfolge der Detailansicht auf den Standard zurück.</strong> Wer den Design-Tab in einem Browser-Tab offen hatte, der noch von vor einem Update stammte – oder eine zwischengespeicherte Fassung der Seite vor sich –, verlor beim Speichern einer ganz anderen Einstellung seine eingestellte Anordnung, weil die abgeschickte Liste den Feldbestand der neueren Fassung nicht kannte. Sie wird jetzt vor der Prüfung ergänzt statt verworfen. Betraf auch die Umstellung von „Eckdaten&quot; auf Datum/Uhrzeit/Ort aus einer früheren Version.</li>\n</ul>\n"
+        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Lange Terminnamen liefen aus ihrer Spalte.</strong> Auf der eigenen Terminseite steht der Name in der linken Spalte, also auf halber Seitenbreite – ein langes deutsches Kompositum wie „Kinderferienprogramm&quot; passte dort nicht hinein und ragte über den Rand hinaus, bis es am Bild daneben klebte (gemessen: 51 Pixel über die Spalte, 7 Pixel Überlappung). Der Name wird jetzt nach den Regeln der Seitensprache getrennt, statt am Stück stehen zu bleiben. Gilt für alle drei Stellen, an denen ein Terminname erscheint – Kachel, große Kachel der Ansicht „Nächster Termin&quot; und Detailansicht –, an den beiden ersten vorsorglich: Dort ging es sich bisher knapp aus, bei einem etwas längeren Namen nicht mehr.</li>\n</ul>\n"
     }
 }
