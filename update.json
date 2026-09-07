@@ -1,15 +1,15 @@
 {
     "name": "ChurchTools Events",
     "slug": "churchtools-plugin",
-    "version": "1.17.1",
+    "version": "1.17.2",
     "homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "author": "wirsindcgks",
     "author_homepage": "https://github.com/wirsindcgks/churchtools-plugin",
     "requires": "6.4",
     "requires_php": "8.1",
-    "last_updated": "2026-09-07 09:20:26",
-    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.17.1/churchtools-plugin-v1.17.1.zip",
+    "last_updated": "2026-09-07 14:30:21",
+    "download_url": "https://github.com/wirsindcgks/churchtools-plugin/releases/download/v1.17.2/churchtools-plugin-v1.17.2.zip",
     "sections": {
-        "changelog": "<h4>Fixed</h4>\n<ul>\n<li><strong>Lange Terminnamen liefen aus ihrer Spalte.</strong> Auf der eigenen Terminseite steht der Name in der linken Spalte, also auf halber Seitenbreite – ein langes deutsches Kompositum wie „Kinderferienprogramm&quot; passte dort nicht hinein und ragte über den Rand hinaus, bis es am Bild daneben klebte (gemessen: 51 Pixel über die Spalte, 7 Pixel Überlappung). Der Name wird jetzt nach den Regeln der Seitensprache getrennt, statt am Stück stehen zu bleiben. Gilt für alle drei Stellen, an denen ein Terminname erscheint – Kachel, große Kachel der Ansicht „Nächster Termin&quot; und Detailansicht –, an den beiden ersten vorsorglich: Dort ging es sich bisher knapp aus, bei einem etwas längeren Namen nicht mehr.</li>\n</ul>\n"
+        "changelog": "<h4>Changed</h4>\n<ul>\n<li><strong>Der „Teilen&quot;-Knopf steht jetzt auch in der Doku</strong>, wo man ihn sucht: mit zwei Bildern im README (Popup und eigene Terminseite, letztere mit der Meldung „Link kopiert&quot;) und einem eigenen Abschnitt in der <code>readme.txt</code>, den WordPress unter <em>Plugins → Details</em> anzeigt – Standardzustand, wo er eingeschaltet wird, was er auf dem Telefon und was am Rechner tut. In 1.17.0 stand er nur als ein Stichpunkt in der Feature-Liste; wer ihn im Design-Tab nicht zufällig fand, erfuhr nicht, dass es ihn gibt.</li>\n<li><strong>Eine seit 1.9.0 veraltete Beschreibung berichtigt.</strong> Der Eventfinder fragt „Welche Angebote sprechen dich an?&quot;; README und <code>readme.txt</code> beschrieben ihn an fünf Stellen noch mit seiner alten Überschrift „Du suchst …&quot;, und auch das Bild im README zeigte sie noch. Am Plugin selbst ändert sich mit dieser Version nichts.</li>\n</ul>\n<h4>Fixed</h4>\n<ul>\n<li><strong>Der Screenshot-Generator lief nicht mehr</strong> (<code>bin/demo-screenshots.php</code>): <code>wp_json_encode()</code> stand inzwischen doppelt – im Test-Bootstrap und im Skript selbst –, was PHP hart abbricht, und den Demo-Argumenten fehlte der Schlüssel <code>design_class</code>, den die Templates seither lesen. Genau deshalb waren die Bilder im README alt: Der Weg, sie aufzufrischen, war verschüttet, und gemerkt hat es niemand, weil ein Bild nicht rot wird.</li>\n<li><strong>Ein Test hält die Doku künftig fest</strong> (<code>tests/Release/DocumentationLabelsTest.php</code>): Jede Beschriftung, die README oder <code>readme.txt</code> in Anführungszeichen zitieren, muss es im Plugin auch geben. Genau der Fall oben – ein umformulierter Text im Plugin, eine Doku, die stehen bleibt – bricht damit den Testlauf, statt jahrelang unbemerkt zu bleiben.</li>\n</ul>\n"
     }
 }
