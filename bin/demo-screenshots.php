@@ -15,8 +15,8 @@
  *   node bin/demo-screenshots.js      (Playwright, macht daraus die PNGs)
  *
  * Die Platzhalterbilder liegen unter docs/demo-assets/ - abstrakte Verlaeufe,
- * keine Fotos. Ergebnis sind docs/.demo/demo.html und demo-popup.html
- * (nicht eingecheckt, siehe .gitignore).
+ * keine Fotos. Ergebnis sind docs/.demo/demo.html, demo-popup.html und die
+ * beiden Teilen-Seiten (nicht eingecheckt, siehe .gitignore).
  */
 
 declare(strict_types=1);
@@ -28,19 +28,16 @@ $GLOBALS['ctp_test_options']['date_format'] = 'd.m.Y';
 
 /*
  * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon:
- * eindeutige IDs im Eventfinder, die Toolbar-Konfiguration als JSON und die
- * drei Schritte, aus denen EventFormatter::descriptionHtml() besteht.
+ * eindeutige IDs im Eventfinder und die drei Schritte, aus denen
+ * EventFormatter::descriptionHtml() besteht. wp_json_encode() stand hier
+ * ebenfalls, bis der Bootstrap es selbst mitbrachte - eine zweite Deklaration
+ * bricht PHP hart ab, deshalb kommt es nicht zurueck.
  */
 function wp_unique_id(string $prefix = ''): string
 {
     static $counter = 0;
 
     return $prefix . ++$counter;
-}
-
-function wp_json_encode($data)
-{
-    return json_encode($data);
 }
 
 function wp_kses_post(string $html): string
@@ -126,6 +123,9 @@ function ctp_demo_args(array $overrides = []): array
         'columns' => 3,
         'click_behavior' => 'popup',
         'hidden_elements' => [],
+        // design_class ist im Betrieb die Stil-Vorlage aus DesignPreset::bodyClass();
+        // leer heisst „Standard", und genau die zeigen die Bilder.
+        'design_class' => '',
         'design_style' => '',
         'design_separators' => '',
         'month_dividers' => false,
@@ -193,12 +193,69 @@ $popup = '<div class="ctp-events"><dialog class="ctp-events__modal" open>'
     . '<div class="ctp-events__modal-body">' . $termine[0]['detail_html'] . '</div>'
     . '</dialog></div>';
 
+$popupRahmen = '<style>body{margin:0;height:100vh;background:#e9ebef;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>';
+
 file_put_contents(
     $build . '/demo-popup.html',
     '<!doctype html><html lang="de"><head><meta charset="utf-8"><style>' . $css . '</style>'
-    . '<style>body{margin:0;height:100vh;background:#e9ebef;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>'
+    . $popupRahmen
     . '</head><body>' . $popup . '</body></html>'
 );
 
-echo "Demo-Seiten geschrieben: docs/.demo/demo.html, docs/.demo/demo-popup.html\n";
+/*
+ * Der „Teilen"-Knopf bekommt eigene Seiten, statt im Popup oben mitzulaufen:
+ * Er ist standardmaessig aus, das Popup-Bild im README zeigt also den
+ * Auslieferungszustand und soll ihn weiter zeigen. Und er steht in beiden
+ * Ansichten - im Popup rechts unter der Beschreibung, auf der eigenen Seite
+ * linksbuendig unter der vollen Breite -, das sind zwei Anordnungen und damit
+ * zwei Seiten.
+ *
+ * Die Adresse ist hier eine erfundene, aber vollstaendige: Genau die legt der
+ * Knopf am Rechner in die Zwischenablage, und wo auch die fehlt, steht sie als
+ * Rueckmeldung da.
+ */
+$shareTermin = $termine[0];
+$shareTermin['detail_url'] = 'https://musterkirche.de/termine/gottesdienst-06-09-2026/';
+
+$shareEnabled = true;
+$order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'];
+
+$event = $shareTermin;
+$detailContext = 'popup';
+ob_start();
+require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php';
+$sharePopupHtml = (string) ob_get_clean();
+
+$event = $shareTermin;
+$detailContext = 'page';
+ob_start();
+require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php';
+$sharePageHtml = (string) ob_get_clean();
+
+file_put_contents(
+    $build . '/demo-teilen-popup.html',
+    '<!doctype html><html lang="de"><head><meta charset="utf-8"><style>' . $css . '</style>'
+    . $popupRahmen
+    . '</head><body><div class="ctp-events"><dialog class="ctp-events__modal" open>'
+    . '<button type="button" class="ctp-events__modal-close" aria-label="Schliessen">&times;</button>'
+    . '<div class="ctp-events__modal-body">' . $sharePopupHtml . '</div>'
+    . '</dialog></div></body></html>'
+);
+
+/*
+ * Die eigene Terminseite steht im Theme zwischen Kopf und Fuss; hier reicht
+ * der weisse Kasten darum, damit das Bild dasselbe zeigt wie die uebrigen
+ * Abschnitte der Sammelseite.
+ */
+file_put_contents(
+    $build . '/demo-teilen-seite.html',
+    '<!doctype html><html lang="de"><head><meta charset="utf-8"><style>' . $css . '</style>'
+    . '<style>' . $rahmen . '</style></head><body><section id="teilen-seite">'
+    . '<div class="ctp-events ctp-events--detail">'
+    . '<a class="ctp-events__back" href="#">&larr; Zurück</a>'
+    . $sharePageHtml
+    . '</div></section></body></html>'
+);
+
+echo "Demo-Seiten geschrieben: docs/.demo/demo.html, demo-popup.html, demo-teilen-popup.html, demo-teilen-seite.html\n";
 echo "Weiter mit: node bin/demo-screenshots.js\n";

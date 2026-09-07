@@ -16,9 +16,9 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 
 * **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
-* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte „Du suchst …“-Eventfinder, alle clientseitig und damit Full-Page-Cache-tauglich.
+* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Knopf – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
-* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Aufbau der Detailansicht samt „Teilen“-Knopf, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
@@ -51,7 +51,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
 * `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
 * `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
-* `eventfinder` – Geführte „Du suchst …“-Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
+* `eventfinder` – Geführte Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
 * `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung im „Design“-Tab, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
 * `paging` – Button „Weitere Termine laden“ anzeigen: `1` (Standard) oder `0`. Nur bei `layout="list"`/`"grid"`.
 
@@ -79,7 +79,7 @@ Die Zeitraumlänge ist global im „Design“-Tab einstellbar (Standard: 2 Monat
 
 Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ im Sync-Tab) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
 
-Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte „Du suchst …“-Werkzeugleiste mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
+Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte Werkzeugleiste unter der Frage „Welche Angebote sprechen dich an?“, mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
 
 = Gutenberg-Block =
 
@@ -97,6 +97,14 @@ Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ unte
 * Der Termin wird zum Inhalt dieser Seite. WordPress liefert damit eine ganz normale Seite aus – mit der Vorlage des Theme, dessen Kopf- und Fußbereich und allem, was sonst dazugehört. Ohne ausgewählte Seite gibt es für den Termin keinen echten WordPress-Beitrag; auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlt der Terminseite dann die Vorlage des Theme.
 
 Die ausgewählte Seite bleibt ganz normal erreichbar und behält ihren eigenen Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin. Bereits verschickte Links auf die alten Adressen bleiben gültig: Sie werden dauerhaft (301) auf die neuen weitergeleitet. Voraussetzung sind eingeschaltete Permalinks (Einstellungen → Permalinks, alles außer „Einfach“).
+
+= Teilen-Knopf =
+
+Popup und eigene Terminseite können einen „Teilen“-Knopf zeigen. Er ist standardmäßig aus und wird im Tab „Design“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
+
+Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail und alles, was dort installiert ist). Am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“; wo auch die Zwischenablage nicht zur Verfügung steht (kein HTTPS), wird die Adresse zum Markieren angezeigt. Es wird kein Skript eines Drittanbieters geladen und kein Zählpixel eingebunden: Solange niemand den Knopf drückt, geht nichts ins Netz.
+
+Geteilt wird die eigene Adresse des Termins. Seit 1.16.0 bringt sie einen eigenen Seitentitel samt Vorschaubild mit – in Messenger und sozialen Netzwerken erscheint also der Termin und nicht die Terminliste.
 
 = Eigenes Design =
 

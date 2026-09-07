@@ -11,7 +11,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 
 - **Automatischer Abgleich** per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") kommen als einzelne Termine an, abgesagte verschwinden wieder.
 - **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
-- **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte „Du suchst …"-Eventfinder.
+- **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?").
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
 - **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit „Teilen"-Knopf — auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
 - **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math.
@@ -44,6 +44,14 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 **Termindetails** — als Popup auf derselben Seite (im Bild) oder als eigene Termin-URL.
 
 ![Popup mit Bild, Datums-Chip, Titel, Zeit, Ort und Beschreibung](docs/screenshots/popup.png)
+
+**Teilen** — der „Teilen"-Knopf steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
+
+![Popup mit dem „Teilen"-Knopf unter der Beschreibung](docs/screenshots/teilen-popup.png)
+
+Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante — hier mit der Rückmeldung nach einem Klick am Rechner.
+
+![Eigene Terminseite mit „Teilen"-Knopf und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
 
 ## Installation
 
@@ -115,7 +123,7 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. 
 | `layout` | `list` (Standard), `grid` oder `upcoming` |
 | `columns` | Spalten bei `grid`, 2–6 (Standard 3); auf schmalen Bildschirmen automatisch weniger |
 | `limit` | Obergrenze; bei `upcoming` die Gesamtzahl inklusive der großen Kachel |
-| `eventfinder` | Geführte „Du suchst …"-Leiste mit Themen- und Zeitraum-Knöpfen |
+| `eventfinder` | Geführte Leiste mit Themen- und Zeitraum-Knöpfen |
 | `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
 | `month_dividers` | Termine nach Monaten gruppieren |
 | `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Knopf |

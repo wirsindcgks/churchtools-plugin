@@ -93,18 +93,31 @@ Für lokale Tests: Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` ve
 ## Screenshots fürs README
 
 ```bash
-php bin/demo-screenshots.php   # baut docs/.demo/demo.html und demo-popup.html
+php bin/demo-screenshots.php   # baut docs/.demo/demo.html, demo-popup.html und die zwei Teilen-Seiten
 node bin/demo-screenshots.js   # macht daraus die PNGs in docs/screenshots/
 ```
 
 Die Demo-Seiten entstehen **ohne WordPress**: Das PHP-Skript lädt denselben Stub-Bootstrap wie die Tests, baut erfundene Termine und bindet die Layout-Templates direkt ein. Das ist Absicht — aus einer echten Installation könnten Namen, Orte und Fotos einer Gemeinde in die Bilder geraten, und um eine einzelne Ansicht zu zeigen, müsste man dort globale Design-Einstellungen umstellen und hinterher zurücksetzen. Die Platzhalterbilder liegen als abstrakte Verläufe unter `docs/demo-assets/`.
 
-Nach einer Design-Änderung im Frontend beide Schritte neu laufen lassen, sonst zeigt das README einen alten Stand. `docs/` ist von der Auslieferung ausgenommen (`.github/release-excludes.txt`), die Bilder landen also nicht im Update-Paket.
+Nach einer Design-Änderung im Frontend beide Schritte neu laufen lassen, sonst zeigt das README einen alten Stand — die Bilder altern still, gemerkt hat es zuletzt erst der nächste Lauf (der Eventfinder trug im README noch die Überschrift „Du suchst …", die im Plugin längst „Welche Angebote sprechen dich an?" heißt). Das Skript kennt außerdem die Argumente, die die Templates lesen: Kommt ein neuer `$args`-Schlüssel dazu, muss `ctp_demo_args()` ihn mitbringen, sonst bricht der Lauf ab. `docs/` ist von der Auslieferung ausgenommen (`.github/release-excludes.txt`), die Bilder landen also nicht im Update-Paket.
+
+## Doku gehört zur Änderung
+
+Was Anwender sehen, ist erst fertig, wenn es auch dort steht, wo Anwender nachsehen. Vier Stellen, jede mit eigenem Publikum:
+
+| Stelle | Wer liest sie |
+| --- | --- |
+| `README.md` | Wer das Repo besucht, bevor er das Plugin installiert – mit den Bildern aus `docs/screenshots/` |
+| `readme.txt` | Dieselben Leute im WordPress-Backend unter *Plugins → Details*, plus die vollständige Referenz aller Optionen |
+| `CHANGELOG.md` | Wer wissen will, was ein Update ändert |
+| Beschriftungen und Hilfetexte im Backend | Wer die Einstellung gerade vor sich hat |
+
+Danach die Gegenprobe: Steht eine im Plugin sichtbare Beschriftung wörtlich in einer der Dateien, ändert sich mit ihr auch die Doku – und zeigt ein Screenshot die geänderte Ansicht, gehört ein neuer Lauf von `bin/demo-screenshots.*` dazu. Der Changelog-Eintrag allein reicht nicht: Er beschreibt die Änderung, nicht den Zustand, und wer eine Option nachschlägt, liest den Abschnitt darüber.
 
 ## Release
 
 1. Version in `churchtools-plugin.php` (Header **und** `CTP_VERSION`), `readme.txt` (`Stable tag`) und `CHANGELOG.md` anheben – `tests/Release/VersionConsistencyTest.php` prüft, dass alle vier übereinstimmen.
 2. `update.json` neu erzeugen: `php bin/make-update-json.php .` – der Release-Workflow bricht ab, wenn sie noch auf die vorige Version zeigt.
 3. Übersetzungsvorlage neu erzeugen: `php bin/make-pot.php .` (Minimal-Ersatz für `wp i18n make-pot`, deckt genau die fünf hier verwendeten Aufrufformen ab und bricht bei `_n`/`_x` ab – dann `wp i18n make-pot` nehmen)
-4. `composer test && composer lint`
+4. `composer test && composer lint`; dazu die Doku-Gegenprobe oben – README, `readme.txt` und Screenshots auf dem Stand der Version, die gleich hinausgeht
 5. Tag `vX.Y.Z` pushen – der Release-Workflow baut und veröffentlicht das ZIP.
