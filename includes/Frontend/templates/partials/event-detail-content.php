@@ -14,13 +14,21 @@
  *   popup — flat, every element a direct child of .ctp-events__detail, which
  *           lays them out as a single wrapping column. The configured order is
  *           reproduced one-to-one.
- *   page  — everything except image and description moves into one wrapper,
- *           .ctp-events__detail-text, in the configured order. That wrapper is
- *           the left column of the two-column layout: the image sits beside the
- *           whole block rather than between two of its lines, and the
- *           description runs the full width underneath. Only for those two does
- *           the layout override the configured position — everything else keeps
- *           it exactly.
+ *   page  — everything except image, description and share button moves into
+ *           one wrapper, .ctp-events__detail-text, in the configured order.
+ *           That wrapper is the left column of the two-column layout: the image
+ *           sits beside the whole block rather than between two of its lines,
+ *           und Beschreibung und Teilen-Knopf laufen darunter über die volle
+ *           Breite. Nur für diese drei überschreibt das Layout die
+ *           *Spalte* — die Reihenfolge untereinander bleibt die eingestellte.
+ *
+ *           Der Teilen-Knopf kam zuletzt dazu (Nutzerwunsch 2026-09-07: „rechts
+ *           unterhalb dem Beschreibungstext", in beiden Ansichten). In der
+ *           linken Spalte stand er zwischen den Eckdaten und damit *neben* der
+ *           Beschreibung statt unter ihr, während er im Popup längst hinter ihr
+ *           lag — dieselbe Reihenfolge sah in den zwei Ansichten verschieden
+ *           aus. Er ist deshalb kein Feld der Textspalte, sondern gehört zu dem
+ *           Teil, der unter dem Ganzen steht.
  *
  *           1.4.0 hatte diesen Block noch nach Art sortiert, in „Kopf" und
  *           „Eckdaten". Das hat die eingestellte Reihenfolge still überstimmt:
@@ -88,13 +96,19 @@ $ctpKeysOutside = static fn (array $group): array => array_values(
         style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
     <?php endif; ?>
 >
+    <?php
+    // Die drei, die auf der eigenen Seite nicht in die Textspalte gehoeren:
+    // Bild daneben, Beschreibung und Teilen-Knopf darunter. Als eine Liste,
+    // damit die beiden Aufrufe unten nicht auseinanderlaufen koennen.
+    $ctpFullWidth = ['media', 'description', DetailDesign::SHARE_KEY];
+    ?>
     <?php if ($detailContext === 'page') : ?>
         <div class="ctp-events__detail-text">
-            <?php foreach ($ctpKeysOutside(['media', 'description']) as $key) : ?>
+            <?php foreach ($ctpKeysOutside($ctpFullWidth) as $key) : ?>
                 <?php require $ctpElement; ?>
             <?php endforeach; ?>
         </div>
-        <?php foreach ($ctpKeysIn(['media', 'description']) as $key) : ?>
+        <?php foreach ($ctpKeysIn($ctpFullWidth) as $key) : ?>
             <?php require $ctpElement; ?>
         <?php endforeach; ?>
     <?php else : ?>

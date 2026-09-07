@@ -85,12 +85,16 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
-     * Auf der eigenen Seite läuft der Knopf mit der Textspalte, nicht mit Bild
-     * und Beschreibung — sonst stünde er im zweispaltigen Raster in einer
-     * eigenen Zeile unter der Beschreibung statt bei den Angaben, zu denen er
-     * gehört.
+     * Auf der eigenen Seite gehört der Knopf *nicht* in die Textspalte, sondern
+     * zu dem Teil, der unter dem Ganzen über die volle Breite läuft — wie die
+     * Beschreibung, und hinter ihr (Nutzerwunsch 2026-09-07: „rechts unterhalb
+     * dem Beschreibungstext", in beiden Ansichten).
+     *
+     * In der Textspalte stand er zwischen den Eckdaten und damit *neben* der
+     * Beschreibung statt unter ihr, während er im Popup längst hinter ihr lag:
+     * dieselbe eingestellte Reihenfolge, zwei verschiedene Bilder.
      */
-    public function testThePageKeepsTheShareButtonInTheTextColumn(): void
+    public function testThePagePutsTheShareButtonBelowTheDescriptionInsteadOfIntoTheTextColumn(): void
     {
         $xpath = $this->render('page', null, 'https://example.test/flyer.jpg', true);
 
@@ -102,10 +106,59 @@ final class DetailLayoutTest extends TestCase
                 'ctp-events__meta-item',
                 'ctp-events__meta-item',
                 'ctp-events__meta-item',
-                'ctp-events__share',
             ],
-            $this->childClasses($xpath, 'ctp-events__detail-text')
+            $this->childClasses($xpath, 'ctp-events__detail-text'),
+            'Der Teilen-Knopf gehört nicht mehr in die linke Spalte.'
         );
+
+        // Direkte Kinder des Rasters, in Quelltext-Reihenfolge: die Textspalte,
+        // dann Bild und Knopf. „description" fehlt in dieser Fixture bewusst
+        // (siehe render()), der Knopf muss trotzdem hinter dem Bild stehen.
+        $this->assertSame(
+            ['ctp-events__detail-text', 'ctp-events__detail-media', 'ctp-events__share'],
+            $this->childClasses($xpath, 'ctp-events__detail')
+        );
+    }
+
+    /**
+     * Auf der eigenen Seite steht der Knopf links, im Popup rechts — und das
+     * ist keine Inkonsequenz, sondern folgt derselben Frage: An welcher Kante
+     * hängt alles andere?
+     *
+     * Auf der Seite beginnen Etikett, Titel, Eckdaten und der
+     * Beschreibungsabsatz alle an der linken Rasterkante (nachgemessen: alle
+     * fünf bei 217px). Rechts ausgerichtet hätte der Knopf als einziges
+     * Element eine eigene Fluchtlinie — und weil der Absatz beim Lesemaß von
+     * 42rem aufhört, der Block aber breiter ist, nicht einmal die des Textes
+     * über ihm. Im Popup fallen Text- und Rasterkante zusammen, dort stellt
+     * sich die Frage nicht.
+     *
+     * Die Grundregel setzt fürs Popup `margin-inline-start: auto` und
+     * `justify-content: flex-end`; auf der Seite müssen deshalb *beide* zurück-
+     * genommen werden — die Außenkante schöbe den Kasten nach rechts, die
+     * Füllrichtung seinen Inhalt darin.
+     */
+    public function testTheShareButtonAlignsLeftOnThePageAndKeepsItsOwnRow(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+
+        preg_match(
+            '/\.ctp-events--detail \.ctp-events__detail > \.ctp-events__share \{([^}]*)\}/',
+            $css,
+            $treffer
+        );
+        $this->assertNotEmpty($treffer, 'Keine Seiten-Regel für den Teilen-Knopf gefunden.');
+        $regel = $treffer[1];
+
+        $this->assertStringContainsString('justify-content: flex-start;', $regel);
+        $this->assertStringContainsString('margin-inline-start: 0;', $regel);
+
+        // Eigene Zeile über die volle Rasterbreite: Für die Position des
+        // Knopfes ist das gleichgültig (links ist links), aber die Rückmeldung
+        // daneben kann die Adresse selbst tragen, wenn die Zwischenablage
+        // fehlschlägt — die soll über die ganze Breite umbrechen dürfen und
+        // nicht in der schmaleren linken Spalte.
+        $this->assertStringContainsString('grid-column: 1 / -1;', $regel);
     }
 
     /**

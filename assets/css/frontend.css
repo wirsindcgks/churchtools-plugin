@@ -1696,8 +1696,22 @@
  * Als Inhalt einer echten Seite (Einstellung „Adresse der Terminseite") legt
  * das Theme seinen Container schon um diesen Block - dann ist der eigene
  * Innenabstand der zweite um denselben Inhalt, und oben stand dadurch ein
- * Streifen Leere, den niemand bestellt hat. Die Breitenbegrenzung bleibt: Sie
- * gilt dem Lesemass und nicht dem Rand.
+ * Streifen Leere, den niemand bestellt hat.
+ *
+ * Die Breitenbegrenzung faellt hier seit 2026-09-07 mit (Nutzerentscheidung,
+ * „der Text nutzt die volle Breite nicht aus"). Bis dahin blieb sie stehen,
+ * mit der Begruendung, sie gelte dem Lesemass und nicht dem Rand - und das war
+ * an der falschen Stelle gedacht: Das Lesemass gehoert an den *Absatz*, wo es
+ * mit `max-width: 42rem` ohnehin steht und wo es unabhaengig davon wirkt, wie
+ * breit die Seite ist. Die 62rem hier begrenzten daneben auch Bild, Eckdaten
+ * und die zweite Spalte, die vom Lesemass gar nicht betroffen sind. Auf einer
+ * eingebetteten Seite war das Ergebnis ein Termin, der schmaler stand als
+ * alles andere auf derselben Seite - in der Testumgebung 992px in einem
+ * 1425px breiten Inhaltsbereich.
+ *
+ * Fuer die Route *ohne* Elternseite bleiben die 62rem: Dort gibt es keinen
+ * Beitrag und damit keinen Container vom Theme, und ohne die Begrenzung liefe
+ * der Termin ueber die ganze Fensterbreite.
  */
 .ctp-events--detail.ctp-events--hosted {
     padding-block: 0;
@@ -2004,6 +2018,45 @@
 
 .ctp-events--detail .ctp-events__detail-description p {
     max-width: 42rem;
+}
+
+/*
+ * Der Teilen-Knopf ist auf der eigenen Seite kein Feld der Textspalte, sondern
+ * steht wie die Beschreibung ueber die volle Breite darunter (siehe
+ * partials/event-detail-content.php). `grid-column: 1 / -1` ist dabei das, was
+ * ihn ueberhaupt unter die Beschreibung bringt: Ohne die Angabe landete er in
+ * der automatischen Platzierung in der *linken* Spalte, und `margin-inline-
+ * start: auto` haette ihn dann an deren rechten Rand geschoben - also mitten
+ * auf die Seite statt an ihren Rand.
+ *
+ * Die Zeile bleibt der automatischen Platzierung ueberlassen: Bild (Zeile 1)
+ * und Beschreibung (Zeile 2) stehen fest, der Knopf faellt dahinter. Eine
+ * feste `grid-row: 3` waere eine Zeile zu weit, sobald ein Termin keine
+ * Beschreibung hat und deren Zeile gar nicht entsteht.
+ *
+ * Auf dieser Seite steht er *links* und nicht rechts (Nutzerentscheidung
+ * 2026-09-07). Der Grund ist die Kante, an der alles andere haengt: Etikett,
+ * Titel, Eckdaten und der Beschreibungsabsatz beginnen alle an der linken
+ * Rasterkante. Rechts ausgerichtet haette der Knopf als einziges Element eine
+ * eigene Fluchtlinie gehabt - und weil der Absatz beim Lesemass aufhoert, der
+ * Block aber breiter ist, waere sie nicht einmal die des Textes darueber
+ * gewesen. Im Popup bleibt er rechts: Dort ist der Kasten so schmal, dass
+ * Text- und Rasterkante zusammenfallen, und die Frage stellt sich nicht.
+ *
+ * Deshalb beides zuruecknehmen, was die Grundregel oben fuers Popup setzt: die
+ * automatische Aussenkante (die ihn nach rechts schoebe) und die Fuellrichtung
+ * des Flex-Kastens.
+ */
+.ctp-events--detail .ctp-events__detail > .ctp-events__share {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    margin-inline-start: 0;
+}
+
+/* Die Rueckmeldung steht jetzt links neben dem Knopf statt rechts von ihm -
+   eine rechtsbuendige Zeile darin liefe der Leserichtung entgegen. */
+.ctp-events--detail .ctp-events__detail > .ctp-events__share .ctp-events__share-feedback {
+    text-align: left;
 }
 
 /*
