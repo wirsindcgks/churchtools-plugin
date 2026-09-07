@@ -323,6 +323,47 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
+     * Lange Terminnamen müssen brechen dürfen, sonst laufen sie aus ihrer
+     * Spalte. Gemeldet an „Kinderferienprogramm: Royal Ranger Outdoortag": Der
+     * Titel ragte 51px über die linke Spalte hinaus und überlappte das Bild um
+     * 7px. Deutsche Komposita sind lang, und diese Spalte ist auf der eigenen
+     * Seite nur halb so breit wie die Seite.
+     *
+     * Geprüft werden alle drei Fassungen des Terminnamens — Kachel, Hero und
+     * Detailansicht. Der Code nennt sie an anderer Stelle ausdrücklich
+     * „dasselbe" und gibt ihnen deshalb denselben Schnitt; dann sollen sie
+     * auch dasselbe Umbruchverhalten haben. Sonst repariert man den Namen an
+     * einer Stelle und wundert sich an der nächsten.
+     *
+     * `min-width: 0` gilt nur der Detailüberschrift, und das ist der Teil, den
+     * man beim Nachbauen vergisst: Sie ist Flex-Kind neben dem Datums-Chip, und
+     * ein Flex-Kind schrumpft mit `min-width: auto` **nie** unter die Breite
+     * seines längsten Wortes. Ohne die Zeile bleibt die Silbentrennung darunter
+     * wirkungslos — der Browser dürfte trennen, müsste den Kasten aber nicht
+     * schmaler machen.
+     */
+    public function testLongEventNamesAreAllowedToBreakInEveryTitleVariant(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+
+        $regeln = [
+            'Kachel' => '/^\.ctp-events__title \{([^}]*)\}/m',
+            'Hero' => '/^\.ctp-events--upcoming \.ctp-events__hero-title \{([^}]*)\}/m',
+            'Detailansicht' => '/^\.ctp-events__detail-title \{([^}]*)\}/m',
+        ];
+
+        foreach ($regeln as $name => $muster) {
+            $this->assertSame(1, preg_match($muster, $css, $treffer), "Keine Regel für {$name} gefunden.");
+            $this->assertStringContainsString('hyphens: auto;', $treffer[1], "{$name}: keine Silbentrennung.");
+            $this->assertStringContainsString('overflow-wrap: break-word;', $treffer[1], "{$name}: kein Notausgang für Unteilbares.");
+
+            if ($name === 'Detailansicht') {
+                $this->assertStringContainsString('min-width: 0;', $treffer[1], 'Ohne min-width bleibt die Trennung im Flex-Kind wirkungslos.');
+            }
+        }
+    }
+
+    /**
      * @param string[]|null $order Ohne „description": deren Aufbereitung läuft
      *                             über wpautop()/make_clickable()/wp_kses_post(),
      *                             die diese Testumgebung bewusst nicht nachbaut

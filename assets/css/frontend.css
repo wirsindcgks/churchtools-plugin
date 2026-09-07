@@ -907,6 +907,15 @@
     font-size: var(--ctp-font-lg);
     font-weight: 600;
     line-height: 1.3;
+    /* Trennen statt ueberlaufen, wie bei .ctp-events__detail-title (dort steht
+       die ausfuehrliche Begruendung). Hier vorsorglich und nicht auf einen
+       Befund hin: „Kinderferienprogramm:" misst in diesem Schriftgrad 198px,
+       eine Kachel darf bis auf --ctp-card-min (240px) schrumpfen, und davon
+       geht noch der Innenabstand ab. Es passt heute knapp - bei
+       „Weihnachtsgottesdienst" oder „Konfirmandenunterricht" nicht mehr. */
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    overflow-wrap: break-word;
 }
 
 .ctp-events__subtitle {
@@ -1350,6 +1359,12 @@
     font-size: clamp(var(--ctp-font-xl), 1rem + 1.4vw, var(--ctp-font-2xl));
     font-weight: 600;
     line-height: 1.15;
+    /* Dasselbe wie bei den beiden anderen Terminnamen - und hier am
+       noetigsten: Diese Ueberschrift traegt den groessten Schriftgrad, ein
+       langes Kompositum wird also als Erstes zu breit fuer seine Spalte. */
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    overflow-wrap: break-word;
 }
 
 .ctp-events--upcoming .ctp-events__more-label {
@@ -1624,12 +1639,41 @@
     order: 0;
 }
 
+/*
+ * Lange Terminnamen brechen, statt aus ihrer Spalte zu laufen.
+ *
+ * Gemeldet an „Kinderferienprogramm: Royal Ranger Outdoortag": Der Titel
+ * ragte 51px ueber die linke Spalte hinaus und ueberlappte das Bild daneben um
+ * 7px - er „hing press am Bild". Deutsche Komposita sind lang, und diese Spalte
+ * ist auf der eigenen Seite nur halb so breit wie die Seite.
+ *
+ * Drei Zeilen, und jede loest einen anderen Teil davon:
+ *
+ *   min-width: 0    - Der Titel ist ein Flex-Kind von .ctp-events__detail-
+ *                     heading (Datums-Chip daneben). Flex-Kinder tragen
+ *                     `min-width: auto` und schrumpfen damit *nie* unter ihr
+ *                     min-content-Mass, also unter die Breite ihres laengsten
+ *                     Wortes. Ohne diese Zeile bleiben die beiden darunter
+ *                     wirkungslos: Der Browser darf zwar trennen, muss den
+ *                     Kasten aber nicht schmaler machen.
+ *   hyphens: auto   - Trennt nach den Regeln der Dokumentsprache, also
+ *                     „Kinder-ferien-programm" statt an beliebiger Stelle.
+ *                     Setzt `lang` am Dokument voraus, das WordPress selbst
+ *                     ueber language_attributes() ausgibt.
+ *   overflow-wrap   - Der Notausgang fuer das, was sich nicht trennen laesst:
+ *                     ein Wort ohne Trennstellen, eine Adresse im Titel. Ohne
+ *                     ihn liefe so etwas weiter ueber den Rand.
+ */
 .ctp-events__detail-title {
+    min-width: 0;
     margin: 0;
     font-size: var(--ctp-font-xl);
     /* Siehe .ctp-events__hero-title: dieselbe Ueberlegung, derselbe Schnitt. */
     font-weight: 600;
     line-height: 1.22;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    overflow-wrap: break-word;
 }
 
 /* Explicitly sized rather than left to inherit the theme's body font — that
