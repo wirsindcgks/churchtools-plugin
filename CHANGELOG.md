@@ -5,11 +5,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.17.3] - 2026-09-07
+
+### Added
+
+- **Die Plugin-Beschreibung steht jetzt im Backend**, hinter *Plugins → ChurchTools Events → Details*: neben dem Changelog auch Beschreibung, Installation, die vollständige Shortcode-Referenz mit allen Optionen, die FAQ und der Datenschutz-Abschnitt – je ein eigener Reiter. Wer eine Option nachschlagen will, muss dafür nicht mehr ins Repository.
+
+### Fixed
+
+- **Eine Behauptung, die nie gestimmt hat.** README und Changelog schrieben, WordPress zeige die `readme.txt` in der Plugin-Detailansicht an. Das tut es nur bei Plugins von wordpress.org – hier kommen die Metadaten aus `update.json`, und die trug bis 1.17.2 ausschließlich den Changelog: Die Referenz aller Shortcode-Optionen und der FAQ-Teil waren im Backend nirgends zu lesen, obwohl die Doku genau dorthin verwies. Aufgefallen ist das beim Nachstellen eines echten Updates auf der Testinstallation. Statt die Sätze zu streichen, liefert `bin/make-update-json.php` die Abschnitte jetzt mit – die Doku hatte recht, das Plugin hielt sich nur nicht daran.
+
 ## [1.17.2] - 2026-09-07
 
 ### Changed
 
-- **Der „Teilen"-Knopf steht jetzt auch in der Doku**, wo man ihn sucht: mit zwei Bildern im README (Popup und eigene Terminseite, letztere mit der Meldung „Link kopiert") und einem eigenen Abschnitt in der `readme.txt`, den WordPress unter *Plugins → Details* anzeigt – Standardzustand, wo er eingeschaltet wird, was er auf dem Telefon und was am Rechner tut. In 1.17.0 stand er nur als ein Stichpunkt in der Feature-Liste; wer ihn im Design-Tab nicht zufällig fand, erfuhr nicht, dass es ihn gibt.
+- **Der „Teilen"-Knopf steht jetzt auch in der Doku**, wo man ihn sucht: mit zwei Bildern im README (Popup und eigene Terminseite, letztere mit der Meldung „Link kopiert") und einem eigenen Abschnitt in der `readme.txt` – Standardzustand, wo er eingeschaltet wird, was er auf dem Telefon und was am Rechner tut. In 1.17.0 stand er nur als ein Stichpunkt in der Feature-Liste; wer ihn im Design-Tab nicht zufällig fand, erfuhr nicht, dass es ihn gibt.
 - **Eine seit 1.9.0 veraltete Beschreibung berichtigt.** Der Eventfinder fragt „Welche Angebote sprechen dich an?"; README und `readme.txt` beschrieben ihn an fünf Stellen noch mit seiner alten Überschrift „Du suchst …", und auch das Bild im README zeigte sie noch. Am Plugin selbst ändert sich mit dieser Version nichts.
 
 ### Fixed
