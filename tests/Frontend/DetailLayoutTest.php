@@ -115,7 +115,7 @@ final class DetailLayoutTest extends TestCase
         // dann Bild und Knopf. „description" fehlt in dieser Fixture bewusst
         // (siehe render()), der Knopf muss trotzdem hinter dem Bild stehen.
         $this->assertSame(
-            ['ctp-events__detail-text', 'ctp-events__detail-media', 'ctp-events__share'],
+            ['ctp-events__detail-text', 'ctp-events__detail-media', 'ctp-events__actions'],
             $this->childClasses($xpath, 'ctp-events__detail')
         );
     }
@@ -133,17 +133,17 @@ final class DetailLayoutTest extends TestCase
      * über ihm. Im Popup fallen Text- und Rasterkante zusammen, dort stellt
      * sich die Frage nicht.
      *
-     * Die Grundregel setzt fürs Popup `margin-inline-start: auto` und
-     * `justify-content: flex-end`; auf der Seite müssen deshalb *beide* zurück-
-     * genommen werden — die Außenkante schöbe den Kasten nach rechts, die
-     * Füllrichtung seinen Inhalt darin.
+     * Ausgerichtet wird die Hülle um beide Knöpfe (.ctp-events__actions), nicht
+     * jeder Knopf für sich: Zwei Kästen, die sich jeder selbst nach rechts
+     * schieben, ergeben keine Gruppe, sondern zwei Einzelgänger mit einer Lücke
+     * dazwischen — im Popup gemessene 99px.
      */
     public function testTheShareButtonAlignsLeftOnThePageAndKeepsItsOwnRow(): void
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
 
         preg_match(
-            '/\.ctp-events--detail \.ctp-events__detail > \.ctp-events__share \{([^}]*)\}/',
+            '/\.ctp-events--detail \.ctp-events__detail > \.ctp-events__actions \{([^}]*)\}/',
             $css,
             $treffer
         );
@@ -151,7 +151,6 @@ final class DetailLayoutTest extends TestCase
         $regel = $treffer[1];
 
         $this->assertStringContainsString('justify-content: flex-start;', $regel);
-        $this->assertStringContainsString('margin-inline-start: 0;', $regel);
 
         // Eigene Zeile über die volle Rasterbreite: Für die Position des
         // Knopfes ist das gleichgültig (links ist links), aber die Rückmeldung
@@ -173,7 +172,7 @@ final class DetailLayoutTest extends TestCase
         $children = $xpath->query('//*[@class="ctp-events__detail"]/*');
         $this->assertInstanceOf(DOMNodeList::class, $children);
         $this->assertInstanceOf(DOMElement::class, $children[0]);
-        $this->assertStringContainsString('ctp-events__share', $children[0]->getAttribute('class'));
+        $this->assertStringContainsString('ctp-events__actions', $children[0]->getAttribute('class'));
     }
 
     public function detailContextProvider(): array

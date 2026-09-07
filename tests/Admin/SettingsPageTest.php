@@ -413,7 +413,7 @@ final class SettingsPageTest extends TestCase
         // und aus demselben Grund: Ohne ihn wäre die gelesene Reihenfolge
         // unvollständig und fiele auf die Standardanordnung zurück.
         $this->assertSame(
-            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'],
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics'],
             $settings['detail_element_order']
         );
         $this->assertSame(['date', 'time', 'location'], $settings['hidden_elements']);
@@ -446,7 +446,7 @@ final class SettingsPageTest extends TestCase
         ]);
 
         $this->assertSame(
-            ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle', 'share'],
+            ['description', 'media', 'title', 'calendar', 'location', 'time', 'date', 'subtitle', 'share', 'ics'],
             $sanitized['detail_element_order']
         );
     }

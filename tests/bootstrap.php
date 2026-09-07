@@ -238,6 +238,32 @@ function sanitize_hex_color(string $color): ?string
  */
 $GLOBALS['ctp_test_post_meta'] = [];
 
+/*
+ * Die drei Bausteine, aus denen EventDetailPage::urlForEvent() eine
+ * Terminadresse zusammensetzt. Sie kamen erst mit den Tests zur Kalenderdatei
+ * dazu — bis dahin war jene Methode nie im Unit-Test, und die Adresse eines
+ * Termins ist inzwischen an genug Stellen die Wahrheit (Canonical, Sitemap,
+ * strukturierte Daten, Teilen, Kalenderdatei), dass sie eine verdient hat.
+ */
+function trailingslashit(string $value): string
+{
+    return rtrim($value, "/\\") . '/';
+}
+
+function get_permalink($post = null)
+{
+    $uri = get_page_uri($post);
+
+    return $uri === false ? false : home_url('/' . $uri . '/');
+}
+
+function add_query_arg($key, $value = null, $url = '')
+{
+    $trenner = str_contains((string) $url, '?') ? '&' : '?';
+
+    return $url . $trenner . rawurlencode((string) $key) . '=' . rawurlencode((string) $value);
+}
+
 function ctp_test_set_post_meta(int $postId, string $key, $value): void
 {
     $GLOBALS['ctp_test_post_meta'][$postId][$key] = $value;

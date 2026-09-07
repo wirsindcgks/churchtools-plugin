@@ -1439,6 +1439,20 @@
 /* ---------- popup modal (see partials/modal.php, assets/js/frontend.js) ---------- */
 
 .ctp-events__modal {
+    /*
+     * Der Dialog deckelt die Hoehe, und er scrollt selbst nie - das tut allein
+     * sein Rumpf. Vorher trugen beide denselben calc()-Ausdruck, der Rumpf
+     * rechnete ihn aber ohne seine Polsterung (content-box): 836px Deckel plus
+     * zweimal 28,8px ergaben einen 894px hohen Rumpf in einem 836px hohen
+     * Dialog. Damit lagen zwei Scroll-Container ineinander, und ein Wischen kam
+     * erst beim zweiten Mal unten an (Nutzerbefund 2026-09-07 am „Offenen
+     * Hauskreis"). Die Flex-Spalte loest das an der Wurzel: Die Hoehe steht
+     * einmal, der Rumpf fuellt sie und rechnet nicht mit.
+     *
+     * Dieselbe Fehlerklasse wie die Panels in 1.7.0 - eine Groesse, die ohne
+     * ihre Polsterung gerechnet wird, und beide Male sind es 58 Pixel.
+     */
+    overflow: hidden;
     max-width: min(640px, calc(100vw - 2rem));
     max-height: calc(100vh - 4rem);
     padding: 0;
@@ -1449,6 +1463,18 @@
     background: var(--ctp-color-surface);
     color: var(--ctp-color-text);
     box-shadow: var(--ctp-shadow);
+}
+
+/*
+ * Die Spaltenanordnung *nur* im geoeffneten Zustand. Ein geschlossenes
+ * <dialog> ist allein deshalb unsichtbar, weil der Browser ihm `display: none`
+ * gibt — eine eigene `display`-Angabe hebt das auf, und das Fenster stand
+ * samt Schliessen-Kreuz mitten in der Seite (gemessen 90px unter „Weitere
+ * Termine laden"). Deshalb haengt sie an [open] und nicht an der Grundregel.
+ */
+.ctp-events__modal[open] {
+    display: flex;
+    flex-direction: column;
 }
 
 .ctp-events__modal::backdrop {
@@ -1509,9 +1535,13 @@
 }
 
 .ctp-events__modal-body {
+    /* `min-height: 0` ist die Bedingung dafuer, dass ein Flex-Kind ueberhaupt
+       unter seine Inhaltshoehe schrumpfen und damit scrollen darf - ohne sie
+       waechst es stattdessen aus dem Dialog heraus. */
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 1.8rem;
     overflow-y: auto;
-    max-height: calc(100vh - 4rem);
 }
 
 /* ---------- detail view content (partials/event-detail-content.php), shared by the modal body and the "own page" template ---------- */
@@ -1887,30 +1917,38 @@
  * Haarstrich und folgt im Zugriff der eingestellten Buttonfarbe.
  */
 /*
- * Rechtsbuendig, und zwar mit *einer* Regel fuer beide Anordnungen: Die
- * Detailansicht ist im Popup ein Zeilen-Flex und auf der eigenen Seite ein
- * Spalten-Flex, und `margin-inline-start: auto` schluckt in beiden Faellen den
- * freien Platz davor - in der Zeile bis zum Zeilenende, in der Spalte bis zum
- * rechten Rand. Ein `align-self: flex-end` haette nur die Spalte getroffen und
- * im Popup die *senkrechte* Ausrichtung verstellt.
+ * Ein Knopf mit seiner Rueckmeldung daneben. Die *Ausrichtung* liegt nicht
+ * mehr hier, sondern an der Huelle .ctp-events__actions weiter unten: Teilen
+ * und „Importieren" sollen als Paar auftreten, und zwei Kaesten, die sich
+ * jeder selbst nach rechts schieben, ergeben keine Gruppe, sondern zwei
+ * Einzelgaenger mit einer Luecke dazwischen (gemessen 99px).
  */
 .ctp-events__share {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
-    margin-inline-start: auto;
     gap: 0.4rem 0.65rem;
 }
 
 /*
- * Im Popup ist die Detailansicht ein Zeilen-Flex, in dem jedes Kind ueber
- * `.ctp-events__detail > *` eine volle Zeile beansprucht. Fuer einen Knopf ist
- * das die falsche Vorgabe - er wuerde ueber die ganze Breite gezogen. Also
- * dieselbe Ausnahme, die die Kalender-Pille dort schon hat.
+ * Die Huelle um Teilen und „Importieren" (siehe
+ * partials/event-detail-content.php). Sie ist der Grund, warum die beiden
+ * nebeneinander stehen und nicht jeder in einer eigenen Zeile: Als *ein*
+ * Flex- bzw. Rasterkind belegen sie zusammen eine Zeile statt zwei.
+ *
+ * Die eigene Zeile im Popup braucht dabei keine eigene Regel: Dort beansprucht
+ * ueber `.ctp-events__detail > *` ohnehin jedes Kind die volle Breite, und die
+ * Gruppe ist genau ein Kind. Das ist die zweite Haelfte des Nutzerbefunds vom
+ * 2026-09-07 - vorher waren es zwei Kinder mit `flex: 0 0 auto`, die sich
+ * deshalb eine Zeile mit dem Kalender-Etikett teilten: Etikett links, Knoepfe
+ * rechts, dazwischen eine Luecke, die wie ein Versehen aussah.
  */
-.ctp-events .ctp-events__detail > .ctp-events__share {
-    flex: 0 0 auto;
+.ctp-events__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem 0.75rem;
 }
 
 /* Polsterung, Schriftgrad, Laufweite und Form sind wortgleich mit
@@ -1931,6 +1969,10 @@
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    /* Der Chip ist beim Teilen ein <button>, beim Kalender ein <a> mit
+       `download` — ohne diese Zeile unterstreicht ihn jedes Theme in der
+       zweiten Fassung und nicht in der ersten. */
+    text-decoration: none;
     cursor: pointer;
     /* Bewusst *keine* eigene Zeilenhoehe: `font: inherit` oben reicht die des
        Umfelds durch, und genau die bekommt der Kalender-Chip als <span> auch.
@@ -1950,6 +1992,7 @@
  */
 .ctp-events .ctp-events__share-btn:hover,
 .ctp-events .ctp-events__share-btn:focus {
+    text-decoration: none;
     border-color: var(--ctp-color-button-strong) !important;
     background-color: color-mix(in srgb, var(--ctp-color-button-strong) 7%, transparent) !important;
     color: var(--ctp-color-button-strong) !important;
@@ -2091,15 +2134,14 @@
  * automatische Aussenkante (die ihn nach rechts schoebe) und die Fuellrichtung
  * des Flex-Kastens.
  */
-.ctp-events--detail .ctp-events__detail > .ctp-events__share {
+.ctp-events--detail .ctp-events__detail > .ctp-events__actions {
     grid-column: 1 / -1;
     justify-content: flex-start;
-    margin-inline-start: 0;
 }
 
 /* Die Rueckmeldung steht jetzt links neben dem Knopf statt rechts von ihm -
    eine rechtsbuendige Zeile darin liefe der Leserichtung entgegen. */
-.ctp-events--detail .ctp-events__detail > .ctp-events__share .ctp-events__share-feedback {
+.ctp-events--detail .ctp-events__detail > .ctp-events__actions .ctp-events__share-feedback {
     text-align: left;
 }
 

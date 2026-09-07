@@ -5,6 +5,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.18.0] - 2026-09-07
+
+### Added
+
+- **Ein „Importieren"-Button in Popup und eigener Terminseite** – standardmäßig aus, einzuschalten im Design-Tab unter „Aufbau der Detailansicht", mit eigenem Häkchen und eigener Position in derselben Drag&Drop-Liste. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen; mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild. **Die Datei ist eine Momentaufnahme**: Ändert sich der Termin später in ChurchTools oder fällt er aus, erfährt der bereits eingetragene Kalender davon nichts. Wer sie erneut herunterlädt, aktualisiert damit aber seinen vorhandenen Eintrag, statt einen zweiten anzulegen – dafür sorgen eine über die Zeit stabile Kennung und ein mitwachsender Änderungszähler. Bei einer Terminserie enthält die Datei den einen Termin, dessen Seite geöffnet ist, nicht die ganze Serie.
+- **Teilen- und Importieren-Button stehen als Paar nebeneinander**, in einer eigenen Zeile unter der Beschreibung – im Popup rechtsbündig, auf der eigenen Terminseite an der linken Textkante, wo auch Titel und Eckdaten beginnen.
+
+### Fixed
+
+- **Das Popup ließ sich erst beim zweiten Wischen bis ans Ende scrollen.** Fenster und Inhalt hatten beide eine Höhenbegrenzung, der Inhalt rechnete seine aber ohne den eigenen Innenabstand – er wurde damit 58 Pixel höher als das Fenster, das ihn hält, und es lagen zwei Scrollbereiche ineinander. Jetzt begrenzt das Fenster die Höhe, und der Inhalt füllt sie.
+
+### Changed
+
+- **Im Backend heißen Bedienelemente durchgehend „Button" statt „Knopf"** – in den Einstellungen des Design-Tabs, in den Beschreibungstexten und in der Plugin-Beschreibung. Betrifft nur Beschriftungen, keine gespeicherten Werte.
+
 ## [1.17.3] - 2026-09-07
 
 ### Added

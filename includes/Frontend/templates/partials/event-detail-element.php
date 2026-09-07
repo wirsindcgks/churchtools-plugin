@@ -13,6 +13,7 @@
 
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventFormatter;
+use ChurchToolsPlugin\Frontend\EventIcs;
 use ChurchToolsPlugin\Frontend\Icons;
 
 if (!defined('ABSPATH')) {
@@ -213,6 +214,48 @@ if (!defined('ABSPATH')) {
                 </button>
                 <?php // role="status" meldet den Wechsel des Textes von selbst — ohne das bliebe „Link kopiert" für Screenreader unbemerkt, und der Klick hätte dort gar keine Rückmeldung. ?>
                 <span class="ctp-events__share-feedback" role="status"></span>
+            </div>
+        <?php endif; ?>
+        <?php
+        break;
+
+    case 'ics':
+        ?>
+        <?php
+        /*
+         * „Importieren" — ein gewoehnlicher Verweis mit `download`,
+         * kein Knopf mit Skript dahinter. Eine Kalenderdatei oeffnet auf iOS,
+         * Android, Outlook und Thunderbird von selbst das richtige Programm;
+         * ueber navigator.share({files}) waere derselbe Weg von der
+         * Unterstuetzung des Browsers abhaengig und ohne Skript gar nicht da.
+         *
+         * `download` ist dabei nur ein Wunsch an den Browser — den Dateinamen
+         * setzt ohnehin der Content-Disposition-Kopf der Route (siehe
+         * Frontend\EventIcs), und der gilt auch dort, wo das Attribut ignoriert
+         * wird.
+         *
+         * Sichtbar steht dort ein Wort, vorgelesen der ganze Satz: „Importieren"
+         * allein ist Systemsprache, und das Kalendersymbol daneben, das die
+         * Bedeutung im Bild traegt, ist aria-hidden. Das aria-label enthaelt die
+         * sichtbare Beschriftung und ergaenzt sie nur — so verlangt es WCAG 2.5.3.
+         *
+         * Das Wort ist mit Bedacht nicht „Abonnieren": Das gehoert einer
+         * moeglichen Feed-Adresse (siehe plan.md) und waere das Gegenteil davon,
+         * dauerhaft statt einmalig.
+         */
+        ?>
+        <?php if (($event['detail_url'] ?? '') !== '') : ?>
+            <div class="ctp-events__share ctp-events__share--ics">
+                <a
+                    class="ctp-events__share-btn"
+                    href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
+                    aria-label="<?php esc_attr_e('Termin in den Kalender importieren', 'churchtools-plugin'); ?>"
+                    download
+                >
+                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                    <?php echo Icons::calendarPlus(); ?>
+                    <?php esc_html_e('Importieren', 'churchtools-plugin'); ?>
+                </a>
             </div>
         <?php endif; ?>
         <?php

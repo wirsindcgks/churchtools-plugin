@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.17.3
+Stable tag: 1.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,8 +17,8 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
-* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Knopf – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
-* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Aufbau der Detailansicht samt „Teilen“-Knopf, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt.
+* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Aufbau der Detailansicht samt „Teilen“-Button, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
@@ -98,11 +98,17 @@ Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ unte
 
 Die ausgewählte Seite bleibt ganz normal erreichbar und behält ihren eigenen Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin. Bereits verschickte Links auf die alten Adressen bleiben gültig: Sie werden dauerhaft (301) auf die neuen weitergeleitet. Voraussetzung sind eingeschaltete Permalinks (Einstellungen → Permalinks, alles außer „Einfach“).
 
-= Teilen-Knopf =
+= Teilen-Button =
 
-Popup und eigene Terminseite können einen „Teilen“-Knopf zeigen. Er ist standardmäßig aus und wird im Tab „Design“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
+Popup und eigene Terminseite können einen „Teilen“-Button zeigen. Er ist standardmäßig aus und wird im Tab „Design“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
 
-Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail und alles, was dort installiert ist). Am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“; wo auch die Zwischenablage nicht zur Verfügung steht (kein HTTPS), wird die Adresse zum Markieren angezeigt. Es wird kein Skript eines Drittanbieters geladen und kein Zählpixel eingebunden: Solange niemand den Knopf drückt, geht nichts ins Netz.
+Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail und alles, was dort installiert ist). Am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“; wo auch die Zwischenablage nicht zur Verfügung steht (kein HTTPS), wird die Adresse zum Markieren angezeigt. Es wird kein Skript eines Drittanbieters geladen und kein Zählpixel eingebunden: Solange niemand den Button drückt, geht nichts ins Netz.
+
+= Importieren-Button =
+
+Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild.
+
+Die Datei ist eine Momentaufnahme: Ändert sich der Termin später in ChurchTools oder fällt er aus, erfährt der bereits eingetragene Kalender davon nichts. Wer die Datei erneut herunterlädt, aktualisiert damit aber seinen vorhandenen Eintrag, statt einen zweiten anzulegen. Bei einer Terminserie enthält die Datei den einen Termin, dessen Seite geöffnet ist – nicht die ganze Serie.
 
 Geteilt wird die eigene Adresse des Termins. Seit 1.16.0 bringt sie einen eigenen Seitentitel samt Vorschaubild mit – in Messenger und sozialen Netzwerken erscheint also der Termin und nicht die Terminliste.
 
@@ -130,7 +136,7 @@ Seine gespeicherten Termine ist ein Kalender schon los, sobald er hier abgewähl
 
 Das Plugin sagt es von selbst: Schlägt ein Lauf fehl, fehlt der Zeitplan, oder liegt der letzte erfolgreiche Lauf zu lange zurück, erscheint im WordPress-Backend ein Hinweis mit Link zur Übersicht. „Zu lange“ heißt: mehr als das Dreifache des eingestellten Intervalls, mindestens aber 24 Stunden – ein als „stündlich“ eingestellter Sync, der über Nacht mangels Besuchern nicht läuft, ist normal (siehe die nächste Frage) und keinen Hinweis wert. Ein fehlender Cron-Zeitplan wird beim nächsten Aufruf des Backends zusätzlich automatisch wieder angelegt.
 
-Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl für den abgefragten Zeitraum bereits Termine gespeichert sind, bricht das Plugin den Lauf ab und löscht nichts – eine leere Antwort wird zunächst als Störung behandelt, nicht als „alle Termine abgesagt“. Bleibt sie leer, gilt sie ab dem dritten Lauf in Folge als richtig, und die gespeicherten Termine werden entfernt: Ein Kalender, der wirklich geleert wurde, soll nicht dauerhaft alte Termine auf der Website stehen lassen. Gezählt wird dabei die Zeit dreier planmäßiger Läufe – wer den Knopf „Jetzt synchronisieren“ dreimal hintereinander drückt, löst das Löschen nicht vorzeitig aus.
+Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl für den abgefragten Zeitraum bereits Termine gespeichert sind, bricht das Plugin den Lauf ab und löscht nichts – eine leere Antwort wird zunächst als Störung behandelt, nicht als „alle Termine abgesagt“. Bleibt sie leer, gilt sie ab dem dritten Lauf in Folge als richtig, und die gespeicherten Termine werden entfernt: Ein Kalender, der wirklich geleert wurde, soll nicht dauerhaft alte Termine auf der Website stehen lassen. Gezählt wird dabei die Zeit dreier planmäßiger Läufe – wer den Button „Jetzt synchronisieren“ dreimal hintereinander drückt, löst das Löschen nicht vorzeitig aus.
 
 = Wie zuverlässig läuft der Sync im eingestellten Intervall? =
 
@@ -213,6 +219,9 @@ Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools 
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Upgrade Notice ==
+
+= 1.18.0 =
+Neu ist ein „Importieren“-Button in Popup und eigener Terminseite: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen. Er ist standardmäßig aus und wird im Design-Tab eingeschaltet – nach dem Update ändert sich also zunächst nichts. Dazu behoben: Das Popup ließ sich erst beim zweiten Wischen bis ans Ende scrollen.
 
 = 1.17.3 =
 Die Plugin-Beschreibung ist jetzt im Backend zu lesen: Unter „Details anzeigen“ stehen neben dem Changelog auch Beschreibung, Installation, die vollständige Shortcode-Referenz, die FAQ und der Datenschutz-Abschnitt. Am Plugin selbst ändert sich nichts. Kein Handlungsbedarf.
@@ -326,6 +335,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.18.0 =
+
+* Neu: Ein „Importieren“-Button in Popup und eigener Terminseite legt den Termin als Kalenderdatei (.ics) ab – Handy, Outlook und Thunderbird öffnen sie direkt. Standardmäßig aus
+* Neu: Teilen- und Importieren-Button stehen als Paar in einer eigenen Zeile unter der Beschreibung
+* Behoben: Das Popup ließ sich erst beim zweiten Wischen bis ans Ende scrollen – Fenster und Inhalt hatten beide eine Höhenbegrenzung
+* Geändert: Im Backend heißen Bedienelemente jetzt durchgehend „Button“ statt „Knopf“
 
 = 1.17.3 =
 

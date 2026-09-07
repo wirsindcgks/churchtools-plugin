@@ -124,6 +124,37 @@ final class EventDetailPage
     }
 
     /**
+     * Der Termin, den dieser Request meint — oder null, wenn es keiner ist.
+     *
+     * Beide Ausfuehrungen zusammengefasst: Auf der Elternseiten-Route steht er
+     * seit resolveHostedRequest() bereit, auf der ID-Route muss er noch
+     * nachgeschlagen werden. Oeffentlich, seit Frontend\EventIcs denselben
+     * Termin braucht, nur um etwas anderes daraus zu machen — die Aufloesung
+     * ein zweites Mal zu schreiben hiesse, zwei Wege zu derselben Antwort zu
+     * haben, und die laufen frueher oder spaeter auseinander.
+     *
+     * Die Sichtbarkeitspruefung gehoert mit hierher und nicht zum Aufrufer:
+     * Sie ist der Schutz davor, dass eine geratene fortlaufende ID den Termin
+     * eines abgewaehlten Kalenders herausgibt.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function currentEvent(): ?array
+    {
+        if (self::$hostedEvent !== null) {
+            return self::$hostedEvent;
+        }
+
+        $id = (int) get_query_var(self::QUERY_VAR);
+        if ($id <= 0) {
+            return null;
+        }
+
+        $event = (new EventRepository())->find($id);
+
+        return $event !== null && self::isVisible($event) ? $event : null;
+    }
+    /**
      * Ob dieser Request die Einzelansicht eines Termins ist — beide
      * Ausführungen. Assets::enqueue() hängt daran, ob Stylesheet und Skript des
      * Plugins geladen werden; ohne den zweiten Zweig stünde der Termin auf der

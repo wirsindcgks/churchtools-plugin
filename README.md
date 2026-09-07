@@ -13,7 +13,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
 - **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?").
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
-- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit „Teilen"-Knopf — auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel.
+- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit „Teilen"- und „Importieren"-Button — teilen über das Teilen-Menü des Geräts bzw. die Zwischenablage, importieren als Kalenderdatei für Handy, Outlook und Thunderbird. Ohne Drittanbieter-Skript und ohne Zählpixel.
 - **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
@@ -37,7 +37,7 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
 ![Ansicht „Nächster Termin" mit großer Kachel und Folgeterminen](docs/screenshots/naechster-termin.png)
 
-**Eventfinder** — geführter Einstieg statt Dropdown: ein Knopf je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche. Geht ein Zeitraum leer aus („Diesen Monat" am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
+**Eventfinder** — geführter Einstieg statt Dropdown: ein Button je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche. Geht ein Zeitraum leer aus („Diesen Monat" am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
 
 ![Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste](docs/screenshots/eventfinder.png)
 
@@ -45,13 +45,15 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
 ![Popup mit Bild, Datums-Chip, Titel, Zeit, Ort und Beschreibung](docs/screenshots/popup.png)
 
-**Teilen** — der „Teilen"-Knopf steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
+**Teilen** — der „Teilen"-Button steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
 
-![Popup mit dem „Teilen"-Knopf unter der Beschreibung](docs/screenshots/teilen-popup.png)
+![Popup mit dem „Teilen"-Button unter der Beschreibung](docs/screenshots/teilen-popup.png)
 
 Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante — hier mit der Rückmeldung nach einem Klick am Rechner.
 
-![Eigene Terminseite mit „Teilen"-Knopf und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
+Daneben lässt sich ein **„Importieren"-Button** einschalten: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen — mit Titel, Zeit, Ort, Beschreibung, Kategorie und Bild. Die Datei ist eine Momentaufnahme: Ändert sich der Termin später, erfährt der Kalender davon nichts; wer sie erneut herunterlädt, aktualisiert seinen Eintrag aber, statt einen zweiten anzulegen. Beide Knöpfe sind einzeln schaltbar und stehen als Paar nebeneinander.
+
+![Eigene Terminseite mit „Teilen"-Button und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
 
 ## Installation
 
@@ -126,7 +128,7 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. 
 | `eventfinder` | Geführte Leiste mit Themen- und Zeitraum-Knöpfen |
 | `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
 | `month_dividers` | Termine nach Monaten gruppieren |
-| `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Knopf |
+| `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Button |
 | `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |
 
 Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — im Backend unter *Plugins → ChurchTools Events → Details* im Reiter *Verwendung* dieselbe.

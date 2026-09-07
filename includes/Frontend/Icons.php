@@ -46,6 +46,22 @@ final class Icons
     }
 
     /**
+     * Kalenderblatt mit Pluszeichen — dasselbe Blatt wie calendar() oben, damit
+     * die beiden als Paar lesen, nur mit dem Zusatz, der „hinzufuegen" sagt.
+     */
+    public static function calendarPlus(): string
+    {
+        return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            . '<path d="M20.5 11.5V7.5a2.5 2.5 0 0 0-2.5-2.5H6a2.5 2.5 0 0 0-2.5 2.5v10.5A2.5 2.5 0 0 0 6 20.5h6"></path>'
+            . '<line x1="3.5" y1="10" x2="20.5" y2="10"></line>'
+            . '<line x1="8.5" y1="2.75" x2="8.5" y2="6.5"></line>'
+            . '<line x1="15.5" y1="2.75" x2="15.5" y2="6.5"></line>'
+            . '<line x1="17.5" y1="14.5" x2="17.5" y2="21.5"></line>'
+            . '<line x1="14" y1="18" x2="21" y2="18"></line></svg>';
+    }
+
+    /**
      * Die drei verbundenen Knoten, das gebräuchlichste Teilen-Zeichen außerhalb
      * von iOS. Bewusst nicht das Apple-Symbol (Kasten mit Pfeil nach oben): Das
      * steht auf Android und im Web für „hochladen".

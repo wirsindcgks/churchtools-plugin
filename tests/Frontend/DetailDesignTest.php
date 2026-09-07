@@ -16,7 +16,7 @@ final class DetailDesignTest extends TestCase
 
     public function testIsValidOrderAcceptsAnyPermutation(): void
     {
-        $order = ['description', 'media', 'share', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
+        $order = ['description', 'media', 'share', 'ics', 'title', 'calendar', 'location', 'time', 'date', 'subtitle'];
 
         $this->assertTrue(DetailDesign::isValidOrder($order));
     }
@@ -51,7 +51,7 @@ final class DetailDesignTest extends TestCase
         $upgraded = DetailDesign::upgradeOrder(['media', 'calendar', 'title', 'subtitle', 'meta', 'description']);
 
         $this->assertSame(
-            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'],
+            ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics'],
             $upgraded
         );
         $this->assertTrue(DetailDesign::isValidOrder($upgraded));
@@ -72,7 +72,7 @@ final class DetailDesignTest extends TestCase
 
         $upgraded = DetailDesign::upgradeOrder($stored);
 
-        $this->assertSame(array_merge($stored, ['share']), $upgraded);
+        $this->assertSame(array_merge($stored, ['share', 'ics']), $upgraded);
         $this->assertTrue(DetailDesign::isValidOrder($upgraded));
     }
 
@@ -84,7 +84,7 @@ final class DetailDesignTest extends TestCase
      */
     public function testUpgradeOrderLeavesAnExistingShareKeyWhereItIs(): void
     {
-        $order = ['media', 'calendar', 'title', 'share', 'subtitle', 'date', 'time', 'location', 'description'];
+        $order = ['media', 'calendar', 'title', 'share', 'ics', 'subtitle', 'date', 'time', 'location', 'description'];
 
         $this->assertSame($order, DetailDesign::upgradeOrder($order));
         $this->assertSame($order, DetailDesign::upgradeOrder(DetailDesign::upgradeOrder($order)));

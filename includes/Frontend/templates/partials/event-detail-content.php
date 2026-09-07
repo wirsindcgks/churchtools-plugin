@@ -42,6 +42,7 @@
  * @var array  $order         Validated DetailDesign::ELEMENT_KEYS permutation.
  * @var string $detailContext 'popup' or 'page', set by EventListRenderer.
  * @var bool   $shareEnabled  Einstellung `detail_share_enabled`, siehe unten.
+ * @var bool   $icsEnabled    Einstellung `detail_ics_enabled`, ebenso.
  */
 
 use ChurchToolsPlugin\Frontend\DetailDesign;
@@ -71,14 +72,69 @@ $detailContext = isset($detailContext) && $detailContext === 'page' ? 'page' : '
  * unverändertes Verhalten, und das ist die richtige Richtung für einen Knopf,
  * der ohnehin ausdrücklich eingeschaltet werden muss.
  */
-$ctpOrder = !empty($shareEnabled)
+// Beide Knoepfe haengen an je einer eigenen Einstellung; was aus ist, faellt
+// aus der Reihenfolge, statt als leeres Element eine Zeile zu belegen.
+$ctpAus = [];
+if (empty($shareEnabled)) {
+    $ctpAus[] = DetailDesign::SHARE_KEY;
+}
+if (empty($icsEnabled)) {
+    $ctpAus[] = DetailDesign::ICS_KEY;
+}
+
+$ctpOrder = $ctpAus === []
     ? $order
     : array_values(array_filter(
         $order,
-        static fn (string $key): bool => $key !== DetailDesign::SHARE_KEY
+        static fn (string $key): bool => !in_array($key, $ctpAus, true)
     ));
 
+/*
+ * Teilen und „Importieren" sind zwei Schluessel, stehen im Bild aber als ein
+ * Paar: nebeneinander, in einer eigenen Zeile, abgesetzt vom Rest. Deshalb
+ * kommen sie in eine gemeinsame Huelle, die an der Stelle des *ersten* von
+ * beiden ausgegeben wird.
+ *
+ * Das ist bewusst keine zweite Meinung zur eingestellten Reihenfolge, wie sie
+ * 1.4.1 hier einmal war: Die Abfolge der beiden untereinander bleibt die
+ * eingestellte, und die Gruppe steht dort, wo der erste von beiden gezogen
+ * wurde. Aufgehoben ist allein die Moeglichkeit, ein anderes Feld *zwischen*
+ * sie zu schieben — und genau das war der Nutzerbefund (2026-09-07: die
+ * Knoepfe teilten sich eine Zeile mit dem Kalender-Etikett).
+ */
+$ctpAktionen = array_values(array_filter(
+    $ctpOrder,
+    static fn (string $key): bool => in_array($key, [DetailDesign::SHARE_KEY, DetailDesign::ICS_KEY], true)
+));
+
 $ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-element.php';
+
+/**
+ * Gibt eine Liste von Schluesseln aus und fasst die Aktionsknoepfe dabei zu
+ * einer Huelle zusammen. `$key` ist die Variable, die das Element-Partial
+ * liest — deshalb wird sie hier gesetzt und nicht durchgereicht.
+ *
+ * @var callable(string[]): void $ctpRender
+ */
+$ctpRender = static function (array $keys) use ($ctpElement, $ctpAktionen, $event, $detailContext): void {
+    foreach ($keys as $key) {
+        if (in_array($key, $ctpAktionen, true)) {
+            if ($key !== $ctpAktionen[0]) {
+                continue;
+            }
+
+            echo '<div class="ctp-events__actions">';
+            foreach ($ctpAktionen as $key) {
+                require $ctpElement;
+            }
+            echo '</div>';
+
+            continue;
+        }
+
+        require $ctpElement;
+    }
+};
 
 /** @var callable(string[]): string[] $ctpKeysIn */
 $ctpKeysIn = static fn (array $group): array => array_values(
@@ -100,20 +156,14 @@ $ctpKeysOutside = static fn (array $group): array => array_values(
     // Die drei, die auf der eigenen Seite nicht in die Textspalte gehoeren:
     // Bild daneben, Beschreibung und Teilen-Knopf darunter. Als eine Liste,
     // damit die beiden Aufrufe unten nicht auseinanderlaufen koennen.
-    $ctpFullWidth = ['media', 'description', DetailDesign::SHARE_KEY];
+    $ctpFullWidth = ['media', 'description', DetailDesign::SHARE_KEY, DetailDesign::ICS_KEY];
     ?>
     <?php if ($detailContext === 'page') : ?>
         <div class="ctp-events__detail-text">
-            <?php foreach ($ctpKeysOutside($ctpFullWidth) as $key) : ?>
-                <?php require $ctpElement; ?>
-            <?php endforeach; ?>
+            <?php $ctpRender($ctpKeysOutside($ctpFullWidth)); ?>
         </div>
-        <?php foreach ($ctpKeysIn($ctpFullWidth) as $key) : ?>
-            <?php require $ctpElement; ?>
-        <?php endforeach; ?>
+        <?php $ctpRender($ctpKeysIn($ctpFullWidth)); ?>
     <?php else : ?>
-        <?php foreach ($ctpOrder as $key) : ?>
-            <?php require $ctpElement; ?>
-        <?php endforeach; ?>
+        <?php $ctpRender($ctpOrder); ?>
     <?php endif; ?>
 </div>

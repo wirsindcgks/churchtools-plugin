@@ -73,7 +73,7 @@
 	}
 
 	/*
-	 * Der „Teilen"-Knopf ist der einzige Block der Detailvorschau, dessen
+	 * Teilen- und Kalender-Knopf sind die Bloecke der Detailvorschau, deren
 	 * Sichtbarkeit nicht an seiner Position hängt, sondern an einem eigenen
 	 * Haekchen (Einstellung `detail_share_enabled`). Seine Zeile bleibt dabei
 	 * immer in der Reihenfolge-Liste stehen - er laesst sich also auch
@@ -82,22 +82,31 @@
 	 * Dasselbe Muster wie updateVisibility() weiter unten fuer die Kachel: das
 	 * native `hidden`-Attribut, nicht style.display.
 	 */
-	var shareInput = document.getElementById('ctp-design-detail-share');
+	var eigeneHaekchen = [
+		['ctp-design-detail-share', 'share'],
+		['ctp-design-detail-ics', 'ics']
+	];
 
-	function updateDetailShare() {
-		if (!detailPreview || !shareInput) {
+	function updateEigeneBloecke() {
+		if (!detailPreview) {
 			return;
 		}
-		var block = detailPreview.querySelector('[data-key="share"]');
-		if (block) {
-			block.hidden = !shareInput.checked;
-		}
+		eigeneHaekchen.forEach(function (paar) {
+			var haekchen = document.getElementById(paar[0]);
+			var block = detailPreview.querySelector('[data-key="' + paar[1] + '"]');
+			if (haekchen && block) {
+				block.hidden = !haekchen.checked;
+			}
+		});
 	}
 
-	if (shareInput) {
-		shareInput.addEventListener('change', updateDetailShare);
-	}
-	updateDetailShare();
+	eigeneHaekchen.forEach(function (paar) {
+		var haekchen = document.getElementById(paar[0]);
+		if (haekchen) {
+			haekchen.addEventListener('change', updateEigeneBloecke);
+		}
+	});
+	updateEigeneBloecke();
 
 	/**
 	 * Hides the "Aufbau der Detailansicht" editor and its preview panel while

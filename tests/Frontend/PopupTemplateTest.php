@@ -136,6 +136,51 @@ final class PopupTemplateTest extends TestCase
         }
     }
 
+    /**
+     * Zwei Zusagen an dieselbe Regel, und die zweite hat die erste schon einmal
+     * gebrochen.
+     *
+     * Der Rumpf des Popups ist der *einzige* Scroll-Container: Vorher trugen
+     * Dialog und Rumpf denselben `max-height`-Ausdruck, der Rumpf rechnete ihn
+     * aber ohne seine Polsterung (content-box) und wurde damit 58px hoeher als
+     * der Dialog, der ihn haelt. Zwei ineinander liegende Scroll-Container
+     * waren die Folge, und ein Wischen kam erst beim zweiten Mal unten an.
+     * Geloest ueber eine Flex-Spalte: Die Hoehe steht einmal, der Rumpf fuellt
+     * sie.
+     *
+     * Und genau diese Loesung hat den zweiten Fehler gebaut: Ein geschlossenes
+     * <dialog> ist allein deshalb unsichtbar, weil der Browser ihm
+     * `display: none` gibt. Eine eigene `display`-Angabe in der Grundregel hebt
+     * das auf — das Fenster stand samt Schliessen-Kreuz mitten in der Seite,
+     * 90px unter „Weitere Termine laden". Deshalb darf `display` hier nur am
+     * geoeffneten Zustand haengen.
+     */
+    public function testThePopupIsOneScrollContainerAndStaysHiddenWhileClosed(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+
+        preg_match('/\.ctp-events__modal \{([^}]*)\}/', $css, $grundregel);
+        $this->assertNotEmpty($grundregel, 'Keine Grundregel fuer das Popup gefunden.');
+        $this->assertStringNotContainsString(
+            'display:',
+            $grundregel[1],
+            'Eine display-Angabe in der Grundregel macht das geschlossene Fenster sichtbar.'
+        );
+
+        preg_match('/\.ctp-events__modal\[open\] \{([^}]*)\}/', $css, $offen);
+        $this->assertNotEmpty($offen, 'Die Anordnung muss am geoeffneten Zustand haengen.');
+        $this->assertStringContainsString('display: flex;', $offen[1]);
+        $this->assertStringContainsString('flex-direction: column;', $offen[1]);
+
+        // Der Rumpf scrollt, der Dialog nicht - und der Rumpf rechnet keine
+        // eigene Hoehe mehr aus, sonst faengt die Verschachtelung von vorne an.
+        preg_match('/\.ctp-events__modal-body \{([^}]*)\}/', $css, $rumpf);
+        $this->assertNotEmpty($rumpf);
+        $this->assertStringContainsString('overflow-y: auto;', $rumpf[1]);
+        $this->assertStringContainsString('min-height: 0;', $rumpf[1]);
+        $this->assertStringNotContainsString('max-height', $rumpf[1]);
+    }
+
     public function layoutProvider(): array
     {
         return array_combine(

@@ -26,7 +26,7 @@ namespace ChurchToolsPlugin\Frontend;
  */
 final class DetailDesign
 {
-    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'];
+    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics'];
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
 
     /**
@@ -35,6 +35,14 @@ final class DetailDesign
      * in partials/event-detail-content.php und die Vorschau im Design-Tab.
      */
     public const SHARE_KEY = 'share';
+
+    /**
+     * Der Knopf „Importieren" (Datei je Termin, siehe Frontend\Ics).
+     * Wie SHARE_KEY ein fester Schluessel mit eigener Einstellung
+     * (`detail_ics_enabled`) — aus demselben Grund: Ein Schluessel, den es mal
+     * gibt und mal nicht, faenge Drag&Drop, Reset und Vorschau gleichzeitig an.
+     */
+    public const ICS_KEY = 'ics';
 
     /**
      * Same widening CardDesign::upgradeOrder() does for the card order, for
@@ -58,8 +66,10 @@ final class DetailDesign
     {
         $order = CardDesign::upgradeOrder($order);
 
-        if (!in_array(self::SHARE_KEY, $order, true)) {
-            $order[] = self::SHARE_KEY;
+        foreach ([self::SHARE_KEY, self::ICS_KEY] as $spaeterDazu) {
+            if (!in_array($spaeterDazu, $order, true)) {
+                $order[] = $spaeterDazu;
+            }
         }
 
         return $order;

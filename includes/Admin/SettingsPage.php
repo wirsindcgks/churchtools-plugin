@@ -273,7 +273,8 @@ final class SettingsPage
         // Vor der Reihenfolge, aus demselben Grund wie das Klickverhalten
         // darüber: „Gibt es den Knopf überhaupt?" ist die Frage vor „wo steht
         // er?". In der Liste darunter lässt er sich danach frei verschieben.
-        add_settings_field('detail_share_enabled', __('Teilen-Knopf', 'churchtools-plugin'), [$this, 'renderDetailShareField'], $designDetailPage, 'ctp_design_detail_order');
+        add_settings_field('detail_share_enabled', __('Teilen-Button', 'churchtools-plugin'), [$this, 'renderDetailShareField'], $designDetailPage, 'ctp_design_detail_order');
+        add_settings_field('detail_ics_enabled', __('Kalender-Button', 'churchtools-plugin'), [$this, 'renderDetailIcsField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $designListPage = self::PAGE_SLUG . '_design_list';
@@ -354,6 +355,12 @@ final class SettingsPage
              * ein neues Bedienelement in ihre Termine.
              */
             'detail_share_enabled' => false,
+            /**
+             * Der Button „Importieren". Aus demselben Grund aus wie
+             * der Teilen-Knopf darueber: Eine Bestandsseite soll beim Update
+             * kein Bedienelement dazubekommen, das niemand bestellt hat.
+             */
+            'detail_ics_enabled' => false,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
         ];
     }
@@ -680,6 +687,9 @@ final class SettingsPage
             'detail_share_enabled' => array_key_exists('detail_share_enabled', $input)
                 ? (bool) $input['detail_share_enabled']
                 : $existing['detail_share_enabled'],
+            'detail_ics_enabled' => array_key_exists('detail_ics_enabled', $input)
+                ? (bool) $input['detail_ics_enabled']
+                : $existing['detail_ics_enabled'],
             'paging_months' => array_key_exists('paging_months', $input)
                 ? EventWindow::sanitizeMonths((int) $input['paging_months'])
                 : $existing['paging_months'],
@@ -972,7 +982,7 @@ final class SettingsPage
                 self::renderActionBar(
                     'ctp-fetch-resources',
                     __('Räume von ChurchTools laden', 'churchtools-plugin'),
-                    __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Knopf holt sie sofort. Die Haken bleiben dabei erhalten.', 'churchtools-plugin')
+                    __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Button holt sie sofort. Die Haken bleiben dabei erhalten.', 'churchtools-plugin')
                 );
                 ?>
 
@@ -1143,7 +1153,7 @@ final class SettingsPage
             self::renderActionBar(
                 'ctp-fetch-calendars',
                 __('Kalender von ChurchTools laden', 'churchtools-plugin'),
-                __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Knopf holt sie sofort. Eingestellte Farben und Standardbilder bleiben dabei erhalten.', 'churchtools-plugin')
+                __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Button holt sie sofort. Eingestellte Farben und Standardbilder bleiben dabei erhalten.', 'churchtools-plugin')
             );
             ?>
 
@@ -1673,7 +1683,7 @@ final class SettingsPage
     public static function renderListIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Betrifft Liste und Grid: wie viel auf einmal geladen wird und was der Knopf „Weitere Termine laden“ nachholt. Ohne Einfluss auf „Nächster Termin“ – dort zählt die Anzahl, nicht der Zeitraum.', 'churchtools-plugin')
+            . esc_html__('Betrifft Liste und Grid: wie viel auf einmal geladen wird und was der Button „Weitere Termine laden“ nachholt. Ohne Einfluss auf „Nächster Termin“ – dort zählt die Anzahl, nicht der Zeitraum.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1819,7 +1829,7 @@ final class SettingsPage
             esc_html__('Zurücksetzen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Gilt für die Buttons des Eventfinders, „Weitere Termine laden“ und den Schließen-Knopf des Popups – und zwar für deren gefüllten Zustand: ausgewählt beziehungsweise unter dem Mauszeiger. Im Ruhezustand bleiben sie hell mit dünnem Rand. Die Schriftfarbe auf der gefüllten Fläche wird automatisch auf Schwarz oder Weiß gesetzt, je nachdem, was besser lesbar ist.', 'churchtools-plugin')
+            . esc_html__('Gilt für die Buttons des Eventfinders, „Weitere Termine laden“ und den Schließen-Button des Popups – und zwar für deren gefüllten Zustand: ausgewählt beziehungsweise unter dem Mauszeiger. Im Ruhezustand bleiben sie hell mit dünnem Rand. Die Schriftfarbe auf der gefüllten Fläche wird automatisch auf Schwarz oder Weiß gesetzt, je nachdem, was besser lesbar ist.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1918,16 +1928,37 @@ final class SettingsPage
             '<label><input type="checkbox" id="ctp-design-detail-share" name="%1$s[detail_share_enabled]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
             checked(!empty(self::get()['detail_share_enabled']), true, false),
-            esc_html__('„Teilen“-Knopf in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
+            esc_html__('„Teilen“-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail …), am Rechner kopiert er die Adresse des Termins in die Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel – es wird nichts an ein Netzwerk gemeldet, solange niemand den Knopf drückt.', 'churchtools-plugin')
+            . esc_html__('Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail …), am Rechner kopiert er die Adresse des Termins in die Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel – es wird nichts an ein Netzwerk gemeldet, solange niemand den Button drückt.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
             . esc_html__('Die Kacheln bekommen ihn nicht: Er gehört zum geöffneten Termin, nicht in eine Liste. Wo genau er in der Detailansicht steht, wird in der Reihenfolge darunter festgelegt.', 'churchtools-plugin')
             . '</p>';
     }
 
+    /**
+     * Das Häkchen für „Importieren". Getrennt vom Teilen-Knopf,
+     * weil es eine andere Frage beantwortet: Teilen richtet sich an andere,
+     * der Kalendereintrag an einen selbst.
+     */
+    public function renderDetailIcsField(): void
+    {
+        printf('<input type="hidden" name="%1$s[detail_ics_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" id="ctp-design-detail-ics" name="%1$s[detail_ics_enabled]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty(self::get()['detail_ics_enabled']), true, false),
+            esc_html__('„Importieren"-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen. Titel, Zeit, Ort, Beschreibung, Kalendername und Bild kommen mit.', 'churchtools-plugin')
+            . '</p>';
+        echo '<p class="description">'
+            . esc_html__('Die Datei ist eine Momentaufnahme: Ändert sich der Termin später, erfährt der Kalender davon nichts. Wer sie erneut herunterlädt, aktualisiert seinen Eintrag aber, statt einen zweiten anzulegen.', 'churchtools-plugin')
+            . '</p>';
+    }
     /**
      * German labels for DetailDesign::ELEMENT_KEYS. Same shape as
      * elementOrderLabels() above, but describing the detail view's own field
@@ -1945,7 +1976,8 @@ final class SettingsPage
             'time' => __('Uhrzeit', 'churchtools-plugin'),
             'location' => __('Ort', 'churchtools-plugin'),
             'description' => __('Beschreibung', 'churchtools-plugin'),
-            'share' => __('Teilen-Knopf', 'churchtools-plugin'),
+            'share' => __('Teilen-Button', 'churchtools-plugin'),
+            'ics' => __('Kalender-Button', 'churchtools-plugin'),
         ];
     }
 
@@ -2105,10 +2137,13 @@ final class SettingsPage
             // data-Attribute, denn hier wird nichts geteilt.
             'share' => '<div class="ctp-events__share"><button type="button" class="ctp-events__share-btn">'
                 . Icons::share() . esc_html__('Teilen', 'churchtools-plugin') . '</button></div>',
+            'ics' => '<div class="ctp-events__share"><span class="ctp-events__share-btn">'
+                . Icons::calendarPlus() . esc_html__('Importieren', 'churchtools-plugin') . '</span></div>',
         ];
         // Der einzige Schlüssel, dessen Sichtbarkeit nicht an seiner Position
         // hängt. admin-design.js hält das Attribut danach am Häkchen aktuell.
         $shareEnabled = !empty($settings['detail_share_enabled']);
+        $icsEnabled = !empty($settings['detail_ics_enabled']);
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
@@ -2122,7 +2157,7 @@ final class SettingsPage
                     style="<?php echo esc_attr($style); ?>"
                 >
                     <?php foreach ($order as $key) : ?>
-                        <div data-key="<?php echo esc_attr($key); ?>" <?php echo $key === DetailDesign::SHARE_KEY && !$shareEnabled ? 'hidden' : ''; ?>>
+                        <div data-key="<?php echo esc_attr($key); ?>" <?php echo self::previewBlockHidden($key, $shareEnabled, $icsEnabled) ? 'hidden' : ''; ?>>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
                             <?php echo $blocks[$key] ?? ''; ?>
                         </div>
@@ -2133,6 +2168,16 @@ final class SettingsPage
         <?php
     }
 
+    /**
+     * Die zwei Schluessel, deren Sichtbarkeit in der Vorschau nicht an ihrer
+     * Position haengt, sondern an einem eigenen Haekchen. admin-design.js haelt
+     * das Attribut danach aktuell; hier geht es nur um den Zustand beim Laden.
+     */
+    private static function previewBlockHidden(string $key, bool $shareEnabled, bool $icsEnabled): bool
+    {
+        return ($key === DetailDesign::SHARE_KEY && !$shareEnabled)
+            || ($key === DetailDesign::ICS_KEY && !$icsEnabled);
+    }
     /**
      * Reference panel for the design tab: the design settings above (element
      * order, corner style) apply to every [ctp_events] shortcode automatically,
