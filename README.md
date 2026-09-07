@@ -129,7 +129,7 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. 
 | `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Knopf |
 | `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |
 
-Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — dieselbe Datei, die WordPress in der Plugin-Detailansicht anzeigt.
+Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — im Backend unter *Plugins → ChurchTools Events → Details* im Reiter *Verwendung* dieselbe.
 
 ## Gut zu wissen
 

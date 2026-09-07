@@ -108,7 +108,7 @@ Was Anwender sehen, ist erst fertig, wenn es auch dort steht, wo Anwender nachse
 | Stelle | Wer liest sie |
 | --- | --- |
 | `README.md` | Wer das Repo besucht, bevor er das Plugin installiert – mit den Bildern aus `docs/screenshots/` |
-| `readme.txt` | Dieselben Leute im WordPress-Backend unter *Plugins → Details*, plus die vollständige Referenz aller Optionen |
+| `readme.txt` | Dieselben Leute im WordPress-Backend unter *Plugins → Details*, plus die vollständige Referenz aller Optionen. Dorthin kommt sie nicht von allein: `bin/make-update-json.php` schreibt ihre Abschnitte in `update.json`, WordPress zeigt eine `readme.txt` nur bei Plugins von wordpress.org an (seit 1.17.3, davor stand im Detailfenster nur der Changelog) |
 | `CHANGELOG.md` | Wer wissen will, was ein Update ändert |
 | Beschriftungen und Hilfetexte im Backend | Wer die Einstellung gerade vor sich hat |
 
