@@ -83,6 +83,48 @@ final class VersionConsistencyTest extends TestCase
     }
 
     /**
+     * update.json traegt den Changelog-Abschnitt der ausgelieferten Version
+     * mit - das ist der Text, den WordPress im Update-Dialog unter „Details
+     * anzeigen" ausgibt. Er wird beim Erzeugen der Datei aus CHANGELOG.md
+     * eingebacken, und genau daraus entsteht eine Luecke, die die Pruefungen
+     * oben nicht sehen: Wird nach `bin/make-update-json.php` noch eine Zeile im
+     * Changelog ergaenzt, stimmt die Version weiter, die Beschreibung aber
+     * nicht mehr. Real passiert am 2026-09-07 - der Sitemap-Fix kam nach dem
+     * Erzeugen dazu und fehlte in der Datei.
+     *
+     * Verglichen werden die fett eingeleiteten Eintraege des Abschnitts. Gegen
+     * den *entschaerften* Text, nicht gegen das rohe HTML: Die eingebettete
+     * Fassung maskiert Anfuehrungszeichen zu `&quot;`, ein woertlicher
+     * Vergleich schluege dort falschen Alarm.
+     */
+    public function testUpdateMetadataCarriesTheCurrentChangelog(): void
+    {
+        $metadata = json_decode((string) file_get_contents(self::ROOT . '/update.json'), true);
+        $embedded = (string) ($metadata['sections']['changelog'] ?? '');
+        $this->assertNotSame('', $embedded, 'update.json fuehrt gar keinen Changelog.');
+
+        $text = html_entity_decode(strip_tags($embedded), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $changelog = (string) file_get_contents(self::ROOT . '/CHANGELOG.md');
+        $pattern = '/^## \[' . preg_quote($this->pluginVersion(), '/') . '\][^\n]*\n(.*?)(?=\n## \[|\z)/ms';
+        $this->assertSame(1, preg_match($pattern, $changelog, $section));
+
+        $this->assertGreaterThan(
+            0,
+            preg_match_all('/^- \*\*(.+?)\*\*/m', $section[1], $leads),
+            'Der Abschnitt hat keine fett eingeleiteten Eintraege.'
+        );
+
+        foreach ($leads[1] as $lead) {
+            $this->assertStringContainsString(
+                $lead,
+                $text,
+                'update.json ist aelter als CHANGELOG.md - bin/make-update-json.php nach der letzten Changelog-Aenderung erneut laufen lassen.'
+            );
+        }
+    }
+
+    /**
      * Semantic versioning, since the GitHub update checker compares releases
      * with version_compare() - a tag like "v1.0" or "1.0.0-final" would sort in
      * ways nobody expects.
