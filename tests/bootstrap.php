@@ -519,6 +519,26 @@ function wp_get_attachment_image_url(int $attachmentId, $size = 'thumbnail')
  */
 $GLOBALS['ctp_test_hooks'] = [];
 
+/**
+ * Das Gegenstück zu add_filter(). Gebraucht von den Stellen, die bewusst am
+ * Sanitizer vorbei schreiben (SettingsPage::refreshResources()/refreshCalendars()):
+ * Ohne diese Funktion wäre dieser Weg im Test gar nicht erst begehbar.
+ */
+function remove_filter(string $hook, $callback, int $priority = 10): bool
+{
+    $verbliebene = [];
+
+    foreach ($GLOBALS['ctp_test_hooks'][$hook] ?? [] as $eintrag) {
+        if ($eintrag['callback'] !== $callback || $eintrag['priority'] !== $priority) {
+            $verbliebene[] = $eintrag;
+        }
+    }
+
+    $GLOBALS['ctp_test_hooks'][$hook] = $verbliebene;
+
+    return true;
+}
+
 function add_filter(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
 {
     // Die Priorität kommt mit in den Speicher, seit sie selbst eine Zusage ist:
@@ -609,4 +629,77 @@ function ctp_test_settings_fields(string $page): array
 function ctp_test_reset_settings(): void
 {
     $GLOBALS['ctp_test_settings'] = ['sections' => [], 'fields' => []];
+}
+
+/**
+ * Der HTTP-Ersatz für Api\Client. Diese Testreihe verzichtet ansonsten auf
+ * jeden Netzzugriff (siehe die Notiz in SyncEngineTest) — für den Schutz in
+ * SettingsPage::refreshResources() reicht das nicht: Was dort geprüft wird, ist
+ * gerade der Übergang von der API-Antwort in die gespeicherten Einstellungen,
+ * und ohne Antwort lässt sich nur die Hälfte davon prüfen.
+ *
+ * Deshalb eine Warteschlange statt eines echten Aufrufs: ctp_test_queue_http()
+ * legt Statuscode und Körper hinein, wp_remote_request() nimmt sie in derselben
+ * Reihenfolge wieder heraus. Ist sie leer, ist das ein Fehler und keine leere
+ * Antwort — ein Test, der einen Aufruf mehr auslöst als erwartet, soll das
+ * merken und nicht stillschweigend ein `null` verarbeiten.
+ */
+$GLOBALS['ctp_test_http'] = [];
+
+function ctp_test_queue_http(array $data, int $code = 200): void
+{
+    $GLOBALS['ctp_test_http'][] = ['code' => $code, 'body' => wp_json_encode(['data' => $data])];
+}
+
+/** Rohe Antwort, für alles, was nicht die Form `{"data": …}` hat. */
+function ctp_test_queue_raw_http(string $body, int $code = 200): void
+{
+    $GLOBALS['ctp_test_http'][] = ['code' => $code, 'body' => $body];
+}
+
+function ctp_test_reset_http(): void
+{
+    $GLOBALS['ctp_test_http'] = [];
+}
+
+function wp_remote_request(string $url, array $args = [])
+{
+    if ($GLOBALS['ctp_test_http'] === []) {
+        throw new RuntimeException('Unerwarteter HTTP-Aufruf: ' . $url);
+    }
+
+    return array_shift($GLOBALS['ctp_test_http']);
+}
+
+/**
+ * Nur als Typ gebraucht: is_wp_error() unterscheidet daran den Netzfehler von
+ * einer Antwort. Die Testreihe stellt keinen her — sie prüft den Netzfehler
+ * über den Statuscode, den Client::request() ohnehin in dieselbe Ausnahme
+ * überführt.
+ */
+class WP_Error
+{
+    public function __construct(private readonly string $message = '')
+    {
+    }
+
+    public function get_error_message(): string
+    {
+        return $this->message;
+    }
+}
+
+function is_wp_error($thing): bool
+{
+    return $thing instanceof WP_Error;
+}
+
+function wp_remote_retrieve_response_code($response): int
+{
+    return (int) ($response['code'] ?? 0);
+}
+
+function wp_remote_retrieve_body($response): string
+{
+    return (string) ($response['body'] ?? '');
 }

@@ -4532,6 +4532,14 @@ final class SettingsPage
             return;
         }
 
+        // Wie bei den Kalendern: Der Erfolgszweig laedt die Seite neu, eine
+        // Meldung waere dort nicht zu lesen. Die stehengebliebene Liste ist
+        // deshalb ein Fehler fuer die Anzeige - sonst haette der Knopf eben
+        // „geladen" gemeldet und nichts getan.
+        if ($result['status'] === 'empty') {
+            wp_send_json_error(['message' => $result['message']]);
+        }
+
         wp_send_json_success(['count' => $result['count']]);
     }
 
@@ -4569,6 +4577,98 @@ final class SettingsPage
     }
 
     /**
+     * ChurchTools benennt die Ressourcentypen ueber Uebersetzungsschluessel;
+     * `resource.type.room` ist der Raum. Am Schluessel erkannt und nicht am
+     * angezeigten Namen, weil der uebersetzt und umbenannt werden kann.
+     */
+    private const ROOM_TYPE_KEY = 'resource.type.room';
+
+    /** Erlaubte Werte fuer `rooms_mode` - alles andere faellt auf den Standard zurueck. */
+    private const ROOM_MODES = [RoomLookup::MODE_EXCLUSIVE, RoomLookup::MODE_SINGLE, RoomLookup::MODE_ALL];
+
+    /**
+     * Zwilling von refreshCalendars(), mit demselben Schutz gegen die leere
+     * Antwort - und der stand hier bis 1.20.0 nicht.
+     *
+     * Die Begruendung dafuer lautete: an der Raumliste haenge nichts, was
+     * verloren gehen koenne (keine Farben, keine Standardbilder), der Haken
+     * ueberlebe in $existing. Der zweite Halbsatz war der Fehler. Der Haken
+     * ueberlebt nur, solange die ID wiederkommt - und mergeResources() baut die
+     * Liste ausschliesslich aus der Antwort neu auf. Eine einzige leere Antwort
+     * (ein `data: []` kommt durch Client::request(), das nur einen fehlenden
+     * `data`-Schluessel abfaengt) loeschte damit die ganze Auswahl, und die
+     * naechste, wieder vollstaendige Antwort brachte die Raeume unangehakt
+     * zurueck. Der Haken *ist* das, was verloren gehen kann: Er steht nirgends
+     * sonst, und ob er fehlt, sieht man nicht an der Liste, sondern erst Tage
+     * spaeter an fehlenden Ortsangaben im Frontend (Nutzerbefund 2026-09-08:
+     * „Bei dem Update ging wohl die Raumauswahl verloren").
+     *
+     * Geschuetzt ist wie bei den Kalendern nur der Alles-oder-nichts-Fall.
+     * Verschwindet ein einzelner Raum, verschwindet er weiterhin samt Haken -
+     * von hier aus sehen ein in ChurchTools geloeschter Raum und ein
+     * zurueckgezogenes „Ressource sehen" gleich aus, und „faellt aus der Liste"
+     * ist auf beides die richtige Antwort. Nur wenn *alle* auf einmal gehen,
+     * ist der Datenverlust groesser als jede Erklaerung dafuer.
+     *
+     * Dass gar keine Raeume ausgewaehlt sind, bleibt der Normalzustand dieses
+     * Plugins: Ist auch die gespeicherte Liste leer, ist die leere Antwort kein
+     * Sonderfall, sondern das erwartete Ergebnis eines API-Keys ohne Freigabe
+     * fuer Ressourcen.
+     *
+     * @return array{status: 'updated'|'empty', count: int, changed: bool, message?: string}
+     */
+    public static function refreshResources(Client $client): array
+    {
+        $settings = self::get();
+        $existing = $settings['resources'] ?? [];
+        $masterdata = $client->getResourceMasterdata();
+
+        $roomTypeIds = [];
+
+        foreach ($masterdata['resourceTypes'] as $type) {
+            if ((string) ($type['name'] ?? '') === self::ROOM_TYPE_KEY) {
+                $roomTypeIds[] = (int) ($type['id'] ?? 0);
+            }
+        }
+
+        // Keine Ersatzliste mehr aus allen Typen: mergeResources() liest die
+        // leere Liste selbst als „nicht filtern". Die Ersatzliste war der
+        // zweite Weg in denselben Verlust - kam `resourceTypes` leer zurueck,
+        // lief array_map() ueber ein leeres Array und ergab wieder eine leere
+        // Erlaubnisliste, die dann *jeden* Raum aussortierte. Gemeint war das
+        // Gegenteil: Wer die Typen nicht kennt, filtert nicht.
+        $merged = self::mergeResources($existing, $masterdata['resources'], $roomTypeIds);
+
+        if ($merged === [] && $existing !== []) {
+            return [
+                'status' => 'empty',
+                'count' => count($existing),
+                'changed' => false,
+                'message' => __('ChurchTools hat keine Räume zurückgeliefert. Die gespeicherte Raumliste bleibt deshalb unverändert, damit die angehakten Räume nicht verloren gehen – bitte die Freigabe „Ressource sehen“ des API-Keys prüfen. Sind die Räume dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin'),
+            ];
+        }
+
+        $changed = $merged !== $existing;
+
+        if ($changed) {
+            // Wie bei refreshCalendars(): sanitizeSettings() haengt an jedem
+            // update_option() dieser Option und wuerde frisch geholte, noch
+            // unbekannte IDs an der eigenen Allowlist wieder herausfiltern.
+            remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
+            update_option(self::OPTION_KEY, array_merge($settings, ['resources' => $merged]));
+            add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
+        }
+
+        update_option(self::OPTION_RESOURCES_FETCHED, current_time('mysql'));
+
+        return [
+            'status' => 'updated',
+            'count' => count($merged),
+            'changed' => $changed,
+        ];
+    }
+
+    /**
      * Holt die Kalenderliste von ChurchTools und schreibt sie zurueck - der
      * eine Weg fuer beide Aufrufer: den Knopf „Kalender von ChurchTools laden“
      * und den planmaessigen Sync (siehe SyncEngine::run()).
@@ -4592,69 +4692,6 @@ final class SettingsPage
      *
      * @return array{status: 'updated'|'empty', count: int, changed: bool, message: string}
      */
-    /**
-     * ChurchTools benennt die Ressourcentypen ueber Uebersetzungsschluessel;
-     * `resource.type.room` ist der Raum. Am Schluessel erkannt und nicht am
-     * angezeigten Namen, weil der uebersetzt und umbenannt werden kann.
-     */
-    private const ROOM_TYPE_KEY = 'resource.type.room';
-
-    /** Erlaubte Werte fuer `rooms_mode` - alles andere faellt auf den Standard zurueck. */
-    private const ROOM_MODES = [RoomLookup::MODE_EXCLUSIVE, RoomLookup::MODE_SINGLE, RoomLookup::MODE_ALL];
-
-    /**
-     * Zwilling von refreshCalendars(). Zwei Unterschiede zum Kalenderabgleich,
-     * beide beabsichtigt:
-     *
-     * Eine leere Antwort ist hier *kein* Alarmfall. Ein API-Key ohne Freigabe
-     * fuer Ressourcen bekommt legitim eine leere Liste, und der Normalzustand
-     * dieses Plugins ist, dass niemand Raeume ausgewaehlt hat. Anders als bei
-     * den Kalendern haengt an der Liste auch nichts, was verloren gehen koennte
-     * (keine Farben, keine Standardbilder) - der Haken ueberlebt in $existing,
-     * solange die ID wiederkommt.
-     *
-     * Und gefiltert wird auf Raeume: Gegenstaende sind nie eine Ortsangabe.
-     * Findet sich kein Raumtyp - eine Instanz, die ihre Typen anders benannt
-     * hat -, gelten alle Typen, damit die Liste nicht wortlos leer bleibt.
-     */
-    public static function refreshResources(Client $client): array
-    {
-        $settings = self::get();
-        $masterdata = $client->getResourceMasterdata();
-
-        $roomTypeIds = [];
-
-        foreach ($masterdata['resourceTypes'] as $type) {
-            if ((string) ($type['name'] ?? '') === self::ROOM_TYPE_KEY) {
-                $roomTypeIds[] = (int) ($type['id'] ?? 0);
-            }
-        }
-
-        if ($roomTypeIds === []) {
-            $roomTypeIds = array_map(static fn (array $type): int => (int) ($type['id'] ?? 0), $masterdata['resourceTypes']);
-        }
-
-        $merged = self::mergeResources($settings['resources'] ?? [], $masterdata['resources'], $roomTypeIds);
-        $changed = $merged !== ($settings['resources'] ?? []);
-
-        if ($changed) {
-            // Wie bei refreshCalendars(): sanitizeSettings() haengt an jedem
-            // update_option() dieser Option und wuerde frisch geholte, noch
-            // unbekannte IDs an der eigenen Allowlist wieder herausfiltern.
-            remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-            update_option(self::OPTION_KEY, array_merge($settings, ['resources' => $merged]));
-            add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-        }
-
-        update_option(self::OPTION_RESOURCES_FETCHED, current_time('mysql'));
-
-        return [
-            'status' => 'updated',
-            'count' => count($merged),
-            'changed' => $changed,
-        ];
-    }
-
     public static function refreshCalendars(Client $client): array
     {
         $settings = self::get();
@@ -4855,7 +4892,12 @@ final class SettingsPage
      * Frage, und eine Liste, in der man sie erst wegsehen muss, waere schlechter
      * als eine kurze. Erkannt wird das am Typ, nicht am Namen.
      *
-     * @param int[] $roomTypeIds IDs der Ressourcentypen, die Raeume sind
+     * Eine leere $roomTypeIds heisst „nicht filtern", nicht „nichts erlauben" -
+     * eine Instanz, die ihre Typen anders benannt hat, bekommt lieber Technik
+     * zu viel in der Liste als eine Liste, die wortlos leer bleibt (und dabei
+     * jeden Haken mitnimmt, siehe refreshResources()).
+     *
+     * @param int[] $roomTypeIds IDs der Ressourcentypen, die Raeume sind; leer heisst „alle"
      */
     private static function mergeResources(array $existing, array $remoteResources, array $roomTypeIds): array
     {
@@ -4865,7 +4907,11 @@ final class SettingsPage
         foreach ($remoteResources as $resource) {
             $id = (int) ($resource['id'] ?? 0);
 
-            if ($id === 0 || !isset($rooms[(int) ($resource['resourceTypeId'] ?? 0)])) {
+            if ($id === 0) {
+                continue;
+            }
+
+            if ($rooms !== [] && !isset($rooms[(int) ($resource['resourceTypeId'] ?? 0)])) {
                 continue;
             }
 

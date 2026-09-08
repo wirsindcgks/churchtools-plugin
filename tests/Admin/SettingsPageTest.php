@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Tests\Admin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Frontend\DesignPreset;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Security\Crypto;
@@ -888,6 +889,120 @@ final class SettingsPageTest extends TestCase
         $this->assertSame([23], array_keys($merged));
         $this->assertSame('Grosser Saal', $merged[23]['name']);
         $this->assertSame(5, $merged[23]['sort_key']);
+    }
+
+    /**
+     * Eine leere Typenliste darf nicht jeden Raum aussortieren. Sie war der
+     * zweite Weg in den Verlust der Raumauswahl: Fand refreshResources() keinen
+     * Raumtyp, sollte „alle Typen" gelten - die Ersatzliste entstand aber aus
+     * derselben leeren Antwort und erlaubte deshalb nichts.
+     */
+    public function testAnEmptyTypeListKeepsEveryRoomInsteadOfNone(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+
+        $merged = $method->invoke(null, [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+        ], [
+            ['id' => 23, 'name' => 'Grosser Saal', 'resourceTypeId' => 2, 'sortKey' => 5],
+        ], []);
+
+        $this->assertSame([23], array_keys($merged));
+        $this->assertTrue($merged[23]['enabled']);
+    }
+
+    /**
+     * Der Kern des Befunds vom 2026-09-08 („Bei dem Update ging wohl die
+     * Raumauswahl verloren"): Eine einzige leere Antwort loeschte die ganze
+     * Auswahl, und die naechste vollstaendige brachte die Raeume unangehakt
+     * zurueck. Der Haken steht nirgends sonst - er ist nicht
+     * wiederherstellbar, sondern nur von Hand neu zu setzen.
+     */
+    public function testAnEmptyAnswerLeavesTheTickedRoomsAlone(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+        ]]);
+
+        ctp_test_queue_http([]);
+        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+
+        $this->assertSame('empty', $result['status']);
+        $this->assertFalse($result['changed']);
+        $this->assertSame(
+            [23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5]],
+            SettingsPage::get()['resources']
+        );
+    }
+
+    /**
+     * Und der Zeitstempel bleibt dabei stehen. Er ist die einzige Anzeige, an
+     * der jemand die veraltete Liste erkennen kann (siehe den Tab „Raeume");
+     * ruecke er trotz nicht uebernommener Antwort vor, meldete er das Gegenteil
+     * dessen, was geschehen ist.
+     */
+    public function testAnEmptyAnswerDoesNotRefreshTheFetchedTimestamp(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+        ]]);
+        ctp_test_set_option('ctp_resources_fetched', '2026-09-01 08:00:00');
+
+        ctp_test_queue_http([]);
+        SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+
+        $this->assertSame('2026-09-01 08:00:00', get_option('ctp_resources_fetched'));
+    }
+
+    /**
+     * Der Schutz gilt nur dem Alles-oder-nichts-Fall. Ist noch gar keine Liste
+     * gespeichert, ist die leere Antwort der Normalzustand jeder Installation,
+     * deren API-Key keine Freigabe fuer Ressourcen hat - daraus einen Fehler zu
+     * machen, waere Laerm ueber eine Abwesenheit.
+     */
+    public function testAnEmptyAnswerIsNormalWhenNothingIsStoredYet(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_queue_http([]);
+
+        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+
+        $this->assertSame('updated', $result['status']);
+        $this->assertSame(0, $result['count']);
+    }
+
+    /**
+     * Und die vollstaendige Antwort kommt weiterhin an: Ein neuer Raum taucht
+     * unangehakt auf, ein in ChurchTools geloeschter faellt samt Haken heraus.
+     * Ohne diesen Test hiesse „schuetzt die Auswahl" auch „schreibt nie wieder".
+     */
+    public function testAFullAnswerStillReplacesTheList(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
+            99 => ['name' => 'Alter Raum', 'enabled' => true, 'sort_key' => 9],
+        ]]);
+
+        ctp_test_queue_http([
+            'resourceTypes' => [['id' => 2, 'name' => 'resource.type.room']],
+            'resources' => [
+                ['id' => 23, 'name' => 'Grosser Saal', 'resourceTypeId' => 2, 'sortKey' => 5],
+                ['id' => 24, 'name' => 'Neuer Raum', 'resourceTypeId' => 2, 'sortKey' => 6],
+                ['id' => 51, 'name' => 'Beamer', 'resourceTypeId' => 1, 'sortKey' => 1],
+            ],
+        ]);
+
+        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+        $gespeichert = SettingsPage::get()['resources'];
+
+        $this->assertSame('updated', $result['status']);
+        $this->assertTrue($result['changed']);
+        $this->assertSame([23, 24], array_keys($gespeichert));
+        $this->assertTrue($gespeichert[23]['enabled']);
+        $this->assertFalse($gespeichert[24]['enabled']);
     }
 
     /**

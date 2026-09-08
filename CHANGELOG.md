@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.20.1] - 2026-09-08
+
+### Fixed
+
+- **Eine leere Antwort von ChurchTools löschte die ganze Raumauswahl.** Die Raumliste wird bei jedem Abgleich neu aus der API-Antwort aufgebaut – kam sie einmal leer zurück, war die Liste leer, und der nächste, wieder vollständige Abgleich brachte die Räume unangehakt zurück. Der Haken steht nirgends sonst; wer es nicht bemerkte, sah es erst Tage später an fehlenden Ortsangaben im Frontend. Jetzt gilt hier dieselbe Regel wie bei den Kalendern: Verschwinden *alle* Räume auf einmal, bleibt die gespeicherte Liste stehen, und der Knopf „Räume von ChurchTools laden" sagt, dass nichts kam. Verschwindet ein einzelner, fällt er weiterhin aus der Liste – von hier aus sind ein gelöschter Raum und eine zurückgezogene Freigabe nicht zu unterscheiden.
+- **Kannte die Instanz keine Ressourcentypen, blieb die Raumliste leer**, statt wie vorgesehen alle Ressourcen zu zeigen. Die Ersatzregel „findet sich kein Raumtyp, gelten alle Typen" bildete ihre Liste aus derselben leeren Antwort und erlaubte deshalb nichts – der zweite Weg in denselben Verlust.
+
 ## [1.20.0] - 2026-09-08
 
 ### Changed
