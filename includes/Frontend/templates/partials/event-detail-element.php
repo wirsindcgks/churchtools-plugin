@@ -284,8 +284,8 @@ if (!defined('ABSPATH')) {
          * reicht der Abgleich nur `sync_days_ahead` weit voraus. Eine Zahl ist
          * gegen die Liste daneben prüfbar, ein Versprechen nicht.
          *
-         * Kein _n(): Die Auswahl erscheint erst ab zwei Terminen, die
-         * Einzahlform käme also nie vor.
+         * Keine Pluralform: Die Auswahl erscheint erst ab zwei Terminen, die
+         * Einzahl käme also nie vor.
          *
          * Die vorgelesene Fassung beginnt mit der sichtbaren und ergänzt sie
          * nur — so verlangt es WCAG 2.5.3. Im ersten Anlauf stand sichtbar

@@ -17,6 +17,11 @@ $root = realpath($argv[1] ?? '.');
  * esc_*-Varianten werden NICHT unterstützt. Statt sie stillschweigend zu
  * verschlucken - was eine unvollständige .pot erzeugt, die niemandem auffällt -
  * bricht der Lauf ab. Wer solche Aufrufe einführt, nimmt `wp i18n make-pot`.
+ *
+ * Die Suche unten liest keinen PHP-Code, sondern Text — sie findet die
+ * Aufrufform also auch in einem Kommentar. Wer in einem Kommentar über `_n`
+ * schreibt, lässt die Klammer weg, sonst bricht der Lauf über einen Aufruf
+ * ab, den es gar nicht gibt (am 2026-09-08 genau so passiert).
  */
 $unsupported = shell_exec('grep -rlE "\\b(_n|_x|_nx|_ex|esc_html_x|esc_attr_x|_n_noop)\\(" '
     . escapeshellarg($root) . '/includes ' . escapeshellarg($root) . '/blocks 2>/dev/null');

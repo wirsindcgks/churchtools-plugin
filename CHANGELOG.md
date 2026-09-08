@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.19.0] - 2026-09-08
+
+### Added
+
+- **Eine ganze Terminserie lässt sich in einem Zug in den Kalender übernehmen.** Gehört ein Termin zu einer Serie, fragt der „Importieren"-Button nach dem Klick, was in die Datei soll: „Nur dieser Termin" oder „Alle N Termine". Bei einem Einzeltermin gibt es nichts zu fragen, dort lädt ein Klick die Datei sofort wie bisher. **Die Zahl steht mit Absicht in der Beschriftung**: Gezählt wird über den Basistermin aus ChurchTools, und ein dort einzeln nachbearbeitetes Datum zählt als eigener – „ganze Serie" verspräche also mehr, als sich halten lässt, eine Zahl dagegen ist gegen die Liste daneben prüfbar. Gezählt werden die künftigen Termine, die synchronisiert sind (siehe Sync-Zeitraum). Auch die Seriendatei aktualisiert bei einem zweiten Herunterladen die vorhandenen Einträge, statt neue anzulegen – Termin für Termin.
+- **Die Rückfrage klappt als Karte über dem Knopf auf**, nicht neben ihm: Der Knopf bleibt an seiner Stelle, die Zeile wächst nicht, und im Popup entsteht kein zweiter Scrollbereich. Sie schließt sich bei einem Klick daneben und mit Escape; ohne JavaScript bleibt sie über denselben Knopf bedienbar, mit dem sie geöffnet wurde.
+
 ## [1.18.0] - 2026-09-07
 
 ### Added

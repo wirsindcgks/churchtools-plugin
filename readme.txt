@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -222,6 +222,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.19.0 =
+
+Gehört ein Termin zu einer Serie, fragt der „Importieren“-Button jetzt, ob nur dieser Termin oder gleich alle in den Kalender sollen. Bei Einzelterminen bleibt alles wie bisher – ein Klick, eine Datei. Wer den Button gar nicht eingeschaltet hat, merkt von diesem Update nichts.
+
 = 1.18.0 =
 Neu ist ein „Importieren“-Button in Popup und eigener Terminseite: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen. Er ist standardmäßig aus und wird im Design-Tab eingeschaltet – nach dem Update ändert sich also zunächst nichts. Dazu behoben: Das Popup ließ sich erst beim zweiten Wischen bis ans Ende scrollen.
 
@@ -337,6 +341,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.19.0 =
+
+* Neu: Bei einer Terminserie fragt der „Importieren“-Button nach dem Klick, ob nur dieser Termin oder alle künftigen Termine in die Datei sollen. Die Anzahl steht in der Beschriftung
+* Neu: Die Rückfrage klappt als Karte über dem Knopf auf – der Knopf bleibt an seiner Stelle, im Popup entsteht kein zweiter Scrollbereich. Schließt bei Klick daneben und mit Escape, funktioniert auch ohne JavaScript
 
 = 1.18.0 =
 
