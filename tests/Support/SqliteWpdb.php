@@ -29,6 +29,19 @@ final class SqliteWpdb
 {
     public string $prefix = 'wp_';
 
+    /**
+     * Wie das Feld gleichen Namens am echten $wpdb: wie viele Abfragen bisher
+     * gelaufen sind. Gezaehlt werden nur die *lesenden und schreibenden*
+     * Aufrufe unten, nicht prepare() und nicht das Befuellen ueber seedEvent()
+     * - genau die Abfragen also, die der Produktivcode absetzt.
+     *
+     * Dafuer da, dass eine Zusage wie „eine Abfrage fuer eine ganze Seite"
+     * (siehe EventRepository::seriesCounts()) pruefbar ist statt nur
+     * behauptet. Das N+1-Muster hat in diesem Plugin schon einmal 55 Abfragen
+     * aus 5 gemacht.
+     */
+    public int $num_queries = 0;
+
     private PDO $pdo;
 
     private int $nextEventId = 0;
@@ -142,6 +155,7 @@ final class SqliteWpdb
      */
     public function get_var(string $query)
     {
+        $this->num_queries++;
         $value = $this->pdo->query($query)->fetchColumn();
 
         return $value === false ? null : (string) $value;
@@ -152,11 +166,15 @@ final class SqliteWpdb
      */
     public function get_results(string $query, string $output = 'OBJECT'): array
     {
+        $this->num_queries++;
+
         return $this->pdo->query($query)->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function query(string $query): int
     {
+        $this->num_queries++;
+
         return $this->pdo->exec($query);
     }
 }

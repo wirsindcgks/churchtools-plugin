@@ -253,6 +253,75 @@ final class IcsTest extends TestCase
         $this->assertSame('gottesdienst-06-09-2026.ics', Ics::filename($this->event()));
     }
 
+    /**
+     * Die Serienfassung: ein VCALENDAR, so viele VEVENTs wie Termine. Der
+     * Rahmen darf dabei nicht mitwachsen — eine Datei mit drei BEGIN:VCALENDAR
+     * ist kein Kalender mehr, sondern drei aneinandergeklebte.
+     */
+    public function testTheWholeSeriesIsOneCalendarWithOneEntryPerDate(): void
+    {
+        $ics = Ics::forEvents($this->series(3));
+
+        $this->assertSame(1, substr_count($ics, 'BEGIN:VCALENDAR'));
+        $this->assertSame(1, substr_count($ics, 'END:VCALENDAR'));
+        $this->assertSame(3, substr_count($ics, 'BEGIN:VEVENT'));
+        $this->assertSame(3, substr_count($ics, 'END:VEVENT'));
+    }
+
+    /**
+     * Jeder Termin behält seine eigene Kennung. Das ist die Zusage, an der das
+     * zweite Herunterladen hängt: Ohne sie überschriebe der Kalender die drei
+     * Einträge gegenseitig und behielte einen.
+     */
+    public function testEveryDateInTheSeriesKeepsItsOwnIdentity(): void
+    {
+        preg_match_all('/^UID:(.+?)\r?$/m', Ics::forEvents($this->series(3)), $treffer);
+
+        $this->assertCount(3, $treffer[1]);
+        $this->assertCount(3, array_unique($treffer[1]), 'Zwei Termine der Serie teilen sich eine UID.');
+    }
+
+    /**
+     * Kein RRULE, obwohl hier eine Serie beisammen liegt: ChurchTools liefert
+     * kein Wiederholungsmuster, und aus den Abständen eines zu erschließen wäre
+     * Raten. Ausgeschriebene Einzeltermine sind die ehrliche Fassung — dass
+     * das so bleibt, steht hier.
+     */
+    public function testTheSeriesIsWrittenOutRatherThanGuessedAsARule(): void
+    {
+        $this->assertStringNotContainsString('RRULE', Ics::forEvents($this->series(3)));
+    }
+
+    /**
+     * Der Dateiname der Serie trägt kein Datum. Er benennt nicht *einen*
+     * Termin, und ein Datum darin wäre die Behauptung, er täte es.
+     */
+    public function testTheSeriesFilenameCarriesNoSingleDate(): void
+    {
+        $name = Ics::seriesFilename($this->event());
+
+        $this->assertSame('gottesdienst-serie.ics', $name);
+        $this->assertStringNotContainsString('06-09-2026', $name);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function series(int $anzahl): array
+    {
+        $termine = [];
+
+        for ($i = 0; $i < $anzahl; $i++) {
+            $termin = $this->event();
+            $tag = str_pad((string) (6 + $i * 7), 2, '0', STR_PAD_LEFT);
+            $termin['start_date'] = "2026-09-{$tag} 10:30:00";
+            $termin['end_date'] = "2026-09-{$tag} 12:00:00";
+            $termine[] = $termin;
+        }
+
+        return $termine;
+    }
+
     private function sequence(string $ics): int
     {
         // \r? vor dem Anker: Bei /m steht $ vor dem \n, das \r davor gehört

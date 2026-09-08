@@ -1121,4 +1121,99 @@
 	if (document.fonts && document.fonts.ready) {
 		document.fonts.ready.then(refreshFinderLayout);
 	}
+
+	/*
+	 * Die Auswahl hinter „Importieren" (siehe .ctp-events__import in
+	 * frontend.css) schliesst sich, wenn man danebenklickt oder Escape
+	 * drueckt.
+	 *
+	 * Ausdruecklich eine Zugabe und keine Voraussetzung: Das Auf- und Zuklappen
+	 * selbst macht der Browser, weil es ein <details> ist, und die beiden
+	 * Verweise darin sind gewoehnliche <a download>. Ohne dieses Skript bleibt
+	 * alles bedienbar - man schliesst die Karte dann ueber denselben Knopf, mit
+	 * dem man sie geoeffnet hat. Genau darum steht die Bedienlogik nicht hier,
+	 * sondern im Markup.
+	 *
+	 * Wichtig ist es trotzdem: Die Karte schwebt seit dem Umbau ueber dem
+	 * Inhalt. Eine schwebende Flaeche, die nur an einer einzigen Stelle wieder
+	 * wegzubekommen ist, steht schnell im Weg.
+	 */
+	function schliesseImportKarten(ausser) {
+		Array.prototype.forEach.call(document.querySelectorAll('.ctp-events__import[open]'), function (karte) {
+			if (karte !== ausser) {
+				karte.open = false;
+			}
+		});
+	}
+
+	document.addEventListener('click', function (event) {
+		// Der Klick *in* die eigene Karte darf sie nicht schliessen - sonst
+		// waere der Verweis darin nicht zu treffen.
+		schliesseImportKarten(event.target.closest('.ctp-events__import'));
+	});
+
+	/*
+	 * Escape, und hier steckt eine Falle, in die ich zuerst hineingelaufen bin.
+	 *
+	 * Der erste Anlauf fing die Taste im keydown ab und rief stopPropagation()
+	 * mit der Begruendung, das halte „den Escape-Handler des Dialogs" auf. Den
+	 * gibt es gar nicht: Ein modales <dialog> schliesst der *Browser*, nicht
+	 * dieses Skript. Escape ist dort eine Schliessanforderung, und die laesst
+	 * sich weder durch stopPropagation noch durch preventDefault auf dem
+	 * keydown abwenden - allein durch preventDefault auf dem `cancel`-Ereignis,
+	 * das der Browser vorher am Dialog ausloest. Der erste Bau haette also im
+	 * Popup beides auf einmal geschlossen: die Karte und den Termin dahinter.
+	 *
+	 * Deshalb zwei Wege, streng getrennt nach Ort:
+	 *   im Dialog       -> `cancel`, wo sich das Schliessen verhindern laesst
+	 *   auf der Seite   -> keydown, wo es keinen Dialog gibt, den man stoeren
+	 *                      koennte
+	 */
+	function schliesseKarteMitFokus(karte) {
+		var knopf = karte.querySelector('summary');
+
+		karte.open = false;
+
+		if (knopf) {
+			// Der Fokus stand in der Karte, die es gleich nicht mehr gibt.
+			knopf.focus();
+		}
+	}
+
+	document.addEventListener('keydown', function (event) {
+		if (event.key !== 'Escape') {
+			return;
+		}
+
+		var offen = document.querySelector('.ctp-events__import[open]');
+
+		if (!offen || offen.closest('dialog')) {
+			// Ohne offene Karte ist nichts zu tun; steckt sie in einem Dialog,
+			// uebernimmt der cancel-Handler unten.
+			return;
+		}
+
+		schliesseKarteMitFokus(offen);
+	});
+
+	/*
+	 * `cancel` steigt nicht auf, deshalb im Erfassungslauf: So erreicht es
+	 * dieser Zuhoerer am document trotzdem, waehrend es zum Dialog hinabgeht.
+	 */
+	document.addEventListener('cancel', function (event) {
+		var dialog = event.target;
+		var offen = dialog && dialog.querySelector
+			? dialog.querySelector('.ctp-events__import[open]')
+			: null;
+
+		if (!offen) {
+			// Keine Karte offen - Escape schliesst den Termin, wie immer.
+			return;
+		}
+
+		// Erst die Karte, der Termin bleibt stehen. Ein zweites Escape
+		// schliesst ihn dann, weil dieser Zweig dann nicht mehr greift.
+		event.preventDefault();
+		schliesseKarteMitFokus(offen);
+	}, true);
 })();

@@ -56,18 +56,42 @@ final class Ics
      */
     public static function forEvent(array $event): string
     {
-        $lines = array_merge(
-            [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                self::line('PRODID', self::prodId()),
-                'CALSCALE:GREGORIAN',
-                'METHOD:PUBLISH',
-                'BEGIN:VEVENT',
-            ],
-            self::eventLines($event),
-            ['END:VEVENT', 'END:VCALENDAR']
-        );
+        return self::forEvents([$event]);
+    }
+
+    /**
+     * Mehrere Termine in einer Datei — das, was „Alle N Termine“ ausliefert.
+     *
+     * Ein VCALENDAR darf beliebig viele VEVENTs tragen; mehr ist daran nicht.
+     * Jedes behält seine eigene UID aus uid(), der Kalender legt also N
+     * Einträge an und erkennt beim zweiten Herunterladen jeden einzelnen
+     * wieder.
+     *
+     * Bewusst *kein* RRULE, obwohl hier eine Serie beisammen liegt: ChurchTools
+     * liefert kein Wiederholungsmuster, sondern ein Envelope je tatsächlichem
+     * Vorkommnis, und mapOccurrence() speichert das genauso. Aus den Abständen
+     * eine Regel zu erschließen wäre Raten, und an den echten Daten ginge es
+     * schief — „Gottesdienst“ steht mit 10 Terminen über vier Monate, das sind
+     * erkennbar keine sauberen sieben Tage. Ausgeschriebene Einzeltermine sind
+     * die ehrliche Fassung.
+     *
+     * @param array<int, array<string, mixed>> $events
+     */
+    public static function forEvents(array $events): string
+    {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            self::line('PRODID', self::prodId()),
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+        ];
+
+        foreach ($events as $event) {
+            $lines = array_merge($lines, ['BEGIN:VEVENT'], self::eventLines($event), ['END:VEVENT']);
+        }
+
+        $lines[] = 'END:VCALENDAR';
 
         // CRLF, nicht LF: Das Format schreibt es vor, und Outlook nimmt eine
         // Datei mit bloßen Zeilenvorschüben teilweise gar nicht an.
@@ -85,6 +109,20 @@ final class Ics
         $slug = EventSlug::forEvent($event);
 
         return ($slug === '' ? 'termin' : $slug) . '.ics';
+    }
+
+    /**
+     * Der Dateiname der Serienfassung. Ohne das Datum, das
+     * EventSlug::forEvent() anhängt: Die Datei trägt nicht *einen* Termin,
+     * und ein Datum im Namen wäre die Behauptung, sie täte es.
+     *
+     * @param array<string, mixed> $event Irgendein Vorkommnis der Serie.
+     */
+    public static function seriesFilename(array $event): string
+    {
+        $slug = sanitize_title((string) ($event['title'] ?? ''));
+
+        return ($slug === '' ? 'termine' : $slug) . '-serie.ics';
     }
 
     /**

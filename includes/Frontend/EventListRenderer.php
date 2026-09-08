@@ -557,6 +557,16 @@ final class EventListRenderer
         $order = DetailDesign::isValidOrder($detailOrder) ? $detailOrder : DetailDesign::DEFAULT_ORDER;
         self::primeAttachmentCache($events, $calendars);
 
+        /*
+         * Die Serienlängen für die ganze Seite in einer Abfrage, bevor die
+         * Schleife läuft — genau wie die Anhänge eine Zeile darüber. Nur
+         * gefragt, wenn der Kalender-Knopf überhaupt an ist: Ohne ihn nimmt die
+         * Zahl niemand entgegen.
+         */
+        $seriesCounts = $icsEnabled
+            ? EventQueryCache::seriesCounts(array_column($events, 'ct_event_id'))
+            : [];
+
         foreach ($events as &$event) {
             $calendar = $calendars[(int) $event['ct_calendar_id']] ?? null;
             $event['calendar_color'] = $calendar['color'] ?? '';
@@ -579,6 +589,14 @@ final class EventListRenderer
             $event['image_srcset_full'] = $image['id'] > 0 ? CardImage::srcsetFor($image['id']) : '';
 
             $event['detail_url'] = EventDetailPage::urlForEvent($event);
+
+            /*
+             * Wie viele künftige Vorkommnisse diese Serie hat — die Zahl, die
+             * auf dem Serienknopf steht. 1 heißt „kein Serienfall": ein
+             * Einzeltermin, oder das letzte Vorkommnis einer Serie, bei dem es
+             * nichts mehr mitzunehmen gibt.
+             */
+            $event['series_count'] = $seriesCounts[(int) $event['ct_event_id']] ?? 1;
 
             if ($clickBehavior === 'popup') {
                 $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled, $icsEnabled);

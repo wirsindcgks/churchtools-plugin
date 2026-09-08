@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Frontend;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Db\EventRepository;
 
 /**
  * Die Adresse, unter der ein Termin als iCalendar-Datei herauskommt — das, was
@@ -27,6 +28,14 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 final class EventIcs
 {
     public const QUERY_VAR = 'ctp_ics';
+
+    /**
+     * Der Wert, unter dem statt des einen Termins die ganze Serie
+     * herauskommt. Zwei Werte an einem Parameter und nicht ein zweiter
+     * Parameter: Es ist dieselbe Frage („was soll in der Datei stehen?“) und
+     * damit eine Angabe, die genau einen Wert hat.
+     */
+    public const SERIES_VALUE = 'serie';
 
     public static function registerHooks(): void
     {
@@ -70,9 +79,22 @@ final class EventIcs
         return $url === '' ? '' : add_query_arg(self::QUERY_VAR, '1', $url);
     }
 
+    /**
+     * Dieselbe Adresse, aber für alle künftigen Vorkommnisse derselben Serie.
+     *
+     * @param array<string, mixed> $event
+     */
+    public static function urlForSeries(array $event): string
+    {
+        $url = EventDetailPage::urlForEvent($event);
+
+        return $url === '' ? '' : add_query_arg(self::QUERY_VAR, self::SERIES_VALUE, $url);
+    }
+
     public static function maybeRenderIcs(): void
     {
-        if ((string) get_query_var(self::QUERY_VAR) !== '1') {
+        $mode = (string) get_query_var(self::QUERY_VAR);
+        if ($mode !== '1' && $mode !== self::SERIES_VALUE) {
             return;
         }
 
@@ -81,17 +103,49 @@ final class EventIcs
             return;
         }
 
-        $event = self::withMeta($event);
+        $series = $mode === self::SERIES_VALUE;
+
+        /*
+         * Die Sichtbarkeitsschranke hängt am Ankertermin, den currentEvent()
+         * schon geprüft hat — auch im Serienfall. Das trägt, weil alle Zeilen
+         * einer ct_event_id im selben Kalender liegen (siehe
+         * EventRepository::findSeries()).
+         *
+         * Fällt die Serienabfrage leer aus — der Ankertermin liegt in der
+         * Vergangenheit, findSeries() schneidet dort ab —, kommt die Datei mit
+         * genau diesem einen Termin heraus statt leer. Ein VCALENDAR ohne
+         * VEVENT ist für den Kalender des Besuchers nichts als ein
+         * Fehldownload.
+         */
+        $events = $series ? (new EventRepository())->findSeries((int) ($event['ct_event_id'] ?? 0)) : [];
+        if ($events === []) {
+            $events = [$event];
+        }
+
+        /*
+         * Nach der Abfrage neu entschieden und nicht vorher: Der Parameter sagt
+         * nur, was gewollt war, die Zeilenzahl sagt, was herauskommt. Wer
+         * `ctp_ics=serie` von Hand an einen Einzeltermin hängt, bekommt diesen
+         * einen Termin — dann soll die Datei aber auch nicht „-serie" heißen.
+         * (Beim Prüfen auf dem Testsystem genau so aufgefallen: Der
+         * „Männerabend" ist kein Serientermin und kam als
+         * `maennerabend-serie.ics` heraus.)
+         */
+        $series = count($events) > 1;
+
+        $events = self::withMeta($events);
 
         // Kein nocache_headers(): Eine Termindatei ändert sich mit dem
         // Abgleich und nicht mit dem Besucher — dieselbe Überlegung wie bei
         // der Sitemap.
+        $filename = $series ? Ics::seriesFilename($events[0]) : Ics::filename($events[0]);
+
         status_header(200);
         header('Content-Type: text/calendar; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="' . Ics::filename($event) . '"');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ics::forEvent() maskiert jeden Wert nach den Regeln des Formats (siehe dort); HTML-Escaping wäre hier sogar falsch, die Datei ist kein Markup.
-        echo Ics::forEvent($event);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ics::forEvents() maskiert jeden Wert nach den Regeln des Formats (siehe dort); HTML-Escaping wäre hier sogar falsch, die Datei ist kein Markup.
+        echo Ics::forEvents($events);
         exit;
     }
 
@@ -102,19 +156,27 @@ final class EventIcs
      * Rendervorgangs und baut nebenbei das komplette Popup-Markup zusammen —
      * für drei Felder wäre das viel Arbeit für nichts.
      *
-     * @param array<string, mixed> $event
+     * Über die Liste und nicht über den einzelnen Termin, seit die Serie
+     * dazukam: Die Einstellungen einmal zu lesen statt sechzehnmal ist der
+     * ganze Unterschied.
      *
-     * @return array<string, mixed>
+     * @param array<int, array<string, mixed>> $events
+     *
+     * @return array<int, array<string, mixed>>
      */
-    private static function withMeta(array $event): array
+    private static function withMeta(array $events): array
     {
         $calendars = SettingsPage::get()['calendars'];
-        $calendar = $calendars[(int) ($event['ct_calendar_id'] ?? 0)] ?? null;
 
-        $event['calendar_name'] = (string) ($calendar['name'] ?? '');
-        $event['detail_url'] = EventDetailPage::urlForEvent($event);
-        $event['image_url'] = EventListRenderer::resolveImage($event, $calendar)['url'];
+        foreach ($events as &$event) {
+            $calendar = $calendars[(int) ($event['ct_calendar_id'] ?? 0)] ?? null;
 
-        return $event;
+            $event['calendar_name'] = (string) ($calendar['name'] ?? '');
+            $event['detail_url'] = EventDetailPage::urlForEvent($event);
+            $event['image_url'] = EventListRenderer::resolveImage($event, $calendar)['url'];
+        }
+        unset($event);
+
+        return $events;
     }
 }

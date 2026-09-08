@@ -244,18 +244,118 @@ if (!defined('ABSPATH')) {
          * dauerhaft statt einmalig.
          */
         ?>
+        <?php
+        /*
+         * Ein Termin, zwei mögliche Dateien — und ab hier eine Rückfrage statt
+         * eines zweiten Knopfs daneben.
+         *
+         * Erst standen sie nebeneinander. Nachgemessen waren das mit „Teilen"
+         * zusammen 401px Knopfleiste (87 + 131 + 183) für lauter Nebensachen;
+         * auf der eigenen Seite ging das noch, im 640px breiten Popup war es
+         * eine volle Zeile. Zwei Chips sind die richtige Menge, also klappt
+         * der dritte unter den zweiten.
+         *
+         * **Nur bei einer Serie.** Rund ein Viertel der Termine ist gar keine
+         * (an den Daten der Instanz: 28 von 115 künftigen Zeilen), und dort
+         * wäre die Rückfrage ein Klick ohne Wahl. Der Einzeltermin bleibt
+         * deshalb genau der direkte Verweis, der er seit 1.18.0 ist.
+         *
+         * **`<details>` und kein Skript.** Der Import war von Anfang an ein
+         * blanker `<a download>` und funktioniert ohne JavaScript; ein
+         * Skript-Menü hätte genau das aufgegeben. `<details>` bringt Tastatur,
+         * Rolle und `aria-expanded` von selbst mit — und ist damit weniger
+         * Bedienlogik als vorher, nicht mehr.
+         *
+         * Aufgeklappt wird *im Fluss* und nicht schwebend: Der Rumpf des
+         * Popups ist ein eigener Scroll-Container (siehe frontend.css), eine
+         * absolut gesetzte Fläche würde dort abgeschnitten.
+         */
+        $ctpSerie = (int) ($event['series_count'] ?? 1);
+
+        /*
+         * Die Zahl steht sichtbar in der Beschriftung, und das ist keine
+         * Verzierung. „Ganze Serie" wäre eine Zusage, die das Plugin nicht
+         * halten kann: Gezählt wird über ct_event_id, und das ist
+         * ChurchTools' Basistermin und nicht die Serie, die ein Mensch sieht —
+         * ein einzeln bearbeitetes Datum löst sich dort in einen eigenen
+         * Basistermin auf. An den Daten der Instanz nachgezählt: Der
+         * wöchentliche „Kindergottesdienst" steht als eine Serie mit 11
+         * Terminen *und* sechs gleichnamigen Einzelterminen daneben. Dazu
+         * reicht der Abgleich nur `sync_days_ahead` weit voraus. Eine Zahl ist
+         * gegen die Liste daneben prüfbar, ein Versprechen nicht.
+         *
+         * Kein _n(): Die Auswahl erscheint erst ab zwei Terminen, die
+         * Einzahlform käme also nie vor.
+         *
+         * Die vorgelesene Fassung beginnt mit der sichtbaren und ergänzt sie
+         * nur — so verlangt es WCAG 2.5.3. Im ersten Anlauf stand sichtbar
+         * „Nur dieser Termin" und vorgelesen „Nur *diesen* Termin …": eine
+         * Sprachsteuerung hätte dann nicht auf das gehört, was dasteht. Der
+         * Gedankenstrich statt einer Umformulierung, weil er beides erlaubt,
+         * einen sauberen Satz und die wörtliche Übernahme.
+         *
+         * series_count fällt auf 1 zurück: Wer dieses Partial direkt einbindet,
+         * hat die Zahl nicht mitgeschickt, und 1 heißt „kein Serienfall".
+         */
+        $ctpSerieText = sprintf(
+            /* translators: %d: Anzahl der künftigen Termine dieser Serie. */
+            __('Alle %d Termine', 'churchtools-plugin'),
+            $ctpSerie
+        );
+        $ctpSerieBeschreibung = sprintf(
+            /* translators: %d: Anzahl der künftigen Termine dieser Serie. */
+            __('Alle %d Termine dieser Serie — in den Kalender importieren', 'churchtools-plugin'),
+            $ctpSerie
+        );
+        ?>
         <?php if (($event['detail_url'] ?? '') !== '') : ?>
             <div class="ctp-events__share ctp-events__share--ics">
-                <a
-                    class="ctp-events__share-btn"
-                    href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
-                    aria-label="<?php esc_attr_e('Termin in den Kalender importieren', 'churchtools-plugin'); ?>"
-                    download
-                >
-                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
-                    <?php echo Icons::calendarPlus(); ?>
-                    <?php esc_html_e('Importieren', 'churchtools-plugin'); ?>
-                </a>
+                <?php if ($ctpSerie > 1) : ?>
+                    <details class="ctp-events__import">
+                        <summary class="ctp-events__share-btn ctp-events__import-summary">
+                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                            <?php echo Icons::calendarPlus(); ?>
+                            <?php esc_html_e('Importieren', 'churchtools-plugin'); ?>
+                        </summary>
+                        <?php
+                        /*
+                         * Die Reihenfolge ist Absicht: der einzelne Termin
+                         * zuerst. Er ist die kleinere und rücknehmbarere Wahl —
+                         * wer 15 Einträge im Telefonkalender wieder loswerden
+                         * will, hat einen langen Abend vor sich.
+                         */
+                        ?>
+                        <div class="ctp-events__import-choices">
+                            <a
+                                class="ctp-events__import-choice"
+                                href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
+                                aria-label="<?php esc_attr_e('Nur dieser Termin — in den Kalender importieren', 'churchtools-plugin'); ?>"
+                                download
+                            >
+                                <?php esc_html_e('Nur dieser Termin', 'churchtools-plugin'); ?>
+                            </a>
+                            <a
+                                class="ctp-events__import-choice"
+                                href="<?php echo esc_url(EventIcs::urlForSeries($event)); ?>"
+                                aria-label="<?php echo esc_attr($ctpSerieBeschreibung); ?>"
+                                download
+                            >
+                                <?php echo esc_html($ctpSerieText); ?>
+                            </a>
+                        </div>
+                    </details>
+                <?php else : ?>
+                    <a
+                        class="ctp-events__share-btn"
+                        href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
+                        aria-label="<?php esc_attr_e('Termin in den Kalender importieren', 'churchtools-plugin'); ?>"
+                        download
+                    >
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                        <?php echo Icons::calendarPlus(); ?>
+                        <?php esc_html_e('Importieren', 'churchtools-plugin'); ?>
+                    </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
         <?php

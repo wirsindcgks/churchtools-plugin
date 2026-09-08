@@ -86,6 +86,48 @@ final class EventIcsTest extends TestCase
     }
 
     /**
+     * Die Serienfassung hängt an derselben Adresse, nur mit einem anderen Wert
+     * am selben Parameter. Zwei Werte an einer Angabe und nicht zwei Angaben:
+     * „was soll in der Datei stehen?" ist eine Frage mit genau einer Antwort.
+     */
+    public function testTheWholeSeriesHangsOffTheSameAddressWithAnotherValue(): void
+    {
+        ctp_test_set_option('permalink_structure', '/%postname%/');
+        ctp_test_set_post(43, 'page', 'publish');
+        ctp_test_set_option('ctp_settings', ['detail_page_id' => 43, 'calendars' => []]);
+
+        $einzeln = EventIcs::urlForEvent($this->event());
+        $serie = EventIcs::urlForSeries($this->event());
+
+        $this->assertStringContainsString('gottesdienst-06-09-2026', $serie);
+        $this->assertStringContainsString(EventIcs::QUERY_VAR . '=' . EventIcs::SERIES_VALUE, $serie);
+        $this->assertNotSame($einzeln, $serie);
+    }
+
+    /**
+     * Beide Adressen zeigen auf dieselbe Terminseite — sie unterscheiden sich
+     * ausschliesslich im Wert des Parameters. Faellt das auseinander, hat die
+     * Serienfassung eine eigene Aufloesung bekommen, und genau die wollte
+     * EventIcs nicht haben (siehe dessen Klassenkommentar).
+     */
+    public function testBothFilesResolveThroughTheSameEventAddress(): void
+    {
+        ctp_test_set_option('permalink_structure', '');
+        ctp_test_set_option('ctp_settings', ['detail_page_id' => 0, 'calendars' => []]);
+
+        $ohneParameter = static fn (string $url): string => preg_replace(
+            '/[?&]' . EventIcs::QUERY_VAR . '=[^&]*/',
+            '',
+            $url
+        );
+
+        $this->assertSame(
+            $ohneParameter(EventIcs::urlForEvent($this->event())),
+            $ohneParameter(EventIcs::urlForSeries($this->event()))
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function event(): array

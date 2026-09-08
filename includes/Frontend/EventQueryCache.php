@@ -143,6 +143,44 @@ final class EventQueryCache
     }
 
     /**
+     * Die Serienlängen zu den Terminen einer Seite, in einer Abfrage und
+     * danach aus dem Zwischenspeicher — dieselbe Behandlung wie die Liste
+     * selbst, denn die Zahl steht auf jedem Serienknopf und im Popup-Modus
+     * rendert jede Kachel ihre eigene Detailansicht mit.
+     *
+     * Der Schlüssel führt die sortierte Liste der Serien-IDs mit: Zwei Seiten
+     * mit verschiedenen Terminen haben verschiedene Antworten. Und wie bei
+     * calendarIdsWithUpcoming() geht die Antwort in ein Array, bevor sie
+     * gespeichert wird — die ehrliche Antwort kann leer sein, und ein leeres
+     * Array wäre von get_transient()'s „nicht da" sonst nicht zu
+     * unterscheiden.
+     *
+     * @param int[] $ctEventIds
+     *
+     * @return array<int, int>
+     */
+    public static function seriesCounts(array $ctEventIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ctEventIds))));
+        if ($ids === []) {
+            return [];
+        }
+
+        sort($ids);
+        $key = self::cacheKey([], 0, null, null, 'series', 0, implode(',', $ids));
+        $cached = get_transient($key);
+
+        if (is_array($cached) && array_key_exists('counts', $cached)) {
+            return $cached['counts'];
+        }
+
+        $counts = (new EventRepository())->seriesCounts($ids);
+        set_transient($key, ['counts' => $counts], self::TTL);
+
+        return $counts;
+    }
+
+    /**
      * $extra carries whatever a single caller adds on top of the shared
      * calendar/limit/window identity — today only findMatching()'s hashed
      * search term, which must not collide with the same window's unfiltered

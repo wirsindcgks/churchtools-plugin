@@ -105,6 +105,84 @@ class EventRepository
         $wpdb->update($this->table, ['attachment_id' => $attachmentId], ['ct_event_id' => $ctEventId]);
     }
 
+    /**
+     * Die kuenftigen Vorkommnisse *einer* Terminserie, aufsteigend — die
+     * Datenquelle hinter „Alle N Termine importieren".
+     *
+     * `end_date >= jetzt` und nicht `start_date`: derselbe Schnitt, den
+     * findInWindow() fuer die Liste zieht. Ein Termin, der gerade laeuft,
+     * steht dort noch und gehoert deshalb auch in die Datei.
+     *
+     * Ohne Kalenderpruefung, und das ist Absicht: Alle Zeilen einer
+     * ct_event_id liegen im selben Kalender (an den Daten der Instanz
+     * nachgezaehlt: 0 von 38 Gruppen verteilen sich auf mehrere), die
+     * Sichtbarkeitsschranke am Ankertermin deckt die Serie also mit ab.
+     *
+     * Ohne LIMIT, anders als searchUpcoming() an seinem ebenfalls oeffentlichen
+     * Endpunkt: Die Zeilenzahl ist hier schon durch den Abgleich gedeckelt.
+     * Gezaehlt werden nur kuenftige Vorkommnisse, und weiter als
+     * `sync_days_ahead` reicht die Tabelle nicht - im schlimmsten Fall ein
+     * taeglicher Termin ueber den ganzen Zeitraum. Ein eigener Deckel waere
+     * ausserdem schaedlich: seriesCounts() haette ihn nicht, und die Zahl auf
+     * dem Knopf verspraeche dann mehr, als in der Datei steht (siehe
+     * tests/Db/EventSeriesQueryTest.php).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findSeries(int $ctEventId): array
+    {
+        global $wpdb;
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            'SELECT * FROM %i WHERE ct_event_id = %d AND end_date >= %s ORDER BY start_date ASC',
+            $this->table,
+            $ctEventId,
+            current_time('mysql')
+        ), ARRAY_A);
+
+        return $rows ?: [];
+    }
+
+    /**
+     * Wie viele kuenftige Vorkommnisse jede der uebergebenen Serien hat — in
+     * *einer* Abfrage fuer eine ganze Seite.
+     *
+     * Genau dafuer existiert die Methode: Die Beschriftung des Serienknopfs
+     * traegt die Zahl, und im Popup-Modus rendert jede Kachel ihre eigene
+     * Detailansicht mit. Je Kachel einmal zu zaehlen waere auf einer Liste mit
+     * 20 Kacheln 20 zusaetzliche COUNT(*) — dasselbe N+1-Muster, das in diesem
+     * Plugin schon einmal 55 Abfragen aus 5 gemacht hat (behoben mit 1.0.0).
+     *
+     * @param int[] $ctEventIds
+     *
+     * @return array<int, int> ct_event_id => Anzahl. Serien ohne kuenftige
+     *                         Zeile fehlen, der Aufrufer faellt auf 0 zurueck.
+     */
+    public function seriesCounts(array $ctEventIds): array
+    {
+        global $wpdb;
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ctEventIds))));
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $sql = "SELECT ct_event_id, COUNT(*) AS occurrences FROM %i
+                WHERE end_date >= %s AND ct_event_id IN ({$placeholders})
+                GROUP BY ct_event_id";
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql ist aus Literalen plus einer "%d,%d,..."-Liste gebaut (WordPress' eigenes Muster fuer IN mit variabler Laenge) und geht danach durch prepare(), siehe findInWindow().
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $this->table, current_time('mysql'), ...$ids), ARRAY_A);
+
+        $counts = [];
+        foreach ($rows ?: [] as $row) {
+            $counts[(int) $row['ct_event_id']] = (int) $row['occurrences'];
+        }
+
+        return $counts;
+    }
+
     public function count(): int
     {
         global $wpdb;

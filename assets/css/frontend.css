@@ -1951,6 +1951,184 @@
     gap: 0.5rem 0.75rem;
 }
 
+/*
+ * Die Rueckfrage hinter „Importieren", wenn der Termin zu einer Serie gehoert
+ * (siehe partials/event-detail-element.php). Ein <details>, kein Skript: Der
+ * Import ist ein blanker <a download> und soll es ohne JavaScript bleiben.
+ *
+ * Der Kasten selbst ist unsichtbar - er traegt nur die Aufklappmechanik. Das
+ * Aussehen steckt in der <summary>, und die traegt dieselbe Klasse wie jeder
+ * andere Chip: Sichtbar aendert sich am eingeklappten Zustand gegenueber dem
+ * Einzeltermin nichts.
+ */
+.ctp-events__import {
+    position: relative;
+}
+
+/*
+ * Das Dreieck des Browsers weg. Zwei Regeln, weil die alte WebKit-Fassung auf
+ * das Pseudoelement hoert und der Rest der Welt auf display - eine allein
+ * laesst auf der jeweils anderen Seite eine Marke stehen.
+ */
+.ctp-events .ctp-events__import-summary {
+    display: inline-flex;
+    list-style: none;
+    cursor: pointer;
+}
+
+.ctp-events .ctp-events__import-summary::-webkit-details-marker {
+    display: none;
+}
+
+/*
+ * Der aufgeklappte Zustand bekommt die Umrandung der Auswahl darunter
+ * angeheftet - sonst schwebten zwei Kaesten uebereinander, die nichts
+ * miteinander zu tun zu haben scheinen.
+ */
+.ctp-events__import[open] .ctp-events__import-summary {
+    border-color: var(--ctp-color-text);
+    color: var(--ctp-color-text);
+}
+
+/*
+ * Die Auswahl schwebt ueber dem Inhalt, statt ihn beiseitezuschieben.
+ *
+ * Der erste Bau hatte sie im Fluss, und das war sichtbar falsch (Nutzerbefund
+ * 2026-09-08: „Beim Klick auf den Button wandert der Button an eine andere
+ * Stelle"). Der Grund ist der Flex-Kasten darum: Die aufgeklappte Auswahl ist
+ * breiter als der Knopf (gemessen 292 gegen 131px), also rechnet
+ * .ctp-events__actions die ganze Zeile neu - im Popup mit
+ * `justify-content: flex-end` rutscht dabei die komplette Gruppe nach links,
+ * auf schmalen Fenstern bricht sie zusaetzlich um. Ein Knopf, der unter dem
+ * Zeigefinger wegwandert, ist kein Bedienelement mehr, sondern ein
+ * bewegliches Ziel.
+ *
+ * `position: absolute` nimmt die Auswahl aus dem Fluss. Damit bleibt das
+ * <details> genau so breit wie seine <summary>, und der Knopf steht still.
+ *
+ * **Nach oben und nicht nach unten**, und das ist der Punkt, an dem der
+ * frueher verworfene Einwand doch noch traegt: Der Rumpf des Popups ist ein
+ * eigener Scroll-Container. Eine Flaeche, die nach *unten* aus der letzten
+ * Zeile herausragt, verlaengert dessen Scrollbereich - man muesste zu einem
+ * Menue scrollen, das man gerade geoeffnet hat. Nach oben liegt sie auf
+ * bereits sichtbarem Inhalt, und es entsteht kein Ueberhang. Nachgemessen:
+ * Scroll-Ueberhang 0 im zu- wie im aufgeklappten Zustand.
+ *
+ * Untereinander statt nebeneinander, damit die Karte schmal bleibt und wie
+ * ein Menue liest und nicht wie eine zweite Knopfleiste.
+ */
+.ctp-events__import-choices {
+    position: absolute;
+    z-index: 3;
+    bottom: calc(100% + 0.4rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.35rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: calc(var(--ctp-radius) * 0.45);
+    background-color: var(--ctp-color-surface);
+    box-shadow: var(--ctp-shadow);
+    /* Verankert an der Kante, an der auch der Knopf haengt: Die Knopfleiste
+       steht im Popup rechts (`justify-content: flex-end` in
+       .ctp-events__actions), auf der eigenen Seite links (Regel darunter).
+       Waere die Karte immer links verankert, ragte sie im Popup ueber die
+       rechte Dialogkante hinaus - sie ist breiter als der Knopf. */
+    inset-inline-end: 0;
+}
+
+.ctp-events--detail .ctp-events__detail > .ctp-events__actions .ctp-events__import-choices {
+    inset-inline-end: auto;
+    inset-inline-start: 0;
+}
+
+/*
+ * Das Auffalten, um das der Nutzer gebeten hat. Vom Knopf weg nach oben, also
+ * `transform-origin: bottom` - so sieht es aus, als komme die Karte aus dem
+ * Knopf heraus und nicht aus dem Nichts.
+ *
+ * Nur wenn Bewegung nicht abbestellt ist; sonst ist die Karte einfach da, und
+ * das ist die eigentliche Funktion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    .ctp-events__import[open] .ctp-events__import-choices {
+        animation: ctp-events-unfold 0.16s ease-out 1;
+        transform-origin: bottom;
+    }
+}
+
+@keyframes ctp-events-unfold {
+    from {
+        opacity: 0;
+        transform: scaleY(0.7) translateY(0.3rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: scaleY(1) translateY(0);
+    }
+}
+
+/* Wortgleich mit .ctp-events__share-btn, abzueglich des Symbolabstands: Die
+   Auswahl soll wie zwei kleinere Geschwister des Chips darueber lesen und
+   nicht wie ein fremdes Bedienelement. `font: inherit` und der Verzicht auf
+   eine eigene Zeilenhoehe stehen dort begruendet. */
+.ctp-events .ctp-events__import-choice {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.2rem 0.65rem;
+    border: 1px solid var(--ctp-color-border);
+    border-radius: var(--ctp-radius-pill);
+    background-color: transparent;
+    color: var(--ctp-color-muted);
+    font: inherit;
+    font-size: var(--ctp-font-xs);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/*
+ * In der Karte fuellen beide die volle Breite: Zwei verschieden breite Pillen
+ * untereinander lesen als Ausrutscher, nicht als Menue.
+ *
+ * Das macht `align-items: stretch` - der Vorgabewert des Flex-Kastens - ganz
+ * von allein, und zwar auf der *aeusseren* Kante. Ein `width: 100%` stand hier
+ * einmal und war falsch: Die Elemente rechnen in `content-box`, die 100%
+ * gelten also dem Inhalt, und Polsterung und Rahmen kamen obendrauf.
+ * Nachgemessen war die Karte innen 156px breit und der Chip 177px - ein
+ * Ueberstand von 21px, auf 0,2px genau die Polsterung (2 x 10,4) plus die
+ * beiden Rahmen. Der Nutzer hat es sofort gesehen: „Leider passen die Buttons
+ * noch nicht vollstaendig in den Overlay."
+ *
+ * **Dieselbe Fehlerklasse zum dritten Mal in diesem Projekt** - die Panels in
+ * 1.7.0 und der Popup-Rumpf in 1.18.0 waren beide content-box gegen
+ * border-box, und beide Male war der Ueberstand exakt die Polsterung. Die
+ * Lehre daraus, jetzt aufgeschrieben: Sobald hier eine feste Breite oder Hoehe
+ * neben einer Polsterung steht, ist die Frage nicht ob, sondern wo es
+ * ueberlaeuft. Die Loesung ist beide Male dieselbe gewesen - die Angabe
+ * weglassen und das Layout die Groesse bestimmen lassen.
+ */
+.ctp-events__import-choices .ctp-events__import-choice {
+    justify-content: center;
+}
+
+.ctp-events .ctp-events__import-choice:hover,
+.ctp-events .ctp-events__import-choice:focus {
+    border-color: var(--ctp-color-text);
+    color: var(--ctp-color-text);
+}
+
+.ctp-events .ctp-events__import-choice:focus-visible {
+    outline: 2px solid var(--ctp-color-button);
+    outline-offset: 2px;
+}
+
 /* Polsterung, Schriftgrad, Laufweite und Form sind wortgleich mit
    .ctp-events__eyebrow - die beiden sollen nebeneinander als ein Paar lesen. */
 .ctp-events .ctp-events__share-btn {

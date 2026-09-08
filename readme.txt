@@ -17,7 +17,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
-* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt.
+* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
 * **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Aufbau der Detailansicht samt „Teilen“-Button, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
@@ -108,7 +108,9 @@ Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail 
 
 Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild.
 
-Die Datei ist eine Momentaufnahme: Ändert sich der Termin später in ChurchTools oder fällt er aus, erfährt der bereits eingetragene Kalender davon nichts. Wer die Datei erneut herunterlädt, aktualisiert damit aber seinen vorhandenen Eintrag, statt einen zweiten anzulegen. Bei einer Terminserie enthält die Datei den einen Termin, dessen Seite geöffnet ist – nicht die ganze Serie.
+Gehört der Termin zu einer Serie, fragt der Button nach dem Klick, was in die Datei soll: „Nur dieser Termin“ oder „Alle N Termine“. Die Zahl steht dort, damit sichtbar ist, wie viele es tatsächlich sind – gezählt werden die künftigen Termine, die synchronisiert sind (siehe Sync-Zeitraum). Bei einem Einzeltermin gibt es nichts zu fragen, dort lädt ein Klick die Datei sofort.
+
+Die Datei ist eine Momentaufnahme: Ändert sich der Termin später in ChurchTools oder fällt er aus, erfährt der bereits eingetragene Kalender davon nichts. Wer die Datei erneut herunterlädt, aktualisiert damit aber seinen vorhandenen Eintrag, statt einen zweiten anzulegen – auch bei der ganzen Serie, dort Termin für Termin.
 
 Geteilt wird die eigene Adresse des Termins. Seit 1.16.0 bringt sie einen eigenen Seitentitel samt Vorschaubild mit – in Messenger und sozialen Netzwerken erscheint also der Termin und nicht die Terminliste.
 
