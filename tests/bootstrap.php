@@ -562,3 +562,51 @@ function ctp_test_reset_hooks(): void
 {
     $GLOBALS['ctp_test_hooks'] = [];
 }
+
+/*
+ * Settings-API, so weit die Tests sie brauchen: registerSettings() meldet
+ * Abschnitte und Felder je Settings-Seite an, und genau diese Zuordnung ist
+ * pruefbar — welcher Bereich des Design-Tabs welche Felder traegt, und ob zwei
+ * davon denselben Namen haben. Gerendert wird hier nichts; die Rueckrufe
+ * werden nur mitgeschrieben.
+ */
+$GLOBALS['ctp_test_settings'] = ['sections' => [], 'fields' => []];
+
+function register_setting(string $group, string $name, $args = []): void
+{
+}
+
+/** Wie WordPress: Kleinbuchstaben, und uebrig bleiben nur a-z, 0-9, _ und -. */
+function sanitize_key(string $key): string
+{
+    return preg_replace('/[^a-z0-9_\-]/', '', strtolower($key)) ?? '';
+}
+
+function add_settings_section(string $id, string $title, $callback, string $page): void
+{
+    $GLOBALS['ctp_test_settings']['sections'][$page][$id] = $title;
+}
+
+function add_settings_field(string $id, string $title, $callback, string $page, string $section = 'default', array $args = []): void
+{
+    $GLOBALS['ctp_test_settings']['fields'][$page][] = [
+        'id' => $id,
+        'title' => $title,
+        'section' => $section,
+    ];
+}
+
+/**
+ * Die Felder einer Settings-Seite in der Reihenfolge ihrer Anmeldung.
+ *
+ * @return array<int, array{id: string, title: string, section: string}>
+ */
+function ctp_test_settings_fields(string $page): array
+{
+    return $GLOBALS['ctp_test_settings']['fields'][$page] ?? [];
+}
+
+function ctp_test_reset_settings(): void
+{
+    $GLOBALS['ctp_test_settings'] = ['sections' => [], 'fields' => []];
+}

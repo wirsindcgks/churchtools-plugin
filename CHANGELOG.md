@@ -5,6 +5,19 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.20.0] - 2026-09-08
+
+### Changed
+
+- **Der Design-Tab ist in vier Bereiche aufgeteilt** – „Stil", „Kachel", „Detailansicht" und „Listen", umschaltbar über eine Reiterreihe unter den Haupt-Reitern. Bisher standen alle vier untereinander auf einer Seite: dreizehn Felder auf gut fünf Bildschirmhöhen, das Fünffache des nächstgrößten Tabs. Jeder Bereich ist jetzt für sich so lang wie ein gewöhnlicher Tab und bringt seine Vorschau daneben mit; gespeichert wird je Bereich, die Einstellungen der übrigen bleiben dabei unangetastet.
+- **Die beiden „Reihenfolge"-Felder heißen jetzt nach ihrem Ort** – „Reihenfolge auf der Kachel" und „Reihenfolge in der Detailansicht". Vorher trugen beide denselben Namen, einmal für die Kachel und einmal für die Detailansicht, und im Fließtext einer langen Seite war nicht zu sehen, welches welches ist.
+- **Die Vorschau der Detailansicht zeigt jetzt auch die Rahmung** – bei „Popup" das Schließen-Kreuz oben rechts, bei „Eigene Seite" den Zurück-Button oben links. Inhalt und Reihenfolge gelten weiterhin für beide gleichermaßen; sichtbar unterscheiden sie sich nur im Fenster darum, und das steht jetzt auch so in der Vorschau.
+- **Die Stil-Vorlagen stehen quer, eine je Zeile**: Miniatur links, Name und Beschreibung rechts. Die Miniaturen sind dabei kleiner geworden – die richtige Vorschau steht daneben, die Miniatur muss die Vorlage nur unterscheidbar machen.
+
+### Fixed
+
+- **„Keine – Kacheln bleiben unklickbar" ließ sich ohne Neuladen nicht mehr zurücknehmen.** Die Wahl blendet den Aufbau der Detailansicht aus, weil es dann keine gibt – ausgeblendet wurde aber der ganze Block, und in dem stehen die drei Auswahlknöpfe selbst. Wer versehentlich „Keine" wählte, hatte danach nichts mehr vor sich, womit er zurückschalten konnte. Jetzt bleibt die Auswahl stehen, und nur der Aufbau darunter verschwindet.
+
 ## [1.19.0] - 2026-09-08
 
 ### Added

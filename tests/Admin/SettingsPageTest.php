@@ -43,6 +43,177 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
+     * Jeder Bereich des Design-Tabs muss auch Felder haben: Die Navigation
+     * baut sich aus designSections(), die Inhalte holt renderPage() dagegen
+     * aus `PAGE_SLUG . '_design_' . $section`. Ein Bereich ohne passende
+     * Settings-Seite ergibt keinen Fehler, sondern einen Reiter, der auf eine
+     * leere Seite fuehrt — genau die Sorte Luecke, die beim Anlegen des
+     * naechsten Bereichs entsteht.
+     */
+    public function testEveryDesignSectionHasFieldsOfItsOwn(): void
+    {
+        ctp_test_reset_settings();
+        (new SettingsPage())->registerSettings();
+
+        foreach (array_keys($this->invokePrivate('designSections')) as $section) {
+            $this->assertNotSame(
+                [],
+                ctp_test_settings_fields('churchtools-plugin_design_' . $section),
+                sprintf('Der Bereich „%s" hat keine Felder.', $section)
+            );
+        }
+    }
+
+    /**
+     * Zwei Felder des Design-Tabs hiessen beide „Reihenfolge" — einmal fuer
+     * die Kachel, einmal fuer die Detailansicht. Im Fliesstext einer langen
+     * Seite war nicht zu sehen, welches welches ist, und der Nutzerbefund vom
+     * 2026-09-08 („man findet nichts mehr") hatte darin seine konkreteste
+     * Ursache. Die Bereiche trennen sie inzwischen, aber die Namen muessen
+     * auch fuer sich stehen: Wer im Browser sucht, findet beide.
+     */
+    public function testNoTwoDesignFieldsShareALabel(): void
+    {
+        ctp_test_reset_settings();
+        (new SettingsPage())->registerSettings();
+
+        $labels = [];
+        foreach (array_keys($this->invokePrivate('designSections')) as $section) {
+            foreach (ctp_test_settings_fields('churchtools-plugin_design_' . $section) as $field) {
+                $labels[] = $field['title'];
+            }
+        }
+
+        $this->assertSame(
+            [],
+            array_keys(array_filter(array_count_values($labels), static fn (int $count): bool => $count > 1)),
+            'Zwei Felder des Design-Tabs tragen denselben Namen.'
+        );
+    }
+
+    /**
+     * „Keine" blendet den Aufbau der Detailansicht aus (admin-design.js) —
+     * und solange das Klickverhalten im selben Abschnitt stand, verschwanden
+     * die Auswahlknoepfe mit ihm. Auf der eigenen Bereichsseite waere danach
+     * nichts uebrig, mit dem man zurueckschaltet. Die beiden gehoeren deshalb
+     * in getrennte Abschnitte; das Skript blendet nur den zweiten aus.
+     */
+    public function testTheClickBehaviourSitsApartFromWhatItHides(): void
+    {
+        ctp_test_reset_settings();
+        (new SettingsPage())->registerSettings();
+
+        $sections = [];
+        foreach (ctp_test_settings_fields('churchtools-plugin_design_detail') as $field) {
+            $sections[$field['id']] = $field['section'];
+        }
+
+        $this->assertArrayHasKey('click_behavior', $sections);
+        $this->assertArrayHasKey('detail_element_order', $sections);
+        $this->assertNotSame(
+            $sections['detail_element_order'],
+            $sections['click_behavior'],
+            'Das Klickverhalten steht im selben Abschnitt wie das, was es ausblendet.'
+        );
+    }
+
+    /**
+     * `section` kommt wie `tab` aus der Adresse und wird genauso behandelt:
+     * Was nicht in der Liste steht, faellt auf den ersten Bereich zurueck,
+     * statt eine leere Seite zu rendern.
+     */
+    public function testAnUnknownDesignSectionFallsBackToTheStyleSection(): void
+    {
+        $_GET['section'] = 'gibt-es-nicht';
+        $this->assertSame('style', $this->currentDesignSection());
+
+        $_GET['section'] = 'detail';
+        $this->assertSame('detail', $this->currentDesignSection());
+
+        unset($_GET['section']);
+        $this->assertSame('style', $this->currentDesignSection());
+    }
+
+    private function currentDesignSection(): string
+    {
+        return (new ReflectionMethod(SettingsPage::class, 'currentDesignSection'))->invoke(null);
+    }
+
+    /**
+     * `hidden` muss im Backend auch auf Ueberschriften wirken. wp-admins
+     * common.css setzt `h1, h2, h3, h4, h5, h6 { display: block }`, und eine
+     * Autorenregel schlaegt die `[hidden]`-Regel des Browsers — die
+     * ausgeblendete Ueberschrift „Aufbau der Detailansicht" blieb dadurch als
+     * Titel ohne Inhalt stehen (im Browser nachgemessen, nicht vermutet).
+     */
+    public function testHiddenAlsoWorksOnHeadingsInTheAdmin(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-admin \[hidden\]\s*\{[^}]*display:\s*none/',
+            $css,
+            'Ohne diese Regel bleibt eine mit `hidden` versteckte Ueberschrift im Backend stehen.'
+        );
+    }
+
+    /**
+     * Schliessen-Kreuz und Zurueck-Knopf der Detailvorschau erben ihre Optik
+     * aus frontend.css — und damit auch zwei Regeln, die dort richtig sind
+     * und hier stoeren. Beide sind im Browser gemessen worden, nicht
+     * vermutet:
+     *
+     *   - `.ctp-events .ctp-events__back { display: inline-flex }` ist gleich
+     *     spezifisch wie die allgemeine [hidden]-Regel und wird spaeter
+     *     geladen: Der Zurueck-Knopf blieb auch bei „Popup" stehen.
+     *   - `.ctp-events__detail > * { flex: 0 0 100% }` gab ihm die volle
+     *     Innenbreite als *Inhalts*breite; mit Polsterung und Rahmen wurden
+     *     daraus 356px in 320px, also 36px Ueberstand.
+     *
+     * Beide Gegenregeln brauchen den `.ctp-admin`-Vorsatz als Gewicht — ohne
+     * ihn verlieren sie gegen frontend.css.
+     */
+    public function testThePreviewChromeOutranksTheFrontendStylesheet(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-admin \.ctp-design-preview-chrome\[hidden\]\s*\{[^}]*display:\s*none/',
+            $css,
+            'Ohne diese Regel steht der Zurueck-Knopf auch im Popup-Modus in der Vorschau.'
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-admin \.ctp-design-preview-chrome\s*\{[^}]*flex:\s*0 0 auto/',
+            $css,
+            'Ohne diese Regel fuellt der Zurueck-Knopf die Zeile und laeuft um seine Polsterung ueber.'
+        );
+    }
+
+    /**
+     * Die vier Stil-Karten stehen seit 1.19.0 in einer halbbreiten Spalte des
+     * Design-Rasters. `auto-fit` verkleinert die Spaltenzahl nur bei
+     * bestimmter Breite — in der Zelle einer form-table ohne Breitenangabe
+     * blieben es vier Spalten zu 190px: gemessen 796px Raster in einem 600px
+     * breiten Panel, die vierte Karte lag unter der Vorschau. Beide Regeln
+     * gehoeren zusammen, eine allein reicht nicht.
+     */
+    public function testThePresetCardsCannotOutgrowTheirColumn(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-design-layout \.ctp-preset-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0,/',
+            $css,
+            'Ohne eine einzelne minmax(0, 1fr)-Spalte bleibt die min-content-Breite des Rasters zu gross.'
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-design-layout \.ctp-panel \.form-table\s*\{[^}]*width:\s*100%/',
+            $css,
+            'Ohne Breitenangabe waechst die Tabelle auf die max-content-Breite ihres Inhalts.'
+        );
+    }
+
+    /**
      * Die Elternseite der Termin-Adressen muss eine veröffentlichte *Seite*
      * sein. Alles andere hätte entweder keine öffentliche Adresse (Entwurf)
      * oder eine, die WordPress selbst schon belegt (Beitrag) — und die

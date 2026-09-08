@@ -45,7 +45,7 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
 ![Popup mit Bild, Datums-Chip, Titel, Zeit, Ort und Beschreibung](docs/screenshots/popup.png)
 
-**Teilen** — der „Teilen"-Button steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
+**Teilen** — der „Teilen"-Button steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab im Bereich *Detailansicht* unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
 
 ![Popup mit dem „Teilen"-Button unter der Beschreibung](docs/screenshots/teilen-popup.png)
 
@@ -71,9 +71,9 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
 3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
 4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
-5. **Aussehen anpassen.** *ChurchTools → Design*: eine von vier Stil-Vorlagen als Grundlage (Standard, Ruhig, Warm, Strukturiert), darunter Reihenfolge und Sichtbarkeit der Angaben auf einer Kachel, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe — mit Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
+5. **Aussehen anpassen.** *ChurchTools → Design*, aufgeteilt in vier Bereiche: **Stil** (eine von vier Vorlagen als Grundlage — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), **Kachel** (Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis), **Detailansicht** (Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge) und **Listen** (Zeitraum pro Seite). Stil, Kachel und Detailansicht haben ihre Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
 
-6. **Wenn Termine eine eigene Seite bekommen sollen.** Im selben Tab bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
+6. **Wenn Termine eine eigene Seite bekommen sollen.** Im Bereich *Detailansicht* bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
 
 Läuft etwas nicht, steht der Grund auf der Übersichtsseite: Sie zeigt den letzten Abgleich, die Zahl gespeicherter Termine und Fehler im Klartext.
 

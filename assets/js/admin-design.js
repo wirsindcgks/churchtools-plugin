@@ -109,17 +109,30 @@
 	updateEigeneBloecke();
 
 	/**
-	 * Hides the "Aufbau der Detailansicht" editor and its preview panel while
-	 * "Keine" is selected — the setting has no visible effect in that case.
-	 * Both are whole panels now that the click-behavior radios have moved down
-	 * to the global settings: the editor panel holds nothing but that one
-	 * section, so hiding the panel (rather than the <h2>/<table> pair inside
-	 * it, as this did while the radios still sat above them) leaves no empty
-	 * box behind in the layout grid.
+	 * Blendet den Abschnitt „Aufbau der Detailansicht" und die Vorschau
+	 * daneben aus, solange „Keine" gewaehlt ist - dann gibt es keine
+	 * Detailansicht, und die Einstellung hat keine sichtbare Wirkung.
+	 *
+	 * Ausgeblendet wird das <h2>/<table>-Paar des Abschnitts, nicht das ganze
+	 * Panel: Seit 1.19.0 stehen die Auswahlknoepfe („Verhalten") im selben
+	 * Panel darueber, und mit dem Panel waeren sie mit verschwunden - auf der
+	 * eigenen Bereichsseite waere nichts uebrig geblieben, mit dem man
+	 * zurueckschaltet.
 	 */
 	var clickInputs = document.querySelectorAll('.ctp-design-click-input');
-	var detailPanel = detailHiddenInput ? detailHiddenInput.closest('.ctp-panel') : null;
+	var detailOrderTable = detailHiddenInput ? detailHiddenInput.closest('table') : null;
+	var detailOrderHeading = detailOrderTable ? detailOrderTable.previousElementSibling : null;
 	var detailPreviewPanel = detailPreview ? detailPreview.closest('.ctp-panel') : null;
+
+	/*
+	 * Die Rahmung des Termins, das Einzige, worin sich die beiden
+	 * Klickverhalten sichtbar unterscheiden: das Schliessen-Kreuz des Popups
+	 * (oben rechts) und der Zurueck-Knopf der eigenen Seite (oben links).
+	 * Beide liegen in der Vorschau bereit, sichtbar ist immer hoechstens
+	 * einer - siehe renderDetailPreview().
+	 */
+	var previewClose = document.getElementById('ctp-design-preview-close');
+	var previewBack = document.getElementById('ctp-design-preview-back');
 
 	function updateDetailVisibility() {
 		var selected = 'none';
@@ -130,8 +143,18 @@
 		});
 		var hide = selected === 'none';
 
-		if (detailPanel) {
-			detailPanel.hidden = hide;
+		if (previewClose) {
+			previewClose.hidden = selected !== 'popup';
+		}
+		if (previewBack) {
+			previewBack.hidden = selected !== 'page';
+		}
+
+		if (detailOrderTable) {
+			detailOrderTable.hidden = hide;
+		}
+		if (detailOrderHeading) {
+			detailOrderHeading.hidden = hide;
 		}
 		if (detailPreviewPanel) {
 			detailPreviewPanel.hidden = hide;
@@ -199,9 +222,16 @@
 	var addDividerButton = document.getElementById('ctp-design-add-divider');
 	var addSpacerButton = document.getElementById('ctp-design-add-spacer');
 
-	if (!list || !hiddenInput) {
-		return;
-	}
+	/*
+	 * Bis 1.19.0 brach das Skript hier ab, wenn kein Reihenfolge-Editor auf
+	 * der Seite stand - der Design-Tab zeigte ja immer alle vier Bereiche auf
+	 * einmal. Seit sie einzeln aufrufbar sind, gilt das nicht mehr: Auf dem
+	 * Bereich „Stil" gibt es keinen Editor, wohl aber Ecken und die beiden
+	 * Farben, und die treiben die Vorschau daneben. Der Abbruch haette sie
+	 * still eingefroren. Ab hier wird also nur noch das ausgelassen, was den
+	 * Editor wirklich braucht.
+	 */
+	var hasOrderEditor = !!(list && hiddenInput);
 
 	var dragged = null;
 	var separatorCounter = 0;
@@ -216,93 +246,98 @@
 		return key.split('-')[0];
 	}
 
-	list.addEventListener('dragstart', function (event) {
-		var item = event.target.closest('li[draggable]');
-		if (!item) {
-			return;
-		}
-		dragged = item;
-		event.dataTransfer.effectAllowed = 'move';
-	});
+	if (hasOrderEditor) {
+		list.addEventListener('dragstart', function (event) {
+			var item = event.target.closest('li[draggable]');
+			if (!item) {
+				return;
+			}
+			dragged = item;
+			event.dataTransfer.effectAllowed = 'move';
+		});
 
-	list.addEventListener('dragover', function (event) {
-		var target = event.target.closest('li[draggable]');
-		if (!dragged || !target || target === dragged) {
-			return;
-		}
-		event.preventDefault();
+		list.addEventListener('dragover', function (event) {
+			var target = event.target.closest('li[draggable]');
+			if (!dragged || !target || target === dragged) {
+				return;
+			}
+			event.preventDefault();
 
-		var rect = target.getBoundingClientRect();
-		var isAfter = event.clientY - rect.top > rect.height / 2;
-		list.insertBefore(dragged, isAfter ? target.nextSibling : target);
-	});
+			var rect = target.getBoundingClientRect();
+			var isAfter = event.clientY - rect.top > rect.height / 2;
+			list.insertBefore(dragged, isAfter ? target.nextSibling : target);
+		});
 
-	list.addEventListener('drop', function (event) {
-		event.preventDefault();
-	});
+		list.addEventListener('drop', function (event) {
+			event.preventDefault();
+		});
 
-	list.addEventListener('dragend', function () {
-		dragged = null;
-		syncOrderInput();
-		updatePreview();
-	});
+		list.addEventListener('dragend', function () {
+			dragged = null;
+			syncOrderInput();
+			updatePreview();
+		});
 
-	// Delegated: the remove button exists on separator <li>s rendered by PHP
-	// on load and on ones this script appends via addSeparator() below.
-	list.addEventListener('click', function (event) {
-		var removeButton = event.target.closest('.ctp-order-item__remove');
-		if (!removeButton) {
-			return;
-		}
+		// Delegated: the remove button exists on separator <li>s rendered by PHP
+		// on load and on ones this script appends via addSeparator() below.
+		list.addEventListener('click', function (event) {
+			var removeButton = event.target.closest('.ctp-order-item__remove');
+			if (!removeButton) {
+				return;
+			}
 
-		var item = removeButton.closest('li[draggable]');
-		if (item) {
-			item.remove();
+			var item = removeButton.closest('li[draggable]');
+			if (item) {
+				item.remove();
+				syncOrderInput();
+				updatePreview();
+			}
+		});
+
+		function addSeparator(type) {
+			separatorCounter += 1;
+			var key = type + '-' + Date.now().toString(36) + separatorCounter;
+
+			var item = document.createElement('li');
+			item.setAttribute('draggable', 'true');
+			item.setAttribute('data-key', key);
+			item.className = 'ctp-order-item ctp-order-item--separator';
+
+			var handle = document.createElement('span');
+			handle.className = 'dashicons dashicons-menu';
+			handle.setAttribute('aria-hidden', 'true');
+			item.appendChild(handle);
+			item.appendChild(document.createTextNode(labels[type] || type));
+
+			var removeButton = document.createElement('button');
+			removeButton.type = 'button';
+			removeButton.className = 'ctp-order-item__remove';
+			removeButton.setAttribute('aria-label', labels.remove);
+			removeButton.innerHTML = '&times;';
+			item.appendChild(removeButton);
+
+			list.appendChild(item);
 			syncOrderInput();
 			updatePreview();
 		}
-	});
 
-	function addSeparator(type) {
-		separatorCounter += 1;
-		var key = type + '-' + Date.now().toString(36) + separatorCounter;
+		if (addDividerButton) {
+			addDividerButton.addEventListener('click', function () {
+				addSeparator('divider');
+			});
+		}
 
-		var item = document.createElement('li');
-		item.setAttribute('draggable', 'true');
-		item.setAttribute('data-key', key);
-		item.className = 'ctp-order-item ctp-order-item--separator';
-
-		var handle = document.createElement('span');
-		handle.className = 'dashicons dashicons-menu';
-		handle.setAttribute('aria-hidden', 'true');
-		item.appendChild(handle);
-		item.appendChild(document.createTextNode(labels[type] || type));
-
-		var removeButton = document.createElement('button');
-		removeButton.type = 'button';
-		removeButton.className = 'ctp-order-item__remove';
-		removeButton.setAttribute('aria-label', labels.remove);
-		removeButton.innerHTML = '&times;';
-		item.appendChild(removeButton);
-
-		list.appendChild(item);
-		syncOrderInput();
-		updatePreview();
-	}
-
-	if (addDividerButton) {
-		addDividerButton.addEventListener('click', function () {
-			addSeparator('divider');
-		});
-	}
-
-	if (addSpacerButton) {
-		addSpacerButton.addEventListener('click', function () {
-			addSeparator('spacer');
-		});
+		if (addSpacerButton) {
+			addSpacerButton.addEventListener('click', function () {
+				addSeparator('spacer');
+			});
+		}
 	}
 
 	function syncOrderInput() {
+		if (!hasOrderEditor) {
+			return;
+		}
 		var keys = Array.prototype.map.call(list.querySelectorAll('li[data-key]'), function (item) {
 			return item.getAttribute('data-key');
 		});
@@ -310,6 +345,9 @@
 	}
 
 	function currentOrder() {
+		if (!hasOrderEditor) {
+			return ELEMENT_KEYS;
+		}
 		var value = hiddenInput.value.split(',').filter(Boolean);
 		var fixedKeys = value.filter(function (key) {
 			return !isSeparator(key);
@@ -329,8 +367,46 @@
 		return 'rounded';
 	}
 
+	/**
+	 * Die Ecken sind die einzige Stil-Einstellung, die beide Vorschauen
+	 * anfasst - und die einzige, die frueher in updatePreview() mitlief,
+	 * also am Reihenfolge-Editor hing. Seit die Bereiche einzeln aufgerufen
+	 * werden, steht sie hier fuer sich.
+	 *
+	 * Der Abbruch ohne Auswahlknoepfe ist keine Vorsicht, sondern noetig:
+	 * Auf den Bereichen ohne Ecken-Auswahl haette currentCornerStyle() den
+	 * Vorgabewert „rounded" gemeldet und removeProperty() damit das
+	 * serverseitig gesetzte --ctp-radius aus der Vorschau geloescht - eine
+	 * eckige Einstellung waere dort rund erschienen.
+	 */
+	function updateCorners() {
+		if (!cornerInputs.length) {
+			return;
+		}
+
+		// Both radius variables, same as CardDesign::cssVariables() — the pill
+		// one drives the calendar/all-day badges, which stay round on their own.
+		// Applied to the detail preview too: its badge and image frame follow
+		// the same setting on the front end.
+		[preview, detailPreview].forEach(function (frame) {
+			if (!frame) {
+				return;
+			}
+
+			if (currentCornerStyle() === 'square') {
+				frame.style.setProperty('--ctp-radius', '0px');
+				frame.style.setProperty('--ctp-radius-pill', '0px');
+			} else {
+				frame.style.removeProperty('--ctp-radius');
+				frame.style.removeProperty('--ctp-radius-pill');
+			}
+		});
+	}
+
 	function updatePreview() {
-		if (!preview) {
+		updateCorners();
+
+		if (!preview || !hasOrderEditor) {
 			return;
 		}
 
@@ -357,24 +433,6 @@
 		preview.style.setProperty('--ctp-order-date', position.date);
 		preview.style.setProperty('--ctp-order-time', position.time);
 		preview.style.setProperty('--ctp-order-location', position.location);
-
-		// Both radius variables, same as CardDesign::cssVariables() — the pill
-		// one drives the calendar/all-day badges, which stay round on their own.
-		// Applied to the detail preview too: its badge and image frame follow
-		// the same setting on the front end.
-		[preview, detailPreview].forEach(function (frame) {
-			if (!frame) {
-				return;
-			}
-
-			if (currentCornerStyle() === 'square') {
-				frame.style.setProperty('--ctp-radius', '0px');
-				frame.style.setProperty('--ctp-radius-pill', '0px');
-			} else {
-				frame.style.removeProperty('--ctp-radius');
-				frame.style.removeProperty('--ctp-radius-pill');
-			}
-		});
 
 		renderPreviewSeparators(order, position);
 	}
@@ -458,6 +516,14 @@
 	}
 
 	function updateAccent() {
+		// Ohne das Haekchen ist die Akzentfarbe auf dieser Seite gar nicht
+		// einstellbar - dann gibt es nichts zu spiegeln, und das
+		// removeProperty() weiter unten wuerde die serverseitig gesetzte
+		// Farbe aus der Vorschau loeschen. Gleiche Falle wie bei den Ecken.
+		if (!accentEnabledInput) {
+			return;
+		}
+
 		var enabled = !!(accentEnabledInput && accentEnabledInput.checked);
 
 		// The accent color is a three-part control (swatch, hex field, reset
@@ -499,6 +565,11 @@
 	}
 
 	function updateButtonColor() {
+		// Siehe updateAccent(): kein Haekchen auf der Seite, nichts zu tun.
+		if (!buttonEnabledInput) {
+			return;
+		}
+
 		var enabled = !!(buttonEnabledInput && buttonEnabledInput.checked);
 
 		// Same three-part control as the accent field above (swatch, hex

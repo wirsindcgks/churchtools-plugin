@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.19.0
+Stable tag: 1.20.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
-* **Design-Tab** mit Live-Vorschau: vier Stil-Vorlagen (Standard, Ruhig, Warm, Strukturiert), Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Aufbau der Detailansicht samt „Teilen“-Button, Eckenstil, Bild-Seitenverhältnis, Akzentfarbe (Farbwähler oder Hex-Code) und Zeitraum pro Seite.
+* **Design-Tab** mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
@@ -33,7 +33,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 3. Im Menü „ChurchTools“ → Tab „Verbindung“ den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
 4. Im Tab „Kalender“ auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
 5. Im Tab „Übersicht“ einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
-6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Design“).
+6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Einbinden“).
 
 == Verwendung ==
 
@@ -52,7 +52,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
 * `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
 * `eventfinder` – Geführte Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
-* `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung im „Design“-Tab, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
+* `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung im „Design“-Tab unter „Listen“, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
 * `paging` – Button „Weitere Termine laden“ anzeigen: `1` (Standard) oder `0`. Nur bei `layout="list"`/`"grid"`.
 
 = Die drei Ansichten =
@@ -75,7 +75,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 **Liste** und **Grid** zeigen nicht alle synchronisierten Termine auf einmal, sondern zunächst den angebrochenen laufenden Monat plus den darauffolgenden – bei Bedarf hängt ein Klick auf „Weitere Termine laden“ die jeweils nächsten zwei Monate unten an, ohne die Seite neu zu laden. Das hält die erste Seitenauslieferung klein, gerade bei vielen Kalendern mit wöchentlichen Serien.
 
-Die Zeitraumlänge ist global im „Design“-Tab einstellbar (Standard: 2 Monate) und pro Shortcode/Block/Element per `months` überschreibbar; der Nachladen-Button lässt sich mit `paging="0"` abschalten (z. B. für eine kurze Teaser-Liste mit `limit="3"`). Die Grenzen liegen immer auf Monatsanfängen, passen also exakt zu den Monatstrennern (`month_dividers="1"`). Enthält ein Zeitraum überhaupt keine Termine, springt die Ansicht automatisch weiter bis zum nächsten Monat mit Terminen, statt eine leere Liste zu zeigen.
+Die Zeitraumlänge ist global im „Design“-Tab im Bereich „Listen“ einstellbar (Standard: 2 Monate) und pro Shortcode/Block/Element per `months` überschreibbar; der Nachladen-Button lässt sich mit `paging="0"` abschalten (z. B. für eine kurze Teaser-Liste mit `limit="3"`). Die Grenzen liegen immer auf Monatsanfängen, passen also exakt zu den Monatstrennern (`month_dividers="1"`). Enthält ein Zeitraum überhaupt keine Termine, springt die Ansicht automatisch weiter bis zum nächsten Monat mit Terminen, statt eine leere Liste zu zeigen.
 
 Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ im Sync-Tab) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
 
@@ -91,7 +91,7 @@ Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; 
 
 = Adresse der Terminseite =
 
-Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
+Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ im Bereich „Detailansicht“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
 
 * Die Adressen werden lesbar: `/termine/gottesdienst-06-09-2026/` statt `/churchtools-termin/4021/`. Titel *und* Datum, weil ein Titel allein eine Terminserie benennt und nicht einen einzelnen Termin.
 * Der Termin wird zum Inhalt dieser Seite. WordPress liefert damit eine ganz normale Seite aus – mit der Vorlage des Theme, dessen Kopf- und Fußbereich und allem, was sonst dazugehört. Ohne ausgewählte Seite gibt es für den Termin keinen echten WordPress-Beitrag; auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlt der Terminseite dann die Vorlage des Theme.
@@ -100,13 +100,13 @@ Die ausgewählte Seite bleibt ganz normal erreichbar und behält ihren eigenen I
 
 = Teilen-Button =
 
-Popup und eigene Terminseite können einen „Teilen“-Button zeigen. Er ist standardmäßig aus und wird im Tab „Design“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
+Popup und eigene Terminseite können einen „Teilen“-Button zeigen. Er ist standardmäßig aus und wird im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
 
 Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail und alles, was dort installiert ist). Am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“; wo auch die Zwischenablage nicht zur Verfügung steht (kein HTTPS), wird die Adresse zum Markieren angezeigt. Es wird kein Skript eines Drittanbieters geladen und kein Zählpixel eingebunden: Solange niemand den Button drückt, geht nichts ins Netz.
 
 = Importieren-Button =
 
-Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild.
+Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild.
 
 Gehört der Termin zu einer Serie, fragt der Button nach dem Klick, was in die Datei soll: „Nur dieser Termin“ oder „Alle N Termine“. Die Zahl steht dort, damit sichtbar ist, wie viele es tatsächlich sind – gezählt werden die künftigen Termine, die synchronisiert sind (siehe Sync-Zeitraum). Bei einem Einzeltermin gibt es nichts zu fragen, dort lädt ein Klick die Datei sofort.
 
@@ -171,7 +171,7 @@ Ja, und dafür ist ab 1.16.0 nichts einzustellen:
 * Unter `/churchtools-termine-sitemap.xml` liegt eine Sitemap aller kommenden Termine, in der robots.txt angekündigt. Sie ist der Weg zu allem, was erst hinter „Weitere Termine laden“ steht – dort klickt keine Suchmaschine.
 * Terminseiten tragen einen eigenen Seitentitel, eine eigene Kurzbeschreibung (Datum, Uhrzeit, Ort zuerst), das Bild des Termins als Vorschau und ein Canonical auf sich selbst.
 
-Empfehlung bleibt die Einstellung *Terminseite* im Design-Tab: Ohne sie liegen die Termine unter `/churchtools-termin/<id>/` und damit außerhalb der Vorlage des Theme – als Ziel eines Suchtreffers ist eine Seite mit Kopf- und Fußbereich die bessere Landung.
+Empfehlung bleibt die Einstellung *Adresse der Terminseite* im Design-Tab, Bereich *Detailansicht*: Ohne sie liegen die Termine unter `/churchtools-termin/<id>/` und damit außerhalb der Vorlage des Theme – als Ziel eines Suchtreffers ist eine Seite mit Kopf- und Fußbereich die bessere Landung.
 
 Mit **Yoast SEO** oder **Rank Math** greifen deren Angaben; das Plugin füllt sie mit den Daten des Termins (Titel, Beschreibung, Canonical, Vorschau). Andere SEO-Plugins (SEOPress, All in One SEO, The SEO Framework) werden erkannt, damit nichts doppelt im Seitenkopf steht – ihre Titel und Canonicals bleiben dann aber die der Terminliste. Strukturierte Daten und Sitemap sind davon unberührt.
 
@@ -341,6 +341,14 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.20.0 =
+
+* Geändert: Der Design-Tab ist in die vier Bereiche „Stil“, „Kachel“, „Detailansicht“ und „Listen“ aufgeteilt – umschaltbar über eine Reiterreihe, statt alle vier untereinander auf einer Seite
+* Geändert: Die beiden gleichnamigen „Reihenfolge“-Felder heißen jetzt „Reihenfolge auf der Kachel“ und „Reihenfolge in der Detailansicht“
+* Geändert: Die Vorschau der Detailansicht zeigt jetzt die Rahmung des gewählten Klickverhaltens – bei „Popup“ das Schließen-Kreuz, bei „Eigene Seite“ den Zurück-Button
+* Geändert: Die Stil-Vorlagen stehen quer, eine je Zeile: Miniatur links, Name und Beschreibung rechts
+* Behoben: „Keine – Kacheln bleiben unklickbar“ ließ sich ohne Neuladen der Seite nicht mehr zurücknehmen
 
 = 1.19.0 =
 

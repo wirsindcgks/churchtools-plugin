@@ -98,6 +98,19 @@
     color: var(--ctp-admin-muted);
 }
 
+/*
+ * `hidden` muss auch auf Ueberschriften wirken. wp-admins common.css setzt
+ * `h1, h2, h3, h4, h5, h6 { display: block }`, und eine Autorenregel schlaegt
+ * die `[hidden] { display: none }` des Browsers - eine ausgeblendete
+ * Ueberschrift blieb dadurch stehen. Aufgefallen beim Ausblenden des
+ * Abschnitts „Aufbau der Detailansicht" (admin-design.js): Die Tabelle
+ * verschwand, ihre Ueberschrift blieb als Titel ohne Inhalt zurueck. Kein
+ * !important noetig, die Klasse gibt genug Gewicht.
+ */
+.ctp-admin [hidden] {
+    display: none;
+}
+
 .ctp-admin .nav-tab-wrapper {
     margin-bottom: 4px;
 }
@@ -155,6 +168,84 @@
 .ctp-admin .nav-tab-active,
 .ctp-admin .nav-tab-active:hover {
     box-shadow: inset 0 -3px 0 var(--ctp-admin-accent);
+}
+
+/*
+ * Zweite Ebene: die Bereiche des Design-Tabs (siehe
+ * SettingsPage::designSections()).
+ *
+ * Erster Anlauf war eine freistehende Segmentschiene - und der Nutzer hat sie
+ * schlicht uebersehen („mir ist es erst nicht aufgefallen"). Gemessen stand
+ * sie 24px ueber dem Panel und 306px breit zwischen zwei viel schwereren
+ * Nachbarn: darueber die Statuszeile, darunter der Panelrahmen. Etwas, das an
+ * nichts haengt, liest sich als Filterchip und nicht als Navigation.
+ *
+ * Jetzt eine angesetzte Reiterreihe: eine durchgehende Linie unter der Reihe,
+ * der gewaehlte Reiter sitzt weiss auf dieser Linie und ueberdeckt sie um
+ * einen Pixel - er geht damit in den Kasten darunter ueber, der direkt
+ * anschliesst. Dieselbe Sprache wie die Haupt-Reiter darueber, nur eine
+ * Nummer kleiner und mit der Akzentlinie oben statt unten, damit die beiden
+ * Ebenen nicht verwechselt werden.
+ */
+.ctp-subtabs {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin: 20px 0 0;
+    padding: 0;
+    border-bottom: 1px solid var(--ctp-admin-border);
+}
+
+.ctp-admin .ctp-subtab {
+    /* Der negative Rand legt den Reiter auf die Linie der Reihe - ohne ihn
+       stuende er darueber und die Linie liefe unter ihm durch. */
+    margin-bottom: -1px;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: var(--ctp-admin-radius) var(--ctp-admin-radius) 0 0;
+    color: var(--ctp-admin-muted);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    text-decoration: none;
+}
+
+.ctp-admin .ctp-subtab:hover {
+    color: var(--ctp-admin-text);
+    background: color-mix(in srgb, var(--ctp-admin-surface) 60%, transparent);
+}
+
+/*
+ * Der gewaehlte Reiter traegt die Flaeche des Kastens darunter und schliesst
+ * ihn nach oben ab: weisser Grund, Rahmen an drei Seiten, unten offen. Die
+ * Akzentlinie liegt als inset-Schatten oben - so wie bei den Haupt-Reitern
+ * unten - und kostet dadurch keine Hoehe, die die Nachbarn verschieben wuerde.
+ */
+.ctp-admin .ctp-subtab--active,
+.ctp-admin .ctp-subtab--active:hover {
+    color: var(--ctp-admin-text);
+    font-weight: 600;
+    background: var(--ctp-admin-surface);
+    border-color: var(--ctp-admin-border);
+    box-shadow: inset 0 3px 0 var(--ctp-admin-accent);
+}
+
+.ctp-admin .ctp-subtab:focus-visible {
+    outline: 2px solid var(--ctp-admin-accent);
+    outline-offset: -2px;
+}
+
+/*
+ * Der Kasten schliesst direkt an die Reiterreihe an - genau das macht sie zur
+ * Navigation *dieses* Kastens. Der erste Kasten im Formular verliert dafuer
+ * seinen oberen Abstand; der Rest des Tabs behaelt seinen.
+ */
+.ctp-subtabs + .ctp-settings-form > .ctp-design-layout,
+.ctp-subtabs + .ctp-settings-form > .ctp-panel {
+    margin-top: 0;
 }
 
 /* The shared panel chrome every tab's content sits in — settings forms, the sync
@@ -733,10 +824,6 @@
 
 /* ---------- Stil-Vorlagen (renderDesignPresetField(), DesignPreset.php) ---------- */
 
-.ctp-design-style {
-    margin-bottom: 20px;
-}
-
 .ctp-preset-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -745,14 +832,101 @@
 }
 
 /*
+ * Zwei feste Spalten statt auto-fit, sobald die Karten im Raster des
+ * Design-Tabs stehen - und `width: 100%` fuer die Tabelle darum. Beides
+ * gehoert zusammen, und der Grund ist derselbe:
+ *
+ * Die Karten liegen in einer Zelle von WordPress' form-table, und eine
+ * Tabelle ohne Breitenangabe waechst auf die max-content-Breite ihres
+ * Inhalts. `auto-fit` verkleinert die Spaltenzahl nur bei *bestimmter*
+ * Breite - in der Tabellenzelle blieben es vier Spalten zu 190px. Gemessen:
+ * 796px Raster in einem 600px breiten Panel, 254px Ueberstand, die vierte
+ * Karte lag unter der Vorschau daneben. Bis 1.19.0 fiel das nicht auf, weil
+ * das Stil-Panel ueber die volle Seitenbreite lief.
+ *
+ * Erst die feste Spaltenzahl mit `minmax(0, 1fr)` macht die min-content-
+ * Breite des Rasters wieder klein genug, dass `width: 100%` die Tabelle
+ * ueberhaupt begrenzen kann. Nachgemessen: 532px Raster in 544px
+ * Innenbreite, kein Ueberlauf.
+ */
+.ctp-design-layout .ctp-panel .form-table {
+    width: 100%;
+}
+
+/*
+ * Im halbbreiten Panel des Design-Tabs steht eine Vorlage je Zeile, quer:
+ * Miniatur links, Name und Beschreibung rechts.
+ *
+ * Zwei nebeneinander waren der erste Anlauf, und der Nutzerbefund dazu war
+ * „der Stil-Waehler ist etwas gedrueckt" - zu Recht. Gemessen: Karte 260px
+ * breit bei 350px Hoehe, die Beschreibung auf vier Zeilen zu je gut dreissig
+ * Zeichen, die Miniatur auf 206px gezogen. Quer bekommt die Beschreibung
+ * ihre Zeilenlaenge zurueck, und die Miniatur wieder die Groesse, fuer die
+ * ihr 16:7-Ausschnitt gezeichnet ist.
+ *
+ * Eine Spalte loest denselben Ueberlauf wie vorher die feste Zweizahl: Die
+ * min-content-Breite eines einzelnen `minmax(0, 1fr)`-Tracks ist null, erst
+ * dadurch greift `width: 100%` an der Tabelle darum (siehe oben).
+ */
+@media (min-width: 961px) {
+    .ctp-design-layout .ctp-preset-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /*
+     * Drei Spuren: Auswahlknopf, Miniatur, Text. Der Knopf bekommt seine
+     * eigene - vorher lag er absolut in der Ecke der Karte und damit auf der
+     * Miniatur (gemessen 17 x 13px Ueberdeckung, 3px bis ins Bild hinein).
+     * Das war in der hochkanten Fassung noch die graue Polsterung der
+     * Miniatur; quer ist die Ecke deren Bild.
+     */
+    .ctp-design-layout .ctp-preset-body {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        column-gap: 16px;
+        align-content: start;
+        padding-left: 36px;
+    }
+
+    /* Mittig auf der eigenen Spur statt in der Ecke - die Karte ist quer
+       niedrig genug, dass die Mitte die ruhigere Stelle ist. */
+    .ctp-design-layout .ctp-preset-input {
+        top: 50%;
+        left: 13px;
+        transform: translateY(-50%);
+    }
+
+    /* Die Miniatur ueber beide Zeilen, Name und Beschreibung daneben.
+     * Kleiner als in der hochkanten Fassung, und zwar auf Nutzerwunsch: Die
+     * echte Vorschau steht daneben, die Miniatur muss die Vorlage nur
+     * unterscheidbar machen, nicht vorfuehren. Weniger Polsterung dazu, damit
+     * von den 120px moeglichst viel auf die Kachel selbst faellt. */
+    .ctp-design-layout .ctp-preset-swatch {
+        grid-row: 1 / span 2;
+        align-self: start;
+        padding: 10px;
+    }
+
+    .ctp-design-layout .ctp-preset-name {
+        margin-top: 0;
+    }
+}
+
+/*
  * Das Radio liegt in der Ecke der Karte statt vor ihrer Beschriftung: Die
  * ganze Karte ist die Schaltflaeche (sie steckt im <label>), der Knopf zeigt
  * nur noch an, welche gewaehlt ist. Absolut positioniert, damit er die
  * Miniatur darunter nicht verschiebt.
  */
+/*
+ * Raster statt Block, damit die Karte darin von selbst auf die Zellenhoehe
+ * geht - siehe .ctp-preset-body darunter, dem dafuer die eigene Hoehenangabe
+ * genommen wurde. Der Auswahlknopf liegt absolut und ist deshalb kein
+ * Rasterkind.
+ */
 .ctp-preset-option {
     position: relative;
-    display: block;
+    display: grid;
     cursor: pointer;
 }
 
@@ -764,9 +938,22 @@
     margin: 0;
 }
 
+/*
+ * Ohne eigene Hoehe. Hier stand `height: 100%`, damit die Karten einer Reihe
+ * gleich hoch werden - und weil die Elemente dieses Projekts in `content-box`
+ * rechnen, kamen Polsterung und Rahmen obendrauf: Die Karte ragte **26px**
+ * unter ihre Rasterzelle (2 x 12 + 2 x 1). In einer Reihe fiel das nicht auf,
+ * untereinander schon - aus 12px Rasterabstand wurden **-14px**, die Karten
+ * ueberlappten sich, und die Rahmen zweier Nachbarn lagen aufeinander.
+ * Gefunden hat es der Nutzer im Bild.
+ *
+ * Die gleiche Hoehe macht jetzt das Layout: Die Zelle streckt die Karte
+ * (`.ctp-preset-option` ist ein Raster), und Streckung misst die *aeussere*
+ * Kante. Dieselbe Loesung wie bei den Panels in 1.7.0, dem Popup-Rumpf und
+ * der Import-Karte - die Angabe weglassen.
+ */
 .ctp-preset-body {
     display: block;
-    height: 100%;
     padding: 12px;
     border: 1px solid var(--ctp-admin-border);
     border-radius: 6px;
@@ -905,6 +1092,10 @@
 
 #ctp-design-detail-preview {
     --ctp-accent: #2563eb;
+    /* Ankerpunkt fuer das Schliessen-Kreuz der Popup-Fassung, das wie im
+       Frontend absolut in der oberen rechten Ecke sitzt (dort ist der Anker
+       der <dialog>, hier dessen Stellvertreter). */
+    position: relative;
     width: 100%;
     max-width: 320px;
     padding: 1.5rem;
@@ -927,6 +1118,45 @@
 
 #ctp-design-preview .ctp-events__card {
     --ctp-accent: #2563eb;
+}
+
+/*
+ * Schliessen-Kreuz und Zurueck-Knopf der Detailvorschau: Sie zeigen, welche
+ * Rahmung der Termin beim gewaehlten Klickverhalten bekommt, und sind reine
+ * Anschauung - kein Fokus, keine Klicks, kein Zeigefinger. Die Optik erben
+ * sie unveraendert von .ctp-events__modal-close und .ctp-events__back aus
+ * frontend.css; hier steht nur, dass sie nichts tun.
+ */
+.ctp-design-preview-chrome {
+    pointer-events: none;
+    cursor: default;
+}
+
+/*
+ * Der Zurueck-Knopf soll seinen Text umschliessen, nicht die Zeile fuellen.
+ * frontend.css gibt jedem Kind der Detailansicht `flex: 0 0 100%`, damit die
+ * Angaben untereinander stehen - und weil hier in `content-box` gerechnet
+ * wird, gelten die 100% dem *Inhalt*, Polsterung und Rahmen kommen obendrauf.
+ * Gemessen: 356px in 320px Innenbreite, **36px Ueberstand**, auf zwei Zehntel
+ * genau 2 x 16,8 + 2 x 1. Dieselbe Familie wie die Vorlagenkarte weiter oben,
+ * nur kommt die feste Groesse diesmal aus einer fremden Datei.
+ *
+ * Die Klasse allein reicht als Gewicht nicht: `.ctp-events__detail > *` ist
+ * gleich spezifisch, und frontend.css wird nach admin.css geladen.
+ */
+.ctp-admin .ctp-design-preview-chrome {
+    flex: 0 0 auto;
+}
+
+/*
+ * `hidden` muss hier staerker sein als sonst. frontend.css setzt
+ * `.ctp-events .ctp-events__back { display: inline-flex }` - gleich
+ * spezifisch wie die allgemeine [hidden]-Regel, aber spaeter geladen, also
+ * gewinnt sie. Der Zurueck-Knopf blieb dadurch auch bei „Popup" stehen. Die
+ * eigene Klasse dazu gibt das noetige Gewicht.
+ */
+.ctp-admin .ctp-design-preview-chrome[hidden] {
+    display: none;
 }
 
 /*

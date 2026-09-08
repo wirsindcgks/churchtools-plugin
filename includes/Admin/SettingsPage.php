@@ -52,6 +52,12 @@ final class SettingsPage
     private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
     private const DEFAULT_TAB = 'status';
 
+    /**
+     * Der Stil ist die Grundlage, auf der Kachel und Detailansicht aufsetzen —
+     * deshalb der Bereich, auf dem der Design-Tab aufgeht.
+     */
+    private const DEFAULT_DESIGN_SECTION = 'style';
+
     private string $pageHook = '';
 
     public function register(): void
@@ -107,6 +113,40 @@ final class SettingsPage
     }
 
     /**
+     * Die vier Bereiche des Design-Tabs, als eigene Ebene unter `tab=design`
+     * (`&section=…`). Sie sind seit jeher vier getrennte Settings-Seiten
+     * (siehe registerSettings()) — bis 1.19.0 standen sie nur alle vier
+     * untereinander auf einer Seite: 13 Felder, rund 3.100 Zeichen
+     * Beschreibung und bei 1440×900 gut fünf Bildschirme Höhe, das Fünffache
+     * des nächstgrößten Tabs. Jeder Bereich bringt jetzt sein eigenes <form>
+     * mit, was aus demselben Grund trägt wie bei den Tabs darüber:
+     * sanitizeSettings() lässt Schlüssel, die nicht im $_POST stehen, stehen
+     * (array_key_exists-Rückfall), und jede Checkbox trägt ihren versteckten
+     * `0`-Zwilling, damit „abgehakt" von „nicht auf dieser Seite"
+     * unterscheidbar bleibt.
+     *
+     * Die Schlüssel sind zugleich die Suffixe der Settings-Seiten
+     * (`self::PAGE_SLUG . '_design_' . $section`).
+     */
+    private static function designSections(): array
+    {
+        return [
+            'style' => __('Stil', 'churchtools-plugin'),
+            'tile' => __('Kachel', 'churchtools-plugin'),
+            'detail' => __('Detailansicht', 'churchtools-plugin'),
+            'list' => __('Listen', 'churchtools-plugin'),
+        ];
+    }
+
+    private static function currentDesignSection(): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which design section to display), not a state change; same pattern as currentTab().
+        $section = sanitize_key((string) ($_GET['section'] ?? self::DEFAULT_DESIGN_SECTION));
+
+        return array_key_exists($section, self::designSections()) ? $section : self::DEFAULT_DESIGN_SECTION;
+    }
+
+    /**
      * Purely cosmetic (tab-nav scanability) — keyed the same as tabs(), one dashicon
      * per topic so the tabs read as distinct sections instead of plain text labels.
      */
@@ -145,7 +185,10 @@ final class SettingsPage
         // shortcode/block, an unrelated concern to whether the admin's Design
         // tab preview needs the stylesheet. Loaded after ctp-admin so its
         // .ctp-events rules (needed for the live preview) aren't shadowed by it.
-        if (self::currentTab() === 'design') {
+        // Der Bereich „Listen" ist der einzige des Design-Tabs ohne Vorschau -
+        // dort braucht es weder das Frontend-Stylesheet noch das Skript, das
+        // sie treibt (gleiche Rechnung wie beim Medien-Dialog oben).
+        if (self::currentTab() === 'design' && self::currentDesignSection() !== 'list') {
             wp_enqueue_style('ctp-admin-design', CTP_PLUGIN_URL . 'assets/css/frontend.css', ['ctp-admin'], CTP_VERSION);
             wp_enqueue_script('ctp-admin-design', CTP_PLUGIN_URL . 'assets/js/admin-design.js', [], CTP_VERSION, true);
             // Every other user-facing string in this plugin is translated in PHP
@@ -191,32 +234,6 @@ final class SettingsPage
         add_settings_field('keep_data_on_uninstall', __('Beim Deinstallieren', 'churchtools-plugin'), [$this, 'renderKeepDataOnUninstallField'], $syncPage, 'ctp_sync');
 
         /*
-         * The Design tab is grouped by "can you watch this change happen?", not
-         * by which data structure a setting belongs to:
-         *
-         *   _design_tile   -> the card's element order, paired in the layout grid
-         *                     with the card preview it drives
-         *   _design_detail -> the detail view's element order, paired with the
-         *                     detail preview
-         *   _design_global -> everything that applies site-wide and has no
-         *                     drag&drop of its own (click behavior, corners,
-         *                     field visibility, image ratio, accent and button
-         *                     color, months per page)
-         *
-         * Click behavior started out above the detail editor, on the grounds
-         * that it decides whether a detail view is reachable at all. It reads
-         * as a property *of that editor* there, though, while it in fact
-         * governs every card on the site — so it now sits with the rest of the
-         * site-wide settings, as the first of them.
-         *
-         * Previously the five global settings sat *between* the two drag&drop
-         * editors in one tall left-hand column, which pushed the detail editor
-         * far below the detail preview it belongs to — you could not see the
-         * live preview react while dragging. Page slugs only select which
-         * do_settings_sections() call renders a section; saving is governed
-         * solely by settings_fields(self::PAGE_SLUG) in renderPage().
-         */
-        /*
          * Vier Gruppen statt der bisherigen drei plus Sammelbecken. Bis 1.5.2
          * gab es einen Abschnitt „Globale Einstellungen", in dem acht Felder
          * lagen, die miteinander wenig zu tun hatten: das Klickverhalten neben
@@ -231,6 +248,11 @@ final class SettingsPage
          *   2. Was steht auf einer Kachel?            (Reihenfolge, Sichtbarkeit, Bildformat)
          *   3. Was passiert beim Klick darauf?        (Detailansicht, Adresse)
          *   4. Wie viel wird auf einmal geladen?      (Zeitraum pro Seite)
+         *
+         * Seit 1.19.0 ist diese Sortierung auch die Navigation: Jede der vier
+         * Gruppen ist ein eigener Bereich des Design-Tabs
+         * (`&section=style|tile|detail|list`, siehe designSections()), statt
+         * dass alle vier untereinander auf einer Seite stehen.
          *
          * Seitenslugs waehlen nur aus, welcher do_settings_sections()-Aufruf
          * einen Abschnitt rendert; gespeichert wird weiterhin allein ueber
@@ -255,7 +277,12 @@ final class SettingsPage
 
         $designTilePage = self::PAGE_SLUG . '_design_tile';
         add_settings_section('ctp_design_order', __('Aufbau der Kachel', 'churchtools-plugin'), '__return_false', $designTilePage);
-        add_settings_field('element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
+        // Voller Name statt nur „Reihenfolge": Derselbe Titel stand bis 1.19.0
+        // zweimal auf derselben Seite - einmal hier fuer die Kachel, einmal
+        // unten fuer die Detailansicht. Die Bereiche trennen sie inzwischen,
+        // aber die Feldliste des Tabs liest man am Stueck (und Suchen im
+        // Browser findet beide), also traegt jedes seinen Ort im Namen.
+        add_settings_field('element_order', __('Reihenfolge auf der Kachel', 'churchtools-plugin'), [$this, 'renderElementOrderField'], $designTilePage, 'ctp_design_order');
         // Beide betreffen ausschliesslich die Kachel: Die Sichtbarkeit arbeitet
         // auf CardDesign::TOGGLEABLE_KEYS, und das Seitenverhaeltnis greift nur
         // im Kachelbild (die Detailansicht begrenzt ihr Bild ueber die Hoehe).
@@ -263,19 +290,30 @@ final class SettingsPage
         add_settings_field('media_aspect_ratio', __('Bild-Seitenverhältnis', 'churchtools-plugin'), [$this, 'renderMediaAspectRatioField'], $designTilePage, 'ctp_design_order');
 
         $designDetailPage = self::PAGE_SLUG . '_design_detail';
+        /*
+         * Zwei Abschnitte auf einer Seite, und die Trennung ist nicht nur
+         * Ordnung: Bei „Keine" gibt es gar keine Detailansicht, dann blendet
+         * admin-design.js den Aufbau darunter aus. Solange beides in einem
+         * Abschnitt stand, verschwanden mit ihm auch die Auswahlknoepfe, mit
+         * denen man zurueckschaltet - auf der eigenen Bereichsseite waere die
+         * Seite dadurch leer gewesen. Das Verhalten bleibt jetzt stehen.
+         *
+         * Das Klickverhalten steht vor der Reihenfolge, weil es die Frage davor
+         * beantwortet: Gibt es ueberhaupt eine Detailansicht, und wo oeffnet
+         * sie? Die Adresse folgt unmittelbar, sie ist die zweite Haelfte
+         * derselben Entscheidung.
+         */
+        add_settings_section('ctp_design_detail_behavior', __('Verhalten', 'churchtools-plugin'), '__return_false', $designDetailPage);
+        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_detail_behavior');
+        add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designDetailPage, 'ctp_design_detail_behavior');
+
         add_settings_section('ctp_design_detail_order', __('Aufbau der Detailansicht', 'churchtools-plugin'), '__return_false', $designDetailPage);
-        // Das Klickverhalten steht vor der Reihenfolge, weil es die Frage davor
-        // beantwortet: Gibt es ueberhaupt eine Detailansicht, und wo oeffnet
-        // sie? Die Adresse folgt unmittelbar, sie ist die zweite Haelfte
-        // derselben Entscheidung.
-        add_settings_field('click_behavior', __('Bei Klick auf eine Kachel', 'churchtools-plugin'), [$this, 'renderClickBehaviorField'], $designDetailPage, 'ctp_design_detail_order');
-        add_settings_field('detail_page_id', __('Adresse der Terminseite', 'churchtools-plugin'), [$this, 'renderDetailPageField'], $designDetailPage, 'ctp_design_detail_order');
         // Vor der Reihenfolge, aus demselben Grund wie das Klickverhalten
         // darüber: „Gibt es den Knopf überhaupt?" ist die Frage vor „wo steht
         // er?". In der Liste darunter lässt er sich danach frei verschieben.
         add_settings_field('detail_share_enabled', __('Teilen-Button', 'churchtools-plugin'), [$this, 'renderDetailShareField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_ics_enabled', __('Kalender-Button', 'churchtools-plugin'), [$this, 'renderDetailIcsField'], $designDetailPage, 'ctp_design_detail_order');
-        add_settings_field('detail_element_order', __('Reihenfolge', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
+        add_settings_field('detail_element_order', __('Reihenfolge in der Detailansicht', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $designListPage = self::PAGE_SLUG . '_design_list';
         add_settings_section('ctp_design_list', __('Listen', 'churchtools-plugin'), [self::class, 'renderListIntro'], $designListPage);
@@ -2144,11 +2182,26 @@ final class SettingsPage
         // hängt. admin-design.js hält das Attribut danach am Häkchen aktuell.
         $shareEnabled = !empty($settings['detail_share_enabled']);
         $icsEnabled = !empty($settings['detail_ics_enabled']);
+        /*
+         * Die Rahmung des Termins - und der einzige sichtbare Unterschied
+         * zwischen den beiden Klickverhalten: Im Popup steht oben rechts das
+         * Schliessen-Kreuz (partials/modal.php), auf der eigenen Seite oben
+         * links der Zurueck-Knopf (templates/event-detail.php). Beides steht
+         * hier ausserhalb der [data-key]-Bloecke, weil es nicht zur
+         * einstellbaren Reihenfolge gehoert, sondern zum Fenster darum.
+         *
+         * Als <span> und nicht als <button>/<a>: Die Vorschau steht mitten im
+         * Einstellungsformular, und ein Bedienelement, das nichts bedient,
+         * faengt dort nur Fokus und Klicks ab. Dieselbe Entscheidung wie beim
+         * Importieren-Knopf oben. admin-design.js schaltet die beiden mit den
+         * Klickverhalten-Knoepfen um.
+         */
+        $clickBehavior = (string) $settings['click_behavior'];
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Gilt gleichermaßen für Popup und eigene Seite, sofern das Klickverhalten nicht auf „Keine“ steht.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Inhalt und Reihenfolge gelten für beide Klickverhalten; der Rahmen darum unterscheidet sie – das Popup schließt oben rechts, die eigene Seite führt oben links zurück.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-design-preview-backdrop">
                 <div
@@ -2156,6 +2209,18 @@ final class SettingsPage
                     id="ctp-design-detail-preview"
                     style="<?php echo esc_attr($style); ?>"
                 >
+                    <span
+                        class="ctp-events__modal-close ctp-design-preview-chrome"
+                        id="ctp-design-preview-close"
+                        aria-hidden="true"
+                        <?php echo $clickBehavior === 'popup' ? '' : 'hidden'; ?>
+                    >&times;</span>
+                    <span
+                        class="ctp-events__back ctp-design-preview-chrome"
+                        id="ctp-design-preview-back"
+                        aria-hidden="true"
+                        <?php echo $clickBehavior === 'page' ? '' : 'hidden'; ?>
+                    >&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></span>
                     <?php foreach ($order as $key) : ?>
                         <div data-key="<?php echo esc_attr($key); ?>" <?php echo self::previewBlockHidden($key, $shareEnabled, $icsEnabled) ? 'hidden' : ''; ?>>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
@@ -3858,33 +3923,61 @@ final class SettingsPage
             <?php elseif ($tab === 'design') : ?>
                 <?php
                 /*
-                 * One form around everything, with the layout grid *inside* it,
-                 * so each drag&drop editor and the preview it drives sit in the
-                 * same grid row and are visible together while dragging. The
-                 * previews contain no form fields, so wrapping them costs
-                 * nothing. See .ctp-design-layout in admin.css.
+                 * Ein Bereich je Seitenaufruf, nicht mehr alle vier
+                 * untereinander (siehe designSections()). Das Formular umfasst
+                 * weiterhin alles, was auf der Seite steht, mit dem
+                 * Layout-Raster *innerhalb*: Editor und die Vorschau, die er
+                 * treibt, stehen so in derselben Rasterzeile und sind waehrend
+                 * des Ziehens zusammen im Bild. Die Vorschauen enthalten keine
+                 * Formularfelder, sie mitzunehmen kostet also nichts. Siehe
+                 * .ctp-design-layout in admin.css.
+                 *
+                 * Der Stil bekommt die Kachel-Vorschau daneben (Nutzerwahl):
+                 * Vorlage, Ecken und die beiden Farben wirken sichtbar auf sie,
+                 * und blind eingestellte Farben waren der einzige Preis, den
+                 * die Aufteilung sonst gekostet haette. „Listen" hat als
+                 * einziger Bereich keine - die Seitenlaenge einer Liste zeigt
+                 * eine Kachel nicht.
                  */
+                $section = self::currentDesignSection();
                 ?>
+                <nav class="ctp-subtabs" aria-label="<?php esc_attr_e('Design-Bereiche', 'churchtools-plugin'); ?>">
+                    <?php foreach (self::designSections() as $sectionSlug => $sectionLabel) : ?>
+                        <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'design', 'section' => $sectionSlug], admin_url('admin.php'))); ?>"
+                            class="ctp-subtab <?php echo $section === $sectionSlug ? 'ctp-subtab--active' : ''; ?>"
+                            <?php echo $section === $sectionSlug ? 'aria-current="page"' : ''; ?>>
+                            <?php echo esc_html($sectionLabel); ?>
+                        </a>
+                    <?php endforeach; ?>
+                </nav>
                 <form method="post" action="options.php" class="ctp-settings-form">
-                    <?php settings_fields(self::PAGE_SLUG); ?>
-                    <?php // Volle Breite ueber den Paaren: die Stil-Grundlage, auf der beide Vorschauen aufsetzen. ?>
-                    <div class="ctp-panel ctp-design-style">
-                        <?php do_settings_sections(self::PAGE_SLUG . '_design_style'); ?>
-                    </div>
-                    <div class="ctp-design-layout">
+                    <?php
+                    /*
+                     * settings_fields() legt neben nonce und option_page auch
+                     * _wp_http_referer ab - options.php schickt danach also auf
+                     * genau diese Adresse zurueck, samt `section`. Ohne das
+                     * landete jedes Speichern wieder im ersten Bereich.
+                     */
+                    settings_fields(self::PAGE_SLUG);
+                    ?>
+                    <?php if ($section === 'list') : ?>
                         <div class="ctp-panel">
-                            <?php do_settings_sections(self::PAGE_SLUG . '_design_tile'); ?>
+                            <?php do_settings_sections(self::PAGE_SLUG . '_design_list'); ?>
                         </div>
-                        <?php $this->renderDesignPreview(); ?>
-
-                        <div class="ctp-panel">
-                            <?php do_settings_sections(self::PAGE_SLUG . '_design_detail'); ?>
+                    <?php else : ?>
+                        <div class="ctp-design-layout">
+                            <div class="ctp-panel">
+                                <?php do_settings_sections(self::PAGE_SLUG . '_design_' . $section); ?>
+                            </div>
+                            <?php
+                            if ($section === 'detail') {
+                                $this->renderDetailPreview();
+                            } else {
+                                $this->renderDesignPreview();
+                            }
+                            ?>
                         </div>
-                        <?php $this->renderDetailPreview(); ?>
-                    </div>
-                    <div class="ctp-panel">
-                        <?php do_settings_sections(self::PAGE_SLUG . '_design_list'); ?>
-                    </div>
+                    <?php endif; ?>
                     <?php $this->renderSaveBar(); ?>
                 </form>
             <?php else : ?>
