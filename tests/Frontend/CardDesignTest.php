@@ -297,4 +297,26 @@ final class CardDesignTest extends TestCase
     {
         $this->assertSame(['subtitle'], CardDesign::sanitizeHiddenElements(['subtitle', 'subtitle']));
     }
+
+    /**
+     * Der Titel einer klickbaren Kachel ist ihr Link, und dessen unsichtbare
+     * Flaeche ueberdeckt die ganze Kachel - jede Link-Hover-Regel eines Themes
+     * greift deshalb auf den Titel, sobald der Zeiger irgendwo auf der Kachel
+     * steht. Auf der Live-Seite faerbte Uncode ihn so tuerkis (Nutzerbefund
+     * 2026-09-11: „Andere Kacheln auf unserer Seite bleiben schwarz"). Die
+     * Farbe muss in jedem Link-Zustand erben, und zwar gegen eine Theme-Regel
+     * mit (0,4,1) - also mit !important.
+     */
+    public function testTheCardTitleKeepsItsColourWhateverTheThemeDoesToLinks(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+
+        foreach (['', ':visited', ':hover', ':focus', ':active'] as $zustand) {
+            $this->assertMatchesRegularExpression(
+                '/\.ctp-events \.ctp-events__card-trigger' . preg_quote($zustand, '/') . '\s*[,{][^}]*color:\s*inherit\s*!important/',
+                $css,
+                "Der Kacheltitel erbt im Zustand \"{$zustand}\" seine Farbe nicht verlaesslich."
+            );
+        }
+    }
 }

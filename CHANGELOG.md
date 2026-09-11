@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.22.1] - 2026-09-11
+
+### Fixed
+
+- **Der Titel einer Kachel wechselte beim Überfahren in die Akzentfarbe des Themes.** Der Titel ist der Link, der die ganze Kachel anklickbar macht, und seine unsichtbare Klickfläche liegt über der gesamten Kachel – wer irgendwo darauf zeigt, zeigt auf diesen Link. Themes, die Links beim Überfahren einfärben, färbten deshalb den Titel mit, auf der Live-Seite in Türkis. Jetzt behält er seine Farbe in jedem Zustand, auch bei schon besuchten Terminen. Die Kachel hebt sich beim Überfahren weiterhin an und bekommt ihren Schatten.
+
 ## [1.22.0] - 2026-09-11
 
 ### Changed

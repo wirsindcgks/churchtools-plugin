@@ -1411,6 +1411,39 @@
     border-radius: 2px;
 }
 
+/*
+ * Der Titel bleibt beim Ueberfahren der Kachel, wie er ist.
+ *
+ * Er ist der Link der ganzen Kachel - sein ::after liegt unsichtbar ueber der
+ * vollen Flaeche. Wer irgendwo auf die Kachel zeigt, zeigt deshalb auf diesen
+ * Link, und jede Hover-Regel eines Themes fuer Links greift auf den Titel.
+ * Auf der Live-Seite ist das Uncodes
+ *
+ *     .style-dark .style-light a:not(.btn-text-skin):hover { color: #00a19a }
+ *
+ * - dieselbe Regel, die schon den Zurueck-Button einfaerbte (siehe
+ * .ctp-events__back:hover weiter unten). Nachgestellt auf der Demo-Seite mit
+ * genau dieser Regel: Zeiger auf der Ortszeile, Titel tuerkis. Nutzerbefund
+ * 2026-09-11: „Beim Hover der Kachel wechselt der Titel von Schwarz auf die
+ * Akzentfarbe ... Andere Kacheln auf unserer Seite bleiben schwarz."
+ *
+ * `inherit` in jedem Zustand, auch :visited - ein besuchter Termin soll nicht
+ * anders aussehen als ein unbesuchter. `!important` aus demselben Grund wie
+ * beim Zurueck-Button: Die Theme-Regel kommt auf (0,4,1), mehr ist mit den
+ * Klassen, die hier verlaesslich zur Verfuegung stehen, nicht zu erreichen.
+ * Die Rueckmeldung beim Ueberfahren bleibt trotzdem - sie steckt im Anheben
+ * und im Schatten der Kachel, und die Tastatur bekommt ihren Fokusrahmen
+ * (:focus-visible oben).
+ */
+.ctp-events .ctp-events__card-trigger,
+.ctp-events .ctp-events__card-trigger:visited,
+.ctp-events .ctp-events__card-trigger:hover,
+.ctp-events .ctp-events__card-trigger:focus,
+.ctp-events .ctp-events__card-trigger:active {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
 @media (prefers-reduced-motion: no-preference) {
     .ctp-events__item--clickable,
     .ctp-events__hero--clickable {
