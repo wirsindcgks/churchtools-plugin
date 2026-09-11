@@ -703,3 +703,62 @@ function wp_remote_retrieve_body($response): string
 {
     return (string) ($response['body'] ?? '');
 }
+
+/**
+ * Menü-Registrierungen, aufgezeichnet statt ausgeführt. Gebraucht für die drei
+ * Abkürzungen im linken WordPress-Menü (SettingsPage::addMenuPage()): Ob der
+ * erste Untereintrag den blanken Seiten-Slug trägt, entscheidet, wohin ein
+ * Klick auf den Hauptpunkt führt – und das sieht man dem Code nicht an,
+ * sondern nur der entstandenen Liste.
+ */
+$GLOBALS['ctp_test_menu'] = ['top' => [], 'sub' => []];
+
+function add_menu_page(
+    string $pageTitle,
+    string $menuTitle,
+    string $capability,
+    string $menuSlug,
+    $callback = '',
+    string $icon = '',
+    $position = null
+): string {
+    $GLOBALS['ctp_test_menu']['top'][] = [
+        'title' => $menuTitle,
+        'capability' => $capability,
+        'slug' => $menuSlug,
+    ];
+
+    return 'toplevel_page_' . $menuSlug;
+}
+
+function add_submenu_page(
+    string $parentSlug,
+    string $pageTitle,
+    string $menuTitle,
+    string $capability,
+    string $menuSlug,
+    $callback = ''
+): string {
+    $GLOBALS['ctp_test_menu']['sub'][$parentSlug][] = [
+        'title' => $menuTitle,
+        'capability' => $capability,
+        'slug' => $menuSlug,
+    ];
+
+    return 'admin_page_' . $menuSlug;
+}
+
+/**
+ * Die Untereinträge eines Menüpunkts in der Reihenfolge ihrer Anmeldung.
+ *
+ * @return array<int, array{title: string, capability: string, slug: string}>
+ */
+function ctp_test_submenu(string $parentSlug): array
+{
+    return $GLOBALS['ctp_test_menu']['sub'][$parentSlug] ?? [];
+}
+
+function ctp_test_reset_menu(): void
+{
+    $GLOBALS['ctp_test_menu'] = ['top' => [], 'sub' => []];
+}

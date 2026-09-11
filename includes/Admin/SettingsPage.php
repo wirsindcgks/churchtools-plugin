@@ -63,6 +63,7 @@ final class SettingsPage
     public function register(): void
     {
         add_action('admin_menu', [$this, 'addMenuPage']);
+        add_filter('submenu_file', [$this, 'highlightMenuEntry']);
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('wp_ajax_ctp_test_connection', [$this, 'ajaxTestConnection']);
@@ -83,6 +84,90 @@ final class SettingsPage
             'dashicons-calendar-alt',
             26
         );
+
+        foreach (self::tabs() as $slug => $label) {
+            if (!in_array($slug, self::MENU_TABS, true)) {
+                continue;
+            }
+
+            add_submenu_page(
+                self::PAGE_SLUG,
+                $label,
+                $label,
+                'manage_options',
+                self::submenuSlug($slug),
+                [$this, 'renderPage']
+            );
+        }
+    }
+
+    /**
+     * Die drei Reiter, die zusaetzlich links im WordPress-Menue stehen.
+     *
+     * Bewusst nicht alle neun (Nutzerentscheidung 2026-09-08: „im Menue links
+     * sollten maximal die Hauptpunkte rein"). Das linke Menue traegt damit
+     * nicht die Navigation dieses Plugins - das bleibt die Reiterreihe -,
+     * sondern ein paar Abkuerzungen. Aufgenommen ist, was man von *anderswo*
+     * in WordPress aus ansteuern will: der Statusblick, das Aussehen und die
+     * Termine zum Nachschlagen. Verbindung, Kalender, Raeume und
+     * Synchronisation richtet man einmal ein und erreicht sie danach ueber die
+     * Uebersicht; „Einbinden" braucht man im Seiteneditor, wo das Menue nicht
+     * hilft.
+     *
+     * Die Reihenfolge macht nicht diese Liste, sondern tabs() - hier steht nur,
+     * *ob* ein Reiter dazugehoert. Dass DEFAULT_TAB dort zuerst kommt, ist
+     * Bedingung und keine Zufaelligkeit, siehe submenuSlug().
+     */
+    private const MENU_TABS = ['status', 'design', 'events'];
+
+    /**
+     * Der Menue-Slug eines Reiters - fuer alle bis auf einen der Seiten-Slug
+     * mit angehaengtem `&tab=`. WordPress baut daraus
+     * `admin.php?page=churchtools-plugin&tab=design`, ohne das `&` zu
+     * kodieren (`build_query()` ruft `_http_build_query()` mit
+     * `$urlencode = false`), und zur Laufzeit bleibt `page` trotzdem der blanke
+     * Slug - `enqueueAssets()` sieht deshalb weiterhin genau einen Hook.
+     *
+     * Der Standard-Reiter bekommt den blanken Slug, und das ist keine
+     * Schoenheit: Sobald ein Menuepunkt Untereintraege hat, verlinkt er selbst
+     * nicht mehr auf sich, sondern auf den *ersten* davon
+     * (wp-admin/menu-header.php: `admin.php?page={$submenu_items[0][2]}`).
+     * Traege der erste Eintrag `&tab=…`, fuehrte ein Klick auf „ChurchTools"
+     * kuenftig woandershin als bisher.
+     */
+    private static function submenuSlug(string $tab): string
+    {
+        return $tab === self::DEFAULT_TAB ? self::PAGE_SLUG : self::PAGE_SLUG . '&tab=' . $tab;
+    }
+
+    /**
+     * Sagt WordPress, welcher Untereintrag hervorgehoben wird.
+     *
+     * Ohne das bliebe keiner markiert: Verglichen wird der Menue-Slug mit
+     * `$plugin_page` (wp-admin/menu-header.php), und das ist zur Laufzeit nur
+     * `churchtools-plugin` - das `&tab=` ist ein eigener Query-Parameter und
+     * steht dort nicht drin.
+     *
+     * Auf einem Reiter ohne eigenen Eintrag bleibt es bewusst beim
+     * durchgereichten Wert, also bei keiner Markierung. Ersatzweise
+     * „Uebersicht" zu markieren waere der naheliegende Kurzschluss - er
+     * behauptete, man stuende dort, wo man nicht steht. Der Hauptpunkt
+     * „ChurchTools" ist ohnehin hervorgehoben und aufgeklappt; das haengt an
+     * `$parent_file` und nicht an den Untereintraegen.
+     *
+     * @param string|null $submenuFile
+     * @return string|null
+     */
+    public function highlightMenuEntry($submenuFile)
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which menu entry to mark), not a state change; same pattern as currentTab().
+        if (sanitize_key((string) ($_GET['page'] ?? '')) !== self::PAGE_SLUG) {
+            return $submenuFile;
+        }
+
+        $tab = self::currentTab();
+
+        return in_array($tab, self::MENU_TABS, true) ? self::submenuSlug($tab) : $submenuFile;
     }
 
     /**

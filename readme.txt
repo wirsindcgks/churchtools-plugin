@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.20.1
+Stable tag: 1.21.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,6 +34,8 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 4. Im Tab „Kalender“ auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
 5. Im Tab „Übersicht“ einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
 6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Einbinden“).
+
+Alle neun Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter „ChurchTools“ nur die drei, die man auch von anderswo aus ansteuert: „Übersicht“, „Design“ und „Events“.
 
 == Verwendung ==
 
@@ -341,6 +343,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.21.0 =
+
+* Neu: Übersicht, Design und Events stehen zusätzlich im linken WordPress-Menü unter „ChurchTools“ – bewusst nur diese drei, die Reiterreihe bleibt der Weg zu allen neun Bereichen
+* Geändert: Die Termintabelle ist gut halb so groß – veraltete Doppelungen aus der ChurchTools-Antwort werden vor dem Speichern entfernt, angezeigt wurde keine davon
 
 = 1.20.1 =
 

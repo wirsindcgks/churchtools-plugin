@@ -19,6 +19,7 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_reset_options();
         $GLOBALS['ctp_test_posts'] = [];
+        unset($_GET['page'], $_GET['tab'], $_GET['section']);
     }
 
     /**
@@ -41,6 +42,105 @@ final class SettingsPageTest extends TestCase
     private function invokePrivate(string $method): array
     {
         return (new ReflectionMethod(SettingsPage::class, $method))->invoke(null);
+    }
+
+    /**
+     * Das linke WordPress-Menue traegt nicht die Navigation dieses Plugins,
+     * sondern drei Abkuerzungen (Nutzerentscheidung 2026-09-08: „im Menue
+     * links sollten maximal die Hauptpunkte rein"). Der Test haelt die Auswahl
+     * fest, weil sie sonst beim naechsten neuen Reiter unbemerkt mitwaechst -
+     * neun Eintraege waeren genau das, was hier vermieden werden sollte.
+     */
+    public function testTheLeftMenuCarriesOnlyTheMainAreas(): void
+    {
+        ctp_test_reset_menu();
+        (new SettingsPage())->addMenuPage();
+
+        $slugs = array_column(ctp_test_submenu('churchtools-plugin'), 'slug');
+
+        $this->assertSame([
+            'churchtools-plugin',
+            'churchtools-plugin&tab=design',
+            'churchtools-plugin&tab=events',
+        ], $slugs);
+    }
+
+    /**
+     * Der *erste* Untereintrag muss den blanken Seiten-Slug tragen. Sobald ein
+     * Menuepunkt Untereintraege hat, verlinkt er selbst nicht mehr auf sich,
+     * sondern auf den ersten davon (wp-admin/menu-header.php:
+     * `admin.php?page={$submenu_items[0][2]}`) - traege der ein `&tab=…`,
+     * fuehrte ein Klick auf „ChurchTools" woandershin als bisher. Das sieht man
+     * dem Code nicht an, sondern nur der entstandenen Liste.
+     */
+    public function testTheFirstMenuEntryCarriesThePlainSlug(): void
+    {
+        ctp_test_reset_menu();
+        (new SettingsPage())->addMenuPage();
+
+        $eintraege = ctp_test_submenu('churchtools-plugin');
+
+        $this->assertNotSame([], $eintraege);
+        $this->assertSame('churchtools-plugin', $eintraege[0]['slug']);
+    }
+
+    /**
+     * Jeder Menueeintrag muss einen Reiter meinen, den es gibt: Der Eintrag
+     * fuehrt sonst auf die Seite, die currentTab() als Rueckfall waehlt, und
+     * zwar wortlos.
+     */
+    public function testEveryMenuEntryNamesARealTab(): void
+    {
+        $menuTabs = (new \ReflectionClass(SettingsPage::class))->getConstant('MENU_TABS');
+
+        $this->assertSame([], array_diff($menuTabs, array_keys($this->invokePrivate('tabs'))));
+    }
+
+    /**
+     * Die Hervorhebung im Menue. Ohne den Filter bliebe keiner der Eintraege
+     * markiert - verglichen wird mit `$plugin_page`, und das ist zur Laufzeit
+     * nur `churchtools-plugin`, ohne das `&tab=`.
+     */
+    public function testTheHighlightPointsAtTheEntryOfTheCurrentTab(): void
+    {
+        ctp_test_reset_menu();
+        $page = new SettingsPage();
+        $page->addMenuPage();
+        $slugs = array_column(ctp_test_submenu('churchtools-plugin'), 'slug');
+
+        $_GET['page'] = 'churchtools-plugin';
+
+        foreach (['status' => 'churchtools-plugin', 'design' => 'churchtools-plugin&tab=design'] as $tab => $erwartet) {
+            $_GET['tab'] = $tab;
+
+            $this->assertSame($erwartet, $page->highlightMenuEntry(null));
+            $this->assertContains($erwartet, $slugs, 'Hervorgehoben wird ein Eintrag, den es nicht gibt.');
+        }
+    }
+
+    /**
+     * Auf einem Reiter ohne eigenen Eintrag bleibt es beim durchgereichten
+     * Wert. Ersatzweise „Uebersicht" zu markieren waere der naheliegende
+     * Kurzschluss - er behauptete, man stuende dort, wo man nicht steht.
+     */
+    public function testATabWithoutAnEntryHighlightsNothing(): void
+    {
+        $_GET['page'] = 'churchtools-plugin';
+        $_GET['tab'] = 'connection';
+
+        $this->assertNull((new SettingsPage())->highlightMenuEntry(null));
+    }
+
+    /**
+     * Und auf fremden Seiten haelt der Filter still: Er haengt an jedem
+     * Aufbau des Admin-Menues, nicht nur am eigenen.
+     */
+    public function testTheFilterLeavesOtherPagesAlone(): void
+    {
+        $_GET['page'] = 'woocommerce-settings';
+        $_GET['tab'] = 'design';
+
+        $this->assertSame('fremd.php', (new SettingsPage())->highlightMenuEntry('fremd.php'));
     }
 
     /**

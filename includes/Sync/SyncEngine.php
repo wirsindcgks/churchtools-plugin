@@ -554,8 +554,75 @@ final class SyncEngine
             'all_day' => !empty($base['allDay']),
             'location' => $location,
             'image_url' => $imageUrl,
-            'raw_data' => $envelope,
+            'raw_data' => self::withoutDeprecated($envelope),
         ];
+    }
+
+    /**
+     * Die Rohantwort ohne das, was ChurchTools selbst als veraltet ausweist.
+     *
+     * Jede Antwort traegt ihre Aliase mit: eine Ebene `@deprecated`, die alte
+     * auf neue Schluessel abbildet. Oben in der Huelle
+     * `{"base": "appointment.base", "calculated": "appointment.calculated"}`,
+     * im Termin selbst `{"note": "subtitle", "caption": "title",
+     * "information": "description", "additions": "additionals"}`. Gemessen an
+     * 114 gespeicherten Zeilen (2026-09-11) war jeder Alias zeichengleich mit
+     * seinem Ziel, und die doppelte Huelle allein machte 49 % von `raw_data`
+     * aus - alles zusammen gut die Haelfte der Tabelle, ohne ein einziges Byte
+     * Information.
+     *
+     * Und die Aliase haben schon einmal in die Irre gefuehrt: `note` stand
+     * zehn Tage als ungeklaerter Punkt im Plan, ob sie oeffentlich gezeigt
+     * werden duerfe - dabei ist sie der alte Name des Untertitels und wurde
+     * seit jeher angezeigt.
+     *
+     * Gesteuert ueber die Angaben der Antwort und nicht ueber eine feste
+     * Liste, damit ein kuenftig veralteter Schluessel ohne Zutun mitgeht. Das
+     * ist gefahrlos, weil nur die *gespeicherte Kopie* bereinigt wird:
+     * mapOccurrence() liest seine Spalten vorher aus der unveraenderten Huelle.
+     * Zwei Vorsichtsmassnahmen:
+     *
+     * - Ein alter Schluessel faellt nur weg, wenn sein Ziel auch da ist. Nennt
+     *   ChurchTools eine Abbildung, liefert das neue Feld aber nicht mit, bleibt
+     *   das alte stehen - sonst waere es der einzige Traeger des Werts gewesen.
+     * - `@deprecated` selbst bleibt stehen. Es sind ein paar Dutzend Bytes, und
+     *   sie beantworten fuer den naechsten, der in `raw_data` nachsieht, die
+     *   Frage „wo ist eigentlich `note` hin?", bevor sie zu einem Punkt im
+     *   Plan wird.
+     */
+    private static function withoutDeprecated(array $node): array
+    {
+        $aliases = $node['@deprecated'] ?? null;
+
+        if (is_array($aliases)) {
+            foreach ($aliases as $old => $new) {
+                if (array_key_exists($old, $node) && self::hasPath($node, (string) $new)) {
+                    unset($node[$old]);
+                }
+            }
+        }
+
+        foreach ($node as $key => $value) {
+            if (is_array($value) && $key !== '@deprecated') {
+                $node[$key] = self::withoutDeprecated($value);
+            }
+        }
+
+        return $node;
+    }
+
+    /** Ob `$path` (Punkte trennen die Ebenen, wie in `@deprecated`) in $node existiert. */
+    private static function hasPath(array $node, string $path): bool
+    {
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($node) || !array_key_exists($segment, $node)) {
+                return false;
+            }
+
+            $node = $node[$segment];
+        }
+
+        return true;
     }
 
     /**

@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.21.0] - 2026-09-11
+
+### Added
+
+- **Übersicht, Design und Events stehen jetzt auch im linken WordPress-Menü**, als Unterpunkte von „ChurchTools". Bewusst nur diese drei und nicht alle neun Reiter: Ins Menü gehört, was man von anderswo in WordPress aus ansteuert – den Statusblick, das Aussehen, die Termine zum Nachschlagen. Verbindung, Kalender, Räume und Synchronisation richtet man einmal ein und erreicht sie über die Übersicht. Die Reiterreihe bleibt der vollständige Weg zu allen neun Bereichen, und alle bisherigen Adressen gelten weiter. Ein Klick auf „ChurchTools" selbst führt wie bisher zur Übersicht.
+
+### Changed
+
+- **Die Termintabelle ist gut halb so groß.** ChurchTools liefert jeden Termin mit einer Reihe veralteter Doppelungen aus – die ganze Terminhülle zweimal, dazu vier umbenannte Felder unter ihrem alten Namen –, und alles davon landete bisher in der gespeicherten Rohantwort. Die Doppelungen werden jetzt vor dem Speichern entfernt, und zwar genau die, die ChurchTools selbst als veraltet ausweist. Angezeigt wurde keine davon; im Frontend ändert sich nichts. Gemessen an 114 Terminen: 0,54 MB statt 1,25 MB. Bestehende Termine werden beim nächsten Abgleich umgeschrieben.
+
 ## [1.20.1] - 2026-09-08
 
 ### Fixed

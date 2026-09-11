@@ -235,6 +235,112 @@ final class SyncEngineTest extends TestCase
         );
     }
 
+    /**
+     * Die Huelle, wie ChurchTools sie wirklich schickt: `base` und `calculated`
+     * doppelt (oben als veraltete Kopie von `appointment.*`) und im Termin die
+     * vier Aliase - jeweils mit der `@deprecated`-Angabe, die sie als solche
+     * ausweist. Abgelesen an der Antwort vom 2026-09-11.
+     */
+    private function envelopeWithAliases(): array
+    {
+        $envelope = $this->envelope();
+        $base = $envelope['appointment']['base'] + [
+            'caption' => 'Gottesdienst',
+            'note' => 'Predigt: Max Mustermann',
+            'information' => 'Herzliche Einladung',
+            'additionals' => [],
+            'additions' => [],
+            '@deprecated' => [
+                'additions' => 'additionals',
+                'caption' => 'title',
+                'note' => 'subtitle',
+                'information' => 'description',
+            ],
+        ];
+        $envelope['appointment']['base'] = $base;
+
+        return [
+            'appointment' => $envelope['appointment'],
+            '@deprecated' => ['base' => 'appointment.base', 'calculated' => 'appointment.calculated'],
+            'base' => $base,
+            'calculated' => $envelope['appointment']['calculated'],
+        ];
+    }
+
+    /**
+     * Die doppelte Huelle war fast die Haelfte von `raw_data` (49 %, gemessen
+     * an 114 Zeilen) - ohne ein Byte Information.
+     */
+    public function testTheStoredAnswerDropsTheDeprecatedCopyOfTheEnvelope(): void
+    {
+        $raw = $this->mapOccurrence($this->envelopeWithAliases())['raw_data'];
+
+        $this->assertArrayNotHasKey('base', $raw);
+        $this->assertArrayNotHasKey('calculated', $raw);
+        $this->assertSame(123, $raw['appointment']['base']['id']);
+        $this->assertSame('2026-08-16T06:30:00Z', $raw['appointment']['calculated']['startDate']);
+    }
+
+    /**
+     * Und im Termin die Aliase. `note` ist der, der in die Irre gefuehrt hat:
+     * zehn Tage als offene Frage im Plan, ob sie oeffentlich gezeigt werden
+     * duerfe - dabei ist sie der alte Name des Untertitels.
+     */
+    public function testTheStoredAnswerDropsTheAliasesInsideTheAppointment(): void
+    {
+        $base = $this->mapOccurrence($this->envelopeWithAliases())['raw_data']['appointment']['base'];
+
+        foreach (['note', 'caption', 'information', 'additions'] as $alias) {
+            $this->assertArrayNotHasKey($alias, $base, "Alias \"{$alias}\" steht noch in raw_data.");
+        }
+
+        $this->assertSame('Predigt: Max Mustermann', $base['subtitle']);
+        $this->assertArrayHasKey('additionals', $base);
+    }
+
+    /**
+     * Die Spalten kommen weiter aus der unveraenderten Huelle - bereinigt wird
+     * nur, was gespeichert wird. Ohne diesen Test hiesse „raw_data ist
+     * schlanker" womoeglich auch „der Untertitel ist weg".
+     */
+    public function testTheColumnsAreUnaffectedByTheCleanup(): void
+    {
+        $row = $this->mapOccurrence($this->envelopeWithAliases());
+
+        $this->assertSame('Gottesdienst', $row['title']);
+        $this->assertSame('Predigt: Max Mustermann', $row['subtitle']);
+        $this->assertSame('Herzliche Einladung', $row['description']);
+    }
+
+    /**
+     * Ein alter Schluessel faellt nur weg, wenn sein Ziel auch da ist. Nennt
+     * ChurchTools eine Abbildung und liefert das neue Feld nicht mit, waere
+     * das alte der einzige Traeger des Werts.
+     */
+    public function testAnAliasWithoutItsTargetStays(): void
+    {
+        $envelope = $this->envelope();
+        unset($envelope['appointment']['base']['subtitle']);
+        $envelope['appointment']['base']['note'] = 'Nur hier';
+        $envelope['appointment']['base']['@deprecated'] = ['note' => 'subtitle'];
+
+        $base = $this->mapOccurrence($envelope)['raw_data']['appointment']['base'];
+
+        $this->assertSame('Nur hier', $base['note']);
+    }
+
+    /**
+     * `@deprecated` selbst bleibt: ein paar Dutzend Bytes, die dem naechsten,
+     * der in `raw_data` nachsieht, sagen, wohin `note` gegangen ist.
+     */
+    public function testTheAliasMapItselfStays(): void
+    {
+        $raw = $this->mapOccurrence($this->envelopeWithAliases())['raw_data'];
+
+        $this->assertSame(['base' => 'appointment.base', 'calculated' => 'appointment.calculated'], $raw['@deprecated']);
+        $this->assertSame('subtitle', $raw['appointment']['base']['@deprecated']['note']);
+    }
+
     private function mapOccurrence(array $envelope): ?array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'mapOccurrence');
@@ -478,10 +584,13 @@ final class SyncEngineTest extends TestCase
     }
 
     /**
-     * The full appointment envelope is stored verbatim in raw_data — used e.g. for
+     * The full appointment envelope is stored in raw_data — used e.g. for
      * future debugging/reprocessing without needing to re-fetch from ChurchTools.
+     * Verbatim except for what ChurchTools itself marks as `@deprecated` (see
+     * the tests above): an envelope without such markers, like this one, comes
+     * back byte for byte.
      */
-    public function testRawDataIsTheEntireEnvelope(): void
+    public function testRawDataIsTheEntireEnvelopeWithoutAliases(): void
     {
         $envelope = $this->envelope();
 

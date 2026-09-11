@@ -67,6 +67,8 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 
 ## Einrichten in fünf Minuten
 
+Alle neun Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter *ChurchTools* nur die drei, die man auch von anderswo aus ansteuert: **Übersicht**, **Design** und **Events**.
+
 1. **Verbindung herstellen.** *ChurchTools → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
 2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
 3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
