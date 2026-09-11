@@ -5,6 +5,22 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.22.0] - 2026-09-11
+
+### Changed
+
+- **Die Bereiche oben sind jetzt klassische WordPress-Buttons** statt Reitern auf einer Linie – der geöffnete Bereich blau gefüllt, die übrigen umrandet, genau wie jeder andere Button im Backend. Farben, Rahmen und Rundung kommen von WordPress selbst; die Reihe folgt damit auch dem Farbschema, das jemand in seinem Profil gewählt hat.
+- **Die Reihe läuft über die volle Breite und endet an derselben Kante wie die Kacheln darunter.** Auf breiten Bildschirmen lief sie bisher weiter als der Rest der Seite. Wird der Platz knapp, fallen zuerst die Symbole weg, dann bricht die Reihe in drei gleichmäßige Zeilen um – statt über den Rand hinauszulaufen.
+- **Keine Trennlinien mehr**: weder unter der Reihe der Bereiche noch unter den Unter-Reitern des Design-Tabs. Getrennt wird durch Abstand, wie bei den Kacheln.
+- **Die Beschreibungen im Design-Tab sind kürzer** – was ein Feld tut, steht am Feld; warum man es so einstellt, steht in der Doku. Zusammen 45 % weniger Text, der längste Hinweis 160 statt 428 Zeichen. Zwei Hinweise verwiesen noch auf Stellen, die es seit der Aufteilung in Bereiche nicht mehr gibt, und sind korrigiert.
+- **Jede Box beginnt gleich weit unter ihrer Kante.** Die Boxen mit einem Einstellungsformular – Verbindung, Kalender, Räume, Synchronisation – hatten über ihrer ersten Überschrift doppelt so viel Platz wie die übrigen.
+
+### Fixed
+
+- **Zwischen etwa 960 und 1400px Fensterbreite lief die Reihe der Bereiche über den Rand**, bei 1024px um 182px, und die ganze Seite ließ sich seitlich verschieben. Die Reihe war noch für die sieben Bereiche früherer Versionen berechnet.
+- **Auf breiten Bildschirmen ragte die Linie unter den Design-Bereichen rechts über das Vorschau-Panel hinaus.**
+- **Welcher Bereich geöffnet ist, war für Screenreader nicht erkennbar** – es stand nur in einer Farbe. Der Knopf trägt jetzt `aria-current`, wie die Unter-Reiter des Design-Tabs schon.
+
 ## [1.21.0] - 2026-09-11
 
 ### Added

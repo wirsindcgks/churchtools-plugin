@@ -1546,9 +1546,9 @@ final class SettingsPage
             . esc_html__('Liste und Grid zeigen zunächst den angebrochenen aktuellen Monat plus so viele weitere Monate.', 'churchtools-plugin')
             . '</p>';
         echo '<ul class="description ctp-hint-list">'
-            . '<li>' . esc_html__('„Weitere Termine laden“ hängt jeweils den nächsten Zeitraum an; kürzere Zeiträume laden schneller.', 'churchtools-plugin') . '</li>'
-            . '<li>' . esc_html__('Liegt im Zeitraum kein Termin, springt die Ansicht automatisch zum nächsten Monat mit Terminen.', 'churchtools-plugin') . '</li>'
-            . '<li>' . esc_html__('Ohne Wirkung auf „Nächster Termin“ – diese Ansicht zeigt weiterhin eine feste Anzahl Termine (Attribut „limit“).', 'churchtools-plugin') . '</li>'
+            . '<li>' . esc_html__('Jeder Klick auf „Weitere Termine laden“ holt den nächsten Zeitraum; kürzere laden schneller.', 'churchtools-plugin') . '</li>'
+            . '<li>' . esc_html__('Ein leerer Zeitraum springt zum nächsten Monat mit Terminen.', 'churchtools-plugin') . '</li>'
+            . '<li>' . esc_html__('„Nächster Termin“ zeigt unabhängig davon eine feste Anzahl (Attribut „limit“).', 'churchtools-plugin') . '</li>'
             . '</ul>';
     }
 
@@ -1674,12 +1674,10 @@ final class SettingsPage
          * in seiner eigenen Zeile.
          */
         ?>
-        <p class="description"><?php esc_html_e('Reihenfolge per Drag&Drop ändern:', 'churchtools-plugin'); ?></p>
+        <p class="description"><?php esc_html_e('Reihenfolge per Drag&Drop ändern (Maus oder Trackpad, nicht per Touch):', 'churchtools-plugin'); ?></p>
         <ul class="description ctp-hint-list">
-            <li><?php esc_html_e('Ziehen funktioniert mit Maus und Trackpad – Sortieren per Touch wird derzeit nicht unterstützt.', 'churchtools-plugin'); ?></li>
-            <li><?php esc_html_e('Die Bild-Position legt nur fest, ob das Bild über oder unter dem Textblock steht – nicht zwischen einzelnen Textzeilen.', 'churchtools-plugin'); ?></li>
-            <li><?php esc_html_e('Trennlinien und Abstände lassen sich beliebig oft einfügen und wie jedes andere Element verschieben.', 'churchtools-plugin'); ?></li>
-            <li><?php esc_html_e('Das „×“ an einer Trennlinie oder einem Abstand entfernt sie wieder; die festen Elemente bleiben immer erhalten.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Das Bild steht über oder unter dem Text, nie dazwischen.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('Trennlinien und Abstände lassen sich beliebig oft einfügen und per „×“ wieder entfernen.', 'churchtools-plugin'); ?></li>
         </ul>
         <?php
     }
@@ -1709,7 +1707,7 @@ final class SettingsPage
     public static function renderDesignStyleIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Die Grundlage für alle Ansichten. Sie legt Rundungen, Schatten, Ränder und das Verhalten beim Überfahren mit der Maus fest – nicht aber, welche Felder erscheinen oder in welcher Reihenfolge. Das entscheiden die beiden Editoren weiter unten.', 'churchtools-plugin')
+            . esc_html__('Die Grundlage für alle Ansichten: Rundungen, Schatten, Ränder und das Verhalten unter der Maus.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1799,14 +1797,14 @@ final class SettingsPage
     public static function renderLookIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Gilt über der gewählten Vorlage: Was hier eingestellt ist, setzt sich gegen sie durch – wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden. Für alle Ansichten und jeden Shortcode, Block und WPBakery-Eintrag.', 'churchtools-plugin')
+            . esc_html__('Setzt sich gegen die Vorlage durch – „Eckig“ ergibt eckige Ecken auch in einer Vorlage mit runden.', 'churchtools-plugin')
             . '</p>';
     }
 
     public static function renderListIntro(): void
     {
         echo '<p class="description">'
-            . esc_html__('Betrifft Liste und Grid: wie viel auf einmal geladen wird und was der Button „Weitere Termine laden“ nachholt. Ohne Einfluss auf „Nächster Termin“ – dort zählt die Anzahl, nicht der Zeitraum.', 'churchtools-plugin')
+            . esc_html__('Wie viel Liste und Grid auf einmal laden und was „Weitere Termine laden“ nachholt.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1851,7 +1849,7 @@ final class SettingsPage
             );
         }
         echo '<p class="description">'
-            . esc_html__('Angehakt heißt ausgeblendet: Dieses Feld erscheint dann nicht mehr auf der Kachel. Der Titel bleibt immer sichtbar. Popup und eigene Seite bleiben davon unberührt – dort bestimmt „Aufbau der Detailansicht“, welche Felder erscheinen.', 'churchtools-plugin')
+            . esc_html__('Angehakte Felder erscheinen nicht auf der Kachel, der Titel bleibt immer. Für Popup und eigene Seite gilt „Aufbau der Detailansicht“.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1875,7 +1873,7 @@ final class SettingsPage
         }
         echo '</select>';
         echo '<p class="description">'
-            . esc_html__('Seitenverhältnis des Bildes in Grid-Kachel und Hero („Nächster Termin“). Ohne Wirkung in der Listenansicht, die kein Bild zeigt.', 'churchtools-plugin')
+            . esc_html__('Für Grid-Kachel und „Nächster Termin“ – die Liste zeigt kein Bild.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1916,7 +1914,7 @@ final class SettingsPage
             esc_html__('Zurücksetzen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Ersetzt die vom Theme übernommene Standardfarbe für Icons, Datumsbadges und Ränder sowie die aktiven Buttons des Eventfinders. Termine, deren Kalender bereits eine eigene Farbe hat, behalten weiterhin diese Kalenderfarbe.', 'churchtools-plugin')
+            . esc_html__('Für Icons, Datumsbadges, Ränder und aktive Eventfinder-Buttons. Termine mit eigener Kalenderfarbe behalten diese.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1952,7 +1950,7 @@ final class SettingsPage
             esc_html__('Zurücksetzen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Gilt für die Buttons des Eventfinders, „Weitere Termine laden“ und den Schließen-Button des Popups – und zwar für deren gefüllten Zustand: ausgewählt beziehungsweise unter dem Mauszeiger. Im Ruhezustand bleiben sie hell mit dünnem Rand. Die Schriftfarbe auf der gefüllten Fläche wird automatisch auf Schwarz oder Weiß gesetzt, je nachdem, was besser lesbar ist.', 'churchtools-plugin')
+            . esc_html__('Füllung von Eventfinder-, Nachlade- und Schließen-Button, wenn ausgewählt oder unter der Maus. Die Schrift darauf wird automatisch schwarz oder weiß.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -1975,7 +1973,7 @@ final class SettingsPage
             );
         }
         echo '<p class="description">'
-            . esc_html__('Gilt für jeden Shortcode/Block/WPBakery-Eintrag, sofern dort nicht per Attribut "click" explizit überschrieben (siehe Referenz unten).', 'churchtools-plugin')
+            . esc_html__('Gilt überall, wo Termine eingebunden sind – außer ein Eintrag setzt click selbst (siehe Reiter „Einbinden“).', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -2031,10 +2029,10 @@ final class SettingsPage
         }
 
         echo '<p class="description">'
-            . esc_html__('Die Seite bleibt normal erreichbar und behält ihren Inhalt – nur wenn ein Termin an ihre Adresse angehängt ist, zeigt sie diesen Termin statt ihres eigenen. Bisherige Adressen leiten dauerhaft weiter.', 'churchtools-plugin')
+            . esc_html__('Die Seite selbst bleibt, wie sie ist; nur mit angehängtem Termin zeigt sie diesen. Alte Termin-Adressen leiten weiter.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
-            . esc_html__('Empfehlung: setzen. Ohne Elternseite gibt es für den Termin keinen echten WordPress-Beitrag, und auf einem Block-Theme fehlen der Seite dann die Vorlage des Themes samt Kopf- und Fußbereich. Das ist auch die Seite, auf der ein Suchtreffer landet – Termine sind für Suchmaschinen auffindbar, gleich welche Adresse sie haben. Startseite und Beitragsseite stehen nicht zur Wahl – ihre Adressregel läge über der halben Website.', 'churchtools-plugin')
+            . esc_html__('Empfohlen – ohne sie steht die Terminseite außerhalb der Vorlage des Themes. Startseite und Beitragsseite stehen nicht zur Wahl.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -2054,10 +2052,10 @@ final class SettingsPage
             esc_html__('„Teilen“-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail …), am Rechner kopiert er die Adresse des Termins in die Zwischenablage. Ohne Drittanbieter-Skript und ohne Zählpixel – es wird nichts an ein Netzwerk gemeldet, solange niemand den Button drückt.', 'churchtools-plugin')
+            . esc_html__('Öffnet auf dem Telefon das Teilen-Menü, am Rechner kopiert er die Adresse. Ohne Drittanbieter-Skript und ohne Zählpixel.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
-            . esc_html__('Die Kacheln bekommen ihn nicht: Er gehört zum geöffneten Termin, nicht in eine Liste. Wo genau er in der Detailansicht steht, wird in der Reihenfolge darunter festgelegt.', 'churchtools-plugin')
+            . esc_html__('Nur in der Detailansicht, nicht auf den Kacheln – wo genau, legt die Reihenfolge darunter fest.', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -2076,10 +2074,10 @@ final class SettingsPage
             esc_html__('„Importieren"-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
-            . esc_html__('Legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen. Titel, Zeit, Ort, Beschreibung, Kalendername und Bild kommen mit.', 'churchtools-plugin')
+            . esc_html__('Lädt den Termin als Kalenderdatei herunter, die Handy, Outlook und Thunderbird direkt öffnen.', 'churchtools-plugin')
             . '</p>';
         echo '<p class="description">'
-            . esc_html__('Die Datei ist eine Momentaufnahme: Ändert sich der Termin später, erfährt der Kalender davon nichts. Wer sie erneut herunterlädt, aktualisiert seinen Eintrag aber, statt einen zweiten anzulegen.', 'churchtools-plugin')
+            . esc_html__('Eine Momentaufnahme: Spätere Änderungen kommen erst mit erneutem Herunterladen im Kalender an.', 'churchtools-plugin')
             . '</p>';
     }
     /**
@@ -2133,7 +2131,7 @@ final class SettingsPage
             </button>
         </p>
         <p class="description">
-            <?php esc_html_e('Reihenfolge der Felder in Popup und eigener Seite, per Drag&Drop änderbar (Maus/Trackpad).', 'churchtools-plugin'); ?>
+            <?php esc_html_e('Reihenfolge der Felder in Popup und eigener Seite, per Drag&Drop änderbar (Maus oder Trackpad, nicht per Touch).', 'churchtools-plugin'); ?>
         </p>
         <?php
     }
@@ -2286,7 +2284,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau Detailansicht', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Inhalt und Reihenfolge gelten für beide Klickverhalten; der Rahmen darum unterscheidet sie – das Popup schließt oben rechts, die eigene Seite führt oben links zurück.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Gilt für Popup und eigene Seite gleichermaßen – nur der Rahmen darum unterscheidet sie.', 'churchtools-plugin'); ?>
             </p>
             <div class="ctp-design-preview-backdrop">
                 <div
@@ -3944,21 +3942,27 @@ final class SettingsPage
             </p>
             <?php
             /*
-             * Die Reiter liegen in einem eigenen Raster innerhalb des
-             * nav-tab-wrapper, statt direkt darin: das Raster gibt allen
-             * Reitern die Breite des breitesten („Synchronisation“), waehrend
-             * der Wrapper seine durchgehende Linie ueber die volle Seite
-             * behaelt. Vorher richtete sich jeder Reiter nach seiner
-             * Beschriftung, und die Reihe sah aus wie ein Flickenteppich -
-             * „Design“ halb so breit wie sein Nachbar. Siehe .ctp-tabs in
-             * admin.css.
+             * Die Reiter sind klassische WordPress-Buttons - `button`, der
+             * aktive `button-primary` - in einem Raster, das die Reihe bis zur
+             * Kante der Kacheln darunter fuellt (siehe .ctp-tabs in admin.css).
+             * Bis 2026-09-11 waren es WordPress-Reiter (`nav-tab`) auf einer
+             * durchgehenden Linie. Die Linie wollte der Nutzer nicht mehr („als
+             * Trenner hier keine Linien"), und ohne sie liest sich ein Reiter
+             * nicht mehr als Reiter, sondern als Knopf - also sind es jetzt
+             * Knoepfe, und zwar die, die WordPress ueberall sonst auch zeigt
+             * („klassische Buttons ohne die neuen Styles").
+             *
+             * `aria-current` sagt, welcher Bereich offen ist - vorher stand das
+             * nur in einer Farbe, die ein Screenreader nicht sieht. Dieselbe
+             * Auszeichnung tragen die Unter-Reiter des Design-Tabs.
              */
             ?>
-            <nav class="nav-tab-wrapper">
+            <nav class="ctp-tabnav" aria-label="<?php esc_attr_e('Bereiche', 'churchtools-plugin'); ?>">
                 <div class="ctp-tabs">
                     <?php foreach (self::tabs() as $tabSlug => $label) : ?>
                         <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => $tabSlug], admin_url('admin.php'))); ?>"
-                            class="nav-tab <?php echo $tab === $tabSlug ? 'nav-tab-active' : ''; ?>">
+                            class="button <?php echo $tab === $tabSlug ? 'button-primary' : ''; ?>"
+                            <?php echo $tab === $tabSlug ? 'aria-current="page"' : ''; ?>>
                             <span class="dashicons dashicons-<?php echo esc_attr($icons[$tabSlug] ?? 'admin-generic'); ?>" aria-hidden="true"></span>
                             <?php echo esc_html($label); ?>
                         </a>

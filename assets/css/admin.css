@@ -4,8 +4,9 @@
  * sections wrapped in a card, most not). Structural palette (surface/border/text
  * tokens below) stays close to wp-admin's own values; the plugin's own signature
  * color (--ctp-admin-accent) is layered on top only for identity/branding touches
- * (header logo mark, active-tab underline, dashboard stat cards) — functional
- * controls keep using WP's native .button-primary/.nav-tab-active classes so the
+ * (header logo mark, the active design-section tab, dashboard stat cards) —
+ * functional controls, the main tab row included, keep using WP's native
+ * .button/.button-primary classes so the
  * page still respects whichever admin color scheme the user has picked in their
  * profile.
  */
@@ -55,9 +56,10 @@
     /* The plugin's own signature color — deliberately distinct from both the
      * default wp-admin blue (#2271b1) and the frontend's default accent
      * (#2563eb), so the two "belong to different systems" at a glance.
-     * Scope is intentionally narrow: only the header logo mark, active-tab
-     * indicator, and dashboard stat cards use it below. Buttons/links keep
-     * using WP's native .button-primary/.nav-tab-active classes so the page
+     * Scope is intentionally narrow: only the header logo mark, the active
+     * design-section tab, and dashboard stat cards use it below. Buttons/links
+     * - the main tab row included - keep using WP's native .button/.button-primary
+     * classes so the page
      * still respects whichever admin color scheme the user picked in their
      * profile (see the file-level comment above).
      */
@@ -111,63 +113,116 @@
     display: none;
 }
 
-.ctp-admin .nav-tab-wrapper {
+/* Die Reihe der Bereiche. Gemessen wird ihre Spaltenzahl (siehe unten) an der
+ * Breite, die tatsaechlich zur Verfuegung steht, und nicht am Fenster: Die
+ * Seitenleiste von WordPress ist 160px breit, eingeklappt 36px, und
+ * einklappen kann sie jeder selbst. Eine Fensterbreite sagt deshalb nicht, wie
+ * viel Platz die Reihe hat.
+ *
+ * Dieselbe Breite wie alles darunter (Statuskacheln, Panels, Speichern-
+ * Leiste). Ohne die Grenze lief die Reihe auf breiten Bildschirmen weiter als
+ * der Rest der Seite - gemessen bei 1920px: Kacheln bis 1622px, Reiter bis
+ * 1900px. Nutzerwunsch: „die gleiche Breite wie die Kacheln unterhalb".
+ *
+ * Der Abstand oben ist der, den vorher WordPress' .nav-tab-wrapper mitbrachte;
+ * dessen Linie unter den Reitern gibt es nicht mehr („als Trenner hier keine
+ * Linien"). */
+.ctp-admin .ctp-tabnav {
+    box-sizing: border-box;
+    max-width: var(--ctp-admin-max-width);
+    padding-top: 9px;
     margin-bottom: 4px;
+    container-type: inline-size;
 }
 
-/* Alle Reiter so breit wie der breiteste.
+/* Die Bereiche laufen ueber die volle Breite - in einer Reihe, solange es geht.
  *
- * `grid-auto-columns: 1fr` macht die Spalten gleich breit, und `width:
- * fit-content` sorgt dafuer, dass das Raster nicht die ganze Seite ausfuellt,
- * sondern seine max-content-Breite annimmt - bei gleich breiten Spalten also
- * genau (Anzahl x breitester Reiter). Die durchgehende Linie unter den Reitern
- * gehoert weiterhin dem .nav-tab-wrapper darum herum und laeuft deshalb
- * unveraendert ueber die volle Seitenbreite. */
+ * Jede Spalte ist mindestens so breit wie ihre Beschriftung
+ * (`minmax(max-content, 1fr)`), der Rest der Zeile wird gleichmaessig
+ * verteilt. Das ergibt fast gleich breite Knoepfe: Nur "Synchronisation" ist
+ * spuerbar breiter, weil es das laengste Wort ist - die uebrigen acht teilen
+ * sich den verbleibenden Platz zu gleichen Teilen.
+ *
+ * Bis 1.21.0 stand hier eine einzige Reihe fuer jede Breite und ein Umbruch
+ * erst unter 960px Fensterbreite - berechnet fuer die *sieben* Reiter von
+ * damals. Mit neun lief die Reihe dazwischen ueber: gemessen 206px Ueberstand
+ * bei 1000px Fensterbreite, 182px bei 1024px, und die ganze Seite liess sich
+ * seitlich schieben. Ein erster Umbau auf gleich breite Reiter in zwei kurzen
+ * Reihen (5 + 4) war dem Nutzer zu schmal („das Menue oben soll ueber der
+ * ganzen Breite laufen") - daher jetzt die volle Breite in jeder Stufe.
+ *
+ * Die Stufen sind aus den gemessenen Breiten der Buttons gerechnet (WordPress
+ * 7.1, klassische Buttons): zusammen 1018px mit Symbolen, 838px ohne, der
+ * breiteste ("Synchronisation") 154px - plus acht Abstaende von 4px:
+ *   ab 1070px   eine Reihe mit Symbolen (braucht 1050px)
+ *   ab  890px   eine Reihe ohne Symbole (braucht 870px)
+ *   ab  480px   drei Reihen zu drei Buttons (braucht 3 x 154 + 8 = 470px)
+ *   ab  320px   zwei Spalten (braucht 312px), darunter eine
+ * Jede Schwelle mit rund 20px Luft, weil Schriften je nach System etwas
+ * breiter laufen. Die ersten Schwellen (1000 / 800px) stammten noch von den
+ * WordPress-Reitern, deren Beschriftung schmaler war; mit den Buttons lief die
+ * Reihe knapp darunter wieder ueber.
+ * Kommt ein Bereich dazu oder wird eine Beschriftung laenger, stimmen die
+ * Schwellen nicht mehr - SettingsPageTest haelt deshalb die Spaltenzahl der
+ * obersten Stufe an die Zahl der Bereiche gebunden. */
 .ctp-admin .ctp-tabs {
     display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 4px;
-    width: fit-content;
-    max-width: 100%;
 }
 
-.ctp-admin .nav-tab {
+@container (min-width: 320px) {
+    .ctp-admin .ctp-tabs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@container (min-width: 480px) {
+    .ctp-admin .ctp-tabs {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@container (min-width: 890px) {
+    .ctp-admin .ctp-tabs {
+        grid-template-columns: repeat(9, minmax(max-content, 1fr));
+    }
+}
+
+/* Die einzige Stufe, in der sich etwas anderes aendert als die Spaltenzahl:
+ * Im schmalsten Band der einzeiligen Reihe haelt der Verzicht auf die Symbole
+ * sie einzeilig. Ohne ihn braeche sie hier in drei Reihen um. */
+@container (min-width: 890px) and (max-width: 1069.98px) {
+    .ctp-admin .ctp-tabs .dashicons {
+        display: none;
+    }
+}
+
+/* Klassische WordPress-Buttons: Farbe, Rahmen, Rundung, Hover und der blaue
+ * aktive Bereich (`button-primary`) kommen unveraendert von WordPress
+ * („klassische Buttons ohne die neuen Styles"). Hier steht nur, was das
+ * Raster braucht - Symbol und Beschriftung mittig nebeneinander, und kein
+ * eigener Aussenabstand, weil der Raster-Abstand die Zwischenraeume setzt.
+ * SettingsPageTest haelt fest, dass hier keine Farbe und kein Rahmen
+ * dazukommt. */
+.ctp-admin .ctp-tabs .button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    /* Der Raster-Abstand oben setzt die Zwischenraeume; core's margin-left
-     * wuerde sich addieren und die erste Spalte schmaler wirken lassen. */
-    margin-left: 0;
-    margin-right: 0;
-    text-align: center;
+    margin: 0;
 }
 
-/* Unter der Breite, ab der sieben gleich breite Reiter nicht mehr
- * nebeneinander passen, ist Umbruch wichtiger als gleiche Breite. */
-@media (max-width: 960px) {
-    .ctp-admin .ctp-tabs {
-        grid-auto-flow: row;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        width: auto;
-    }
-}
-
-.ctp-admin .nav-tab .dashicons {
+.ctp-admin .ctp-tabs .button .dashicons {
     font-size: 16px;
     width: 16px;
     height: 16px;
-    opacity: 0.7;
-}
-
-/* Inset box-shadow rather than border-bottom so it doesn't add height and
- * throw off alignment with the inactive tabs next to it (core's own
- * .nav-tab-active already sets a 1px border-bottom to blend into the page
- * background — this just draws a colored line on top of that, inside the box). */
-.ctp-admin .nav-tab-active,
-.ctp-admin .nav-tab-active:hover {
-    box-shadow: inset 0 -3px 0 var(--ctp-admin-accent);
+    /* WordPress 7.1 gibt Symbolen in Buttons `line-height: 1.9` (buttons.css,
+     * gedacht fuer 20px-Symbole in 38px hohen Buttons). Bei 16px sind das
+     * 30,4px, und das Zeichen stand in seinem 16px-Kaestchen nach unten
+     * versetzt - das Kaestchen sass mittig, das Zeichen nicht. Vom Nutzer im
+     * Backend gesehen („Die Icons sind noch verschoben"). */
+    line-height: 1;
 }
 
 /*
@@ -180,12 +235,17 @@
  * Nachbarn: darueber die Statuszeile, darunter der Panelrahmen. Etwas, das an
  * nichts haengt, liest sich als Filterchip und nicht als Navigation.
  *
- * Jetzt eine angesetzte Reiterreihe: eine durchgehende Linie unter der Reihe,
- * der gewaehlte Reiter sitzt weiss auf dieser Linie und ueberdeckt sie um
- * einen Pixel - er geht damit in den Kasten darunter ueber, der direkt
- * anschliesst. Dieselbe Sprache wie die Haupt-Reiter darueber, nur eine
- * Nummer kleiner und mit der Akzentlinie oben statt unten, damit die beiden
- * Ebenen nicht verwechselt werden.
+ * Jetzt eine angesetzte Reiterreihe: Der gewaehlte Reiter sitzt weiss auf der
+ * oberen Kante des Panels darunter, das direkt anschliesst, und ueberdeckt sie
+ * um einen Pixel - er geht damit in den Kasten ueber. Mit der Akzentlinie
+ * oben, damit er sich von den Buttons der ersten Ebene unterscheidet.
+ *
+ * Bis 2026-09-11 lief unter der Reihe zusaetzlich eine durchgehende Linie,
+ * ohne Breitengrenze - auf breiten Bildschirmen ragte sie rechts ueber das
+ * Vorschau-Panel hinaus, und sie war die einzige Linie dieser Art auf allen
+ * Reitern (Nutzerbefund: „Diese Linie, die bei Vorschau rechts raus ragt,
+ * muss noch weg, in den anderen Reitern ist keine Linie"). Der Reiter braucht
+ * sie nicht: Die Kante, auf der er sitzt, ist die des Panels.
  */
 .ctp-subtabs {
     position: relative;
@@ -193,14 +253,16 @@
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
+    box-sizing: border-box;
+    max-width: var(--ctp-admin-max-width);
     margin: 20px 0 0;
     padding: 0;
-    border-bottom: 1px solid var(--ctp-admin-border);
 }
 
 .ctp-admin .ctp-subtab {
-    /* Der negative Rand legt den Reiter auf die Linie der Reihe - ohne ihn
-       stuende er darueber und die Linie liefe unter ihm durch. */
+    /* Der negative Rand legt den Reiter auf die obere Kante des Panels
+       darunter - ohne ihn stuende er darueber und die Kante liefe unter ihm
+       durch. */
     margin-bottom: -1px;
     padding: 8px 16px;
     border: 1px solid transparent;
@@ -269,7 +331,17 @@
     box-shadow: var(--ctp-admin-shadow);
 }
 
-.ctp-panel > h2:first-child {
+/* Die erste Ueberschrift einer Box beginnt direkt am Innenabstand - auch in
+ * Formularen. Dort setzt WordPress (settings_fields()) vor die Ueberschrift
+ * ein paar unsichtbare Felder: option_page, action, Nonce, Referer. Mit
+ * `:first-child` allein war die Ueberschrift dann nicht mehr die erste, behielt
+ * ihren Abstand von 28px, und vier Boxen (Verbindung, Kalender, Raeume,
+ * Synchronisation) begannen 53px unter ihrer Kante statt 25px wie alle
+ * uebrigen. Nutzerbefund 2026-09-11: „Ueber KALENDERAUSWAHL und
+ * CHURCHTOOLS-INSTANZ ist der Abstand in der Box groesser als VERBINDUNG &
+ * BETRIEB" - vereinheitlicht auf den kleineren. */
+.ctp-panel > h2:first-child,
+.ctp-panel > input[type="hidden"] + h2 {
     margin-top: 0;
 }
 

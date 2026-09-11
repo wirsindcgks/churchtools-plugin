@@ -605,6 +605,7 @@ function sanitize_key(string $key): string
 function add_settings_section(string $id, string $title, $callback, string $page): void
 {
     $GLOBALS['ctp_test_settings']['sections'][$page][$id] = $title;
+    $GLOBALS['ctp_test_settings']['callbacks'][$page][] = $callback;
 }
 
 function add_settings_field(string $id, string $title, $callback, string $page, string $section = 'default', array $args = []): void
@@ -614,6 +615,7 @@ function add_settings_field(string $id, string $title, $callback, string $page, 
         'title' => $title,
         'section' => $section,
     ];
+    $GLOBALS['ctp_test_settings']['callbacks'][$page][] = $callback;
 }
 
 /**
@@ -626,9 +628,22 @@ function ctp_test_settings_fields(string $page): array
     return $GLOBALS['ctp_test_settings']['fields'][$page] ?? [];
 }
 
+/**
+ * Was eine Settings-Seite rendert: die Callbacks ihrer Abschnitte und Felder,
+ * in der Reihenfolge ihrer Anmeldung. Gebraucht, um die Texte des Design-Tabs
+ * zu finden, ohne eine Liste der Render-Methoden von Hand zu pflegen - ein
+ * neues Feld ist damit ohne Zutun mitgeprüft.
+ *
+ * @return array<int, mixed>
+ */
+function ctp_test_settings_callbacks(string $page): array
+{
+    return $GLOBALS['ctp_test_settings']['callbacks'][$page] ?? [];
+}
+
 function ctp_test_reset_settings(): void
 {
-    $GLOBALS['ctp_test_settings'] = ['sections' => [], 'fields' => []];
+    $GLOBALS['ctp_test_settings'] = ['sections' => [], 'fields' => [], 'callbacks' => []];
 }
 
 /**

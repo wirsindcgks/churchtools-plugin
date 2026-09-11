@@ -166,6 +166,60 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
+     * Die Texte des Design-Tabs bleiben kurz. Bis 2026-09-11 standen dort 23
+     * Beschreibungen mit zusammen 4.549 Zeichen, die laengste 428, der Median
+     * 191 - und sie erklaerten, *warum* man etwas einstellt, statt was es tut.
+     * Das war der groesste Teil dessen, was der Nutzerbefund „der Design-Tab
+     * ist zu voll" meinte. Die Faustregel seitdem: Was das Feld tut, steht am
+     * Feld; warum, steht in der Doku.
+     *
+     * Die Obergrenze ist die eigentliche Absicherung. Beschreibungen wachsen
+     * nicht in einem Zug, sondern um einen Halbsatz je Aenderung - ein Vorsatz
+     * haelt das nicht auf, ein Test schon. Geprueft wird jeder uebersetzbare
+     * Text in den Render-Methoden, die der Design-Tab tatsaechlich aufruft
+     * (aus den Settings-Seiten gelesen, nicht von Hand gelistet), dazu die
+     * beiden Vorschauen.
+     */
+    public function testDesignTabTextsStayShort(): void
+    {
+        $grenze = 160;
+
+        ctp_test_reset_settings();
+        (new SettingsPage())->registerSettings();
+
+        $methoden = ['renderDesignPreview', 'renderDetailPreview'];
+        foreach (array_keys($this->invokePrivate('designSections')) as $section) {
+            foreach (ctp_test_settings_callbacks('churchtools-plugin_design_' . $section) as $callback) {
+                if (is_array($callback)) {
+                    $methoden[] = $callback[1];
+                }
+            }
+        }
+
+        $quelle = file(CTP_PLUGIN_DIR . 'includes/Admin/SettingsPage.php');
+        $zuLang = [];
+        $geprueft = 0;
+
+        foreach (array_unique($methoden) as $methode) {
+            $r = new ReflectionMethod(SettingsPage::class, $methode);
+            $code = implode('', array_slice($quelle, $r->getStartLine() - 1, $r->getEndLine() - $r->getStartLine() + 1));
+
+            preg_match_all("/(?:esc_html_e|esc_html__|esc_attr_e|esc_attr__|__)\\(\\s*'((?:[^'\\\\]|\\\\.)*)'/u", $code, $treffer);
+
+            foreach ($treffer[1] as $text) {
+                $geprueft++;
+                $text = stripslashes($text);
+                if (mb_strlen($text) > $grenze) {
+                    $zuLang[] = sprintf('%s(): %d Zeichen – %s', $methode, mb_strlen($text), mb_substr($text, 0, 60) . '…');
+                }
+            }
+        }
+
+        $this->assertGreaterThan(20, $geprueft, 'Die Suche nach Texten greift nicht - geprueft wurde fast nichts.');
+        $this->assertSame([], $zuLang, "Texte im Design-Tab ueber {$grenze} Zeichen - das Warum gehoert in die Doku.");
+    }
+
+    /**
      * Zwei Felder des Design-Tabs hiessen beide „Reihenfolge" — einmal fuer
      * die Kachel, einmal fuer die Detailansicht. Im Fliesstext einer langen
      * Seite war nicht zu sehen, welches welches ist, und der Nutzerbefund vom
@@ -298,6 +352,124 @@ final class SettingsPageTest extends TestCase
      * breiten Panel, die vierte Karte lag unter der Vorschau. Beide Regeln
      * gehoeren zusammen, eine allein reicht nicht.
      */
+    /**
+     * Die oberste Stufe der Reiterreihe stellt alle Reiter nebeneinander, und
+     * ihre Spaltenzahl steht fest im Stylesheet. Kommt ein zehnter Reiter
+     * dazu, rutscht er dort still in eine eigene Zeile - und die Schwellen
+     * darunter, die aus 9 x 152px gerechnet sind, stimmen auch nicht mehr.
+     * Bis 1.21.0 ist genau das passiert: Die Reihe war fuer sieben Reiter
+     * berechnet und lief mit neun zwischen 960 und 1400px ueber den Rand.
+     */
+    public function testTheTabRowIsSizedForTheCurrentNumberOfTabs(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+        $anzahl = count($this->invokePrivate('tabs'));
+
+        preg_match_all('/\.ctp-admin \.ctp-tabs\s*\{[^}]*grid-template-columns:\s*repeat\((\d+),/', $css, $treffer);
+
+        $this->assertNotSame([], $treffer[1], 'Keine Spaltenstufen der Reiterreihe gefunden.');
+        $this->assertSame(
+            $anzahl,
+            max(array_map('intval', $treffer[1])),
+            "Die oberste Stufe der Reiterreihe hat nicht so viele Spalten, wie es Reiter gibt ({$anzahl})."
+        );
+    }
+
+    /**
+     * Gemessen wird am Platz der Reihe und nicht am Fenster: Die Seitenleiste
+     * von WordPress ist 160px oder 36px breit, je nachdem, ob jemand sie
+     * eingeklappt hat. Eine @media-Schwelle traefe deshalb je nach Einstellung
+     * eine andere Breite.
+     */
+    public function testTheTabRowMeasuresItsOwnSpace(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression('/\.ctp-admin \.ctp-tabnav\s*\{[^}]*container-type:\s*inline-size/', $css);
+        $this->assertDoesNotMatchRegularExpression('/@media[^{]*\{\s*\.ctp-admin \.ctp-tabs/', $css);
+    }
+
+    /**
+     * Die Reiterreihe endet an derselben Kante wie die Kacheln darunter und
+     * trennt ihre Reiter durch Abstand statt durch Striche - beides
+     * Nutzerwuensche vom 2026-09-11 („die gleiche Breite wie die Kacheln
+     * unterhalb", „als Trenner hier keine Linien"). Ohne die Breitengrenze lief
+     * die Reihe auf einem 1920px-Bildschirm 278px weiter als alles andere.
+     */
+    public function testTheTabRowEndsWhereTheCardsEndAndHasNoLines(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-admin \.ctp-tabnav\s*\{[^}]*max-width:\s*var\(--ctp-admin-max-width\)/',
+            $css,
+            'Die Reiterreihe hat nicht die Breitengrenze der Kacheln und Panels.'
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-status-strip\s*\{[^}]*max-width:\s*var\(--ctp-admin-max-width\)/',
+            $css,
+            'Die Kacheln haben eine andere Breitengrenze als die Reiterreihe.'
+        );
+
+        // Klassische WordPress-Buttons statt Reitern auf einer Linie: Die
+        // Linie kam mit .nav-tab-wrapper, die Rahmen je Reiter mit .nav-tab.
+        $php = (string) file_get_contents(CTP_PLUGIN_DIR . 'includes/Admin/SettingsPage.php');
+        $this->assertDoesNotMatchRegularExpression('/class="nav-tab/', $php, 'Die Reiterreihe benutzt wieder WordPress-Reiter samt ihrer Linie.');
+
+        // Dasselbe fuer die Unter-Reiter des Design-Tabs: Ihre Grundlinie hatte
+        // keine Breitengrenze und ragte auf breiten Bildschirmen rechts ueber
+        // das Vorschau-Panel hinaus („Diese Linie, die bei Vorschau rechts raus
+        // ragt, muss noch weg"). Der aktive Unter-Reiter sitzt seitdem auf der
+        // Kante des Panels selbst.
+        preg_match('/\.ctp-subtabs\s*\{([^}]*)\}/', $css, $unterreiter);
+        $this->assertNotSame([], $unterreiter, 'Keine Regel fuer die Unter-Reiter gefunden.');
+        $this->assertDoesNotMatchRegularExpression('/\bborder(?:-bottom)?\s*:/', $unterreiter[1], 'Die Unter-Reiter haben wieder eine Grundlinie.');
+        $this->assertMatchesRegularExpression('/max-width:\s*var\(--ctp-admin-max-width\)/', $unterreiter[1], 'Die Unter-Reiter haben keine Breitengrenze.');
+    }
+
+    /**
+     * „Klassische Buttons ohne die neuen Styles" (Nutzerwunsch 2026-09-11):
+     * Farbe, Rahmen, Rundung und der aktive Bereich kommen von WordPress, damit
+     * die Reihe aussieht wie jeder andere Button im Backend und dem
+     * Farbschema folgt, das jemand in seinem Profil gewaehlt hat. Das Plugin
+     * setzt fuer die Buttons der Reihe nur Anordnung - dieser Test merkt, wenn
+     * dort wieder eine eigene Gestaltung dazukommt.
+     */
+    public function testTheTabButtonsKeepTheClassicWordPressLook(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', $css);
+
+        preg_match_all('/([^{}]*\.ctp-tabs \.button[^{}]*)\{([^}]*)\}/', $css, $regeln, PREG_SET_ORDER);
+
+        $this->assertNotSame([], $regeln, 'Keine Regeln fuer die Buttons der Reiterreihe gefunden.');
+        foreach ($regeln as [, $selektor, $inhalt]) {
+            $this->assertDoesNotMatchRegularExpression(
+                '/(?:^|;)\s*(?:background|border|color|box-shadow|border-radius)\b/',
+                $inhalt,
+                'Eigene Gestaltung an den Buttons der Reiterreihe: ' . trim($selektor)
+            );
+        }
+    }
+
+    /**
+     * Jede Box beginnt gleich weit unter ihrer Kante - auch die mit einem
+     * Formular. settings_fields() setzt dort unsichtbare Felder vor die erste
+     * Ueberschrift; mit `:first-child` allein behielt sie dann ihren Abstand,
+     * und vier Boxen begannen 53px unter der Kante statt 25px wie alle
+     * uebrigen (Nutzerbefund 2026-09-11, gemessen an allen zwoelf Seiten).
+     */
+    public function testTheFirstHeadingOfEveryBoxStartsAtThePadding(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ctp-panel > input\[type="hidden"\] \+ h2\s*\{[^}]*margin-top:\s*0/',
+            $css,
+            'Nach den unsichtbaren Formularfeldern behaelt die erste Ueberschrift ihren Abstand.'
+        );
+    }
+
     public function testThePresetCardsCannotOutgrowTheirColumn(): void
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
