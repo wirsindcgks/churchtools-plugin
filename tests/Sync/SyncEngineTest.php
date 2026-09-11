@@ -235,6 +235,13 @@ final class SyncEngineTest extends TestCase
         );
     }
 
+    private function resolveLocation(string $addressLocation, string $room): string
+    {
+        $method = new ReflectionMethod(SyncEngine::class, 'resolveLocation');
+
+        return $method->invoke(null, $addressLocation, $room);
+    }
+
     /**
      * Die Huelle, wie ChurchTools sie wirklich schickt: `base` und `calculated`
      * doppelt (oben als veraltete Kopie von `appointment.*`) und im Termin die
@@ -514,6 +521,39 @@ final class SyncEngineTest extends TestCase
 
         $this->assertNotNull($row);
         $this->assertSame('', $row['location']);
+    }
+
+    /**
+     * Seit 2026-09-11 gilt die umgekehrte Reihenfolge zu 1.12.0: ein
+     * gepflegter Ort schlaegt den gebuchten Raum. Ausschlaggebend war ein
+     * Taufgottesdienst ausserhalb des eigenen Hauses mit einer versehentlich
+     * gebuchten Ressource im eigenen Haus - die alte Regel haette dort den
+     * Raum gezeigt statt der echten Adresse.
+     */
+    public function testAnAddressWinsOverABookedRoom(): void
+    {
+        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten', $this->resolveLocation(
+            'Gemeindehaus, Hauptstraße 1, 75015 Bretten',
+            'Saal 1'
+        ));
+    }
+
+    /**
+     * Die Gegenprobe: Steht kein Ort fest, traegt weiterhin der Raum - das
+     * ist der Fall, der die Serien ohne eigene Adresse versorgt.
+     */
+    public function testARoomFillsTheLocationWhenNoAddressIsSet(): void
+    {
+        $this->assertSame('Saal 1', $this->resolveLocation('', 'Saal 1'));
+    }
+
+    /**
+     * Weder Adresse noch Raum: die Zeile bleibt leer, kein Rest an
+     * Trennzeichen oder ein geratener Platzhalter.
+     */
+    public function testTheLocationStaysEmptyWithoutAddressOrRoom(): void
+    {
+        $this->assertSame('', $this->resolveLocation('', ''));
     }
 
     /**

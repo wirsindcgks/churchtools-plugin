@@ -1078,11 +1078,45 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
-     * `isPublic` ist ChurchTools' eigene Angabe zum Kalender und muss den Weg
-     * in die Einstellungen finden - ohne sie kann der Hinweis im Tab
-     * „Kalender" nicht entstehen.
+     * `type` (`church`/`group`/`personal`) ist ChurchTools' aktuelle Angabe
+     * zum Kalender und muss den Weg in die Einstellungen finden - ohne sie
+     * kann der Hinweis im Tab „Kalender" nicht entstehen. `isPublic`/
+     * `isPrivate` sind an der Instanz, gegen die dies verifiziert wurde, als
+     * `@deprecated`-Alias von `type` ausgewiesen.
      */
-    public function testMergeCalendarsCarriesTheChurchToolsPublicFlag(): void
+    public function testMergeCalendarsTreatsTypeChurchAsPublic(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Gottesdienste', 'type' => 'church'],
+        ]);
+
+        $this->assertTrue($merged[7]['is_public']);
+    }
+
+    /**
+     * Ein Gruppen- oder persoenlicher Kalender ist in ChurchTools kein
+     * Gemeindekalender - beide Typen zaehlen deshalb als nicht oeffentlich.
+     */
+    public function testMergeCalendarsTreatsTypeGroupAndPersonalAsNotPublic(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Gruppe', 'type' => 'group'],
+            ['id' => 8, 'name' => 'Persoenlich', 'type' => 'personal'],
+        ]);
+
+        $this->assertFalse($merged[7]['is_public']);
+        $this->assertFalse($merged[8]['is_public']);
+    }
+
+    /**
+     * `isPublic` bleibt Rueckfall fuer eine Instanz, die `type` noch nicht
+     * liefert (aeltere ChurchTools-Version).
+     */
+    public function testMergeCalendarsFallsBackToIsPublicWhenTypeIsMissing(): void
     {
         $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
 
@@ -1096,10 +1130,26 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
-     * Fehlt das Feld ganz (aeltere Instanz, geaenderte Antwortform), gilt der
-     * Kalender als oeffentlich. Andersherum stuende nach dem naechsten
-     * „Kalender laden" auf jedem einzelnen Kalender eine Warnung - und eine
-     * Warnung, die immer erscheint, liest bald niemand mehr.
+     * `type` ist der Nachfolger und muss ein widersprechendes `isPublic`
+     * ueberstimmen - sonst waere `type` nur ein zweiter Blick auf dieselbe
+     * Antwort statt ihr eigentlicher Ersatz.
+     */
+    public function testMergeCalendarsPrefersTypeOverIsPublicWhenBothArePresent(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Gruppe', 'type' => 'group', 'isPublic' => true],
+        ]);
+
+        $this->assertFalse($merged[7]['is_public']);
+    }
+
+    /**
+     * Fehlen beide Felder ganz (aeltere Instanz, geaenderte Antwortform),
+     * gilt der Kalender als oeffentlich. Andersherum stuende nach dem
+     * naechsten „Kalender laden" auf jedem einzelnen Kalender eine Warnung -
+     * und eine Warnung, die immer erscheint, liest bald niemand mehr.
      */
     public function testACalendarWithoutThePublicFlagCountsAsPublic(): void
     {

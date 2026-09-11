@@ -328,19 +328,8 @@ final class SyncEngine
                 continue;
             }
 
-            /*
-             * Der Raum schlaegt die Adresse, wo einer feststeht. Das Adressfeld
-             * am Termin bezeichnet in der Praxis das Gebaeude - und dessen
-             * Anschrift steht auf der Website ohnehin im Fussbereich, waehrend
-             * der Raum die Auskunft ist, die dort fehlt. Steht keiner fest,
-             * bleibt die Zeile bei der Adresse; das ist der Fall, der
-             * auswaertige Termine traegt.
-             */
             $room = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
-
-            if ($room !== '') {
-                $row['location'] = $room;
-            }
+            $row['location'] = self::resolveLocation($row['location'], $room);
 
             $ctEventId = $row['ct_event_id'];
             $seriesImageUrls[$ctEventId] = $row['image_url'];
@@ -807,6 +796,27 @@ final class SyncEngine
      * - `meetingAt` bleibt weg, weil es kein eigenes Feld ist: Die Antwort fuehrt
      *   es in ihrem eigenen `@deprecated`-Verzeichnis als Altnamen von `name`.
      */
+    /**
+     * Ausgelagert, damit die Entscheidung ohne Netzwerk testbar ist (siehe
+     * looksLikeApiFailure() fuer dasselbe Muster).
+     *
+     * Der gepflegte Ort schlaegt den gebuchten Raum, nicht umgekehrt - bis
+     * 1.12.0 war es die andere Reihenfolge. Eine Raumbuchung ist die
+     * schwaechere Aussage: Sie kann aus einer Vorlage oder Serie stammen,
+     * der Logistik dienen oder schlicht falsch sein, und bei Raeumen mit
+     * isAutoAccept wird sie bestaetigt, ohne dass jemand hinsieht. Einen Ort
+     * traegt dagegen jemand fuer genau diesen Termin ein. Ausschlaggebend
+     * war ein Taufgottesdienst ausserhalb des eigenen Hauses mit einer
+     * versehentlich gebuchten Ressource im eigenen Haus: Die alte Regel
+     * haette den Ort im eigenen Haus gezeigt statt der echten Adresse. Der
+     * Raum fuellt die Zeile deshalb nur noch, wo kein Ort gepflegt ist - das
+     * traegt weiterhin die Serien ohne eigene Adresse.
+     */
+    private static function resolveLocation(string $addressLocation, string $room): string
+    {
+        return $addressLocation !== '' ? $addressLocation : $room;
+    }
+
     private static function formatAddress(?array $address): string
     {
         if ($address === null) {

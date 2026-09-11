@@ -1312,7 +1312,7 @@ final class SettingsPage
                         <?php
                         printf(
                             /* translators: %s: comma-separated list of calendar names */
-                            esc_html__('Hier aktiv, in ChurchTools aber nicht als öffentlich geführt: %s. Die Termine erscheinen trotzdem auf der Website – entweder hier abwählen oder in ChurchTools öffentlich stellen.', 'churchtools-plugin'),
+                            esc_html__('Hier aktiv, in ChurchTools aber als Gruppen- oder persönlicher Kalender statt als Gemeindekalender geführt: %s. Die Termine erscheinen trotzdem auf der Website – entweder hier abwählen oder den Kalender in ChurchTools als Gemeindekalender führen.', 'churchtools-plugin'),
                             esc_html(implode(', ', $nonPublic))
                         );
                         ?>
@@ -5112,15 +5112,34 @@ final class SettingsPage
                 'color' => (string) ($existing[$id]['color'] ?? $remoteColor),
                 'default_color' => $remoteColor,
                 'default_image_id' => (int) ($existing[$id]['default_image_id'] ?? 0),
-                // ChurchTools' eigene Einschaetzung, nicht unsere: Ein Kalender
-                // ohne `isPublic` ist dort nicht zur Veroeffentlichung gedacht.
-                // Fehlt das Feld ganz (aeltere Instanz, geaenderte Antwortform),
-                // gilt bewusst `true` - ein Fehlalarm auf jedem Kalender waere
-                // schlimmer als ein ausbleibender Hinweis.
-                'is_public' => (bool) ($calendar['isPublic'] ?? true),
+                'is_public' => self::calendarIsPublic($calendar),
             ];
         }
 
         return $merged;
+    }
+
+    /**
+     * ChurchTools' eigene Einschaetzung, nicht unsere: `type` (`church` /
+     * `group` / `personal`) ist der Nachfolger von `isPublic`/`isPrivate` -
+     * beide stehen an der Instanz, gegen die dies verifiziert wurde, unter
+     * `@deprecated` als Alias von `type`, und `isPublic === true` deckt sich
+     * dort luekenlos mit `type === 'church'`. `isPublic` bleibt als Rueckfall
+     * fuer aeltere Instanzen, die `type` noch nicht liefern. Fehlen beide
+     * Felder (ganz alte Instanz, geaenderte Antwortform), gilt bewusst
+     * `true` - ein Fehlalarm auf jedem Kalender waere schlimmer als ein
+     * ausbleibender Hinweis.
+     */
+    private static function calendarIsPublic(array $calendar): bool
+    {
+        if (array_key_exists('type', $calendar)) {
+            return $calendar['type'] === 'church';
+        }
+
+        if (array_key_exists('isPublic', $calendar)) {
+            return (bool) $calendar['isPublic'];
+        }
+
+        return true;
     }
 }
