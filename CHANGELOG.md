@@ -5,6 +5,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.23.0] - 2026-09-12
+
+### Changed
+
+- **Ist am Termin ein Ort eingetragen, gilt jetzt dieser – auch wenn zugleich ein Raum gebucht ist.** Bisher war es umgekehrt: Der gebuchte Raum schlug den eingetragenen Ort, in der Annahme, das Ortsfeld benenne ohnehin nur das eigene Gebäude, dessen Anschrift im Fußbereich der Website steht. Diese Annahme trägt nicht, sobald ein Termin auswärts stattfindet: Ein Taufgottesdienst in einem Freibad hatte in ChurchTools versehentlich noch einen Raum im eigenen Haus gebucht – angezeigt worden wäre der Raum, und Besucher wären ins eigene Haus gefahren statt ans Freibad. Eine Raumbuchung ist die schwächere Aussage (sie kann aus einer Vorlage oder Serie stammen, der Logistik dienen oder falsch sein, und bei Räumen mit automatischer Annahme wird sie bestätigt, ohne dass jemand hinsieht), ein Ort dagegen wird für genau diesen Termin eingetragen. Die Räume füllen die Ortszeile weiterhin überall dort, wo am Termin kein Ort steht – der Normalfall bei den Serien im eigenen Haus.
+- **Der Hinweis auf nicht-öffentliche Kalender liest jetzt ChurchTools' aktuelles Feld.** Woran das Plugin bisher erkannt hat, ob ChurchTools einen Kalender als öffentlich führt (`isPublic`), ist dort inzwischen als veraltet markiert; an seine Stelle tritt der Kalendertyp (Gemeinde-, Gruppen- oder persönlicher Kalender). Ohne diese Umstellung wäre der Hinweis wortlos verstummt, sobald ChurchTools das alte Feld entfernt. Sichtbar ändert sich nichts, solange beide Felder geliefert werden. Der Hinweistext benennt die Lage jetzt genauer („als Gruppen- oder persönlicher Kalender statt als Gemeindekalender geführt“), und gewarnt wird nur noch auf eine ausdrückliche Angabe von ChurchTools hin – ein unbekannter oder leerer Wert löst keinen Fehlalarm mehr aus.
+- Die Beschreibung im Reiter „Räume“ erklärt die neue Reihenfolge.
+
 ## [1.22.1] - 2026-09-11
 
 ### Fixed

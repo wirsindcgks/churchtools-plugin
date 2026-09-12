@@ -1098,7 +1098,7 @@ final class SettingsPage
                 <h2><?php esc_html_e('Räume in der Ortsangabe', 'churchtools-plugin'); ?></h2>
 
                 <p class="description">
-                    <?php esc_html_e('ChurchTools führt am Termin eine Adresse – in der Praxis die des Gebäudes – und daneben die Räume, die dafür gebucht werden. Angehakte Räume erscheinen als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus: Eine Aufzählung aller gebuchten Räume ist keine Ortsangabe. Ist keiner gebucht, gilt weiterhin die Adresse aus ChurchTools.', 'churchtools-plugin'); ?>
+                    <?php esc_html_e('ChurchTools führt am Termin einen Ort und daneben die Räume, die dafür gebucht werden. Ist am Termin ein Ort eingetragen, gilt dieser – eine Raumbuchung kann aus einer Vorlage stammen oder versehentlich gesetzt sein. Nur wo kein Ort eingetragen ist, springen die angehakten Räume ein: als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus – eine Aufzählung aller gebuchten Räume ist keine Ortsangabe.', 'churchtools-plugin'); ?>
                 </p>
 
                 <?php

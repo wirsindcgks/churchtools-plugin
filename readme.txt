@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.22.1
+Stable tag: 1.23.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -224,6 +224,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.23.0 =
+
+Die Ortszeile eines Termins zeigt jetzt zuerst den in ChurchTools eingetragenen Ort und erst dann den gebuchten Raum – bisher war es umgekehrt. Betroffen sind nur Termine, die beides haben; dort stand bisher der Raum, obwohl jemand eigens einen Ort eingetragen hatte. Wo wie bisher nur ein Raum gebucht ist, ändert sich nichts. Wer Adressen bisher nur für auswärtige Termine pflegt, merkt von diesem Update nichts.
+
 = 1.19.0 =
 
 Gehört ein Termin zu einer Serie, fragt der „Importieren“-Button jetzt, ob nur dieser Termin oder gleich alle in den Kalender sollen. Bei Einzelterminen bleibt alles wie bisher – ein Klick, eine Datei. Wer den Button gar nicht eingeschaltet hat, merkt von diesem Update nichts.
@@ -343,6 +347,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.23.0 =
+
+* Geändert: Ist am Termin ein Ort eingetragen, gilt dieser – auch wenn zugleich ein Raum gebucht ist. Bisher schlug der Raum den Ort, was bei auswärtigen Terminen mit versehentlich gebuchtem Raum den falschen Ort zeigte
+* Geändert: Der Hinweis auf nicht-öffentliche Kalender liest den Kalendertyp aus ChurchTools statt des dort inzwischen veralteten Feldes `isPublic` – und warnt nur noch bei einer ausdrücklichen Angabe
+* Geändert: Die Beschreibung im Reiter „Räume“ erklärt die neue Reihenfolge
 
 = 1.22.1 =
 

@@ -2,9 +2,9 @@
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
 msgstr ""
-"Project-Id-Version: ChurchTools Events 1.22.1\n"
+"Project-Id-Version: ChurchTools Events 1.23.0\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-09-11 20:21:15+0000\n"
+"POT-Creation-Date: 2026-09-12 08:36:05+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -312,7 +312,7 @@ msgid "Räume in der Ortsangabe"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:1101
-msgid "ChurchTools führt am Termin eine Adresse – in der Praxis die des Gebäudes – und daneben die Räume, die dafür gebucht werden. Angehakte Räume erscheinen als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus: Eine Aufzählung aller gebuchten Räume ist keine Ortsangabe. Ist keiner gebucht, gilt weiterhin die Adresse aus ChurchTools."
+msgid "ChurchTools führt am Termin einen Ort und daneben die Räume, die dafür gebucht werden. Ist am Termin ein Ort eingetragen, gilt dieser – eine Raumbuchung kann aus einer Vorlage stammen oder versehentlich gesetzt sein. Nur wo kein Ort eingetragen ist, springen die angehakten Räume ein: als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus – eine Aufzählung aller gebuchten Räume ist keine Ortsangabe."
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:1107
@@ -399,7 +399,7 @@ msgstr ""
 
 #. translators: %s: comma-separated list of calendar names
 #: includes/Admin/SettingsPage.php:1315
-msgid "Hier aktiv, in ChurchTools aber nicht als öffentlich geführt: %s. Die Termine erscheinen trotzdem auf der Website – entweder hier abwählen oder in ChurchTools öffentlich stellen."
+msgid "Hier aktiv, in ChurchTools aber als Gruppen- oder persönlicher Kalender statt als Gemeindekalender geführt: %s. Die Termine erscheinen trotzdem auf der Website – entweder hier abwählen oder den Kalender in ChurchTools als Gemeindekalender führen."
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:1324
