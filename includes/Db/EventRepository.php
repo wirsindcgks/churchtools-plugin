@@ -36,8 +36,8 @@ class EventRepository
 
         $wpdb->query($wpdb->prepare(
             'INSERT INTO %i
-                (ct_event_id, ct_calendar_id, title, subtitle, description, start_date, end_date, all_day, location, location_at_church, image_url, raw_data, updated_at)
-             VALUES (%d, %d, %s, %s, %s, %s, %s, %d, %s, %d, %s, %s, %s)
+                (ct_event_id, ct_calendar_id, title, subtitle, description, start_date, end_date, all_day, location, location_at_church, location_data, image_url, raw_data, updated_at)
+             VALUES (%d, %d, %s, %s, %s, %s, %s, %d, %s, %d, %s, %s, %s, %s)
              ON DUPLICATE KEY UPDATE
                 ct_calendar_id = VALUES(ct_calendar_id),
                 title = VALUES(title),
@@ -47,6 +47,7 @@ class EventRepository
                 all_day = VALUES(all_day),
                 location = VALUES(location),
                 location_at_church = VALUES(location_at_church),
+                location_data = VALUES(location_data),
                 image_url = VALUES(image_url),
                 raw_data = VALUES(raw_data),
                 updated_at = VALUES(updated_at)',
@@ -61,6 +62,7 @@ class EventRepository
             !empty($event['all_day']) ? 1 : 0,
             $event['location'] ?? '',
             !empty($event['location_at_church']) ? 1 : 0,
+            $event['location_data'] ?? '',
             $event['image_url'] ?? '',
             wp_json_encode($event['raw_data'] ?? []),
             current_time('mysql')

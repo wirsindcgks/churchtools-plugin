@@ -76,16 +76,38 @@ final class EventUpsertSqlTest extends TestCase
     }
 
     /**
-     * Ohne die Zeile in `ON DUPLICATE KEY UPDATE` bekäme der Merker seinen
-     * Wert genau einmal — beim ersten Anlegen der Zeile. Jeder weitere Sync
-     * ließe ihn stehen, auch wenn der Raum inzwischen in ein anderes Gebäude
-     * gezogen ist oder die Zeile jetzt eine Adresse trägt.
+     * Jede Spalte, die der Sync schreibt, muss auch im `ON DUPLICATE KEY
+     * UPDATE` stehen — sonst bekäme sie ihren Wert genau einmal, beim ersten
+     * Anlegen der Zeile, und jeder weitere Sync ließe den alten stehen. Für
+     * eine Terminserie, deren Zeilen bei jedem Lauf wieder durch dieselbe
+     * Anweisung gehen, heißt das: Die Angabe käme nie an.
+     *
+     * Bewusst über *alle* Spalten geprüft statt je Spalte einzeln: Beim
+     * Ergänzen von `location_data` fehlte genau diese Zeile, und der Test,
+     * der nur `location_at_church` kannte, hat es nicht gemerkt.
      */
-    public function testTheChurchFlagIsAlsoUpdatedOnAnExistingRow(): void
+    public function testEveryWrittenColumnIsAlsoUpdatedOnAnExistingRow(): void
     {
         (new EventRepository())->upsert($this->event());
 
-        $this->assertStringContainsString('location_at_church = VALUES(location_at_church)', $this->wpdb->sql);
+        preg_match('/\(([^)]+)\)\s*VALUES/s', $this->wpdb->sql, $insert);
+        preg_match('/ON DUPLICATE KEY UPDATE(.+)$/s', $this->wpdb->sql, $update);
+
+        $columns = array_map('trim', explode(',', $insert[1]));
+
+        foreach ($columns as $column) {
+            // Die beiden Schlüsselspalten identifizieren die Zeile, die gerade
+            // getroffen wurde - sie zu überschreiben hätte keinen Sinn.
+            if (in_array($column, ['ct_event_id', 'start_date'], true)) {
+                continue;
+            }
+
+            $this->assertStringContainsString(
+                "{$column} = VALUES({$column})",
+                $update[1],
+                "Spalte {$column} wird beim ersten Anlegen geschrieben, aber nie wieder aktualisiert."
+            );
+        }
     }
 
     /**

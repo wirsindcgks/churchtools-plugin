@@ -566,6 +566,76 @@ final class SyncEngineTest extends TestCase
     }
 
     /**
+     * Eine auswärtige Adresse trägt Straße, Ort *und* Koordinaten - und die
+     * sind dort am meisten wert, wo jemand einen fremden Ort sucht. Die
+     * sichtbare Zeile bleibt davon unberührt, die Teile stehen daneben.
+     */
+    public function testAnAddressWithAStreetIsAlsoStoredInItsParts(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => [
+                'name' => 'Freibad',
+                'street' => 'Badstraße 1',
+                'zip' => '75015',
+                'city' => 'Bretten',
+                'country' => 'DE',
+                'latitude' => '49.0368',
+                'longitude' => '8.7057',
+            ]]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Freibad, Badstraße 1, 75015 Bretten', $row['location']);
+
+        $parts = json_decode($row['location_data'], true);
+
+        $this->assertSame('Badstraße 1', $parts['street']);
+        $this->assertSame('49.0368', $parts['latitude']);
+    }
+
+    /**
+     * Der häufigere Fall an der echten Instanz: Im Adressfeld steht nur ein
+     * Name, und aus einem Namen eine Anschrift zu bauen hieße raten. Gemessen
+     * am 2026-09-12: 10 von 113 Zeilen tragen eine Adresse, keine davon eine
+     * Straße.
+     */
+    public function testAnAddressWithOnlyANameStoresNoParts(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            // Ausdrücklich leer statt weggelassen: envelope() mischt mit der
+            // Vorgabe, ein Weglassen erbte also deren Straße.
+            'appointment' => ['base' => ['address' => [
+                'name' => 'Festsaal',
+                'street' => '',
+                'zip' => '',
+                'city' => '',
+            ]]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertSame('Festsaal', $row['location']);
+        $this->assertSame('', $row['location_data']);
+    }
+
+    /**
+     * Koordinaten allein genügen: Sie verorten den Termin genauer als jede
+     * Adresszeile, auch ohne Straße.
+     */
+    public function testCoordinatesAloneAreWorthStoring(): void
+    {
+        $row = $this->mapOccurrence($this->envelope([
+            'appointment' => ['base' => ['address' => [
+                'name' => 'Waldlichtung',
+                'latitude' => '49.0368',
+                'longitude' => '8.7057',
+            ]]],
+        ]));
+
+        $this->assertNotNull($row);
+        $this->assertNotSame('', $row['location_data']);
+    }
+
+    /**
      * Seit 2026-09-11 gilt die umgekehrte Reihenfolge zu 1.12.0: ein
      * gepflegter Ort schlaegt den gebuchten Raum. Ausschlaggebend war ein
      * Taufgottesdienst ausserhalb des eigenen Hauses mit einer versehentlich

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Frontend;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
-use ChurchToolsPlugin\ChurchAddress;
+use ChurchToolsPlugin\Address;
 use DateTimeImmutable;
 use Throwable;
 
@@ -195,7 +195,7 @@ final class EventSchema
         $location = trim((string) ($event['location'] ?? ''));
         if ($location !== '') {
             $data['eventAttendanceMode'] = 'https://schema.org/OfflineEventAttendanceMode';
-            $data['location'] = self::place($location, !empty($event['location_at_church']));
+            $data['location'] = self::place($location, $event);
         }
 
         $image = trim((string) ($event['image_url'] ?? ''));
@@ -221,30 +221,35 @@ final class EventSchema
     }
 
     /**
-     * Der Ort als schema.org/Place.
+     * Der Ort als schema.org/Place. Drei Fälle, und der Unterschied ist das,
+     * was eine Suchmaschine daraus machen kann:
      *
-     * Zwei Fälle, und der Unterschied ist das, was eine Suchmaschine daraus
-     * machen kann:
+     * 1. Die Zeile benennt einen gebuchten Raum im Haus der Gemeinde (Merker
+     *    aus dem Sync): Der Raum steht als `name`, die Anschrift der Gemeinde
+     *    strukturiert daneben. „Saal 1" allein ist keine Anschrift, und Google
+     *    verlangt für Termine in der Suche eine.
+     * 2. Der Termin trägt eine eigene Adresse mit Straße oder Koordinaten
+     *    (`location_data` aus dem Sync): Dann ist sie die genauere Auskunft —
+     *    und bei auswärtigen Terminen sind es genau die Koordinaten, die
+     *    einen fremden Ort auffindbar machen. Der Name der Adresse wird zum
+     *    `name` des Ortes, also „Freibad" statt der ganzen Zeile.
+     * 3. Sonst bleibt es bei einer Zeile für beides: ChurchTools führt den Ort
+     *    dann als Fließtext, und ihn hier in Teile zu zerlegen hieße raten.
      *
-     * Benennt die Zeile einen gebuchten Raum im Haus der Gemeinde (Merker aus
-     * dem Sync), steht der Raum als `name` und die Anschrift der Gemeinde
-     * strukturiert daneben, samt Koordinaten. Erst damit ist der Ort für eine
-     * Suchmaschine ein Ort und nicht eine Zeichenkette: „Saal 1" allein ist
-     * keine Anschrift, und Google verlangt für Termine in der Suche eine.
-     *
-     * Sonst bleibt es bei einer Zeile für beides. ChurchTools führt den Ort
-     * dort als Fließtext („Gemeindehaus, Musterstraße 1"), nicht als Haus,
-     * Straße, Ort — ihn hier in Teile zu zerlegen hieße raten, und eine falsch
-     * geratene Anschrift ist schlechter als eine unzerlegte.
+     * @param array<string, mixed> $event
      *
      * @return array<string, mixed>
      */
-    private static function place(string $location, bool $atChurch): array
+    private static function place(string $location, array $event): array
     {
-        $address = $atChurch ? SettingsPage::churchAddress() : [];
-        $postal = $address === [] ? [] : ChurchAddress::schemaAddress($address);
+        $address = !empty($event['location_at_church'])
+            ? SettingsPage::churchAddress()
+            : self::ownAddress($event);
 
-        if ($postal === []) {
+        $postal = $address === [] ? [] : Address::schemaAddress($address);
+        $geo = $address === [] ? [] : Address::geo($address);
+
+        if ($postal === [] && $geo === []) {
             return [
                 '@type' => 'Place',
                 'name' => $location,
@@ -254,17 +259,45 @@ final class EventSchema
 
         $place = [
             '@type' => 'Place',
-            'name' => $location,
-            'address' => $postal,
+            // Der Name der eigenen Adresse benennt den Ort („Freibad"), die
+            // Raumzeile den Raum - beides taugt als `name`, die ganze
+            // Adresszeile davor nicht.
+            'name' => trim((string) ($address['name'] ?? '')) !== '' && empty($event['location_at_church'])
+                ? trim((string) $address['name'])
+                : $location,
+            // Ohne verwertbare Anschrift bleibt die Zeile als Text stehen -
+            // besser eine unzerlegte Angabe als gar keine, etwa bei einer
+            // Adresse, die nur Koordinaten trägt.
+            'address' => $postal === [] ? $location : $postal,
         ];
-
-        $geo = ChurchAddress::geo($address);
 
         if ($geo !== []) {
             $place['geo'] = $geo;
         }
 
         return $place;
+    }
+
+    /**
+     * Die Adresse des Termins selbst, wie der Sync sie in `location_data`
+     * abgelegt hat — leer, wo keine gespeichert ist (der häufigere Fall) oder
+     * die Spalte noch fehlt, weil die Zeile älter ist als dieses Feld.
+     *
+     * @param array<string, mixed> $event
+     *
+     * @return array<string, string>
+     */
+    private static function ownAddress(array $event): array
+    {
+        $stored = trim((string) ($event['location_data'] ?? ''));
+
+        if ($stored === '') {
+            return [];
+        }
+
+        $decoded = json_decode($stored, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**

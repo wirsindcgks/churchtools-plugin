@@ -8,7 +8,7 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 
 final class Installer
 {
-    public const DB_VERSION = '1.6.0';
+    public const DB_VERSION = '1.7.0';
 
     /**
      * The three recurrences the "Sync-Intervall" select offers — kept here
@@ -263,6 +263,7 @@ final class Installer
             all_day TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
             location VARCHAR(255) NULL,
             location_at_church TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+            location_data TEXT NULL,
             image_url VARCHAR(1000) NULL,
             attachment_id BIGINT UNSIGNED NULL,
             raw_data LONGTEXT NULL,

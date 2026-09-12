@@ -6,7 +6,7 @@ namespace ChurchToolsPlugin\Sync;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
-use ChurchToolsPlugin\ChurchAddress;
+use ChurchToolsPlugin\Address;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
@@ -563,6 +563,7 @@ final class SyncEngine
             // liegt, sagt sie selbst. Der Merker gilt nur fuer Zeilen, die
             // ein gebuchter Raum stellt, und wird in withRoom() gesetzt.
             'location_at_church' => false,
+            'location_data' => self::locationData(is_array($base['address'] ?? null) ? $base['address'] : null),
             'image_url' => $imageUrl,
             'raw_data' => self::withoutDeprecated($envelope),
         ];
@@ -868,6 +869,44 @@ final class SyncEngine
      * - `meetingAt` bleibt weg, weil es kein eigenes Feld ist: Die Antwort fuehrt
      *   es in ihrem eigenen `@deprecated`-Verzeichnis als Altnamen von `name`.
      */
+    /**
+     * Die Adresse des Termins in ihren Einzelteilen, als JSON fuer die Spalte
+     * `location_data` - oder ein leerer String, wo nichts zu holen ist.
+     *
+     * Warum ueberhaupt gespeichert, wo `raw_data` die ganze Antwort traegt:
+     * Die Anzeige liest flache Spalten, und die Huelle je Termin zu
+     * entpacken, nur um an vier Felder zu kommen, kostet auf jeder
+     * Listenseite - fuer einen Gewinn, den wenige Zeilen haben.
+     *
+     * Gespeichert wird nur, was mehr hergibt als die sichtbare Zeile ohnehin
+     * sagt: eine Strasse oder ein Koordinatenpaar. Ein Adressfeld, in dem nur
+     * ein Name steht (an der Instanz der haeufigere Fall - 10 von 113
+     * Zeilen, alle ohne Strasse), traegt nichts bei; daraus eine Anschrift zu
+     * bauen hiesse raten.
+     */
+    private static function locationData(?array $address): string
+    {
+        if ($address === null) {
+            return '';
+        }
+
+        $parts = [];
+
+        foreach (['name', 'street', 'zip', 'city', 'district', 'country', 'latitude', 'longitude'] as $field) {
+            $value = trim((string) ($address[$field] ?? ''));
+
+            if ($value !== '') {
+                $parts[$field] = $value;
+            }
+        }
+
+        if (!isset($parts['street']) && !isset($parts['latitude'], $parts['longitude'])) {
+            return '';
+        }
+
+        return (string) wp_json_encode($parts);
+    }
+
     private static function formatAddress(?array $address): string
     {
         if ($address === null) {
@@ -877,7 +916,7 @@ final class SyncEngine
         // Dieselbe Regel wie fuer die Anschrift der Gemeinde, und bewusst
         // nicht noch einmal hier: Zwei Kopien waeren zwei Stellen, an denen
         // sich ein Teilort unterschiedlich verhaelt.
-        $cityLine = ChurchAddress::cityLine($address);
+        $cityLine = Address::cityLine($address);
 
         $parts = array_filter(
             array_map(

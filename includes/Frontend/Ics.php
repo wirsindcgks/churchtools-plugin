@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Frontend;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
-use ChurchToolsPlugin\ChurchAddress;
+use ChurchToolsPlugin\Address;
 use DateTimeImmutable;
 use DateTimeZone;
 use Throwable;
@@ -181,8 +181,16 @@ final class Ics
              * Route bauen kann. Der Gebäudename bleibt dabei draußen, den
              * stellt hier der Raum.
              */
-            $churchAddress = !empty($event['location_at_church']) ? SettingsPage::churchAddress() : [];
-            $postalLine = $churchAddress === [] ? '' : ChurchAddress::postalLine($churchAddress);
+            $atChurch = !empty($event['location_at_church']);
+            $address = $atChurch ? SettingsPage::churchAddress() : self::ownAddress($event);
+
+            /*
+             * Die Anschrift kommt nur beim Raum im eigenen Haus dazu — trägt
+             * der Termin eine eigene Adresse, steht sie schon in der Zeile
+             * (SyncEngine::formatAddress() hat sie zusammengesetzt), und ein
+             * zweites Mal wäre sie eine Wiederholung.
+             */
+            $postalLine = $atChurch && $address !== [] ? Address::postalLine($address) : '';
 
             if ($postalLine !== '') {
                 $location .= ', ' . $postalLine;
@@ -190,7 +198,13 @@ final class Ics
 
             $lines[] = self::line('LOCATION', self::escapeText($location));
 
-            $geo = $churchAddress === [] ? [] : ChurchAddress::geo($churchAddress);
+            /*
+             * Die Koordinaten dagegen gehören in beide Fälle — bei einem
+             * auswärtigen Termin sind sie sogar das Wertvollste, was die
+             * Datei trägt: Eine Karten-App findet damit auch ein Freibad ohne
+             * Hausnummer, statt die Adresszeile raten zu müssen.
+             */
+            $geo = $address === [] ? [] : Address::geo($address);
 
             if ($geo !== []) {
                 // GEO trennt mit Semikolon und ist kein Text: keine Maskierung,
@@ -240,6 +254,28 @@ final class Ics
         }
 
         return $lines;
+    }
+
+    /**
+     * Die Adresse des Termins selbst, wie der Sync sie in `location_data`
+     * abgelegt hat — leer, wo keine gespeichert ist oder die Zeile älter ist
+     * als dieses Feld.
+     *
+     * @param array<string, mixed> $event
+     *
+     * @return array<string, string>
+     */
+    private static function ownAddress(array $event): array
+    {
+        $stored = trim((string) ($event['location_data'] ?? ''));
+
+        if ($stored === '') {
+            return [];
+        }
+
+        $decoded = json_decode($stored, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**

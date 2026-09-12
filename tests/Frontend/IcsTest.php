@@ -381,6 +381,39 @@ final class IcsTest extends TestCase
         $this->assertStringNotContainsString('GEO:', $ics);
     }
 
+    /**
+     * Beim auswärtigen Termin steht die Adresse schon in der Zeile - was
+     * fehlt, sind die Koordinaten. Sie sind hier das Wertvollste: Eine
+     * Karten-App findet damit auch ein Freibad ohne Hausnummer.
+     */
+    public function testAnEventWithItsOwnAddressCarriesItsCoordinates(): void
+    {
+        $ics = Ics::forEvent(array_replace($this->event(), [
+            'location' => 'Freibad, Badstraße 1, 75015 Bretten',
+            'location_data' => json_encode(['name' => 'Freibad', 'street' => 'Badstraße 1', 'latitude' => '49.1111', 'longitude' => '8.2222']),
+        ]));
+
+        $this->assertStringContainsString("LOCATION:Freibad\\, Badstraße 1\\, 75015 Bretten\r\n", $ics);
+        $this->assertStringContainsString("GEO:49.1111;8.2222\r\n", $ics);
+    }
+
+    /**
+     * Die Anschrift der Gemeinde kommt nur an eine Raumzeile - an einer
+     * eigenen Adresse wäre sie schlicht falsch, und die Adresse steht dort
+     * ohnehin schon.
+     */
+    public function testTheChurchAddressIsNotAppendedToAnOwnAddress(): void
+    {
+        ctp_test_set_option('ctp_church_address', ['name' => 'GEMEINDEHAUS', 'street' => 'Hauptstraße 1', 'zip' => '75015', 'city' => 'Bretten']);
+
+        $ics = Ics::forEvent(array_replace($this->event(), [
+            'location' => 'Freibad, Badstraße 1, 75015 Bretten',
+            'location_data' => json_encode(['name' => 'Freibad', 'street' => 'Badstraße 1', 'latitude' => '49.1111', 'longitude' => '8.2222']),
+        ]));
+
+        $this->assertStringNotContainsString('Hauptstraße 1', $ics);
+    }
+
     private function event(): array
     {
         return [

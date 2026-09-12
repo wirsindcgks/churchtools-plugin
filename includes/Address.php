@@ -5,22 +5,27 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin;
 
 /**
- * Die Anschrift der Gemeinde in den drei Formen, in denen sie gebraucht wird:
- * als lesbare Zeile (`.ics`), als strukturierte Anschrift (schema.org) und als
- * Koordinatenpaar.
+ * Eine Anschrift aus ChurchTools in den drei Formen, in denen sie gebraucht
+ * wird: als lesbare Zeile (`.ics`), als strukturierte Anschrift (schema.org)
+ * und als Koordinatenpaar.
  *
- * Eigene Klasse, weil sie von drei Seiten benutzt wird - Admin legt sie ab
- * (SettingsPage::refreshChurchAddress()), Frontend liest sie in Schema und
- * `.ics`. Vor allem aber liegt die Regel fuer Stadt und Ortsteil damit an
- * *einer* Stelle: SyncEngine::formatAddress() baut die Ortszeile eines Termins
- * nach derselben Regel, und zwei Kopien davon waeren zwei Stellen, an denen
- * sich ein Teilort anders verhaelt.
+ * Zwei Anschriften laufen hier durch, und sie kommen in derselben Feldform
+ * (`street`, `zip`, `city`, `district`, `latitude`, ...):
  *
- * Erwartet wird die Feldform, die ChurchTools selbst liefert (`street`, `zip`,
- * `city`, `district`, ...) - so kommt sie aus `/api/info` wie aus dem
- * Adressobjekt am Termin.
+ * - die der *Gemeinde* aus `/api/info`, abgelegt von
+ *   SettingsPage::refreshChurchAddress(). Sie tritt neben einen Raumnamen,
+ *   denn „Saal 1" verortet nichts.
+ * - die des *Termins* aus seinem eigenen Adressfeld, abgelegt vom Sync. Sie
+ *   traegt bei auswaertigen Terminen Koordinaten - und genau dort, an einem
+ *   fremden Ort, sind sie am meisten wert.
+ *
+ * Eigene Klasse also nicht nur der Wiederverwendung wegen, sondern weil die
+ * Regel fuer Stadt und Ortsteil damit an *einer* Stelle liegt:
+ * SyncEngine::formatAddress() baut die sichtbare Ortszeile nach derselben
+ * Regel, und zwei Kopien davon waeren zwei Stellen, an denen sich ein Teilort
+ * unterschiedlich verhaelt.
  */
-final class ChurchAddress
+final class Address
 {
     /**
      * „Hauptstrasse 1, 75015 Musterstadt-Musterdorf" - die Anschrift ohne

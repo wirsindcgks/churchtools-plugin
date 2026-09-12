@@ -130,6 +130,83 @@ final class EventSchemaTest extends TestCase
         );
     }
 
+    /**
+     * Der auswärtige Termin: Seine eigene Adresse ist die genauere Auskunft,
+     * und ihre Koordinaten machen ein Freibad ohne Hausnummer auffindbar. Der
+     * Name der Adresse wird zum Namen des Ortes - die ganze Adresszeile wäre
+     * dort kein Name, sondern eine Wiederholung.
+     */
+    public function testAnEventWithItsOwnAddressGetsItStructured(): void
+    {
+        ctp_test_set_option('ctp_church_address', $this->churchAddress());
+
+        $data = EventSchema::forEvent($this->event([
+            'location' => 'Freibad, Badstraße 1, 75015 Bretten',
+            'location_data' => json_encode([
+                'name' => 'Freibad',
+                'street' => 'Badstraße 1',
+                'zip' => '75015',
+                'city' => 'Bretten',
+                'country' => 'DE',
+                'latitude' => '49.1111',
+                'longitude' => '8.2222',
+            ]),
+        ]));
+
+        $this->assertSame('Freibad', $data['location']['name']);
+        $this->assertSame('Badstraße 1', $data['location']['address']['streetAddress']);
+        $this->assertSame('49.1111', $data['location']['geo']['latitude'], 'die Koordinaten des Termins, nicht die der Gemeinde');
+    }
+
+    /**
+     * Die Gegenprobe zur Reihenfolge: Sagt der Merker „Raum im Haus", gilt die
+     * Anschrift der Gemeinde - eine daneben gespeicherte Adresse des Termins
+     * darf sie nicht überstimmen.
+     */
+    public function testTheChurchAddressWinsForARoomInTheBuilding(): void
+    {
+        ctp_test_set_option('ctp_church_address', $this->churchAddress());
+
+        $data = EventSchema::forEvent($this->event([
+            'location' => 'Saal 1',
+            'location_at_church' => 1,
+            'location_data' => json_encode(['name' => 'Freibad', 'street' => 'Badstraße 1', 'latitude' => '49.1111', 'longitude' => '8.2222']),
+        ]));
+
+        $this->assertSame('Saal 1', $data['location']['name']);
+        $this->assertSame('Hauptstraße 1', $data['location']['address']['streetAddress']);
+    }
+
+    /**
+     * Eine Adresse, die nur Koordinaten trägt, verortet den Termin - eine
+     * Anschrift ergibt sie aber nicht. Dann bleibt die Zeile als Text stehen,
+     * statt einer leeren Hülle.
+     */
+    public function testCoordinatesWithoutAnAddressKeepTheTextLine(): void
+    {
+        $data = EventSchema::forEvent($this->event([
+            'location' => 'Waldlichtung',
+            'location_data' => json_encode(['name' => 'Waldlichtung', 'latitude' => '49.1111', 'longitude' => '8.2222']),
+        ]));
+
+        $this->assertSame('Waldlichtung', $data['location']['address']);
+        $this->assertSame('49.1111', $data['location']['geo']['latitude']);
+    }
+
+    /**
+     * Eine unlesbare oder fehlende Spalte darf nichts kaputt machen - ältere
+     * Zeilen tragen sie noch gar nicht.
+     */
+    public function testAnUnreadableLocationDataFallsBackToTheTextLine(): void
+    {
+        $data = EventSchema::forEvent($this->event(['location_data' => 'kein JSON']));
+
+        $this->assertSame(
+            ['@type' => 'Place', 'name' => 'Gemeindehaus, Musterstraße 1', 'address' => 'Gemeindehaus, Musterstraße 1'],
+            $data['location']
+        );
+    }
+
     private function churchAddress(): array
     {
         return [
