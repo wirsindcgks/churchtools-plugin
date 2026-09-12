@@ -675,10 +675,28 @@ function ctp_test_queue_raw_http(string $body, int $code = 200): void
 function ctp_test_reset_http(): void
 {
     $GLOBALS['ctp_test_http'] = [];
+    $GLOBALS['ctp_test_http_calls'] = [];
+}
+
+/**
+ * Mitgeschrieben wird jeder Aufruf, nicht nur seine Antwort: Ob ein Endpunkt
+ * mit oder ohne `Authorization`-Header abgefragt wird, ist bei /api/info eine
+ * Zusage und kein Detail (siehe Client::getInfo()).
+ *
+ * @var array<int, array{url: string, args: array}> $GLOBALS['ctp_test_http_calls']
+ */
+$GLOBALS['ctp_test_http_calls'] = [];
+
+/** @return array<int, array{url: string, args: array}> */
+function ctp_test_http_calls(): array
+{
+    return $GLOBALS['ctp_test_http_calls'];
 }
 
 function wp_remote_request(string $url, array $args = [])
 {
+    $GLOBALS['ctp_test_http_calls'][] = ['url' => $url, 'args' => $args];
+
     if ($GLOBALS['ctp_test_http'] === []) {
         throw new RuntimeException('Unerwarteter HTTP-Aufruf: ' . $url);
     }

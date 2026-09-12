@@ -40,6 +40,13 @@ final class SettingsPage
      */
     private const OPTION_RESOURCES_FETCHED = 'ctp_resources_fetched';
 
+    /**
+     * Name und Anschrift der Gemeinde aus `/api/info`, beim Sync
+     * aufgefrischt. Keine Einstellung, sondern eine Kopie - deshalb eine
+     * eigene Option und kein Feld in ctp_settings (siehe churchAddress()).
+     */
+    private const CHURCH_ADDRESS_OPTION = 'ctp_church_address';
+
     private const PAGE_SLUG = 'churchtools-plugin';
 
     /**
@@ -1099,6 +1106,10 @@ final class SettingsPage
 
                 <p class="description">
                     <?php esc_html_e('ChurchTools führt am Termin einen Ort und daneben die Räume, die dafür gebucht werden. Ist am Termin ein Ort eingetragen, gilt dieser – eine Raumbuchung kann aus einer Vorlage stammen oder versehentlich gesetzt sein. Nur wo kein Ort eingetragen ist, springen die angehakten Räume ein: als Ortsangabe, sobald für einen Termin genau einer davon bestätigt gebucht ist. Sind es mehrere, bleibt die Angabe aus – eine Aufzählung aller gebuchten Räume ist keine Ortsangabe.', 'churchtools-plugin'); ?>
+                </p>
+
+                <p class="description">
+                    <?php esc_html_e('Für Suchmaschinen und Kalender-Apps zählt zusätzlich das Feld „Ort“ an der Ressource in ChurchTools: Trägt es denselben Gebäudenamen wie die Anschrift der Gemeinde, erscheint diese Anschrift samt Koordinaten unsichtbar neben dem Raumnamen. Ein Raumname allein verortet nichts.', 'churchtools-plugin'); ?>
                 </p>
 
                 <?php
@@ -5011,6 +5022,12 @@ final class SettingsPage
                 // Backend - grosse Raeume oben, Testressourcen unten. Sie
                 // entscheidet nichts, siehe RoomLookup.
                 'sort_key' => (int) ($resource['sortKey'] ?? 0),
+                // Das Feld „Ort" an der Ressource: ein Gebaeudename, keine
+                // Anschrift (an der Instanz nachgesehen 2026-09-11). Es
+                // beantwortet die einzige Frage, die von aussen nicht zu
+                // erraten ist - liegt dieser Raum im Haus der Gemeinde?
+                // Siehe resourceIdsInBuilding().
+                'location' => (string) ($resource['location'] ?? ''),
             ];
         }
 
@@ -5091,6 +5108,106 @@ final class SettingsPage
             => [$a['sort_key'] ?? 0, $a['name']] <=> [$b['sort_key'] ?? 0, $b['name']]);
 
         return array_map('intval', array_keys($resources));
+    }
+
+    /**
+     * Name und Anschrift der Gemeinde, wie ChurchTools sie fuehrt - leer,
+     * solange noch kein Sync gelaufen ist.
+     *
+     * Eigene Option statt eines Feldes in den Einstellungen: Hier tippt
+     * niemand etwas ein, es ist eine Kopie aus `/api/info`.
+     *
+     * @return array{name?: string, street?: string, zip?: string, city?: string, district?: string, country?: string, latitude?: string, longitude?: string, postal_line?: string}
+     */
+    public static function churchAddress(): array
+    {
+        $stored = get_option(self::CHURCH_ADDRESS_OPTION, []);
+
+        return is_array($stored) ? $stored : [];
+    }
+
+    /**
+     * Holt die Anschrift der Gemeinde und legt sie ab. Laeuft bei jedem Sync
+     * mit, damit ein Umzug oder eine korrigierte Schreibweise von selbst
+     * ankommt.
+     *
+     * Eine unbrauchbare Antwort ueberschreibt den Bestand nicht (dieselbe
+     * Regel wie bei Kalendern und Raeumen seit 1.20.1). Der Preis ist
+     * bekannt: Loescht eine Gemeinde ihre Anschrift in ChurchTools wirklich,
+     * bleibt die gespeicherte stehen. Das ist die harmlosere Haelfte - sie
+     * steht nur in strukturierten Daten, waehrend eine leere Antwort sonst
+     * jedem Termin im Haus seine Anschrift naehme.
+     */
+    public static function refreshChurchAddress(Client $client): void
+    {
+        $address = $client->getInfo()['address'] ?? null;
+
+        if (!is_array($address)) {
+            return;
+        }
+
+        $stored = [
+            'name' => trim((string) ($address['name'] ?? '')),
+            'street' => trim((string) ($address['street'] ?? '')),
+            'zip' => trim((string) ($address['zip'] ?? '')),
+            'city' => trim((string) ($address['city'] ?? '')),
+            'district' => trim((string) ($address['district'] ?? '')),
+            'country' => trim((string) ($address['country'] ?? '')),
+            'latitude' => trim((string) ($address['latitude'] ?? '')),
+            'longitude' => trim((string) ($address['longitude'] ?? '')),
+        ];
+
+        // Ohne Gebaeudenamen laesst sich kein Raum zuordnen, ohne Strasse
+        // keine Anschrift ausweisen - fehlt beides, ist die Antwort fuer
+        // diesen Zweck leer.
+        if ($stored['name'] === '' && $stored['street'] === '') {
+            return;
+        }
+
+        update_option(self::CHURCH_ADDRESS_OPTION, $stored);
+    }
+
+    /**
+     * Die Raeume, die ChurchTools im angegebenen Gebaeude fuehrt.
+     *
+     * Der Vergleich geht ueber das Feld „Ort" an der Ressource gegen den Namen
+     * der Gemeindeanschrift aus `/api/info` - beides sind Gebaeudenamen, die
+     * dieselbe Person in dieselbe Instanz getippt hat, und genau deshalb
+     * unterscheiden sie sich in Schreibweise und Leerzeichen (an der echten
+     * Instanz steht der Gebaeudename an der Anschrift in Grossbuchstaben, an
+     * den Raeumen gemischt - streng verglichen traefe kein einziger Raum).
+     * Normalisiert wird deshalb auf Kleinschreibung ohne
+     * Leerraum - und keinen Schritt weiter: Aus „Haus 2" darf nie „Haus"
+     * werden.
+     *
+     * Ein leerer Gebaeudename heisst „keine Aussage moeglich" und liefert eine
+     * leere Liste, nicht etwa alle Raeume: Die Anschrift der Gemeinde an einen
+     * Raum zu haengen, von dem niemand weiss, wo er liegt, waere geraten.
+     *
+     * @return int[]
+     */
+    public static function resourceIdsInBuilding(string $buildingName): array
+    {
+        $needle = self::normalizeBuildingName($buildingName);
+
+        if ($needle === '') {
+            return [];
+        }
+
+        $found = [];
+
+        foreach (self::get()['resources'] ?? [] as $id => $resource) {
+            if (self::normalizeBuildingName((string) ($resource['location'] ?? '')) === $needle) {
+                $found[] = (int) $id;
+            }
+        }
+
+        return $found;
+    }
+
+    private static function normalizeBuildingName(string $name): string
+    {
+        return preg_replace('/\s+/u', '', mb_strtolower(trim($name))) ?? '';
     }
 
     private static function mergeCalendars(array $existing, array $remoteCalendars): array

@@ -256,6 +256,45 @@ final class RoomLookupTest extends TestCase
         $this->assertSame('Grosser Saal', $lookup->forOccurrence(6739, '2026-11-01 10:30:00'));
     }
 
+    /**
+     * Aus dem fertigen Namen geht nicht mehr hervor, in welchem Gebaeude der
+     * Raum liegt - das steht an der Ressource. Ohne ihre ID kaeme man von
+     * hier nicht mehr dorthin, und der Merker „Raum im Haus der Gemeinde"
+     * liesse sich gar nicht erst bilden.
+     */
+    public function testTheResourceBehindTheNameStaysReachable(): void
+    {
+        $lookup = RoomLookup::fromBookings([$this->booking()], [23]);
+
+        $this->assertSame([23], $lookup->resourceIdsForOccurrence(6739, '2026-11-01 10:30:00'));
+    }
+
+    /**
+     * Im Modus „alle nennen" stehen mehrere Namen in der Zeile - dann muessen
+     * auch alle Ressourcen dahinter erreichbar sein, sonst gaelte eine
+     * Anschrift, die nur fuer einen Teil von ihnen stimmt.
+     */
+    public function testAllNamedRoomsCarryTheirResources(): void
+    {
+        $lookup = RoomLookup::fromBookings([
+            $this->booking(['resourceId' => 23, 'resource' => ['name' => 'Grosser Saal']]),
+            $this->booking(['resourceId' => 26, 'resource' => ['name' => 'Seminarraum 1']]),
+        ], [23, 26], RoomLookup::MODE_ALL);
+
+        $this->assertSame([23, 26], $lookup->resourceIdsForOccurrence(6739, '2026-11-01 10:30:00'));
+    }
+
+    /**
+     * Wo kein Raum feststeht, gibt es auch keine Ressource - und keinen
+     * Merker.
+     */
+    public function testWithoutARoomThereIsNoResource(): void
+    {
+        $lookup = RoomLookup::fromBookings([$this->booking()], [23]);
+
+        $this->assertSame([], $lookup->resourceIdsForOccurrence(6739, '2026-11-08 10:30:00'));
+    }
+
     private function booking(array $base = [], string $startDate = '2026-11-01T09:30:00Z'): array
     {
         return [

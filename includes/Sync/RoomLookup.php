@@ -63,20 +63,21 @@ final class RoomLookup
     public const MODE_ALL = 'all';
 
     /**
-     * Schluessel „<Termin-ID>|<Datum>" auf den Raumnamen. Vorkommnisse mit
-     * mehreren verschiedenen angehakten Raeumen stehen hier gar nicht erst
-     * drin - siehe fromBookings().
-     *
-     * @var array<string, string>
+     * @param array<string, string>     $rooms   Schluessel „<Termin-ID>|<Datum>" auf den
+     *                                           Raumnamen. Vorkommnisse mit mehreren
+     *                                           verschiedenen angehakten Raeumen stehen
+     *                                           hier gar nicht erst drin - siehe
+     *                                           fromBookings().
+     * @param array<string, array<int>> $roomIds Dieselben Schluessel auf die Ressourcen,
+     *                                           aus denen der Name entstanden ist. Ohne
+     *                                           sie liesse sich zu einem fertigen Namen
+     *                                           nicht mehr sagen, in welchem Gebaeude er
+     *                                           liegt (siehe resourceIdsForOccurrence()).
      */
-    private function __construct(private readonly array $rooms)
+    private function __construct(private readonly array $rooms, private readonly array $roomIds = [])
     {
     }
 
-    /**
-     * @param array $envelopes        Antwort von Client::getBookings()
-     * @param int[] $enabledResourceIds Im Backend angehakte Ressourcen
-     */
     /**
      * @param array    $envelopes          Antwort von Client::getBookings()
      * @param int[]    $enabledResourceIds Angehakte Ressourcen; ihre Reihenfolge
@@ -148,6 +149,7 @@ final class RoomLookup
         }
 
         $rooms = [];
+        $roomIds = [];
 
         foreach ($byOccurrence as $key => $names) {
             if ($mode === self::MODE_ALL) {
@@ -157,6 +159,7 @@ final class RoomLookup
                 // Woche anders.
                 uksort($names, static fn (int $a, int $b): int => $enabled[$a] <=> $enabled[$b]);
                 $rooms[$key] = implode(', ', $names);
+                $roomIds[$key] = array_keys($names);
 
                 continue;
             }
@@ -176,9 +179,10 @@ final class RoomLookup
             }
 
             $rooms[$key] = reset($names);
+            $roomIds[$key] = array_keys($names);
         }
 
-        return new self($rooms);
+        return new self($rooms, $roomIds);
     }
 
     /**
@@ -191,6 +195,22 @@ final class RoomLookup
     public function forOccurrence(int $ctEventId, string $startDate): string
     {
         return $this->rooms[$ctEventId . '|' . substr($startDate, 0, 10)] ?? '';
+    }
+
+    /**
+     * Die Ressourcen hinter dem Namen aus forOccurrence() - im Modus „alle
+     * nennen" mehrere, sonst genau eine, und eine leere Liste, wo kein Raum
+     * feststeht.
+     *
+     * Gebraucht, weil aus einem fertigen Namen nicht mehr hervorgeht, in
+     * welchem Gebaeude er liegt: Das steht an der Ressource (`location`), und
+     * ohne die ID kaeme man von hier nicht mehr dorthin.
+     *
+     * @return int[]
+     */
+    public function resourceIdsForOccurrence(int $ctEventId, string $startDate): array
+    {
+        return $this->roomIds[$ctEventId . '|' . substr($startDate, 0, 10)] ?? [];
     }
 
     /**

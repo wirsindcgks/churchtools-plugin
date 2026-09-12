@@ -335,6 +335,52 @@ final class IcsTest extends TestCase
     /**
      * @return array<string, mixed>
      */
+    /**
+     * „Saal 1" ist für einen Kalender auf dem Handy keine Adresse, aus der er
+     * eine Route bauen kann. Steht der Raum im Haus der Gemeinde, kommt deren
+     * Anschrift dahinter - und die Koordinaten als eigenes Feld, damit die
+     * Karten-App nicht raten muss.
+     */
+    public function testARoomInTheChurchBuildingCarriesTheAddressAndCoordinates(): void
+    {
+        ctp_test_set_option('ctp_church_address', [
+            'name' => 'GEMEINDEHAUS',
+            'street' => 'Hauptstraße 1',
+            'zip' => '75015',
+            'city' => 'Bretten',
+            'district' => 'Ruit',
+            'country' => 'DE',
+            'latitude' => '49.0368',
+            'longitude' => '8.7057',
+        ]);
+
+        $ics = Ics::forEvent(array_replace($this->event(), [
+            'location' => 'Saal 1',
+            'location_at_church' => 1,
+        ]));
+
+        // Das Komma ist in einer iCal-Textangabe ein Trennzeichen und muss
+        // maskiert sein, sonst liest der Kalender drei Werte statt einer
+        // Adresse.
+        $this->assertStringContainsString("LOCATION:Saal 1\\, Hauptstraße 1\\, 75015 Bretten-Ruit\r\n", $ics);
+        $this->assertStringContainsString("GEO:49.0368;8.7057\r\n", $ics);
+    }
+
+    /**
+     * Ohne den Merker bleibt die Zeile, wie sie ist: Eine Adresse vom Termin
+     * sagt selbst, wo sie liegt, und die Anschrift der Gemeinde hätte dort
+     * nichts zu suchen.
+     */
+    public function testAnAddressLineStaysUntouched(): void
+    {
+        ctp_test_set_option('ctp_church_address', ['name' => 'GEMEINDEHAUS', 'street' => 'Hauptstraße 1']);
+
+        $ics = Ics::forEvent(array_replace($this->event(), ['location' => 'Freibad, Badstraße 1']));
+
+        $this->assertStringContainsString("LOCATION:Freibad\\, Badstraße 1\r\n", $ics);
+        $this->assertStringNotContainsString('GEO:', $ics);
+    }
+
     private function event(): array
     {
         return [

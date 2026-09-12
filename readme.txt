@@ -108,7 +108,7 @@ Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail 
 
 = Importieren-Button =
 
-Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild.
+Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild. Benennt die Ortszeile einen Raum im eigenen Haus, stehen die Anschrift der Gemeinde und ihre Koordinaten dabei – erst damit kann eine Karten-App eine Route anbieten, ein Raumname allein verortet nichts.
 
 Gehört der Termin zu einer Serie, fragt der Button nach dem Klick, was in die Datei soll: „Nur dieser Termin“ oder „Alle N Termine“. Die Zahl steht dort, damit sichtbar ist, wie viele es tatsächlich sind – gezählt werden die künftigen Termine, die synchronisiert sind (siehe Sync-Zeitraum). Bei einem Einzeltermin gibt es nichts zu fragen, dort lädt ein Klick die Datei sofort.
 
@@ -169,7 +169,7 @@ Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel ve
 Ja, und dafür ist ab 1.16.0 nichts einzustellen:
 
 * Jede Kachel verweist auf die Adresse ihres Termins – auch bei der Klickart „Popup“, wo der Klick weiterhin das Fenster öffnet und nur ein Crawler (oder ein Mittelklick) der Adresse folgt.
-* Unter jeder Terminliste und auf jeder Terminseite stehen strukturierte Daten nach schema.org/Event: Beginn und Ende mit Zeitzone, Ort, Bild, Beschreibung.
+* Unter jeder Terminliste und auf jeder Terminseite stehen strukturierte Daten nach schema.org/Event: Beginn und Ende mit Zeitzone, Ort, Bild, Beschreibung. Bei einem Raum im eigenen Haus steht der Ort dort als vollständige Anschrift mit Koordinaten statt als bloßer Raumname – Suchmaschinen verlangen für Termine eine Adresse.
 * Unter `/churchtools-termine-sitemap.xml` liegt eine Sitemap aller kommenden Termine, in der robots.txt angekündigt. Sie ist der Weg zu allem, was erst hinter „Weitere Termine laden“ steht – dort klickt keine Suchmaschine.
 * Terminseiten tragen einen eigenen Seitentitel, eine eigene Kurzbeschreibung (Datum, Uhrzeit, Ort zuerst), das Bild des Termins als Vorschau und ein Canonical auf sich selbst.
 

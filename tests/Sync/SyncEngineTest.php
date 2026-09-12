@@ -236,11 +236,11 @@ final class SyncEngineTest extends TestCase
         );
     }
 
-    private function withRoom(array $row, RoomLookup $rooms): array
+    private function withRoom(array $row, RoomLookup $rooms, array $roomIdsAtChurch = []): array
     {
         $method = new ReflectionMethod(SyncEngine::class, 'withRoom');
 
-        return $method->invoke(null, $row, $rooms);
+        return $method->invoke(null, $row, $rooms, $roomIdsAtChurch);
     }
 
     /**
@@ -258,7 +258,30 @@ final class SyncEngineTest extends TestCase
 
     private function row(string $location, string $startDate = '2026-11-01 10:30:00'): array
     {
-        return ['ct_event_id' => 123, 'start_date' => $startDate, 'location' => $location];
+        return [
+            'ct_event_id' => 123,
+            'start_date' => $startDate,
+            'location' => $location,
+            'location_at_church' => false,
+        ];
+    }
+
+    /**
+     * Wie roomsWithSaal1(), aber mit zwei Raeumen in der Zeile - der Fall der
+     * Stellung „alle nennen".
+     */
+    private function roomsWithTwoRooms(): RoomLookup
+    {
+        return RoomLookup::fromBookings([
+            [
+                'base' => ['appointmentId' => 123, 'statusId' => 2, 'resourceId' => 23, 'resource' => ['name' => 'Saal 1']],
+                'calculated' => ['startDate' => '2026-11-01T09:30:00Z', 'endDate' => '2026-11-01T11:00:00Z'],
+            ],
+            [
+                'base' => ['appointmentId' => 123, 'statusId' => 2, 'resourceId' => 26, 'resource' => ['name' => 'Foyer']],
+                'calculated' => ['startDate' => '2026-11-01T09:30:00Z', 'endDate' => '2026-11-01T11:00:00Z'],
+            ],
+        ], [23, 26], RoomLookup::MODE_ALL);
     }
 
     /**
@@ -577,6 +600,74 @@ final class SyncEngineTest extends TestCase
         $row = $this->withRoom($this->row('', '2026-11-08 10:30:00'), $this->roomsWithSaal1());
 
         $this->assertSame('', $row['location']);
+    }
+
+    /**
+     * Der Merker entscheidet, ob die Anschrift der Gemeinde in strukturierte
+     * Daten und `.ics` darf. Er gilt nur fuer Zeilen, die ein gebuchter Raum
+     * im Haus der Gemeinde stellt.
+     */
+    public function testARoomInTheChurchBuildingIsMarked(): void
+    {
+        $row = $this->withRoom($this->row(''), $this->roomsWithSaal1(), [23]);
+
+        $this->assertSame('Saal 1', $row['location']);
+        $this->assertTrue($row['location_at_church']);
+    }
+
+    /**
+     * Die Gegenprobe: Ein Raum, den ChurchTools nicht im Gebaeude der
+     * Gemeinde fuehrt, bekommt deren Anschrift nicht - sonst stuende an einem
+     * Termin im Nebenhaus die Adresse des Haupthauses.
+     */
+    public function testARoomElsewhereIsNotMarked(): void
+    {
+        $row = $this->withRoom($this->row(''), $this->roomsWithSaal1(), [99]);
+
+        $this->assertSame('Saal 1', $row['location']);
+        $this->assertFalse($row['location_at_church']);
+    }
+
+    /**
+     * Nennt die Zeile mehrere Raeume, muessen *alle* im Haus liegen. Eine
+     * Anschrift, die nur fuer einen Teil der genannten Raeume gilt, waere
+     * falsch und nicht nur unvollstaendig.
+     */
+    public function testSeveralRoomsCountOnlyIfEveryOneIsInTheBuilding(): void
+    {
+        $both = $this->withRoom($this->row(''), $this->roomsWithTwoRooms(), [23, 26]);
+        $half = $this->withRoom($this->row(''), $this->roomsWithTwoRooms(), [23]);
+
+        $this->assertSame('Saal 1, Foyer', $both['location']);
+        $this->assertTrue($both['location_at_church']);
+        $this->assertFalse($half['location_at_church']);
+    }
+
+    /**
+     * Stellt die Adresse vom Termin die Zeile, sagt sie selbst, wo sie liegt -
+     * die Anschrift der Gemeinde hat dort nichts zu suchen, auch wenn
+     * nebenher ein Raum im Haus gebucht ist. Genau das war der Fall des
+     * Taufgottesdienstes im Freibad.
+     */
+    public function testAnAddressLineNeverCarriesTheChurchAddress(): void
+    {
+        $row = $this->withRoom($this->row('Freibad, Badstraße 1, 75015 Bretten'), $this->roomsWithSaal1(), [23]);
+
+        $this->assertSame('Freibad, Badstraße 1, 75015 Bretten', $row['location']);
+        $this->assertFalse($row['location_at_church']);
+    }
+
+    /**
+     * Ohne zugeordnete Raeume (kein Ort an der Ressource gepflegt, oder die
+     * Gemeindeanschrift traegt keinen Namen) heisst die leere Liste „nicht
+     * zuzuordnen" und nicht „passt schon".
+     */
+    public function testWithoutAKnownBuildingNothingIsMarked(): void
+    {
+        $row = $this->withRoom($this->row(''), $this->roomsWithSaal1(), []);
+
+        $this->assertSame('Saal 1', $row['location']);
+        $this->assertFalse($row['location_at_church']);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace ChurchToolsPlugin\Sync;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
+use ChurchToolsPlugin\ChurchAddress;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
@@ -321,6 +322,23 @@ final class SyncEngine
 
         $rooms = self::lookUpRooms($client, $from, $to);
 
+        /*
+         * Die Anschrift der Gemeinde und die Frage, welche Raeume in ihrem
+         * Gebaeude liegen: einmal je Lauf, nicht je Termin. Ein Fehlschlag
+         * darf den Sync nicht anhalten - er kostet nur den Merker, und die
+         * Termine selbst sind das Wichtigere. Die zuletzt geholte Anschrift
+         * bleibt dabei stehen (siehe refreshChurchAddress()).
+         */
+        try {
+            SettingsPage::refreshChurchAddress($client);
+        } catch (Throwable) {
+            // Bewusst still: siehe oben.
+        }
+
+        $roomIdsAtChurch = SettingsPage::resourceIdsInBuilding(
+            (string) (SettingsPage::churchAddress()['name'] ?? '')
+        );
+
         foreach ($appointmentEnvelopes as $envelope) {
             $row = self::mapOccurrence($envelope);
 
@@ -328,7 +346,7 @@ final class SyncEngine
                 continue;
             }
 
-            $row = self::withRoom($row, $rooms);
+            $row = self::withRoom($row, $rooms, $roomIdsAtChurch);
 
             $ctEventId = $row['ct_event_id'];
             $seriesImageUrls[$ctEventId] = $row['image_url'];
@@ -541,6 +559,10 @@ final class SyncEngine
             'end_date' => self::toMysqlDate((string) $calculated['endDate']),
             'all_day' => !empty($base['allDay']),
             'location' => $location,
+            // Steht die Adresse vom Termin, ist sie die Auskunft - wo sie
+            // liegt, sagt sie selbst. Der Merker gilt nur fuer Zeilen, die
+            // ein gebuchter Raum stellt, und wird in withRoom() gesetzt.
+            'location_at_church' => false,
             'image_url' => $imageUrl,
             'raw_data' => self::withoutDeprecated($envelope),
         ];
@@ -793,11 +815,34 @@ final class SyncEngine
      * vertauschen bleibt - und damit der Test auch die Zuordnung ueber
      * Termin-ID und Datum mitprueft.
      */
-    private static function withRoom(array $row, RoomLookup $rooms): array
+    private static function withRoom(array $row, RoomLookup $rooms, array $roomIdsAtChurch = []): array
     {
-        if ($row['location'] === '') {
-            $row['location'] = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
+        if ($row['location'] !== '') {
+            return $row;
         }
+
+        $row['location'] = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
+
+        if ($row['location'] === '') {
+            return $row;
+        }
+
+        /*
+         * Der Merker sagt „diese Zeile benennt einen Raum im Haus der
+         * Gemeinde" - erst damit darf die Anschrift der Gemeinde in die
+         * strukturierten Daten und in die .ics. Nennt die Zeile mehrere
+         * Raeume (Stellung „alle nennen"), muessen *alle* im Haus liegen:
+         * Eine Anschrift, die nur fuer einen Teil der genannten Raeume gilt,
+         * waere falsch und nicht nur unvollstaendig.
+         *
+         * Eine leere Liste heisst „nicht zuzuordnen" und nicht „passt schon":
+         * Sie entsteht, wenn an der Ressource kein Ort gepflegt ist oder die
+         * Gemeindeanschrift keinen Namen traegt.
+         */
+        $ids = $rooms->resourceIdsForOccurrence($row['ct_event_id'], $row['start_date']);
+
+        $row['location_at_church'] = $ids !== [] && $roomIdsAtChurch !== []
+            && array_diff($ids, $roomIdsAtChurch) === [];
 
         return $row;
     }
@@ -829,14 +874,10 @@ final class SyncEngine
             return '';
         }
 
-        $city = trim((string) ($address['city'] ?? ''));
-        $district = trim((string) ($address['district'] ?? ''));
-
-        if ($district !== '' && stripos($city, $district) === false) {
-            $city = $city === '' ? $district : $city . '-' . $district;
-        }
-
-        $cityLine = trim(trim((string) ($address['zip'] ?? '')) . ' ' . $city);
+        // Dieselbe Regel wie fuer die Anschrift der Gemeinde, und bewusst
+        // nicht noch einmal hier: Zwei Kopien waeren zwei Stellen, an denen
+        // sich ein Teilort unterschiedlich verhaelt.
+        $cityLine = ChurchAddress::cityLine($address);
 
         $parts = array_filter(
             array_map(

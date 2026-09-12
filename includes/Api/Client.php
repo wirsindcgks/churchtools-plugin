@@ -98,38 +98,44 @@ final class Client
         ]);
     }
 
-    private function request(string $method, string $path, array $query = []): array
+    /**
+     * Name und Anschrift der Gemeinde, wie ChurchTools sie selbst fuehrt.
+     *
+     * Zwei Dinge sind hier anders als bei jedem anderen Aufruf, beide am
+     * 2026-09-12 an der echten Instanz nachgesehen:
+     *
+     * 1. Die Antwort steckt *nicht* in einem `data`-Feld, sondern liegt flach
+     *    (`build`, `version`, `siteName`, `address`). request() wuerde sie
+     *    deshalb als „keine Antwort dieser API" verwerfen.
+     * 2. `/api/info` ist in der Spec der einzige Endpunkt ohne Auth-Pflicht.
+     *    Der Aufruf geht deshalb bewusst *ohne* `Authorization`-Header: Mit
+     *    einem abgelaufenen Key antwortet er 401, ohne Header 200 - und
+     *    oeffentlich ist die Anschrift ohnehin.
+     *
+     * Statt `data` haelt hier `version` die Antwort gegen eine Fehlerseite mit
+     * HTTP 200: `address` taugt nicht dafuer, eine Gemeinde ohne gepflegte
+     * Anschrift ist ein gueltiger Fall.
+     */
+    public function getInfo(): array
     {
-        $url = trailingslashit($this->baseUrl) . ltrim($path, '/');
-
-        if ($query !== []) {
-            $url .= '?' . $this->buildQuery($query);
-        }
-
-        $response = wp_remote_request($url, [
-            'method' => $method,
-            'headers' => [
-                'Authorization' => 'Login ' . $this->apiKey,
-                'Accept' => 'application/json',
-            ],
-            'timeout' => 15,
-        ]);
-
-        if (is_wp_error($response)) {
-            throw new RuntimeException($response->get_error_message());
-        }
-
-        $code = wp_remote_retrieve_response_code($response);
-        $rawBody = wp_remote_retrieve_body($response);
+        $rawBody = $this->send('GET', '/api/info', [], false);
         $body = json_decode($rawBody, true);
 
-        if ($code >= 400) {
+        if (!is_array($body) || !isset($body['version'])) {
             throw new RuntimeException(sprintf(
-                'ChurchTools API error %d: %s',
-                $code,
-                $this->extractErrorMessage($rawBody, $body)
+                /* translators: %s: shortened beginning of the unexpected response body */
+                __('Unerwartete Antwort von /api/info (kein „version“-Feld): %s', 'churchtools-plugin'),
+                self::excerpt($rawBody)
             ));
         }
+
+        return $body;
+    }
+
+    private function request(string $method, string $path, array $query = []): array
+    {
+        $rawBody = $this->send($method, $path, $query);
+        $body = json_decode($rawBody, true);
 
         // Jede Antwort dieser API steckt in einem "data"-Feld (verifiziert gegen
         // die OpenAPI-Spec fuer /whoami, /calendars und /calendars/appointments).
@@ -138,6 +144,8 @@ final class Client
         // Response-Format. Das frueher hier zurueckgegebene [] machte daraus ein
         // "es gibt eben nichts" - im Sync die Vorstufe zum Leerraeumen der
         // Termintabelle, im Verbindungstest ein falsches "Verbindung erfolgreich".
+        //
+        // Die Ausnahme ist /api/info, siehe getInfo().
         if (!is_array($body) || !is_array($body['data'] ?? null)) {
             throw new RuntimeException(sprintf(
                 /* translators: %s: shortened beginning of the unexpected response body */
@@ -147,6 +155,49 @@ final class Client
         }
 
         return $body['data'];
+    }
+
+    /**
+     * Der gemeinsame HTTP-Teil: Adresse bauen, senden, Statuscode pruefen. Was
+     * im Koerper stehen muss, entscheidet der Aufrufer - das ist der einzige
+     * Unterschied zwischen den Endpunkten mit `data`-Huelle und /api/info.
+     */
+    private function send(string $method, string $path, array $query = [], bool $authenticated = true): string
+    {
+        $url = trailingslashit($this->baseUrl) . ltrim($path, '/');
+
+        if ($query !== []) {
+            $url .= '?' . $this->buildQuery($query);
+        }
+
+        $headers = ['Accept' => 'application/json'];
+
+        if ($authenticated) {
+            $headers['Authorization'] = 'Login ' . $this->apiKey;
+        }
+
+        $response = wp_remote_request($url, [
+            'method' => $method,
+            'headers' => $headers,
+            'timeout' => 15,
+        ]);
+
+        if (is_wp_error($response)) {
+            throw new RuntimeException($response->get_error_message());
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $rawBody = wp_remote_retrieve_body($response);
+
+        if ($code >= 400) {
+            throw new RuntimeException(sprintf(
+                'ChurchTools API error %d: %s',
+                $code,
+                $this->extractErrorMessage($rawBody, json_decode($rawBody, true))
+            ));
+        }
+
+        return $rawBody;
     }
 
     /**

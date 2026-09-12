@@ -75,6 +75,76 @@ final class EventSchemaTest extends TestCase
     }
 
     /**
+     * Ein Raumname allein ist keine Anschrift: „Saal 1" verortet nichts, und
+     * Google verlangt für Termine in der Suche einen Ort mit Adresse. Steht
+     * der Raum im Haus der Gemeinde, tritt deren Anschrift strukturiert
+     * daneben - samt Koordinaten, damit auch ohne Geocoding klar ist, wo der
+     * Termin stattfindet.
+     */
+    public function testARoomInTheChurchBuildingGetsTheChurchAddress(): void
+    {
+        ctp_test_set_option('ctp_church_address', $this->churchAddress());
+
+        $data = EventSchema::forEvent($this->event(['location' => 'Saal 1', 'location_at_church' => 1]));
+
+        $this->assertSame('Saal 1', $data['location']['name']);
+        $this->assertSame([
+            '@type' => 'PostalAddress',
+            'streetAddress' => 'Hauptstraße 1',
+            'postalCode' => '75015',
+            'addressLocality' => 'Bretten',
+            'addressCountry' => 'DE',
+        ], $data['location']['address']);
+        $this->assertSame('49.0368', $data['location']['geo']['latitude']);
+    }
+
+    /**
+     * Ohne den Merker bleibt es bei einer Zeile für beides: ChurchTools führt
+     * den Ort dort als Fließtext, und ihn in Teile zu zerlegen hieße raten.
+     */
+    public function testAnAddressLineStaysOneLine(): void
+    {
+        ctp_test_set_option('ctp_church_address', $this->churchAddress());
+
+        $data = EventSchema::forEvent($this->event(['location' => 'Freibad, Badstraße 1']));
+
+        $this->assertSame(
+            ['@type' => 'Place', 'name' => 'Freibad, Badstraße 1', 'address' => 'Freibad, Badstraße 1'],
+            $data['location']
+        );
+    }
+
+    /**
+     * Der Merker sagt „Raum im Haus", die Anschrift dazu kommt aber erst mit
+     * dem nächsten Sync. Bis dahin - und bei einer Gemeinde ohne gepflegte
+     * Anschrift - bleibt es beim bisherigen Verhalten statt einer halben
+     * Angabe.
+     */
+    public function testWithoutAStoredChurchAddressNothingChanges(): void
+    {
+        $data = EventSchema::forEvent($this->event(['location' => 'Saal 1', 'location_at_church' => 1]));
+
+        $this->assertSame(
+            ['@type' => 'Place', 'name' => 'Saal 1', 'address' => 'Saal 1'],
+            $data['location']
+        );
+    }
+
+    private function churchAddress(): array
+    {
+        return [
+            'name' => 'GEMEINDEHAUS',
+            'street' => 'Hauptstraße 1',
+            'zip' => '75015',
+            'city' => 'Bretten',
+            'district' => '',
+            'country' => 'DE',
+            'latitude' => '49.0368',
+            'longitude' => '8.7057',
+        ];
+    }
+
+    /**
      * Die Klickart „Nichts" heißt: Dieser Termin hat auf dieser Website keine
      * eigene Adresse, die jemand aufrufen soll. Dann darf hier auch keine
      * stehen.

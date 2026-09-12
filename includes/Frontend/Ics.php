@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
+use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\ChurchAddress;
 use DateTimeImmutable;
 use DateTimeZone;
 use Throwable;
@@ -172,7 +174,29 @@ final class Ics
 
         $location = trim((string) ($event['location'] ?? ''));
         if ($location !== '') {
+            /*
+             * Benennt die Zeile einen Raum im Haus der Gemeinde (Merker aus
+             * dem Sync), kommt deren Anschrift dahinter: „Saal 1" allein ist
+             * für einen Kalender auf dem Handy keine Adresse, aus der er eine
+             * Route bauen kann. Der Gebäudename bleibt dabei draußen, den
+             * stellt hier der Raum.
+             */
+            $churchAddress = !empty($event['location_at_church']) ? SettingsPage::churchAddress() : [];
+            $postalLine = $churchAddress === [] ? '' : ChurchAddress::postalLine($churchAddress);
+
+            if ($postalLine !== '') {
+                $location .= ', ' . $postalLine;
+            }
+
             $lines[] = self::line('LOCATION', self::escapeText($location));
+
+            $geo = $churchAddress === [] ? [] : ChurchAddress::geo($churchAddress);
+
+            if ($geo !== []) {
+                // GEO trennt mit Semikolon und ist kein Text: keine Maskierung,
+                // sonst stünde dort „49.06\;8.72".
+                $lines[] = self::line('GEO', $geo['latitude'] . ';' . $geo['longitude']);
+            }
         }
 
         $calendar = trim((string) ($event['calendar_name'] ?? ''));

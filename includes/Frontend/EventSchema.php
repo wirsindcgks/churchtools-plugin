@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
+use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\ChurchAddress;
 use DateTimeImmutable;
 use Throwable;
 
@@ -193,18 +195,7 @@ final class EventSchema
         $location = trim((string) ($event['location'] ?? ''));
         if ($location !== '') {
             $data['eventAttendanceMode'] = 'https://schema.org/OfflineEventAttendanceMode';
-            /*
-             * name und address tragen beide denselben Text, weil es nur einen
-             * gibt: ChurchTools führt den Ort als eine Zeile („Gemeindehaus,
-             * Musterstraße 1"), nicht als Haus, Straße, Ort. Ihn hier in Teile
-             * zu zerlegen hieße raten, und eine falsch geratene Adresse ist
-             * schlechter als eine unzerlegte.
-             */
-            $data['location'] = [
-                '@type' => 'Place',
-                'name' => $location,
-                'address' => $location,
-            ];
+            $data['location'] = self::place($location, !empty($event['location_at_church']));
         }
 
         $image = trim((string) ($event['image_url'] ?? ''));
@@ -227,6 +218,53 @@ final class EventSchema
         }
 
         return $data;
+    }
+
+    /**
+     * Der Ort als schema.org/Place.
+     *
+     * Zwei Fälle, und der Unterschied ist das, was eine Suchmaschine daraus
+     * machen kann:
+     *
+     * Benennt die Zeile einen gebuchten Raum im Haus der Gemeinde (Merker aus
+     * dem Sync), steht der Raum als `name` und die Anschrift der Gemeinde
+     * strukturiert daneben, samt Koordinaten. Erst damit ist der Ort für eine
+     * Suchmaschine ein Ort und nicht eine Zeichenkette: „Saal 1" allein ist
+     * keine Anschrift, und Google verlangt für Termine in der Suche eine.
+     *
+     * Sonst bleibt es bei einer Zeile für beides. ChurchTools führt den Ort
+     * dort als Fließtext („Gemeindehaus, Musterstraße 1"), nicht als Haus,
+     * Straße, Ort — ihn hier in Teile zu zerlegen hieße raten, und eine falsch
+     * geratene Anschrift ist schlechter als eine unzerlegte.
+     *
+     * @return array<string, mixed>
+     */
+    private static function place(string $location, bool $atChurch): array
+    {
+        $address = $atChurch ? SettingsPage::churchAddress() : [];
+        $postal = $address === [] ? [] : ChurchAddress::schemaAddress($address);
+
+        if ($postal === []) {
+            return [
+                '@type' => 'Place',
+                'name' => $location,
+                'address' => $location,
+            ];
+        }
+
+        $place = [
+            '@type' => 'Place',
+            'name' => $location,
+            'address' => $postal,
+        ];
+
+        $geo = ChurchAddress::geo($address);
+
+        if ($geo !== []) {
+            $place['geo'] = $geo;
+        }
+
+        return $place;
     }
 
     /**

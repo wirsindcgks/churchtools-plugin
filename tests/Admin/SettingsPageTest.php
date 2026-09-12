@@ -1231,6 +1231,106 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
+     * Der Gebaeudename kommt aus zwei Feldern, die dieselbe Person in
+     * dieselbe Instanz getippt hat - an der echten Instanz „GEMEINDEHAUS" an der
+     * Gemeindeanschrift gegen „Gemeindehaus" an den Raeumen. Streng verglichen
+     * traefe kein einziger Raum, und die Anschrift laege nie an einem Termin.
+     */
+    public function testRoomsAreMatchedToTheBuildingIgnoringCaseAndSpaces(): void
+    {
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            7 => ['name' => 'Saal', 'location' => 'Gemeindehaus'],
+            8 => ['name' => 'Foyer', 'location' => 'GEMEINDE HAUS'],
+            9 => ['name' => 'Anbau', 'location' => ' gemeindehaus '],
+        ]]);
+
+        $this->assertSame([7, 8, 9], SettingsPage::resourceIdsInBuilding('GEMEINDEHAUS'));
+    }
+
+    /**
+     * Normalisiert wird Schreibweise und Leerraum - und kein Schritt weiter:
+     * Aus „Haus 2" darf nie „Haus" werden, sonst bekaeme ein Raum im
+     * Nebengebaeude die Anschrift des Haupthauses.
+     */
+    public function testADifferentBuildingIsNotMatched(): void
+    {
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            7 => ['name' => 'Saal', 'location' => 'Haus 2'],
+            8 => ['name' => 'Kapelle', 'location' => ''],
+        ]]);
+
+        $this->assertSame([], SettingsPage::resourceIdsInBuilding('Haus'));
+    }
+
+    /**
+     * Ohne Gebaeudenamen ist nichts zuzuordnen. Die leere Liste heisst dann
+     * „keine Aussage moeglich" und nicht „alle Raeume" - die Anschrift an
+     * einen Raum zu haengen, von dem niemand weiss, wo er liegt, waere
+     * geraten.
+     */
+    public function testWithoutABuildingNameNoRoomIsMatched(): void
+    {
+        ctp_test_set_option('ctp_settings', ['resources' => [
+            7 => ['name' => 'Saal', 'location' => 'Gemeindehaus'],
+        ]]);
+
+        $this->assertSame([], SettingsPage::resourceIdsInBuilding(''));
+        $this->assertSame([], SettingsPage::resourceIdsInBuilding('   '));
+    }
+
+    /**
+     * Die Anschrift kommt aus `/api/info` und landet als eigene Option -
+     * keine Einstellung, sondern eine Kopie.
+     */
+    public function testTheChurchAddressIsStoredFromTheApi(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_queue_raw_http('{"version":"3.136.2","address":{"name":"GEMEINDEHAUS","street":"Hauptstraße 1","zip":"75015","city":"Bretten","district":"Ruit","country":"DE","latitude":"49.0368","longitude":"8.7057"}}');
+
+        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+
+        $address = SettingsPage::churchAddress();
+
+        $this->assertSame('GEMEINDEHAUS', $address['name']);
+        $this->assertSame('Hauptstraße 1', $address['street']);
+        $this->assertSame('Ruit', $address['district']);
+        $this->assertSame('49.0368', $address['latitude']);
+    }
+
+    /**
+     * Dieselbe Regel wie bei Kalendern und Raeumen seit 1.20.1: Eine leere
+     * Antwort loescht keinen Bestand. Hier waere der Verlust still - die
+     * Anschrift steht nur in strukturierten Daten, niemandem faellt ihr
+     * Fehlen auf.
+     */
+    public function testAnEmptyAnswerKeepsTheStoredChurchAddress(): void
+    {
+        ctp_test_set_option('ctp_church_address', ['name' => 'GEMEINDEHAUS', 'street' => 'Hauptstraße 1']);
+        ctp_test_reset_http();
+        ctp_test_queue_raw_http('{"version":"3.136.2","address":null}');
+
+        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+
+        $this->assertSame('GEMEINDEHAUS', SettingsPage::churchAddress()['name']);
+    }
+
+    /**
+     * Eine Anschrift ohne Namen und ohne Strasse traegt fuer diesen Zweck
+     * nichts: Ohne Namen ist kein Raum zuzuordnen, ohne Strasse keine
+     * Anschrift auszuweisen.
+     */
+    public function testAnAddressWithoutNameAndStreetIsNotStored(): void
+    {
+        ctp_test_set_option('ctp_church_address', ['name' => 'GEMEINDEHAUS', 'street' => 'Hauptstraße 1']);
+        ctp_test_reset_http();
+        ctp_test_queue_raw_http('{"version":"3.136.2","address":{"city":"Bretten"}}');
+
+        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+
+        $this->assertSame('GEMEINDEHAUS', SettingsPage::churchAddress()['name']);
+    }
+
+    /**
      * Gegenstaende sind nie eine Ortsangabe. Erkannt wird das am Typ und nicht
      * am Namen - die Liste soll kurz sein, ohne dass jemand Technik erst
      * wegsehen muss.
