@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.24.0
+Stable tag: 1.25.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -228,6 +228,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.25.0 =
+
+Neu ist ein „Abonnieren“-Button: Er trägt alle künftigen Termine eines Kalenders dauerhaft in den Kalender des Besuchers ein, statt einen einzelnen herunterzuladen. Er ist standardmäßig aus und wird im Design-Tab eingeschaltet – nach dem Update ändert sich also zunächst nichts. Wer ihn einschaltet, schaltet „Importieren“ am besten ab: Zwei Buttons passen nebeneinander, drei werden im Popup eng.
+
 = 1.24.0 =
 
 Der Ort eines Termins steht für Suchmaschinen und Kalender-Apps jetzt als vollständige Anschrift mit Koordinaten da statt als bloßer Raumname. Sichtbar ändert sich auf der Website nichts. Damit ein Raum der Anschrift der Gemeinde zugeordnet werden kann, muss in ChurchTools am Raum das Feld „Ort“ denselben Gebäudenamen tragen wie die Anschrift der Gemeinde; Räume ohne diese Angabe bleiben wie bisher. Die Datenbanktabelle bekommt zwei neue Spalten, das Upgrade läuft beim nächsten Seitenaufruf von allein.
@@ -355,6 +359,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.25.0 =
+
+* Neu: Button „Abonnieren“ in Popup und Terminseite – trägt alle künftigen Termine des Kalenders dauerhaft ein, Verschiebungen und Absagen kommen von allein an
+* Neu: Der Feed dazu liegt unter `/churchtools-termine.ics`, auf Wunsch je Kalender (`?kalender=…`), und enthält genau das, was auch auf der Website steht
+* Behoben: Bei einer neuen Adresse des Plugins wird der Permalink-Regelsatz neu geschrieben – sonst hätte der Feed auf bestehenden Installationen mit „Seite nicht gefunden“ geantwortet
 
 = 1.24.0 =
 

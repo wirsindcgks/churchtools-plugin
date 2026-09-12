@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.25.0] - 2026-09-12
+
+### Added
+
+- **Termine abonnieren statt einzeln herunterladen.** Ein neuer Button „Abonnieren" in Popup und eigener Terminseite trägt alle künftigen Termine des Kalenders dauerhaft in den Kalender des Besuchers ein – der holt sich die Liste danach selbst wieder ab, Verschiebungen und Absagen kommen von allein an. Der „Importieren"-Button bleibt daneben: Er legt *einen* Termin ab und weiß danach von keiner Änderung mehr. Zwei verschiedene Fragen, zwei Antworten. Der neue Button ist wie der alte standardmäßig aus und im Design-Tab frei platzierbar.
+- **Der Feed dahinter ist eine eigene Adresse der Website.** Er liegt unter `/churchtools-termine.ics`, auf Wunsch für einen einzelnen Kalender (`?kalender=Gottesdienst`, IDs oder Namen wie im Shortcode). Er enthält genau das, was auch auf der Website steht: Termine, die ChurchTools als „nur für angemeldete Benutzer" führt, sind darin nicht – sie kommen beim Abgleich gar nicht erst in die Datenbank. Bewusst ein eigener Feed und kein Verweis auf den von ChurchTools: Dessen Inhalt folgt ChurchTools' Kalendern und nicht der Auswahl im Backend, und er setzt einen Zugangsschlüssel voraus, der dann öffentlich stünde.
+
+### Fixed
+
+- Bei einer neuen Adresse des Plugins wird der Regelsatz für Permalinks jetzt neu geschrieben. Ohne das hätte der Abo-Feed auf bestehenden Installationen mit „Seite nicht gefunden" geantwortet, bis jemand die Permalink-Einstellungen von Hand speichert.
+
 ## [1.24.0] - 2026-09-12
 
 ### Added
