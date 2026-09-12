@@ -5,6 +5,18 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.24.0] - 2026-09-12
+
+### Added
+
+- **Der Ort eines Termins steht für Suchmaschinen und Kalender-Apps jetzt als vollständige Anschrift da, nicht nur als Name.** Ein Raumname wie „Saal 1" verortet nichts: Eine Suchmaschine kann daraus keinen Ort machen (Google verlangt für Termine in der Suche eine Adresse), und eine Karten-App keine Route. Benennt die Ortszeile einen gebuchten Raum, den ChurchTools im Gebäude der Gemeinde führt, steht die Anschrift der Gemeinde samt Koordinaten jetzt unsichtbar daneben – in den strukturierten Daten und in der Kalenderdatei des „Importieren"-Buttons. Die sichtbare Ortszeile ändert sich dadurch nicht.
+- **Trägt ein Termin eine eigene Adresse, kommen deren Straße, Ort und Koordinaten mit.** Das zählt vor allem bei auswärtigen Terminen – ein Freibad oder ein Freizeitheim findet sich über Koordinaten zuverlässig, über eine geratene Adresszeile nicht. Adressfelder, in denen nur ein Name steht, bleiben unverändert: Daraus eine Anschrift zu bauen hieße raten.
+- Die Anschrift der Gemeinde holt sich das Plugin bei jedem Abgleich selbst aus ChurchTools; ein Umzug oder eine korrigierte Schreibweise kommt von allein an. Eine leere oder fehlerhafte Antwort überschreibt die gespeicherte Anschrift nicht.
+
+### Changed
+
+- Damit ein Raum der Anschrift der Gemeinde zugeordnet werden kann, liest das Plugin jetzt auch das Feld **„Ort" an der Ressource** in ChurchTools. Trägt es denselben Gebäudenamen wie die Anschrift der Gemeinde, gilt der Raum als im Haus – verglichen wird ohne Rücksicht auf Groß- und Kleinschreibung oder Leerzeichen. Räume ohne diese Angabe bekommen keine Anschrift, statt eine geraten zu bekommen. Der Reiter „Räume" erklärt das.
+
 ## [1.23.0] - 2026-09-12
 
 ### Changed

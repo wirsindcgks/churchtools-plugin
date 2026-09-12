@@ -14,7 +14,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?").
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
 - **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit „Teilen"- und „Importieren"-Button — teilen über das Teilen-Menü des Geräts bzw. die Zwischenablage, importieren als Kalenderdatei für Handy, Outlook und Thunderbird, bei einer Terminserie auf Wunsch gleich alle Termine. Ohne Drittanbieter-Skript und ohne Zählpixel.
-- **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math.
+- **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math. Der Ort steht dabei als vollständige Anschrift mit Koordinaten, wo ChurchTools eine kennt: bei einem gebuchten Raum die Anschrift der Gemeinde, bei einem auswärtigen Termin dessen eigene.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
 - **Updates** kommen wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
@@ -51,7 +51,7 @@ Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
 
 Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante — hier mit der Rückmeldung nach einem Klick am Rechner.
 
-Daneben lässt sich ein **„Importieren"-Button** einschalten: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen — mit Titel, Zeit, Ort, Beschreibung, Kategorie und Bild. Gehört der Termin zu einer Serie, fragt der Button nach dem Klick, was in die Datei soll — „Nur dieser Termin" oder „Alle N Termine". Die Zahl steht dort, weil „ganze Serie" mehr verspräche, als sich halten lässt: Gezählt wird über den Basistermin aus ChurchTools, und ein dort einzeln nachbearbeitetes Datum zählt als eigener. Bei einem Einzeltermin entfällt die Rückfrage.
+Daneben lässt sich ein **„Importieren"-Button** einschalten: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen — mit Titel, Zeit, Ort, Beschreibung, Kategorie und Bild, dazu Anschrift und Koordinaten, wo ChurchTools sie kennt. Gehört der Termin zu einer Serie, fragt der Button nach dem Klick, was in die Datei soll — „Nur dieser Termin" oder „Alle N Termine". Die Zahl steht dort, weil „ganze Serie" mehr verspräche, als sich halten lässt: Gezählt wird über den Basistermin aus ChurchTools, und ein dort einzeln nachbearbeitetes Datum zählt als eigener. Bei einem Einzeltermin entfällt die Rückfrage.
 
 Die Datei ist eine Momentaufnahme: Ändert sich der Termin später, erfährt der Kalender davon nichts; wer sie erneut herunterlädt, aktualisiert seinen Eintrag aber, statt einen zweiten anzulegen. Beide Knöpfe sind einzeln schaltbar und stehen als Paar nebeneinander.
 

@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.23.0
+Stable tag: 1.24.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -224,6 +224,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.24.0 =
+
+Der Ort eines Termins steht für Suchmaschinen und Kalender-Apps jetzt als vollständige Anschrift mit Koordinaten da statt als bloßer Raumname. Sichtbar ändert sich auf der Website nichts. Damit ein Raum der Anschrift der Gemeinde zugeordnet werden kann, muss in ChurchTools am Raum das Feld „Ort“ denselben Gebäudenamen tragen wie die Anschrift der Gemeinde; Räume ohne diese Angabe bleiben wie bisher. Die Datenbanktabelle bekommt zwei neue Spalten, das Upgrade läuft beim nächsten Seitenaufruf von allein.
+
 = 1.23.0 =
 
 Die Ortszeile eines Termins zeigt jetzt zuerst den in ChurchTools eingetragenen Ort und erst dann den gebuchten Raum – bisher war es umgekehrt. Betroffen sind nur Termine, die beides haben; dort stand bisher der Raum, obwohl jemand eigens einen Ort eingetragen hatte. Wo wie bisher nur ein Raum gebucht ist, ändert sich nichts. Wer Adressen bisher nur für auswärtige Termine pflegt, merkt von diesem Update nichts.
@@ -347,6 +351,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.24.0 =
+
+* Neu: Bei einem gebuchten Raum im eigenen Haus stehen die Anschrift der Gemeinde und ihre Koordinaten in den strukturierten Daten und in der Kalenderdatei – ein Raumname allein ist für Suchmaschine und Karten-App kein Ort
+* Neu: Trägt ein Termin eine eigene Adresse, kommen deren Straße, Ort und Koordinaten mit – vor allem bei auswärtigen Terminen der Unterschied zwischen auffindbar und geraten
+* Neu: Die Anschrift der Gemeinde holt sich das Plugin bei jedem Abgleich selbst aus ChurchTools
+* Geändert: Das Feld „Ort“ an der Ressource in ChurchTools entscheidet, ob ein Raum als im Haus der Gemeinde gilt – ohne diese Angabe bekommt er keine Anschrift, statt eine geratene
 
 = 1.23.0 =
 
