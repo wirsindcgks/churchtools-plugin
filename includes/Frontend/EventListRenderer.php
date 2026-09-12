@@ -516,6 +516,7 @@ final class EventListRenderer
         // auch dann, wenn ein Theme eine eigene event-detail.php mitbringt.
         $shareEnabled = (bool) $designSettings['detail_share_enabled'];
         $icsEnabled = (bool) $designSettings['detail_ics_enabled'];
+        $subscribeEnabled = (bool) $designSettings['detail_subscribe_enabled'];
 
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);
@@ -554,6 +555,7 @@ final class EventListRenderer
         $calendars = $settings['calendars'];
         $shareEnabled = (bool) $settings['detail_share_enabled'];
         $icsEnabled = (bool) $settings['detail_ics_enabled'];
+        $subscribeEnabled = (bool) $settings['detail_subscribe_enabled'];
         $order = DetailDesign::isValidOrder($detailOrder) ? $detailOrder : DetailDesign::DEFAULT_ORDER;
         self::primeAttachmentCache($events, $calendars);
 
@@ -599,7 +601,7 @@ final class EventListRenderer
             $event['series_count'] = $seriesCounts[(int) $event['ct_event_id']] ?? 1;
 
             if ($clickBehavior === 'popup') {
-                $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled, $icsEnabled);
+                $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled, $icsEnabled, $subscribeEnabled);
             }
         }
         unset($event);
@@ -656,8 +658,13 @@ final class EventListRenderer
         return ['id' => 0, 'url' => '', 'is_fallback' => false];
     }
 
-    private function renderDetailPartial(array $event, array $order, bool $shareEnabled = false, bool $icsEnabled = false): string
-    {
+    private function renderDetailPartial(
+        array $event,
+        array $order,
+        bool $shareEnabled = false,
+        bool $icsEnabled = false,
+        bool $subscribeEnabled = false
+    ): string {
         $detailContext = 'popup';
 
         ob_start();

@@ -61,9 +61,12 @@ final class EventDetailPage
      * Zählt auch für Regeln, die woanders dazukommen: Der Aufruf von
      * flush_rewrite_rules() unten schreibt den gesamten Regelsatz, und
      * EventSitemap hängt seine Regel auf dieselbe Aktion (mit Priorität 9,
-     * also vorher). „3" ist die Sitemap-Adresse aus 1.16.0.
+     * also vorher). „3" ist die Sitemap-Adresse aus 1.16.0, „4" die des
+     * Abo-Feeds (Frontend\EventFeed) — ohne das Hochzählen antwortete sie auf
+     * jeder bestehenden Installation mit 404, bis jemand die Permalinks von
+     * Hand speichert.
      */
-    private const REWRITE_VERSION = '3';
+    private const REWRITE_VERSION = '4';
 
     /**
      * Der Termin, auf den die aufgerufene Adresse zeigt, sobald

@@ -11,6 +11,7 @@ use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\Assets;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventDetailPage;
+use ChurchToolsPlugin\Frontend\EventFeed;
 use ChurchToolsPlugin\Frontend\EventIcs;
 use ChurchToolsPlugin\Frontend\EventSitemap;
 use ChurchToolsPlugin\Frontend\EventsEndpoint;
@@ -59,6 +60,7 @@ final class Plugin
         EventDetailPage::registerHooks();
         EventSitemap::registerHooks();
         EventIcs::registerHooks();
+        EventFeed::registerHooks();
         CardImage::registerHooks();
         SyncEngine::registerHooks();
         RetentionCleanup::registerHooks();

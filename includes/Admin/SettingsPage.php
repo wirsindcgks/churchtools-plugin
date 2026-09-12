@@ -405,6 +405,7 @@ final class SettingsPage
         // er?". In der Liste darunter lässt er sich danach frei verschieben.
         add_settings_field('detail_share_enabled', __('Teilen-Button', 'churchtools-plugin'), [$this, 'renderDetailShareField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_ics_enabled', __('Kalender-Button', 'churchtools-plugin'), [$this, 'renderDetailIcsField'], $designDetailPage, 'ctp_design_detail_order');
+        add_settings_field('detail_subscribe_enabled', __('Abo-Button', 'churchtools-plugin'), [$this, 'renderDetailSubscribeField'], $designDetailPage, 'ctp_design_detail_order');
         add_settings_field('detail_element_order', __('Reihenfolge in der Detailansicht', 'churchtools-plugin'), [$this, 'renderDetailElementOrderField'], $designDetailPage, 'ctp_design_detail_order');
 
         $designListPage = self::PAGE_SLUG . '_design_list';
@@ -491,6 +492,12 @@ final class SettingsPage
              * kein Bedienelement dazubekommen, das niemand bestellt hat.
              */
             'detail_ics_enabled' => false,
+            /*
+             * Wie der Importieren-Knopf aus: Ein Abonnement ist eine
+             * Zusage ueber alle kuenftigen Termine, und die trifft der
+             * Betreiber ausdruecklich oder gar nicht.
+             */
+            'detail_subscribe_enabled' => false,
             'paging_months' => EventWindow::DEFAULT_MONTHS,
         ];
     }
@@ -820,6 +827,9 @@ final class SettingsPage
             'detail_ics_enabled' => array_key_exists('detail_ics_enabled', $input)
                 ? (bool) $input['detail_ics_enabled']
                 : $existing['detail_ics_enabled'],
+            'detail_subscribe_enabled' => array_key_exists('detail_subscribe_enabled', $input)
+                ? (bool) $input['detail_subscribe_enabled']
+                : $existing['detail_subscribe_enabled'],
             'paging_months' => array_key_exists('paging_months', $input)
                 ? EventWindow::sanitizeMonths((int) $input['paging_months'])
                 : $existing['paging_months'],
@@ -2091,6 +2101,35 @@ final class SettingsPage
             . esc_html__('Eine Momentaufnahme: Spätere Änderungen kommen erst mit erneutem Herunterladen im Kalender an.', 'churchtools-plugin')
             . '</p>';
     }
+
+    /**
+     * Der dritte Knopf derselben Reihe, und der einzige, der nicht diesen
+     * einen Termin meint: Ein Abonnement spiegelt alle künftigen.
+     *
+     * Er ersetzt „Importieren" nicht, er beantwortet die andere Frage — wer
+     * das Konzert im Kalender haben will, braucht kein Abonnement, wer
+     * regelmäßig kommt, keinen Download. Nachgemessen passen allerdings zwei
+     * Chips nebeneinander und nicht drei (siehe partials/
+     * event-detail-element.php), deshalb steht hier der Hinweis statt einer
+     * stillen Enge im Popup.
+     */
+    public function renderDetailSubscribeField(): void
+    {
+        printf('<input type="hidden" name="%1$s[detail_subscribe_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
+        printf(
+            '<label><input type="checkbox" id="ctp-design-detail-subscribe" name="%1$s[detail_subscribe_enabled]" value="1" %2$s /> %3$s</label>',
+            esc_attr(self::OPTION_KEY),
+            checked(!empty(self::get()['detail_subscribe_enabled']), true, false),
+            esc_html__('„Abonnieren"-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
+        );
+        echo '<p class="description">'
+            . esc_html__('Trägt alle künftigen Termine dauerhaft in den Kalender des Besuchers ein – Verschiebungen und Absagen kommen von selbst an.', 'churchtools-plugin')
+            . '</p>';
+        echo '<p class="description">'
+            . esc_html__('Zwei Buttons passen nebeneinander, drei werden im Popup eng. Wer diesen einschaltet, schaltet „Importieren“ am besten ab.', 'churchtools-plugin')
+            . '</p>';
+    }
+
     /**
      * German labels for DetailDesign::ELEMENT_KEYS. Same shape as
      * elementOrderLabels() above, but describing the detail view's own field
@@ -2110,6 +2149,7 @@ final class SettingsPage
             'description' => __('Beschreibung', 'churchtools-plugin'),
             'share' => __('Teilen-Button', 'churchtools-plugin'),
             'ics' => __('Kalender-Button', 'churchtools-plugin'),
+            'subscribe' => __('Abo-Button', 'churchtools-plugin'),
         ];
     }
 
@@ -2271,11 +2311,14 @@ final class SettingsPage
                 . Icons::share() . esc_html__('Teilen', 'churchtools-plugin') . '</button></div>',
             'ics' => '<div class="ctp-events__share"><span class="ctp-events__share-btn">'
                 . Icons::calendarPlus() . esc_html__('Importieren', 'churchtools-plugin') . '</span></div>',
+            'subscribe' => '<div class="ctp-events__share"><span class="ctp-events__share-btn">'
+                . Icons::calendarPlus() . esc_html__('Abonnieren', 'churchtools-plugin') . '</span></div>',
         ];
         // Der einzige Schlüssel, dessen Sichtbarkeit nicht an seiner Position
         // hängt. admin-design.js hält das Attribut danach am Häkchen aktuell.
         $shareEnabled = !empty($settings['detail_share_enabled']);
         $icsEnabled = !empty($settings['detail_ics_enabled']);
+        $subscribeEnabled = !empty($settings['detail_subscribe_enabled']);
         /*
          * Die Rahmung des Termins - und der einzige sichtbare Unterschied
          * zwischen den beiden Klickverhalten: Im Popup steht oben rechts das
@@ -2316,7 +2359,7 @@ final class SettingsPage
                         <?php echo $clickBehavior === 'page' ? '' : 'hidden'; ?>
                     >&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></span>
                     <?php foreach ($order as $key) : ?>
-                        <div data-key="<?php echo esc_attr($key); ?>" <?php echo self::previewBlockHidden($key, $shareEnabled, $icsEnabled) ? 'hidden' : ''; ?>>
+                        <div data-key="<?php echo esc_attr($key); ?>" <?php echo self::previewBlockHidden($key, $shareEnabled, $icsEnabled, $subscribeEnabled) ? 'hidden' : ''; ?>>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $blocks entries are built above from esc_html()/esc_html__()-wrapped strings plus Icons::, same trust boundary as the rest of this admin-only preview markup. ?>
                             <?php echo $blocks[$key] ?? ''; ?>
                         </div>
@@ -2332,10 +2375,15 @@ final class SettingsPage
      * Position haengt, sondern an einem eigenen Haekchen. admin-design.js haelt
      * das Attribut danach aktuell; hier geht es nur um den Zustand beim Laden.
      */
-    private static function previewBlockHidden(string $key, bool $shareEnabled, bool $icsEnabled): bool
-    {
+    private static function previewBlockHidden(
+        string $key,
+        bool $shareEnabled,
+        bool $icsEnabled,
+        bool $subscribeEnabled
+    ): bool {
         return ($key === DetailDesign::SHARE_KEY && !$shareEnabled)
-            || ($key === DetailDesign::ICS_KEY && !$icsEnabled);
+            || ($key === DetailDesign::ICS_KEY && !$icsEnabled)
+            || ($key === DetailDesign::SUBSCRIBE_KEY && !$subscribeEnabled);
     }
     /**
      * Reference panel for the design tab: the design settings above (element

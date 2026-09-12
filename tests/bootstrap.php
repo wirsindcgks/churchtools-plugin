@@ -596,6 +596,51 @@ function register_setting(string $group, string $name, $args = []): void
 {
 }
 
+/**
+ * Die Rewrite-Regeln, die das Plugin anmeldet. Mitgeschrieben, weil ihre
+ * *Anzahl* eine Zusage traegt: Kommt eine Regel dazu, muss
+ * EventDetailPage::REWRITE_VERSION mit hochgezaehlt werden - sonst bleibt die
+ * neue Adresse auf jeder bestehenden Installation ein 404, bis jemand die
+ * Permalinks von Hand speichert.
+ *
+ * @var array<int, array{regex: string, query: string, after: string}> $GLOBALS['ctp_test_rewrite_rules']
+ */
+$GLOBALS['ctp_test_rewrite_rules'] = [];
+
+function add_rewrite_rule(string $regex, string $query, string $after = 'bottom'): void
+{
+    $GLOBALS['ctp_test_rewrite_rules'][] = ['regex' => $regex, 'query' => $query, 'after' => $after];
+}
+
+/** @return array<int, array{regex: string, query: string, after: string}> */
+function ctp_test_rewrite_rules(): array
+{
+    return $GLOBALS['ctp_test_rewrite_rules'];
+}
+
+function ctp_test_reset_rewrite_rules(): void
+{
+    $GLOBALS['ctp_test_rewrite_rules'] = [];
+}
+
+function flush_rewrite_rules(bool $hard = true): void
+{
+}
+
+/**
+ * Genug von WordPress' Fassung fuer die Tests: Tags raus, Zeilenumbrueche und
+ * doppelte Leerzeichen zusammengefaltet, aussen getrimmt.
+ */
+function sanitize_text_field(string $value): string
+{
+    return trim((string) preg_replace('/\s+/', ' ', strip_tags($value)));
+}
+
+function wp_unslash($value)
+{
+    return is_string($value) ? stripslashes($value) : $value;
+}
+
 /** Wie WordPress: Kleinbuchstaben, und uebrig bleiben nur a-z, 0-9, _ und -. */
 function sanitize_key(string $key): string
 {

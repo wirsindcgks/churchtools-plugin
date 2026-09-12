@@ -81,12 +81,52 @@ final class Ics
      */
     public static function forEvents(array $events): string
     {
+        return self::build($events);
+    }
+
+    /**
+     * Dieselbe Datei als Abonnement (Frontend\EventFeed).
+     *
+     * Drei Kopfzeilen mehr, und jede beantwortet eine Frage, die sich beim
+     * Download nicht stellt:
+     *
+     * - `X-WR-CALNAME` ist der Name, unter dem das Abonnement in der Liste des
+     *   Besuchers steht. Ohne ihn zeigen manche Programme die Adresse.
+     * - `REFRESH-INTERVAL` (RFC 7986) und `X-PUBLISHED-TTL` (die ältere,
+     *   weiter verbreitete Fassung derselben Angabe) sagen, wie oft
+     *   nachgefragt werden soll. Eine Stunde entspricht dem üblichen
+     *   Sync-Intervall; wie oft wirklich abgeholt wird, entscheidet am Ende
+     *   der Kalender des Besuchers und nicht diese Datei.
+     *
+     * @param array<int, array<string, mixed>> $events
+     */
+    public static function forFeed(array $events, string $name = ''): string
+    {
+        $kopf = [
+            'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+            'X-PUBLISHED-TTL:PT1H',
+        ];
+
+        if (trim($name) !== '') {
+            $kopf[] = self::line('X-WR-CALNAME', self::escapeText(trim($name)));
+        }
+
+        return self::build($events, $kopf);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $events
+     * @param string[]                         $extraHeaders
+     */
+    private static function build(array $events, array $extraHeaders = []): string
+    {
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
             self::line('PRODID', self::prodId()),
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
+            ...$extraHeaders,
         ];
 
         foreach ($events as $event) {

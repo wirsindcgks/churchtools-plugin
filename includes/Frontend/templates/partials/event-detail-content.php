@@ -43,6 +43,7 @@
  * @var string $detailContext 'popup' or 'page', set by EventListRenderer.
  * @var bool   $shareEnabled  Einstellung `detail_share_enabled`, siehe unten.
  * @var bool   $icsEnabled    Einstellung `detail_ics_enabled`, ebenso.
+ * @var bool   $subscribeEnabled Einstellung `detail_subscribe_enabled`, ebenso.
  */
 
 use ChurchToolsPlugin\Frontend\DetailDesign;
@@ -81,6 +82,9 @@ if (empty($shareEnabled)) {
 if (empty($icsEnabled)) {
     $ctpAus[] = DetailDesign::ICS_KEY;
 }
+if (empty($subscribeEnabled)) {
+    $ctpAus[] = DetailDesign::SUBSCRIBE_KEY;
+}
 
 $ctpOrder = $ctpAus === []
     ? $order
@@ -104,7 +108,7 @@ $ctpOrder = $ctpAus === []
  */
 $ctpAktionen = array_values(array_filter(
     $ctpOrder,
-    static fn (string $key): bool => in_array($key, [DetailDesign::SHARE_KEY, DetailDesign::ICS_KEY], true)
+    static fn (string $key): bool => in_array($key, [DetailDesign::SHARE_KEY, DetailDesign::ICS_KEY, DetailDesign::SUBSCRIBE_KEY], true)
 ));
 
 $ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-element.php';

@@ -26,7 +26,7 @@ namespace ChurchToolsPlugin\Frontend;
  */
 final class DetailDesign
 {
-    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics'];
+    public const ELEMENT_KEYS = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics', 'subscribe'];
     public const DEFAULT_ORDER = self::ELEMENT_KEYS;
 
     /**
@@ -43,6 +43,18 @@ final class DetailDesign
      * gibt und mal nicht, faenge Drag&Drop, Reset und Vorschau gleichzeitig an.
      */
     public const ICS_KEY = 'ics';
+
+    /**
+     * Der Knopf „Abonnieren" (Feed aller Termine, siehe Frontend\EventFeed).
+     * Wie SHARE_KEY und ICS_KEY ein fester Schluessel mit eigener Einstellung
+     * (`detail_subscribe_enabled`).
+     *
+     * Bewusst neben „Importieren" und nicht an dessen Stelle: Der eine legt
+     * *diesen* Termin ab und weiss danach von keiner Aenderung mehr, der
+     * andere spiegelt dauerhaft alle. Zwei Fragen, zwei Antworten - wer nur
+     * eine davon anbieten will, schaltet die andere ab.
+     */
+    public const SUBSCRIBE_KEY = 'subscribe';
 
     /**
      * Same widening CardDesign::upgradeOrder() does for the card order, for
@@ -66,7 +78,7 @@ final class DetailDesign
     {
         $order = CardDesign::upgradeOrder($order);
 
-        foreach ([self::SHARE_KEY, self::ICS_KEY] as $spaeterDazu) {
+        foreach ([self::SHARE_KEY, self::ICS_KEY, self::SUBSCRIBE_KEY] as $spaeterDazu) {
             if (!in_array($spaeterDazu, $order, true)) {
                 $order[] = $spaeterDazu;
             }

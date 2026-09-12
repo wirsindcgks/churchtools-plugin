@@ -160,11 +160,15 @@ final class EventIcs
      * dazukam: Die Einstellungen einmal zu lesen statt sechzehnmal ist der
      * ganze Unterschied.
      *
+     * Oeffentlich, weil der Abo-Feed (Frontend\EventFeed) dieselben drei
+     * Angaben braucht - eine zweite Kopie waere eine zweite Stelle, an der
+     * das Bild aus der Mediathek vergessen werden kann.
+     *
      * @param array<int, array<string, mixed>> $events
      *
      * @return array<int, array<string, mixed>>
      */
-    private static function withMeta(array $events): array
+    public static function withMeta(array $events): array
     {
         $calendars = SettingsPage::get()['calendars'];
 

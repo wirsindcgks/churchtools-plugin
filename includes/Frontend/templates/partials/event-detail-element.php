@@ -12,6 +12,7 @@
  */
 
 use ChurchToolsPlugin\Frontend\CardImage;
+use ChurchToolsPlugin\Frontend\EventFeed;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventIcs;
 use ChurchToolsPlugin\Frontend\Icons;
@@ -358,6 +359,48 @@ if (!defined('ABSPATH')) {
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+        <?php
+        break;
+
+    case 'subscribe':
+        ?>
+        <?php
+        /*
+         * „Abonnieren" — der einzige Knopf dieser Reihe, der nicht *diesen*
+         * Termin meint, sondern alle künftigen. Ein gewöhnlicher Verweis auf
+         * den Feed (siehe Frontend\EventFeed), ohne Skript.
+         *
+         * `webcal://` statt `https://`: Daran erkennen iOS, macOS, Outlook und
+         * Thunderbird ein Abonnement und richten es ein, statt die Datei
+         * einmalig zu öffnen — der ganze Unterschied zum Importieren-Knopf
+         * daneben. Android und Google Kalender kennen das Schema nicht; dort
+         * bleibt der Weg, die Adresse zu kopieren und im Kalender unter
+         * „Per URL hinzufügen" einzufügen. Deshalb trägt der Verweis seine
+         * `https`-Fassung sichtbar im Titel, damit sie sich überhaupt kopieren
+         * lässt.
+         *
+         * Abonniert wird der Kalender *dieses* Termins, nicht alles: Wer von
+         * einem Gottesdienst aus abonniert, will Gottesdienste — und nicht
+         * jede Probe und jede Sitzung dazu.
+         */
+        $ctpKalender = trim((string) ($event['calendar_name'] ?? ''));
+        $ctpAboBeschreibung = $ctpKalender === ''
+            ? __('Alle Termine im eigenen Kalender abonnieren', 'churchtools-plugin')
+            /* translators: %s: calendar name */
+            : sprintf(__('Alle Termine aus „%s“ im eigenen Kalender abonnieren', 'churchtools-plugin'), $ctpKalender);
+        ?>
+        <div class="ctp-events__share">
+            <a
+                class="ctp-events__share-btn"
+                href="<?php echo esc_url(EventFeed::webcalUrl($ctpKalender), ['webcal', 'http', 'https']); ?>"
+                title="<?php echo esc_attr(EventFeed::url($ctpKalender)); ?>"
+                aria-label="<?php echo esc_attr($ctpAboBeschreibung); ?>"
+            >
+                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                <?php echo Icons::calendarPlus(); ?>
+                <?php esc_html_e('Abonnieren', 'churchtools-plugin'); ?>
+            </a>
+        </div>
         <?php
         break;
 endswitch;
