@@ -5124,19 +5124,30 @@ final class SettingsPage
      * `group` / `personal`) ist der Nachfolger von `isPublic`/`isPrivate` -
      * beide stehen an der Instanz, gegen die dies verifiziert wurde, unter
      * `@deprecated` als Alias von `type`, und `isPublic === true` deckt sich
-     * dort luekenlos mit `type === 'church'`. `isPublic` bleibt als Rueckfall
-     * fuer aeltere Instanzen, die `type` noch nicht liefern. Fehlen beide
-     * Felder (ganz alte Instanz, geaenderte Antwortform), gilt bewusst
-     * `true` - ein Fehlalarm auf jedem Kalender waere schlimmer als ein
-     * ausbleibender Hinweis.
+     * dort lueckenlos mit `type === 'church'`.
+     *
+     * Gewarnt wird nur auf eine ausdrueckliche Aussage hin: `type` group oder
+     * personal, sonst ein `isPublic: false`. Ein `null` oder ein Typ, den
+     * diese Fassung nicht kennt, ist keine Aussage - er faellt auf `isPublic`
+     * zurueck und zuletzt auf `true`, wie ein ganz fehlendes Feld (aeltere
+     * Instanz, geaenderte Antwortform). Ein Fehlalarm auf jedem Kalender
+     * waere schlimmer als ein ausbleibender Hinweis. Deshalb `isset` und kein
+     * `array_key_exists`: Die Fassung vor dem Umbau las `isPublic ?? true`
+     * und liess ein `null` damit ebenfalls durch.
      */
     private static function calendarIsPublic(array $calendar): bool
     {
-        if (array_key_exists('type', $calendar)) {
-            return $calendar['type'] === 'church';
+        $type = $calendar['type'] ?? null;
+
+        if ($type === 'church') {
+            return true;
         }
 
-        if (array_key_exists('isPublic', $calendar)) {
+        if ($type === 'group' || $type === 'personal') {
+            return false;
+        }
+
+        if (isset($calendar['isPublic'])) {
             return (bool) $calendar['isPublic'];
         }
 

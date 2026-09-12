@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Tests\Sync;
 
+use ChurchToolsPlugin\Sync\RoomLookup;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -235,11 +236,29 @@ final class SyncEngineTest extends TestCase
         );
     }
 
-    private function resolveLocation(string $addressLocation, string $room): string
+    private function withRoom(array $row, RoomLookup $rooms): array
     {
-        $method = new ReflectionMethod(SyncEngine::class, 'resolveLocation');
+        $method = new ReflectionMethod(SyncEngine::class, 'withRoom');
 
-        return $method->invoke(null, $addressLocation, $room);
+        return $method->invoke(null, $row, $rooms);
+    }
+
+    /**
+     * Eine bestaetigte Buchung von „Saal 1" fuer den Termin aus envelope()
+     * (ID 123) am 01.11.2026 - dieselbe Form wie in RoomLookupTest. 09:30 Zulu
+     * ist 10:30 in Site-Zeit, derselbe Tag.
+     */
+    private function roomsWithSaal1(): RoomLookup
+    {
+        return RoomLookup::fromBookings([[
+            'base' => ['appointmentId' => 123, 'statusId' => 2, 'resourceId' => 23, 'resource' => ['name' => 'Saal 1']],
+            'calculated' => ['startDate' => '2026-11-01T09:30:00Z', 'endDate' => '2026-11-01T11:00:00Z'],
+        ]], [23]);
+    }
+
+    private function row(string $location, string $startDate = '2026-11-01 10:30:00'): array
+    {
+        return ['ct_event_id' => 123, 'start_date' => $startDate, 'location' => $location];
     }
 
     /**
@@ -532,10 +551,9 @@ final class SyncEngineTest extends TestCase
      */
     public function testAnAddressWinsOverABookedRoom(): void
     {
-        $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten', $this->resolveLocation(
-            'Gemeindehaus, Hauptstraße 1, 75015 Bretten',
-            'Saal 1'
-        ));
+        $row = $this->withRoom($this->row('Freibad, Badstraße 1, 75015 Bretten'), $this->roomsWithSaal1());
+
+        $this->assertSame('Freibad, Badstraße 1, 75015 Bretten', $row['location']);
     }
 
     /**
@@ -544,16 +562,21 @@ final class SyncEngineTest extends TestCase
      */
     public function testARoomFillsTheLocationWhenNoAddressIsSet(): void
     {
-        $this->assertSame('Saal 1', $this->resolveLocation('', 'Saal 1'));
+        $row = $this->withRoom($this->row(''), $this->roomsWithSaal1());
+
+        $this->assertSame('Saal 1', $row['location']);
     }
 
     /**
-     * Weder Adresse noch Raum: die Zeile bleibt leer, kein Rest an
-     * Trennzeichen oder ein geratener Platzhalter.
+     * Die Buchung gilt nur fuer ihr eigenes Vorkommnis: Dieselbe Serie eine
+     * Woche spaeter hat keinen Raum und keinen Ort, und die Zeile bleibt leer
+     * statt eines geratenen Platzhalters.
      */
     public function testTheLocationStaysEmptyWithoutAddressOrRoom(): void
     {
-        $this->assertSame('', $this->resolveLocation('', ''));
+        $row = $this->withRoom($this->row('', '2026-11-08 10:30:00'), $this->roomsWithSaal1());
+
+        $this->assertSame('', $row['location']);
     }
 
     /**

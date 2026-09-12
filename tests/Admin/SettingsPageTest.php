@@ -1146,6 +1146,42 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
+     * `null` ist keine Aussage. Die Fassung vor dem Umbau las
+     * `isPublic ?? true` und liess ein `null` durch; ein `type: null` darf
+     * ausserdem kein gueltiges `isPublic` ueberdecken. Die erste Fassung
+     * von calendarIsPublic() hat beides falsch gemacht (array_key_exists).
+     */
+    public function testNullValuesAreNoStatementAboutPublicity(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Null', 'isPublic' => null],
+            ['id' => 8, 'name' => 'Typ null', 'type' => null, 'isPublic' => false],
+        ]);
+
+        $this->assertTrue($merged[7]['is_public']);
+        $this->assertFalse($merged[8]['is_public']);
+    }
+
+    /**
+     * Ein Typ, den diese Fassung nicht kennt, ist keine Aussage: kein
+     * Hinweis, solange nicht `isPublic` ausdruecklich `false` sagt.
+     */
+    public function testAnUnknownTypeFallsBackInsteadOfWarning(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+
+        $merged = $method->invoke(null, [], [
+            ['id' => 7, 'name' => 'Neu', 'type' => 'resource'],
+            ['id' => 8, 'name' => 'Neu, aber intern', 'type' => 'resource', 'isPublic' => false],
+        ]);
+
+        $this->assertTrue($merged[7]['is_public']);
+        $this->assertFalse($merged[8]['is_public']);
+    }
+
+    /**
      * Fehlen beide Felder ganz (aeltere Instanz, geaenderte Antwortform),
      * gilt der Kalender als oeffentlich. Andersherum stuende nach dem
      * naechsten „Kalender laden" auf jedem einzelnen Kalender eine Warnung -

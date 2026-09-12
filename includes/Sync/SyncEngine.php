@@ -328,8 +328,7 @@ final class SyncEngine
                 continue;
             }
 
-            $room = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
-            $row['location'] = self::resolveLocation($row['location'], $room);
+            $row = self::withRoom($row, $rooms);
 
             $ctEventId = $row['ct_event_id'];
             $seriesImageUrls[$ctEventId] = $row['image_url'];
@@ -775,6 +774,34 @@ final class SyncEngine
         return (new DateTimeImmutable($isoZuluDate))->setTimezone(wp_timezone())->format('Y-m-d H:i:s');
     }
 
+    /**
+     * Der gepflegte Ort schlaegt den gebuchten Raum, nicht umgekehrt - von
+     * 1.12.0 bis 1.22.1 galt die andere Reihenfolge. Eine Raumbuchung ist
+     * die schwaechere Aussage: Sie kann aus einer Vorlage oder Serie stammen,
+     * der Logistik dienen oder schlicht falsch sein, und bei Raeumen mit
+     * isAutoAccept wird sie bestaetigt, ohne dass jemand hinsieht. Einen Ort
+     * traegt dagegen jemand fuer genau diesen Termin ein. Ausschlaggebend
+     * war ein Taufgottesdienst ausserhalb des eigenen Hauses mit einer
+     * versehentlich gebuchten Ressource im eigenen Haus: Die alte Regel
+     * haette den Raum gezeigt statt der echten Adresse. Der Raum fuellt die
+     * Zeile deshalb nur noch, wo kein Ort gepflegt ist - das traegt
+     * weiterhin die Serien ohne eigene Adresse.
+     *
+     * Ausgelagert, damit die Entscheidung ohne Netzwerk testbar ist (siehe
+     * looksLikeApiFailure() fuer dasselbe Muster). Sie nimmt die ganze Zeile
+     * und nicht zwei Zeichenketten, damit an der Aufrufstelle nichts zu
+     * vertauschen bleibt - und damit der Test auch die Zuordnung ueber
+     * Termin-ID und Datum mitprueft.
+     */
+    private static function withRoom(array $row, RoomLookup $rooms): array
+    {
+        if ($row['location'] === '') {
+            $row['location'] = $rooms->forOccurrence($row['ct_event_id'], $row['start_date']);
+        }
+
+        return $row;
+    }
+
     /*
      * ChurchTools liefert die Adresse als Objekt mit getrennten Feldern und setzt
      * die Zeile erst in seiner eigenen Oberflaeche zusammen. Wir setzen sie hier,
@@ -796,27 +823,6 @@ final class SyncEngine
      * - `meetingAt` bleibt weg, weil es kein eigenes Feld ist: Die Antwort fuehrt
      *   es in ihrem eigenen `@deprecated`-Verzeichnis als Altnamen von `name`.
      */
-    /**
-     * Ausgelagert, damit die Entscheidung ohne Netzwerk testbar ist (siehe
-     * looksLikeApiFailure() fuer dasselbe Muster).
-     *
-     * Der gepflegte Ort schlaegt den gebuchten Raum, nicht umgekehrt - bis
-     * 1.12.0 war es die andere Reihenfolge. Eine Raumbuchung ist die
-     * schwaechere Aussage: Sie kann aus einer Vorlage oder Serie stammen,
-     * der Logistik dienen oder schlicht falsch sein, und bei Raeumen mit
-     * isAutoAccept wird sie bestaetigt, ohne dass jemand hinsieht. Einen Ort
-     * traegt dagegen jemand fuer genau diesen Termin ein. Ausschlaggebend
-     * war ein Taufgottesdienst ausserhalb des eigenen Hauses mit einer
-     * versehentlich gebuchten Ressource im eigenen Haus: Die alte Regel
-     * haette den Ort im eigenen Haus gezeigt statt der echten Adresse. Der
-     * Raum fuellt die Zeile deshalb nur noch, wo kein Ort gepflegt ist - das
-     * traegt weiterhin die Serien ohne eigene Adresse.
-     */
-    private static function resolveLocation(string $addressLocation, string $room): string
-    {
-        return $addressLocation !== '' ? $addressLocation : $room;
-    }
-
     private static function formatAddress(?array $address): string
     {
         if ($address === null) {
