@@ -172,6 +172,40 @@ $abschnitte = [
     ),
 ];
 
+/*
+ * Die Gruppenliste bekommt ihre Felder so, wie GroupListRenderer::prepareGroups()
+ * sie ans Template reicht - ausgedachte Gruppen, eine davon ohne Bild, damit
+ * die Farbflaeche zu sehen ist, die dann an die Stelle des Bildes tritt.
+ */
+$gruppen = [];
+foreach ([
+    ['Hauskreis Nord', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', 'Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.'],
+    ['Seniorenkreis', 'Mittwoch, 9:30 Uhr', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
+    ['Lobpreisband', 'Sonntag', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
+] as $i => [$name, $zeit, $bild, $plaetze, $text]) {
+    $gruppen[] = [
+        'id' => $i + 1,
+        'name' => $name,
+        'url' => '#',
+        'image_src' => $bild !== '' ? $assets . '/' . $bild : '',
+        'image_srcset' => '',
+        'show_media' => true,
+        'schedule' => $zeit,
+        'places_label' => $plaetze,
+        'excerpt' => $text,
+    ];
+}
+
+$abschnitte['gruppen'] = (static function (array $groups): string {
+    $args = ctp_demo_args(['columns' => 3]);
+    ob_start();
+    require CTP_PLUGIN_DIR . 'includes/Frontend/templates/group-grid.php';
+
+    // Der Abschnitt liegt unten auf der Sammelseite, ausserhalb des Bildes,
+    // das Playwright zuerst sieht - mit loading="lazy" kaeme das Bild nie an.
+    return str_replace('loading="lazy"', 'loading="eager"', (string) ob_get_clean());
+})($gruppen);
+
 $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
 $rahmen = 'body{margin:0;padding:40px;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1f2933;}'
     . 'section{max-width:1100px;margin:0 auto 64px;background:#fff;padding:32px;border-radius:14px;}';

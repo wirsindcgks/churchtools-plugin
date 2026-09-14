@@ -18,6 +18,8 @@ Der Slug ist eine Ableitung, keine Spalte: `sanitize_title(title)` plus Startdat
 
 Eindeutig ist eine Zeile über `(ct_event_id, start_date)` – eine Terminserie („jeden Montag") liefert je Vorkommnis eine eigene Zeile mit derselben `ct_event_id`.
 
+Die **Gruppen** (seit dem Reiter „Gruppen") liegen nicht in einer Tabelle, sondern in Optionen ohne Autoload: `ctp_group_settings` (Homepage-Auswahl, Intervall), `ctp_groups` (Gruppen je Homepage) und `ctp_group_images` (Gruppe → Anhang). Eine Homepage hat an der Referenzinstanz höchstens zwölf Gruppen, und es gibt weder Zeitfenster noch Paging, für die sich eine Tabelle lohnen würde. Ihre Bilder tragen den Merker `_ctp_group_source_image_url` statt `_ctp_source_image_url` – unter dem Merker der Terminbilder hielte `EventRepository::orphanedAttachmentIds()` sie für verwaist und löschte sie beim nächsten Termin-Sync.
+
 Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das Upgrade beim nächsten Seitenaufruf aus, eine Reaktivierung ist nicht nötig.
 
 ## Klassen
@@ -27,6 +29,9 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 | `Admin\SettingsPage` | Einstellungsseite mit sieben Tabs (Übersicht, Verbindung, Kalender, Synchronisation, Design, Events, Updates). Der API-Key wird verschlüsselt gespeichert (`Security\Crypto`, Schlüssel aus `AUTH_KEY` abgeleitet). |
 | `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). |
 | `Sync\SyncEngine` | Per WP-Cron (`ctp_run_sync`) getriggerter Sync. Fängt eigene Exceptions ab und persistiert sie, damit ein unbeaufsichtigter Cron-Lauf nie fatalt. |
+| `Groups\GroupSync` / `GroupSettings` | Per WP-Cron (`ctp_run_group_sync`, eigenes Intervall, nur geplant, solange eine Homepage angehakt ist) übernommener Abgleich der Gruppen-Homepages – **ohne API-Key**, damit ChurchTools selbst entscheidet, was öffentlich ist. `GroupSettings` ist eine eigene Option mit eigenem Sanitizer, siehe dort. |
+| `Admin\GroupsTab` | Reiter „Gruppen" – eigene Klasse statt weiterer Methoden in `SettingsPage`, teilt mit ihr nur Reiterreihe, Statuszeile und Speicherleiste. |
+| `Frontend\GroupListRenderer` | Kachelraster der Gruppen (`[ctp_groups]`, `Blocks\GroupListBlock`, WPBakery), mit denselben Klassen und Design-Einstellungen wie die Terminkacheln (`EventListRenderer::designArgs()`). |
 | `Sync\RetentionCleanup` | Per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist. |
 | `Db\Installer` | Schema via `dbDelta()`, Cron-Zeitpläne (inkl. Umplanung bei Intervall-Wechsel). |
 | `Db\EventRepository` | Sämtliche SQL-Zugriffe, inkl. der gefilterten Abfragen für die Admin-Events-Übersicht. |
@@ -50,7 +55,7 @@ Shortcode, Gutenberg-Block und WPBakery-Element rufen alle `EventListRenderer::r
 
 ## Theme-Overrides
 
-`yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`. Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
+`yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`, für die Gruppen `group-grid.php`. Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
 
 ## Auffindbarkeit
 
@@ -82,13 +87,14 @@ composer lint     # PHPCS (PSR-12 + WordPress-Security/DB/I18n-Sniffs)
 composer test     # PHPUnit
 
 npm install
-npm run build     # kompiliert den Gutenberg-Block
-npm run start     # Watch-Modus für den Block
+npm run build          # kompiliert beide Gutenberg-Blöcke
+npm run start          # Watch-Modus für den Termin-Block
+npm run start:groups   # Watch-Modus für den Gruppen-Block
 ```
 
 Für lokale Tests: Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` verlinken/kopieren und aktivieren.
 
-`vendor/` und `blocks/event-list/build/` sind bewusst nicht eingecheckt – ein reiner Source-Checkout ist deshalb nicht lauffähig. Der Release-Workflow (`.github/workflows/release.yml`) baut beides und hängt ein installierbares ZIP an das GitHub-Release.
+`vendor/` und `blocks/*/build/` sind bewusst nicht eingecheckt – ein reiner Source-Checkout ist deshalb nicht lauffähig. Der Release-Workflow (`.github/workflows/release.yml`) baut beides und hängt ein installierbares ZIP an das GitHub-Release.
 
 ## Screenshots fürs README
 

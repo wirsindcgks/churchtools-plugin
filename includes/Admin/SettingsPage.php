@@ -111,7 +111,7 @@ final class SettingsPage
     /**
      * Die drei Reiter, die zusaetzlich links im WordPress-Menue stehen.
      *
-     * Bewusst nicht alle neun (Nutzerentscheidung 2026-09-08: „im Menue links
+     * Bewusst nicht alle Reiter (Nutzerentscheidung 2026-09-08: „im Menue links
      * sollten maximal die Hauptpunkte rein"). Das linke Menue traegt damit
      * nicht die Navigation dieses Plugins - das bleibt die Reiterreihe -,
      * sondern ein paar Abkuerzungen. Aufgenommen ist, was man von *anderswo*
@@ -189,6 +189,7 @@ final class SettingsPage
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'rooms' => __('Räume', 'churchtools-plugin'),
+            'groups' => __('Gruppen', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
             'embed' => __('Einbinden', 'churchtools-plugin'),
@@ -249,6 +250,7 @@ final class SettingsPage
             'connection' => 'admin-links',
             'calendars' => 'calendar-alt',
             'rooms' => 'location-alt',
+            'groups' => 'groups',
             'sync' => 'update',
             'design' => 'admin-appearance',
             'embed' => 'editor-code',
@@ -2407,7 +2409,7 @@ final class SettingsPage
      * diese Verwechslung: „Nicht gespeicherte Aenderungen", sobald ein Feld
      * angefasst wurde (assets/js/admin-design.js setzt die Klasse).
      */
-    private function renderSaveBar(): void
+    public static function renderSaveBar(): void
     {
         ?>
         <div class="ctp-save-bar">
@@ -2597,6 +2599,43 @@ final class SettingsPage
                 </tbody>
             </table>
         </div>
+
+        <?php
+        /*
+         * Eigenes Panel statt weiterer Zeilen in der Tabelle darueber: Die
+         * Gruppen haben einen eigenen Shortcode, und keins der Attribute oben
+         * gilt fuer ihn. Die fertigen Shortcodes je Homepage stehen im Reiter
+         * „Gruppen" zum Kopieren - hier nur die Referenz.
+         */
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Gruppen', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('[ctp_groups] zeigt die Gruppen einer Gruppen-Homepage. Die Homepage muss im Reiter „Gruppen“ angehakt sein; dort steht der passende Shortcode zum Kopieren.', 'churchtools-plugin'); ?>
+            </p>
+
+            <table class="widefat striped ctp-borderless">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Attribut', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Standard', 'churchtools-plugin'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>homepage</code></td>
+                        <td><?php esc_html_e('Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage.', 'churchtools-plugin'); ?></td>
+                        <td>&ndash;</td>
+                    </tr>
+                    <tr>
+                        <td><code>columns</code></td>
+                        <td><?php esc_html_e('Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
+                        <td><code>3</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <?php
     }
 
@@ -2709,7 +2748,7 @@ final class SettingsPage
      *
      * @param array<int, array{icon: string, value: string, label: string, tone?: string, swatch?: string}> $cards
      */
-    private static function renderStatStrip(array $cards): void
+    public static function renderStatStrip(array $cards): void
     {
         if ($cards === []) {
             return;
@@ -2904,6 +2943,10 @@ final class SettingsPage
                 self::renderStatStrip(self::statusCardsDesign($settings));
 
                 return;
+            case 'groups':
+                self::renderStatStrip(GroupsTab::statusCards());
+
+                return;
         }
     }
 
@@ -3074,7 +3117,7 @@ final class SettingsPage
      * dasselbe Bauteil (.ctp-inline-status, siehe ctpSetStatus() in
      * renderPage()).
      */
-    private static function renderActionBar(string $buttonId, string $label, string $hint = ''): void
+    public static function renderActionBar(string $buttonId, string $label, string $hint = ''): void
     {
         ?>
         <div class="ctp-toolbar">
@@ -4066,6 +4109,8 @@ final class SettingsPage
                 <?php $this->renderCalendarsTab(); ?>
             <?php elseif ($tab === 'rooms') : ?>
                 <?php $this->renderRoomsTab(); ?>
+            <?php elseif ($tab === 'groups') : ?>
+                <?php GroupsTab::render(); ?>
             <?php elseif ($tab === 'updates') : ?>
                 <?php $this->renderUpdatesTab(); ?>
             <?php elseif ($tab === 'design') : ?>
@@ -4345,6 +4390,46 @@ final class SettingsPage
                 uebernehmen();
             }
         })();
+
+        /*
+         * Die beiden Knoepfe des Reiters „Gruppen". Gleiches Muster wie
+         * „Kalender laden" und „Jetzt synchronisieren" darueber, nur ohne
+         * Instanz- und Key-Feld: Die Gruppen werden ohne Key abgefragt, und
+         * die Instanz steht dort nicht im Formular.
+         */
+        [
+            ['ctp-fetch-group-homepages', 'ctp_fetch_group_homepages', '<?php echo esc_js(wp_create_nonce('ctp_fetch_group_homepages')); ?>', '<?php echo esc_js(__('Lade…', 'churchtools-plugin')); ?>'],
+            ['ctp-run-group-sync', 'ctp_run_group_sync', '<?php echo esc_js(wp_create_nonce('ctp_run_group_sync')); ?>', '<?php echo esc_js(__('Synchronisiere…', 'churchtools-plugin')); ?>'],
+        ].forEach(function (entry) {
+            document.getElementById(entry[0])?.addEventListener('click', function () {
+                var button = this;
+                var result = document.getElementById(entry[0] + '-result');
+                button.disabled = true;
+                ctpSetStatus(result, 'busy', entry[3]);
+
+                fetch(ajaxurl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ action: entry[1], nonce: entry[2] }),
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            window.location.reload();
+                            return;
+                        }
+                        button.disabled = false;
+                        ctpSetStatus(result, 'error', (data.data && data.data.message)
+                            ? data.data.message
+                            : '<?php echo esc_js(__('Fehlgeschlagen', 'churchtools-plugin')); ?>');
+                    })
+                    .catch(function () {
+                        button.disabled = false;
+                        ctpSetStatus(result, 'error', '<?php echo esc_js(__('Fehlgeschlagen', 'churchtools-plugin')); ?>');
+                    });
+            });
+        });
 
         document.getElementById('ctp-run-sync')?.addEventListener('click', function () {
             var button = this;

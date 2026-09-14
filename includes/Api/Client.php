@@ -132,9 +132,55 @@ final class Client
         return $body;
     }
 
-    private function request(string $method, string $path, array $query = []): array
+    /**
+     * Die Gruppen-Homepages der Instanz, bewusst *ohne* `Authorization`-Header.
+     *
+     * Ohne Key antwortet ChurchTools als oeffentlicher Benutzer und liefert
+     * damit genau die Homepages, die ein Besucher sehen darf - die Antwort auf
+     * „was ist oeffentlich?" gibt ChurchTools selbst, nicht dieses Plugin. Ein
+     * Key mit mehr Rechten saehe mehr, als oeffentlich ist.
+     *
+     * Die Eintraege tragen den Hash nicht als eigenes Feld, sondern am Ende von
+     * `apiUrl` (am 2026-09-14 an der echten Instanz nachgesehen), die ID als
+     * `domainIdentifier` - siehe GroupSync::mergeHomepages().
+     */
+    public function getGroupHomepages(): array
     {
-        $rawBody = $this->send($method, $path, $query);
+        return $this->request('GET', '/api/grouphomepages', [], false);
+    }
+
+    /**
+     * Eine Gruppen-Homepage samt ihren Gruppen, ebenfalls ohne Key - aus einem
+     * zweiten Grund ueber den oben hinaus: `canSignUp` und die Platzangaben
+     * gelten laut Spec fuer den *abfragenden* Benutzer. Mit dem Key stuende
+     * dort der Anmeldestand des API-Benutzers, nicht der eines Besuchers.
+     *
+     * Der Hash wird vor dem Einsetzen geprueft: Er stammt zwar aus einer
+     * ChurchTools-Antwort, landet aber im Pfad der Adresse, und ein `../`
+     * darin fuehrte auf einen anderen Endpunkt.
+     */
+    public function getGroupHomepage(string $hash): array
+    {
+        if (!self::isValidHomepageHash($hash)) {
+            throw new RuntimeException(__('Ungültige Kennung einer Gruppen-Homepage.', 'churchtools-plugin'));
+        }
+
+        return $this->request('GET', '/api/grouphomepages/' . $hash, [], false);
+    }
+
+    /**
+     * Die Hashes an der echten Instanz sind 32 Zeichen aus Buchstaben und
+     * Ziffern. Geprueft wird nur die Zeichenmenge, nicht die Laenge - eine
+     * andere Instanz oder Version darf laengere oder kuerzere vergeben.
+     */
+    public static function isValidHomepageHash(string $hash): bool
+    {
+        return preg_match('/^[A-Za-z0-9]+$/', $hash) === 1;
+    }
+
+    private function request(string $method, string $path, array $query = [], bool $authenticated = true): array
+    {
+        $rawBody = $this->send($method, $path, $query, $authenticated);
         $body = json_decode($rawBody, true);
 
         // Jede Antwort dieser API steckt in einem "data"-Feld (verifiziert gegen

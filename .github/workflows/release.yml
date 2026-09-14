@@ -1,7 +1,7 @@
 name: Release
 
 # Triggered by a version tag (see plan.md's "Changelog"-Konvention: bump the Version
-# header, tag vX.Y.Z). Neither `vendor/` (Composer) nor `blocks/event-list/build/`
+# header, tag vX.Y.Z). Neither `vendor/` (Composer) nor `blocks/*/build/`
 # (the Gutenberg block's compiled editor script) are committed to the repo — a plain
 # GitHub source checkout/zip is missing both and won't actually run. This workflow
 # builds both, packages a clean plugin directory, and attaches it as a release asset

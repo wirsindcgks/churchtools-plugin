@@ -18,6 +18,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
+* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in der Optik des Plugins, mit Treffzeit und freien Plätzen – per Shortcode, Block oder WPBakery-Element, mit eigenem Sync-Intervall und ohne API-Key.
 * **Design-Tab** mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
@@ -35,7 +36,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 5. Im Tab „Übersicht“ einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
 6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Einbinden“).
 
-Alle neun Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter „ChurchTools“ nur die drei, die man auch von anderswo aus ansteuert: „Übersicht“, „Design“ und „Events“.
+Alle zehn Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter „ChurchTools“ nur die drei, die man auch von anderswo aus ansteuert: „Übersicht“, „Design“ und „Events“.
 
 == Verwendung ==
 
@@ -91,6 +92,23 @@ Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einste
 
 Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Grid“ als Ansicht gewählt ist.
 
+= Gruppen =
+
+Der Reiter „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus ChurchTools – als Ersatz für deren iframe, in derselben Optik wie die Termine. Mit „Homepages von ChurchTools laden“ die Liste holen, die gewünschten anhaken und speichern; der erste Abgleich startet danach von selbst.
+
+`[ctp_groups homepage="Kleingruppen" columns="3"]`
+
+* `homepage` – Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage (bei mehreren angehakten bleibt die Liste leer).
+* `columns` – Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3).
+
+Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ steht dieselbe Auswahl als Liste der angehakten Homepages.
+
+Abgefragt wird ohne API-Key, also so, wie ein Besucher die Homepage sieht. ChurchTools entscheidet damit selbst, welche Gruppen erscheinen und ob Bilder dabei sind; eine zweite Auswahl in WordPress gibt es nicht. Leiter werden nicht angezeigt – ChurchTools liefert sie ohne Anmeldung nicht aus.
+
+Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder aus dem „Design“-Tab gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
+
+Die Gruppen haben ein eigenes „Sync-Intervall“ im Reiter „Gruppen“: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Gruppen jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Abwählen einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
+
 = Adresse der Terminseite =
 
 Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ im Bereich „Detailansicht“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
@@ -122,7 +140,7 @@ Geteilt wird die eigene Adresse des Termins. Seit 1.16.0 bringt sie einen eigene
 
 = Eigenes Design =
 
-Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `event-grid.php`, `event-upcoming.php`). Zum Anpassen die gewünschte Datei aus `wp-content/plugins/churchtools-plugin/includes/Frontend/templates/` nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort bearbeiten – das Original bleibt unangetastet und übersteht Plugin-Updates. Die einzelnen Termin-Zeilen bzw. -Karten liegen in `partials/event-list-items.php` und `partials/event-grid-items.php`; ein eigenes Layout-Template sollte diese weiterhin einbinden, weil das Nachladen (`paging="1"`) genau dieses Markup nachliefert – andernfalls `paging="0"` setzen, damit nachgeladene Termine nicht anders aussehen als die bereits sichtbaren. Das mitgelieferte Stylesheet orientiert sich zusätzlich automatisch an den Globalen Stilen des aktiven Theme (Akzentfarbe, Eckenradius, Flächenfarbe), sofern das Theme diese über `theme.json` bereitstellt.
+Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `event-grid.php`, `event-upcoming.php`, für die Gruppen `group-grid.php`). Zum Anpassen die gewünschte Datei aus `wp-content/plugins/churchtools-plugin/includes/Frontend/templates/` nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort bearbeiten – das Original bleibt unangetastet und übersteht Plugin-Updates. Die einzelnen Termin-Zeilen bzw. -Karten liegen in `partials/event-list-items.php` und `partials/event-grid-items.php`; ein eigenes Layout-Template sollte diese weiterhin einbinden, weil das Nachladen (`paging="1"`) genau dieses Markup nachliefert – andernfalls `paging="0"` setzen, damit nachgeladene Termine nicht anders aussehen als die bereits sichtbaren. Das mitgelieferte Stylesheet orientiert sich zusätzlich automatisch an den Globalen Stilen des aktiven Theme (Akzentfarbe, Eckenradius, Flächenfarbe), sofern das Theme diese über `theme.json` bereitstellt.
 
 == Frequently Asked Questions ==
 
@@ -207,6 +225,7 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 * Mehrere ChurchTools-Instanzen (siehe oben)
 * WordPress-Multisite (ungetestet, siehe oben)
 * Eine Monatskalender-/Rasteransicht – es gibt Liste, Grid und „Nächster Termin“
+* Ein Gruppenfinder mit Filtern oder eine Anmeldung zu Gruppen in WordPress – die Gruppenliste führt zur Anmeldung in ChurchTools
 * Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
 * Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
 * Die Drag-and-drop-Sortierung im Tab „Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
@@ -217,6 +236,8 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 = Welche Daten werden gespeichert? =
 
 Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe „Synchronisation“-Tab).
+
+Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Wochentag, Treffzeit, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder.
 
 = Können Ort/Beschreibung personenbezogene Daten enthalten? =
 

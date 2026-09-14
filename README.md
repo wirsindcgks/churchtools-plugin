@@ -15,6 +15,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
 - **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit Knöpfen für „Teilen“, „Importieren“ und „Abonnieren“ — teilen über das Teilen-Menü des Geräts bzw. die Zwischenablage, importieren als Kalenderdatei für Handy, Outlook und Thunderbird (bei einer Terminserie auf Wunsch gleich alle Termine), abonnieren als Feed, der sich von selbst aktualisiert. Ohne Drittanbieter-Skript und ohne Zählpixel.
 - **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math. Der Ort steht dabei als vollständige Anschrift mit Koordinaten, wo ChurchTools eine kennt: bei einem gebuchten Raum die Anschrift der Gemeinde, bei einem auswärtigen Termin dessen eigene.
+- **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in derselben Optik wie die Termine, mit freien Plätzen und eigenem Sync-Intervall. Welche Gruppen erscheinen, entscheidet die Homepage in ChurchTools.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
 - **Updates** kommen wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
@@ -57,6 +58,10 @@ Die heruntergeladene Datei ist eine Momentaufnahme: Ändert sich der Termin spä
 
 ![Eigene Terminseite mit „Teilen"-Button und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
 
+**Gruppen** — die Gruppen einer Gruppen-Homepage als Kacheln, mit Treffzeit, Auszug und – wo die Gruppe eine Höchstzahl hat – den freien Plätzen. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet.
+
+![Drei Gruppenkacheln, eine davon mit der Zahl der freien Plätze](docs/screenshots/gruppen.png)
+
 ## Installation
 
 1. Unter [Releases](https://github.com/wirsindcgks/churchtools-plugin/releases) beim neuesten Eintrag die Datei `churchtools-plugin-vX.Y.Z.zip` herunterladen. **Nicht** „Source code (zip)" — darin fehlen die fertig gebauten Bestandteile, das Plugin läuft damit nicht.
@@ -67,7 +72,7 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 
 ## Einrichten in fünf Minuten
 
-Alle neun Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter *ChurchTools* nur die drei, die man auch von anderswo aus ansteuert: **Übersicht**, **Design** und **Events**.
+Alle zehn Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter *ChurchTools* nur die drei, die man auch von anderswo aus ansteuert: **Übersicht**, **Design** und **Events**.
 
 1. **Verbindung herstellen.** *ChurchTools → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
 2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
@@ -76,6 +81,8 @@ Alle neun Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-M
 5. **Aussehen anpassen.** *ChurchTools → Design*, aufgeteilt in vier Bereiche: **Stil** (eine von vier Vorlagen als Grundlage — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), **Kachel** (Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis), **Detailansicht** (Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge) und **Listen** (Zeitraum pro Seite). Stil, Kachel und Detailansicht haben ihre Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
 
 6. **Wenn Termine eine eigene Seite bekommen sollen.** Im Bereich *Detailansicht* bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
+
+7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Dafür braucht es keinen API-Key. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
 
 Läuft etwas nicht, steht der Grund auf der Übersichtsseite: Sie zeigt den letzten Abgleich, die Zahl gespeicherter Termine und Fehler im Klartext.
 
@@ -136,6 +143,21 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. 
 | `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |
 
 Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — im Backend unter *Plugins → ChurchTools Events → Details* im Reiter *Verwendung* dieselbe.
+
+## Gruppen auf einer Seite anzeigen
+
+Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in der Optik des Plugins. Im Reiter *Gruppen* steht neben jeder angehakten Homepage der passende Shortcode zum Kopieren:
+
+```
+[ctp_groups homepage="Kleingruppen" columns="3"]
+```
+
+Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen", jeweils mit einer Auswahl der angehakten Homepages.
+
+- **ChurchTools entscheidet, was erscheint.** Abgefragt wird ohne API-Key, also genau so, wie ein Besucher die Homepage sieht: nur öffentliche Gruppen, Bilder nur, wo die Homepage Gruppenbilder zeigt.
+- **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das Intervall kürzer.
+- **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus dem Tab *Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
+- **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Der volle Text und die Anmeldung liegen in ChurchTools.
 
 ## Gut zu wissen
 

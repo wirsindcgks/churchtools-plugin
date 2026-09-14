@@ -840,3 +840,27 @@ function ctp_test_reset_menu(): void
 {
     $GLOBALS['ctp_test_menu'] = ['top' => [], 'sub' => []];
 }
+
+/**
+ * Gruppen: GroupSync::mergeHomepages() liest den Hash aus dem Pfad von
+ * `apiUrl`. wp_parse_url() ist in WordPress eine Huelle um parse_url().
+ */
+function wp_parse_url(string $url, int $component = -1)
+{
+    return parse_url($url, $component);
+}
+
+/**
+ * Kein Theme in der Testreihe: GroupListRenderer faellt auf das mitgelieferte
+ * Template zurueck, genau wie auf einer Seite ohne Template-Kopie im Theme.
+ */
+function locate_template($templateNames, bool $load = false, bool $loadOnce = true): string
+{
+    return '';
+}
+
+/** Ohne Bildgroessen keine Kandidatenliste - wie bei einem Anhang ohne Metadaten. */
+function wp_get_attachment_image_srcset(int $attachmentId, $size = 'medium')
+{
+    return false;
+}

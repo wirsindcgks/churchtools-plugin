@@ -709,9 +709,18 @@ final class SyncEngine
      * instead, determining the real file type from the downloaded content via
      * getimagesize() — not from the URL — and converting it to WebP via
      * prepareForSideload() before storing it.
+     *
+     * Oeffentlich fuer GroupSync, das Gruppenbilder auf demselben Weg holt - aber
+     * unter einem *anderen* Merker: EventRepository::orphanedAttachmentIds()
+     * haelt jedes Bild mit '_ctp_source_image_url', das keine Terminzeile
+     * referenziert, fuer verwaist und loescht es. Ein Gruppenbild unter diesem
+     * Merker verschwaende also beim naechsten Termin-Sync.
      */
-    private static function importImage(string $url): ?int
-    {
+    public static function importImage(
+        string $url,
+        string $sourceMetaKey = '_ctp_source_image_url',
+        string $filePrefix = 'churchtools-event-'
+    ): ?int {
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -733,7 +742,7 @@ final class SyncEngine
         }
 
         $attachmentId = media_handle_sideload([
-            'name' => 'churchtools-event-' . md5($url) . '.' . $extension,
+            'name' => $filePrefix . md5($url) . '.' . $extension,
             'tmp_name' => $sideloadFile,
         ], 0);
 
@@ -743,7 +752,7 @@ final class SyncEngine
             return null;
         }
 
-        update_post_meta((int) $attachmentId, '_ctp_source_image_url', $url);
+        update_post_meta((int) $attachmentId, $sourceMetaKey, $url);
         // Beim Import sind die Zusatzgroessen aus CardImage::SIZES schon
         // mitgeschrieben worden (registriert an after_setup_theme, also lange
         // vor diesem Cron-Lauf). Der Vermerk haelt das fest, damit

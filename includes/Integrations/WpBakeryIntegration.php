@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Integrations;
 
+use ChurchToolsPlugin\Groups\GroupSettings;
+
 final class WpBakeryIntegration
 {
     /**
@@ -12,6 +14,9 @@ final class WpBakeryIntegration
      * enthalten muessen (WPBakery baut daraus die id des Kachel-Links).
      */
     private const BASE = 'ctp_events';
+
+    /** Das zweite Element, die Gruppenliste - dasselbe Symbol, siehe enqueueElementIcon(). */
+    private const GROUPS_BASE = 'ctp_groups';
 
     /**
      * Klasse, unter der das Symbol des Elements haengt. Der "icon"-Wert von
@@ -70,7 +75,7 @@ final class WpBakeryIntegration
      */
     public function adminLabelValue($value, $param, $settings)
     {
-        if (!is_array($settings) || (($settings['base'] ?? '') !== self::BASE)) {
+        if (!is_array($settings) || !in_array($settings['base'] ?? '', [self::BASE, self::GROUPS_BASE], true)) {
             return $value;
         }
 
@@ -153,22 +158,29 @@ final class WpBakeryIntegration
         // der von WordPress dafuer vorgesehene Weg fuer wp_add_inline_style().
         wp_register_style($handle, false, [], CTP_VERSION);
         wp_enqueue_style($handle);
+        // Die Selektoren mit Tag gibt es je Element einmal; die mit der Klasse
+        // decken beide zugleich ab.
+        $perBase = static fn (string $base): string => sprintf(
+            '#wpbakery_content .wpb_%1$s > .wpb_element_wrapper > .wpb_element_title > .vc_element-icon,'
+                . '.vc_el-container #%1$s .vc_element-icon,'
+                . '.vc_el-container > #%1$s > .vc_element-icon,'
+                . '.wpb_%1$s > .wpb_element_wrapper > .wpb_element_title > .vc_element-icon,'
+                . '.vc_helper.vc_helper-%1$s > .vc_element-icon,',
+            $base
+        );
+
         wp_add_inline_style($handle, sprintf(
             '#wpbakery_content .vc_element-icon.%1$s,'
-                . '#wpbakery_content .wpb_%2$s > .wpb_element_wrapper > .wpb_element_title > .vc_element-icon,'
+                . '%2$s'
                 . '.vc_ui-panel-content-container .vc_element-icon.%1$s,'
-                . '.vc_element-icon.%1$s,'
-                . '.vc_el-container #%2$s .vc_element-icon,'
-                . '.vc_el-container > #%2$s > .vc_element-icon,'
-                . '.wpb_%2$s > .wpb_element_wrapper > .wpb_element_title > .vc_element-icon,'
-                . '.vc_helper.vc_helper-%2$s > .vc_element-icon'
+                . '.vc_element-icon.%1$s'
                 . '{background-color:%4$s;border-radius:3px;'
                 . 'background-image:url("%3$s") !important;'
                 . 'background-position:center !important;'
                 . 'background-repeat:no-repeat !important;'
                 . 'background-size:48%% !important;}',
             self::ICON_CLASS,
-            self::BASE,
+            $perBase(self::BASE) . $perBase(self::GROUPS_BASE),
             esc_url(add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/img/wpbakery-element-icon.svg')),
             self::ICON_BACKDROP
         ));
@@ -299,5 +311,48 @@ final class WpBakeryIntegration
                 ],
             ],
         ]);
+
+        vc_map([
+            'name' => __('ChurchTools Gruppen', 'churchtools-plugin'),
+            'base' => self::GROUPS_BASE,
+            'category' => __('ChurchTools', 'churchtools-plugin'),
+            'icon' => self::ICON_CLASS,
+            'params' => [
+                [
+                    'type' => 'dropdown',
+                    'heading' => __('Gruppen-Homepage', 'churchtools-plugin'),
+                    'param_name' => 'homepage',
+                    'admin_label' => true,
+                    'value' => self::homepageOptions(),
+                ],
+                [
+                    'type' => 'textfield',
+                    'heading' => __('Spalten', 'churchtools-plugin'),
+                    'param_name' => 'columns',
+                    'value' => '3',
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Die angehakten Homepages als Auswahl, mit dem Namen als Wert - so steht
+     * im Shortcode derselbe lesbare Wert wie in dem, den der Reiter „Gruppen"
+     * zum Kopieren anbietet. Der leere erste Eintrag ist noetig, weil WPBakery
+     * ein Auswahlfeld ohne gespeicherten Wert sonst stillschweigend auf den
+     * ersten Eintrag setzt, ohne ihn in den Shortcode zu schreiben.
+     *
+     * @return array<string, string>
+     */
+    private static function homepageOptions(): array
+    {
+        $options = [__('— Homepage wählen —', 'churchtools-plugin') => ''];
+
+        foreach (GroupSettings::enabledHomepages() as $id => $homepage) {
+            $name = $homepage['name'] !== '' ? $homepage['name'] : (string) $id;
+            $options[$name] = $name;
+        }
+
+        return $options;
     }
 }

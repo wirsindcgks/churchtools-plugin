@@ -65,6 +65,7 @@ final class Assets
 
         $post = get_post();
 
-        return $post instanceof \WP_Post && has_shortcode($post->post_content, 'ctp_events');
+        return $post instanceof \WP_Post
+            && (has_shortcode($post->post_content, 'ctp_events') || has_shortcode($post->post_content, 'ctp_groups'));
     }
 }

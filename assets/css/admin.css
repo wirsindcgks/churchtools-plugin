@@ -152,12 +152,18 @@
  * ganzen Breite laufen") - daher jetzt die volle Breite in jeder Stufe.
  *
  * Die Stufen sind aus den gemessenen Breiten der Buttons gerechnet (WordPress
- * 7.1, klassische Buttons): zusammen 1018px mit Symbolen, 838px ohne, der
- * breiteste ("Synchronisation") 154px - plus acht Abstaende von 4px:
- *   ab 1070px   eine Reihe mit Symbolen (braucht 1050px)
- *   ab  890px   eine Reihe ohne Symbole (braucht 870px)
- *   ab  480px   drei Reihen zu drei Buttons (braucht 3 x 154 + 8 = 470px)
- *   ab  320px   zwei Spalten (braucht 312px), darunter eine
+ * 7.1, klassische Buttons, gemessen am 2026-09-14 mit dem zehnten Reiter
+ * „Gruppen"): zusammen 1140px mit Symbolen, 920px ohne, der breiteste
+ * ("Synchronisation") 156px - plus neun Abstaende von 4px:
+ *   ab 1200px   eine Reihe mit Symbolen (braucht 1176px)
+ *   ab  980px   eine Reihe ohne Symbole (braucht 956px)
+ *   ab  820px   zwei Reihen zu fuenf Buttons (braucht 5 x 156 + 16 = 796px)
+ *   ab  480px   drei Buttons je Reihe (braucht 3 x 156 + 8 = 476px)
+ *   ab  320px   zwei Spalten (braucht 316px), darunter eine
+ * Die Zweierreihe ist mit dem zehnten Reiter dazugekommen: Zehn gehen in
+ * fuenf glatt auf, bei drei je Reihe bliebe ab 820px ein einzelner Knopf in
+ * einer vierten Reihe stehen. Mit neun Reitern lagen die Schwellen bei
+ * 1070 / 890 / 480 / 320px.
  * Jede Schwelle mit rund 20px Luft, weil Schriften je nach System etwas
  * breiter laufen. Die ersten Schwellen (1000 / 800px) stammten noch von den
  * WordPress-Reitern, deren Beschriftung schmaler war; mit den Buttons lief die
@@ -183,16 +189,22 @@
     }
 }
 
-@container (min-width: 890px) {
+@container (min-width: 820px) {
     .ctp-admin .ctp-tabs {
-        grid-template-columns: repeat(9, minmax(max-content, 1fr));
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@container (min-width: 980px) {
+    .ctp-admin .ctp-tabs {
+        grid-template-columns: repeat(10, minmax(max-content, 1fr));
     }
 }
 
 /* Die einzige Stufe, in der sich etwas anderes aendert als die Spaltenzahl:
  * Im schmalsten Band der einzeiligen Reihe haelt der Verzicht auf die Symbole
- * sie einzeilig. Ohne ihn braeche sie hier in drei Reihen um. */
-@container (min-width: 890px) and (max-width: 1069.98px) {
+ * sie einzeilig. Ohne ihn braeche sie hier in zwei Reihen um. */
+@container (min-width: 980px) and (max-width: 1199.98px) {
     .ctp-admin .ctp-tabs .dashicons {
         display: none;
     }

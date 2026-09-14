@@ -28,6 +28,22 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     delete_option('ctp_events_cache_version');
     delete_option('ctp_rewrite_version');
 
+    // Die Gruppen (siehe Groups\GroupSync::optionNames() - die Klasse ist hier
+    // nicht geladen, also dieselbe Liste noch einmal). Ihre Bilder stehen in
+    // keiner Tabelle, sondern in der Zuordnung Gruppe => Anhang.
+    $groupImages = get_option('ctp_group_images', []);
+
+    foreach (is_array($groupImages) ? $groupImages : [] as $attachmentId) {
+        wp_delete_attachment((int) $attachmentId, true);
+    }
+
+    delete_option('ctp_group_settings');
+    delete_option('ctp_groups');
+    delete_option('ctp_group_images');
+    delete_option('ctp_group_sync_error');
+    delete_option('ctp_group_last_sync');
+    delete_option('ctp_group_homepages_fetched');
+
     $tableName = $wpdb->prefix . 'ctp_events';
 
     // Imported event images live in the media library as attachments referenced

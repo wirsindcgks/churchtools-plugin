@@ -11,6 +11,25 @@ final class Shortcode
     public function register(): void
     {
         add_shortcode('ctp_events', [$this, 'render']);
+        add_shortcode('ctp_groups', [$this, 'renderGroups']);
+    }
+
+    /**
+     * [ctp_groups homepage="Kleingruppen" columns="3"] - die Homepage als Name
+     * oder ID, wie `calendar` bei den Terminen. Ohne Angabe gilt die einzige
+     * angehakte Homepage (siehe GroupSettings::resolveHomepageId()).
+     */
+    public function renderGroups($atts): string
+    {
+        $atts = shortcode_atts([
+            'homepage' => '',
+            'columns' => 3,
+        ], $atts, 'ctp_groups');
+
+        return (new GroupListRenderer())->render([
+            'homepage' => (string) $atts['homepage'],
+            'columns' => (int) $atts['columns'],
+        ]);
     }
 
     public function render($atts): string

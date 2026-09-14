@@ -1,0 +1,16 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "churchtools-plugin/group-list",
+    "title": "ChurchTools Gruppen",
+    "category": "widgets",
+    "icon": "groups",
+    "description": "Zeigt die Gruppen einer Gruppen-Homepage aus ChurchTools an.",
+    "textdomain": "churchtools-plugin",
+    "attributes": {
+        "homepage": { "type": "string", "default": "" },
+        "columns": { "type": "number", "default": 3 }
+    },
+    "editorScript": "file:./build/index.js",
+    "style": "file:../../assets/css/frontend.css"
+}

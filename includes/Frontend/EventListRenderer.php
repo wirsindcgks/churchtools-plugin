@@ -298,6 +298,41 @@ final class EventListRenderer
      * clamping plus everything derived from the global Design-tab settings, so an
      * appended page is styled by exactly the same rules as the first one.
      */
+    /**
+     * Was der Design-Tab fuer jede Kachel vorgibt - ausgelagert, weil die
+     * Gruppenliste (GroupListRenderer) dieselben Kacheln zeigt und nicht eine
+     * zweite Fassung dieser Regeln pflegen soll.
+     *
+     * @return array{design_class: string, design_style: string, design_separators: string, hidden_elements: array}
+     */
+    public static function designArgs(array $designSettings): array
+    {
+        return [
+            // Die Stil-Grundlage kommt als Klasse, nicht als Inline-Variablen —
+            // warum, steht im Docblock von DesignPreset. Die Rangfolge zwischen
+            // beiden ergibt sich daraus von selbst: Der Inline-Style schlaegt
+            // die Klasse, eine ausdrueckliche Einzeleinstellung im Design-Tab
+            // liegt also ueber dem gewaehlten Stil.
+            'design_class' => DesignPreset::bodyClass($designSettings['design_preset']),
+            'design_style' => CardDesign::styleAttribute(
+                $designSettings['element_order'],
+                $designSettings['corner_style'],
+                $designSettings['media_aspect_ratio'],
+                $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : '',
+                $designSettings['button_color_enabled'] ? $designSettings['button_color'] : ''
+            ),
+            // Same value for every card in the loop (element order is a global
+            // design setting, not per-event), so it's computed once here rather
+            // than per iteration in the templates.
+            'design_separators' => CardDesign::renderSeparators($designSettings['element_order']),
+            // Hidden fields have no dedicated markup to attach a CSS var to
+            // (unlike order/corner/ratio/accent above) — templates check this
+            // array directly with in_array() and skip rendering the element's
+            // markup outright.
+            'hidden_elements' => $designSettings['hidden_elements'],
+        ];
+    }
+
     private function prepareArgs(array $args): array
     {
         $args = wp_parse_args($args, [
@@ -341,28 +376,7 @@ final class EventListRenderer
             (int) $args['months'] > 0 ? (int) $args['months'] : (int) $designSettings['paging_months']
         );
 
-        // Die Stil-Grundlage kommt als Klasse, nicht als Inline-Variablen —
-        // warum, steht im Docblock von DesignPreset. Die Rangfolge zwischen
-        // beiden ergibt sich daraus von selbst: Der Inline-Style unten schlaegt
-        // die Klasse, eine ausdrueckliche Einzeleinstellung im Design-Tab liegt
-        // also ueber dem gewaehlten Stil.
-        $args['design_class'] = DesignPreset::bodyClass($designSettings['design_preset']);
-
-        $args['design_style'] = CardDesign::styleAttribute(
-            $designSettings['element_order'],
-            $designSettings['corner_style'],
-            $designSettings['media_aspect_ratio'],
-            $designSettings['accent_color_enabled'] ? $designSettings['accent_color'] : '',
-            $designSettings['button_color_enabled'] ? $designSettings['button_color'] : ''
-        );
-        // Same value for every card in the loop below (element order is a global
-        // design setting, not per-event), so it's computed once here rather than
-        // per iteration in the templates.
-        $args['design_separators'] = CardDesign::renderSeparators($designSettings['element_order']);
-        // Hidden fields have no dedicated markup to attach a CSS var to (unlike
-        // order/corner/ratio/accent above) — templates check this array directly
-        // with in_array() and skip rendering the element's markup outright.
-        $args['hidden_elements'] = $designSettings['hidden_elements'];
+        $args = array_merge($args, self::designArgs($designSettings));
 
         // "default" (the shortcode/block attribute's own default) defers to the
         // Design tab's global setting; an explicit none/popup/page always wins,

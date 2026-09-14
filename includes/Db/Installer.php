@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Db;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Groups\GroupSettings;
+use ChurchToolsPlugin\Groups\GroupSync;
 
 final class Installer
 {
@@ -27,6 +29,15 @@ final class Installer
         // "hourly" activate() picked), which is exactly the kind of setting
         // that looks like it works.
         add_action('update_option_ctp_settings', [self::class, 'onSettingsUpdated'], 10, 2);
+
+        // Die Gruppen haben eine eigene Option und damit einen eigenen Haken.
+        // Dazu add_option_: Beim allerersten Speichern des Reiters gibt es die
+        // Option noch nicht, update_option() reicht dann an add_option() weiter,
+        // und update_option_{name} feuert gar nicht - der erste Haken an einer
+        // Homepage bliebe bis zum naechsten Admin-Seitenaufruf ohne Zeitplan
+        // und ohne sofortigen Lauf.
+        add_action('update_option_' . GroupSettings::OPTION_KEY, [self::class, 'onGroupSettingsUpdated'], 10, 2);
+        add_action('add_option_' . GroupSettings::OPTION_KEY, [self::class, 'onGroupSettingsAdded'], 10, 2);
 
         // Self-heal on any admin page load: a cron event can go missing
         // entirely (a plugin that flushes the cron array, a partially restored
@@ -59,6 +70,74 @@ final class Installer
         if (self::roomSettingsChanged($oldValue, $newValue)) {
             self::scheduleImmediateSync();
         }
+    }
+
+    /**
+     * @param mixed $oldValue
+     * @param mixed $newValue
+     */
+    public static function onGroupSettingsUpdated($oldValue, $newValue): void
+    {
+        $change = self::groupSettingsChange($oldValue, $newValue);
+
+        if ($change['reschedule']) {
+            self::ensureSchedules();
+        }
+
+        // Ein Lauf gleich nach dem Speichern, aus demselben Grund wie bei den
+        // Raeumen: Beim Standardintervall „taeglich" saehe man einen neuen
+        // Haken sonst erst am naechsten Tag. Auch beim Abwaehlen - dann raeumt
+        // der Lauf die Gruppen und ihre Bilder ab.
+        //
+        // Wurde eben neu geplant, legt WordPress diesen Einzeltermin gar nicht
+        // erst an: wp_schedule_single_event() verweigert einen zweiten Termin
+        // desselben Hooks innerhalb von zehn Minuten, und scheduleIfNeeded()
+        // setzt den ersten wiederkehrenden Lauf auf eine Minute. Der laeuft
+        // dann eben als der sofortige - am 2026-09-14 in der Testumgebung so
+        // beobachtet, mit demselben Ergebnis.
+        if ($change['sync_now']) {
+            wp_schedule_single_event(time() + 10, GroupSync::HOOK);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     */
+    public static function onGroupSettingsAdded(string $option, $value): void
+    {
+        self::onGroupSettingsUpdated(null, $value);
+    }
+
+    /**
+     * Neu planen, wenn sich das Intervall aendert oder ob ueberhaupt eine
+     * Homepage angehakt ist (davon haengt ab, ob es einen Zeitplan gibt, siehe
+     * ensureSchedules()); sofort laufen, wenn sich die Auswahl aendert.
+     *
+     * @param mixed $oldValue
+     * @param mixed $newValue
+     *
+     * @return array{reschedule: bool, sync_now: bool}
+     */
+    public static function groupSettingsChange($oldValue, $newValue): array
+    {
+        $enabledIds = static function ($settings): array {
+            $ids = is_array($settings) && is_array($settings['homepages'] ?? null)
+                ? array_keys(GroupSettings::enabledHomepages(['homepages' => $settings['homepages']]))
+                : [];
+            $ids = array_map('intval', $ids);
+            sort($ids);
+
+            return $ids;
+        };
+        $interval = static fn ($settings): string => is_array($settings) ? (string) ($settings['sync_interval'] ?? '') : '';
+
+        $old = $enabledIds($oldValue);
+        $new = $enabledIds($newValue);
+
+        return [
+            'reschedule' => $interval($oldValue) !== $interval($newValue) || ($old === []) !== ($new === []),
+            'sync_now' => $old !== $new,
+        ];
     }
 
     /**
@@ -129,6 +208,26 @@ final class Installer
 
         self::scheduleIfNeeded('ctp_run_sync', $interval);
         self::scheduleIfNeeded('ctp_run_retention_cleanup', 'daily');
+
+        // Ohne angehakte Homepage kein Zeitplan: Eine Installation, die keine
+        // Gruppen zeigt, soll ChurchTools dafuer auch nicht taeglich fragen.
+        $groupSettings = GroupSettings::get();
+
+        if (GroupSettings::enabledHomepages($groupSettings) === []) {
+            // Nur einen *wiederkehrenden* Termin abraeumen. Wer die letzte
+            // Homepage abwaehlt, bekommt einen Einzellauf, der die Gruppen und
+            // ihre Bilder loescht (onGroupSettingsUpdated()) - und diese
+            // Methode laeuft gleich danach auf der Weiterleitung zurueck zur
+            // Einstellungsseite (admin_init). wp_clear_scheduled_hook() nimmt
+            // Einzeltermine mit, der Aufraeumlauf fiele also genau dann aus.
+            $event = wp_get_scheduled_event(GroupSync::HOOK);
+
+            if ($event !== false && $event->schedule !== false) {
+                wp_clear_scheduled_hook(GroupSync::HOOK);
+            }
+        } else {
+            self::scheduleIfNeeded(GroupSync::HOOK, $groupSettings['sync_interval']);
+        }
     }
 
     /**
@@ -173,6 +272,7 @@ final class Installer
     {
         wp_clear_scheduled_hook('ctp_run_sync');
         wp_clear_scheduled_hook('ctp_run_retention_cleanup');
+        wp_clear_scheduled_hook(GroupSync::HOOK);
 
         // Der Streak leerer API-Antworten zaehlt *beobachtete* Laeufe. Waehrend
         // das Plugin aus war, ist keiner gelaufen - bliebe der Zaehler stehen,
