@@ -17,14 +17,23 @@
     <arg name="colors"/>
     <arg name="extensions" value="php"/>
 
-    <!-- Warnings are advisory (e.g. "direct DB call", line-length nitpicks in a
-         WordPress plugin header line) - only errors should block CI. -->
-    <config name="ignore_warnings_on_exit" value="1"/>
+    <!-- Warnungen brechen den Lauf ab, seit dem Sicherheits-Review vom
+         2026-09-14. Vorher wurden sie ignoriert und waren auf fast 400
+         angewachsen - eine neue, ernst gemeinte Warnung ging darin unter. Was
+         in diesem Plugin absichtlich so ist, ist unten gezielt ausgenommen oder
+         an der Stelle mit Begruendung markiert. -->
+    <config name="ignore_warnings_on_exit" value="0"/>
 
     <!-- Formatting: the codebase deliberately follows modern PSR-12 style (spaces,
          short array syntax, PSR-4 namespaces - see .editorconfig), not the
          WordPress-core style (tabs, array(), Yoda conditions, ...). -->
     <rule ref="PSR12">
+        <!-- Lange Zeilen sind hier fast immer Uebersetzungstexte (ein Umbruch
+             in __() zerlegte den Text fuer die Uebersetzung nicht, aber die
+             Lesbarkeit im .pot) oder phpcs:ignore-Begruendungen, die auf der
+             Zeile davor stehen muessen. Als Warnung waren es ueber 300 - und
+             damit genau das Rauschen, das echte Warnungen verdeckt. -->
+        <exclude name="Generic.Files.LineLength"/>
         <!-- A WordPress plugin's main file always mixes declarations (classes it
              loads) with side effects (define(), add_action(), register_*_hook()) by
              design - that's simply how a plugin bootstrap file works. -->
@@ -40,6 +49,25 @@
         <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
     </rule>
     <rule ref="WordPress.DB"/>
+    <!-- Die eigene Tabelle wp_ctp_events hat keine WordPress-API und keinen
+         Objekt-Cache; direkte Abfragen sind dort der einzige Weg (gecacht wird
+         eine Ebene hoeher, Frontend\EventQueryCache). Dasselbe gilt fuer die
+         Sperre in Sync\RunLock, die gerade am Cache vorbei atomar sein muss. -->
+    <rule ref="WordPress.DB.DirectDatabaseQuery.DirectQuery">
+        <exclude-pattern>/includes/Db/*</exclude-pattern>
+        <exclude-pattern>/includes/Sync/RunLock.php</exclude-pattern>
+        <exclude-pattern>/uninstall.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
+        <exclude-pattern>/includes/Db/*</exclude-pattern>
+        <exclude-pattern>/includes/Sync/RunLock.php</exclude-pattern>
+        <exclude-pattern>/uninstall.php</exclude-pattern>
+    </rule>
+    <!-- Schema anlegen und beim Deinstallieren entfernen. -->
+    <rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+        <exclude-pattern>/includes/Db/Installer.php</exclude-pattern>
+        <exclude-pattern>/uninstall.php</exclude-pattern>
+    </rule>
     <rule ref="WordPress.WP.I18n"/>
     <rule ref="WordPress.WP.GlobalVariablesOverride"/>
     <rule ref="WordPress.PHP.DiscouragedPHPFunctions"/>

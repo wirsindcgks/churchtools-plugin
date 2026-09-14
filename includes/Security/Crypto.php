@@ -68,6 +68,7 @@ final class Crypto
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $box = sodium_crypto_secretbox($plaintext, $nonce, self::key());
 
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Transportkodierung eines Ciphertexts fuer eine Textspalte, keine Verschleierung von Code.
         return self::PREFIX . base64_encode($nonce . $box);
     }
 
@@ -116,6 +117,7 @@ final class Crypto
 
     private static function decryptCurrent(string $encoded): string
     {
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- siehe encrypt().
         $data = base64_decode($encoded, true);
 
         if ($data === false || strlen($data) <= SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES) {
@@ -136,6 +138,7 @@ final class Crypto
 
     private static function decryptLegacy(string $encoded): string
     {
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- siehe encrypt().
         $data = base64_decode($encoded, true);
         if ($data === false) {
             return '';

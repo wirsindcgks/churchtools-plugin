@@ -720,7 +720,7 @@ class EventRepository
 
         $affectedSeries = $this->seriesAttachmentsWhere($whereSql, $whereParams);
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- see deleteOrphans().
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see deleteOrphans(); the sniff cannot count the placeholders inside $whereSql.
         $deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i WHERE ' . $whereSql, $this->table, ...$whereParams));
 
         $this->deleteOrphanedAttachments($affectedSeries);
@@ -822,7 +822,7 @@ class EventRepository
 
         $affectedSeries = $this->seriesAttachmentsWhere($whereSql, $whereParams);
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built from string literals plus dynamically-sized "%d,%d,..." / "%s,%s,..." placeholder lists (WordPress's own documented pattern for IN/NOT IN clauses with variable-length arrays), then passed straight into $wpdb->prepare() with matching positional $params.
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $sql is built from string literals plus dynamically-sized "%d,%d,..." / "%s,%s,..." placeholder lists (WordPress's own documented pattern for IN/NOT IN clauses with variable-length arrays), then passed straight into $wpdb->prepare() with matching positional $params; the sniff cannot count the placeholders inside $whereSql.
         $deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i WHERE ' . $whereSql, $this->table, ...$whereParams));
 
         $this->deleteOrphanedAttachments($affectedSeries);

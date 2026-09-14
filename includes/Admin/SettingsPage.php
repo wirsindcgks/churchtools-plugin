@@ -4799,8 +4799,8 @@ final class SettingsPage
             $name = trim(($person['firstName'] ?? '') . ' ' . ($person['lastName'] ?? ''));
 
             wp_send_json_success([
-                /* translators: %s: full name of the authenticated ChurchTools person */
                 'message' => $name !== ''
+                    /* translators: %s: full name of the authenticated ChurchTools person */
                     ? sprintf(__('Verbunden als %s', 'churchtools-plugin'), $name)
                     : __('Verbindung erfolgreich', 'churchtools-plugin'),
             ]);
