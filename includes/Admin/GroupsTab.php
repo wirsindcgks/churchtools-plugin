@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Admin;
 
 use ChurchToolsPlugin\Api\Client;
+use ChurchToolsPlugin\Frontend\GroupListRenderer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
 use Throwable;
 
 /**
- * Der Reiter „Gruppen": Homepage-Auswahl, eigenes Sync-Intervall, Status.
+ * Der Bereich „Gruppen" im Backend: Gruppenliste, Homepage-Auswahl samt
+ * eigenem Sync-Intervall, Einbinden - dazu das Gruppen-Panel der Uebersicht.
  *
  * Eine eigene Klasse statt weiterer Methoden in SettingsPage - die steht bei
  * gut 5.300 Zeilen, und die Gruppen teilen mit ihr nur den Rahmen (Reiterreihe,
@@ -252,6 +254,111 @@ final class GroupsTab
     }
 
     /**
+     * Der Reiter „Gruppenliste": was gerade gespeichert ist und auf der
+     * Website erscheinen kann - das Gegenstueck zur Terminliste, und wie dort
+     * der erste Reiter des Bereichs (Nutzerwunsch 2026-09-14: „die primaeren
+     * Infos in die erste Position").
+     *
+     * Ein Panel je angehakter Homepage statt einer gemeinsamen Tabelle: Ein
+     * Shortcode zeigt immer genau eine Homepage, und so steht hier dieselbe
+     * Liste in derselben Reihenfolge wie dort. Eine Gruppe auf zwei Homepages
+     * steht deshalb zweimal - so, wie sie auf der Website auch zweimal stehen
+     * kann.
+     *
+     * Nur Anzeige, keine Bedienung: Geaendert wird eine Gruppe in ChurchTools,
+     * der Name fuehrt deshalb dorthin.
+     */
+    public static function renderList(): void
+    {
+        $enabled = GroupSettings::enabledHomepages();
+        $stored = GroupSync::storedData();
+        $imageMap = GroupSync::imageMap();
+        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
+        ?>
+        <?php if ($enabled === []) : ?>
+            <div class="ctp-panel">
+                <h2><?php esc_html_e('Gespeicherte Gruppen', 'churchtools-plugin'); ?></h2>
+                <p class="ctp-empty-state">
+                    <?php
+                    printf(
+                        /* translators: %s: link to the "Homepages" tab */
+                        esc_html__('Es werden keine Gruppen übernommen. Unter %s lässt sich eine Gruppen-Homepage aus ChurchTools auswählen.', 'churchtools-plugin'),
+                        '<a href="' . esc_url(SettingsPage::tabUrl('groups')) . '">' . esc_html__('Gruppen → Homepages', 'churchtools-plugin') . '</a>'
+                    );
+                    ?>
+                </p>
+            </div>
+            <?php return; ?>
+        <?php endif; ?>
+
+        <?php foreach ($enabled as $id => $homepage) : ?>
+            <?php
+            $entry = $stored[(int) $id] ?? null;
+            $groups = GroupListRenderer::prepareGroups(GroupSync::groupsFor((int) $id), $imageMap);
+            ?>
+            <div class="ctp-panel">
+                <h2><?php echo esc_html($homepage['name'] !== '' ? $homepage['name'] : sprintf('#%d', (int) $id)); ?></h2>
+                <p class="description">
+                    <?php if ($entry === null || (string) ($entry['fetched'] ?? '') === '') : ?>
+                        <?php esc_html_e('Noch nicht synchronisiert.', 'churchtools-plugin'); ?>
+                    <?php else : ?>
+                        <?php
+                        printf(
+                            // „Gruppen: 1" statt „1 Gruppen" - bin/make-pot.php kennt keine Plurale.
+                            /* translators: 1: number of groups, 2: date and time of the last successful fetch */
+                            esc_html__('Gruppen: %1$d, Stand %2$s.', 'churchtools-plugin'),
+                            count($groups),
+                            esc_html(mysql2date($dateFormat, (string) $entry['fetched']))
+                        );
+                        ?>
+                    <?php endif; ?>
+                    <?php if ((int) ($entry['empty_runs'] ?? 0) > 0) : ?>
+                        <?php
+                        // Der Leer-Antwort-Schutz haelt gerade den Bestand -
+                        // ohne diesen Satz saehe die Liste aktuell aus.
+                        esc_html_e('ChurchTools liefert für diese Homepage zurzeit keine Gruppen; die zuletzt geladenen bleiben vorerst stehen.', 'churchtools-plugin');
+                        ?>
+                    <?php endif; ?>
+                </p>
+
+                <?php if ($groups === []) : ?>
+                    <p class="ctp-empty-state"><?php esc_html_e('Auf dieser Homepage stehen keine Gruppen.', 'churchtools-plugin'); ?></p>
+                <?php else : ?>
+                    <table class="widefat striped ctp-borderless ctp-events-table ctp-group-list">
+                        <thead>
+                            <tr>
+                                <th scope="col"><?php esc_html_e('Gruppe', 'churchtools-plugin'); ?></th>
+                                <th scope="col"><?php esc_html_e('Treffen', 'churchtools-plugin'); ?></th>
+                                <th scope="col"><?php esc_html_e('Plätze', 'churchtools-plugin'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($groups as $group) : ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?php echo esc_url($group['url']); ?>" target="_blank" rel="noopener">
+                                            <?php echo esc_html($group['name']); ?>
+                                        </a>
+                                        <?php if ($group['image_src'] !== '') : ?>
+                                            <span class="dashicons dashicons-format-image ctp-row-icon" title="<?php esc_attr_e('Bild importiert', 'churchtools-plugin'); ?>"></span>
+                                        <?php endif; ?>
+                                        <?php if ($group['excerpt'] !== '') : ?>
+                                            <br /><span class="ctp-muted-text"><?php echo esc_html($group['excerpt']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo $group['schedule'] !== '' ? esc_html($group['schedule']) : '&ndash;'; ?></td>
+                                    <td><?php echo $group['places_label'] !== '' ? esc_html($group['places_label']) : '&ndash;'; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+        <?php
+    }
+
+    /**
      * Das Panel „Gruppen" auf der Uebersicht - die Uebersicht zeigt seit der
      * Teilung in Bereiche den Zustand von beidem, und ein dauerhaft
      * scheiternder Gruppen-Sync fiel bis dahin nur im Reiter der Gruppen auf.
@@ -323,6 +430,10 @@ final class GroupsTab
                     </tbody>
                 </table>
                 <p class="ctp-quicklinks">
+                    <a href="<?php echo esc_url(SettingsPage::tabUrl('group_list')); ?>">
+                        <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
+                        <?php esc_html_e('Gespeicherte Gruppen ansehen', 'churchtools-plugin'); ?>
+                    </a>
                     <a href="<?php echo esc_url(SettingsPage::tabUrl('groups')); ?>">
                         <span class="dashicons dashicons-groups" aria-hidden="true"></span>
                         <?php esc_html_e('Homepages auswählen', 'churchtools-plugin'); ?>

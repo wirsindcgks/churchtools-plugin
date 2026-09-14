@@ -135,7 +135,7 @@ final class SettingsPageTest extends TestCase
     {
         $_GET['page'] = 'churchtools-plugin-groups';
         $_GET['tab'] = 'design';
-        $this->assertSame('groups', $this->currentTab());
+        $this->assertSame('group_list', $this->currentTab(), 'Rueckfall ist der erste Reiter des Bereichs, die Gruppenliste.');
 
         $_GET['tab'] = 'group_embed';
         $this->assertSame('group_embed', $this->currentTab());

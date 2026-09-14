@@ -36,7 +36,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 5. In der Übersicht einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
 6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele unter Events → Einbinden, für Gruppen unter Gruppen → Einbinden).
 
-Das Backend hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Homepages, Einbinden) und Einstellungen (Verbindung, Design, Updates).
+Das Backend hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Gruppenliste, Homepages, Einbinden) und Einstellungen (Verbindung, Design, Updates).
 
 == Verwendung ==
 

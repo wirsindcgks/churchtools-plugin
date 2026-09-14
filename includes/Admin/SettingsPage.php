@@ -141,7 +141,7 @@ final class SettingsPage
     private const AREA_TABS = [
         'overview' => ['status'],
         'events' => ['events', 'calendars', 'rooms', 'sync', 'embed'],
-        'groups' => ['groups', 'group_embed'],
+        'groups' => ['group_list', 'groups', 'group_embed'],
         'settings' => ['connection', 'design', 'updates'],
     ];
 
@@ -275,6 +275,7 @@ final class SettingsPage
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'rooms' => __('Räume', 'churchtools-plugin'),
+            'group_list' => __('Gruppenliste', 'churchtools-plugin'),
             'groups' => __('Homepages', 'churchtools-plugin'),
             'group_embed' => __('Einbinden', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
@@ -347,6 +348,7 @@ final class SettingsPage
             'connection' => 'admin-links',
             'calendars' => 'calendar-alt',
             'rooms' => 'location-alt',
+            'group_list' => 'list-view',
             'groups' => 'groups',
             'group_embed' => 'editor-code',
             'sync' => 'update',
@@ -3004,6 +3006,7 @@ final class SettingsPage
                 self::renderStatStrip(self::statusCardsDesign($settings));
 
                 return;
+            case 'group_list':
             case 'groups':
                 self::renderStatStrip(GroupsTab::statusCards());
 
@@ -4184,6 +4187,8 @@ final class SettingsPage
                 <?php $this->renderCalendarsTab(); ?>
             <?php elseif ($tab === 'rooms') : ?>
                 <?php $this->renderRoomsTab(); ?>
+            <?php elseif ($tab === 'group_list') : ?>
+                <?php GroupsTab::renderList(); ?>
             <?php elseif ($tab === 'groups') : ?>
                 <?php GroupsTab::render(); ?>
             <?php elseif ($tab === 'group_embed') : ?>

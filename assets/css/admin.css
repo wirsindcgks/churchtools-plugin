@@ -1500,6 +1500,24 @@ ul.ctp-hint-list li::before {
     opacity: 0.65;
 }
 
+/* Gruppenliste (Admin\GroupsTab::renderList()): ein Panel je Homepage, und
+ * die Spalten sollen in allen Panels an derselben Stelle stehen. Ohne feste
+ * Anteile richtete sich jede Tabelle nach ihrem eigenen Inhalt - „Treffen"
+ * stand bei zwei Homepages 170px auseinander, und in der Liste mit langen
+ * Beschreibungen brach „Sonntag, 10:30" um. Prozent statt fester Breite, weil
+ * die Zellen eine Polsterung haben und eine feste Breite dazugerechnet wird. */
+.ctp-admin .ctp-group-list {
+    table-layout: fixed;
+}
+
+.ctp-admin .ctp-group-list th:nth-child(2) {
+    width: 22%;
+}
+
+.ctp-admin .ctp-group-list th:nth-child(3) {
+    width: 18%;
+}
+
 .ctp-row-icon {
     font-size: 16px;
     width: 16px;

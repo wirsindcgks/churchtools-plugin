@@ -880,3 +880,14 @@ function admin_url(string $path = ''): string
 {
     return 'https://example.org/wp-admin/' . ltrim($path, '/');
 }
+
+/** Die Gruppenliste im Backend (Admin\GroupsTab::renderList()). */
+function esc_html__(string $text, string $domain = ''): string
+{
+    return esc_html($text);
+}
+
+function esc_attr__(string $text, string $domain = ''): string
+{
+    return esc_attr($text);
+}
