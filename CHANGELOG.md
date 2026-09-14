@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.25.1] - 2026-09-14
+
+### Fixed
+
+- **Der „Ganztägig"-Chip neben der Überschrift eines Termins stand schief.** Auf der eigenen Terminseite und im Popup sitzt er hinter dem Titel und hing dort wie ein Buchstabe auf der Grundlinie – sichtbar tiefer als der Datums-Chip links daneben. Jetzt steht er senkrecht mittig: bei einem einzeiligen Titel auf der Höhe des Datums-Chips, bei einem mehrzeiligen mittig in der letzten Zeile. Bündig mit der Oberkante des Datums-Chips wäre die andere Möglichkeit gewesen; sie hätte dem Titel aber auf jeder Zeile Breite genommen, auf dem Handy mehr als ein Drittel. In den Kachellisten stand der Chip schon richtig.
+
 ## [1.25.0] - 2026-09-12
 
 ### Added
