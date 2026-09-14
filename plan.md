@@ -782,7 +782,7 @@ Befund (2026-09-14, GitHub-API): `main` ohne Branch-Schutz, keine Rulesets, kein
 
 #### Stand der Umsetzung (2026-09-14, Branch `sicherheit-review`)
 
-Neun Commits auf `sicherheit-review`, nicht gepusht. Offene Entscheidungen nach Empfehlung umgesetzt, weil der Auftrag „entsprechend umsetzen“ lautete: `raw_data` behält die Spalte, verliert die Personenverweise; Leiter werden nicht übernommen; E-Mail-Adressen verschleiert; signierte Updates zurückgestellt.
+Zehn Commits auf `sicherheit-review` (dieser Eintrag eingeschlossen), nicht gepusht. Offene Entscheidungen nach Empfehlung umgesetzt, weil der Auftrag „entsprechend umsetzen“ lautete: `raw_data` behält die Spalte, verliert die Personenverweise; Leiter werden nicht übernommen; E-Mail-Adressen verschleiert; signierte Updates zurückgestellt.
 
 - **Phase 0**: Actions auf SHAs, CI mit `contents: read`, Release in `build` (nur lesen) und `publish` (Schreibrecht, kein Fremdcode) getrennt, `gh release` statt `softprops/action-gh-release`, Herkunftsnachweis über `actions/attest`, Dependabot für Actions/Composer/npm. **Offen, beim Nutzer:** 0.1 bis 0.5 in den GitHub-Einstellungen. Die Workflows sind lokal nur als YAML geprüft; der erste echte Lauf ist der nächste Push bzw. Tag.
 - **Vergleich anonym gegen angemeldet (3.1)**, nur GETs gegen die echte Instanz: 11 Homepages und 33 Gruppen, mit und ohne Key identisch, kein abweichendes Feld, `groupIsPublic` nie `false`, `signUpPersons` nie belegt. **Korrektur an der Doku von 1.26.0:** Leiter kommen *auch ohne* Anmeldung (bei 13 Gruppen) – der Satz „ChurchTools liefert sie ohne Anmeldung nicht aus“ war falsch; das Plugin übernimmt sie bewusst nicht. 3.3 (Filter auf `groupIsPublic`) war damit nicht nötig.
