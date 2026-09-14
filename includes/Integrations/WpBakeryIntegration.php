@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Integrations;
 
+use ChurchToolsPlugin\Blocks\GroupListBlock;
 use ChurchToolsPlugin\Groups\GroupSettings;
 
 final class WpBakeryIntegration
@@ -81,6 +82,20 @@ final class WpBakeryIntegration
 
         if (!is_scalar($value) || !is_array($param['value'] ?? null)) {
             return $value;
+        }
+
+        // Die Gruppen-Auswahl ist das eine Ankreuzfeld mit vielen Werten:
+        // WPBakery speichert sie kommagetrennt ("514,269"). Im Baustein sollen
+        // die Namen stehen, in der gewaehlten Reihenfolge.
+        if (($param['param_name'] ?? '') === 'groups') {
+            $labels = array_flip(array_map('strval', $param['value']));
+            $names = [];
+
+            foreach (explode(',', (string) $value) as $id) {
+                $names[] = $labels[trim($id)] ?? sprintf('#%s', trim($id));
+            }
+
+            return implode(', ', $names);
         }
 
         // Bei Ankreuzfeldern waere die Beschriftung des Wertes eine Dopplung
@@ -322,9 +337,33 @@ final class WpBakeryIntegration
                 [
                     'type' => 'dropdown',
                     'heading' => __('Gruppen-Homepage', 'churchtools-plugin'),
+                    'description' => __('Alle Gruppen dieser Homepage. Sind unten einzelne Gruppen angehakt, gelten diese.', 'churchtools-plugin'),
                     'param_name' => 'homepage',
                     'admin_label' => true,
                     'value' => self::homepageOptions(),
+                ],
+                [
+                    // Ankreuzfelder statt eines Suchfelds (autocomplete): Das
+                    // braucht zwei eigene AJAX-Rueckrufe und laesst sich ohne
+                    // WPBakery nicht pruefen; ein Ankreuzfeld mit mehreren
+                    // Werten speichert WPBakery von sich aus kommagetrennt -
+                    // dieselbe Form, die `groups` im Shortcode erwartet.
+                    'type' => 'checkbox',
+                    'heading' => __('Einzelne Gruppen', 'churchtools-plugin'),
+                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages. Angehakte Gruppen erscheinen statt der Homepage, in der Reihenfolge dieser Liste.', 'churchtools-plugin'),
+                    'param_name' => 'groups',
+                    'admin_label' => true,
+                    'value' => self::groupOptions(),
+                ],
+                [
+                    'type' => 'dropdown',
+                    'heading' => __('Ansicht', 'churchtools-plugin'),
+                    'param_name' => 'layout',
+                    'admin_label' => true,
+                    'value' => [
+                        __('Raster', 'churchtools-plugin') => 'grid',
+                        __('Hervorgehoben', 'churchtools-plugin') => 'featured',
+                    ],
                 ],
                 [
                     'type' => 'textfield',
@@ -332,6 +371,7 @@ final class WpBakeryIntegration
                     'description' => __('Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px.', 'churchtools-plugin'),
                     'param_name' => 'columns',
                     'value' => '3',
+                    'dependency' => ['element' => 'layout', 'value' => 'grid'],
                 ],
             ],
         ]);
@@ -353,6 +393,34 @@ final class WpBakeryIntegration
         foreach (GroupSettings::enabledHomepages() as $id => $homepage) {
             $name = $homepage['name'] !== '' ? $homepage['name'] : (string) $id;
             $options[$name] = $name;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Die einzeln waehlbaren Gruppen als `Beschriftung => ID`, mit den
+     * Homepages dahinter, weil Gruppennamen nicht eindeutig sind (siehe
+     * Blocks\GroupListBlock::groupChoices()).
+     *
+     * @return array<string, string>
+     */
+    private static function groupOptions(): array
+    {
+        $options = [];
+
+        foreach (GroupListBlock::groupChoices() as $choice) {
+            $label = $choice['homepages'] !== ''
+                ? sprintf('%s (%s)', $choice['name'], $choice['homepages'])
+                : $choice['name'];
+
+            // Zwei gleich lautende Beschriftungen wuerden sich im Array
+            // ueberschreiben; die ID macht sie eindeutig.
+            if (isset($options[$label])) {
+                $label .= sprintf(' #%d', $choice['id']);
+            }
+
+            $options[$label] = (string) $choice['id'];
         }
 
         return $options;

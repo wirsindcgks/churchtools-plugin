@@ -1510,11 +1510,17 @@ ul.ctp-hint-list li::before {
     table-layout: fixed;
 }
 
-.ctp-admin .ctp-group-list th:nth-child(2) {
-    width: 22%;
+/* Die ID-Spalte vorn (Wert fuer `groups` im Shortcode): so schmal wie eine
+ * dreistellige Zahl samt Polsterung - Prozent aus demselben Grund wie oben. */
+.ctp-admin .ctp-group-list th:nth-child(1) {
+    width: 9%;
 }
 
 .ctp-admin .ctp-group-list th:nth-child(3) {
+    width: 22%;
+}
+
+.ctp-admin .ctp-group-list th:nth-child(4) {
     width: 18%;
 }
 

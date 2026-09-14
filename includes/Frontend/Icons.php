@@ -75,4 +75,17 @@ final class Icons
             . '<line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line>'
             . '<line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg>';
     }
+
+    /**
+     * Pfeil aus dem Kasten - das uebliche Zeichen fuer „fuehrt auf eine andere
+     * Website". Steht am Button der Gruppen, weil der Klick dort aus dieser
+     * Website heraus nach ChurchTools fuehrt (plan.md, G3).
+     */
+    public static function external(): string
+    {
+        return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            . '<path d="M14 4h6v6"></path><line x1="20" y1="4" x2="11" y2="13"></line>'
+            . '<path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V7.5A1.5 1.5 0 0 1 5.5 6H10"></path></svg>';
+    }
 }

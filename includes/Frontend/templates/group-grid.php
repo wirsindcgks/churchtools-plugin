@@ -9,6 +9,9 @@
  * Themes. Die Zusatzfelder jeder Gruppe (image_src, show_media, schedule,
  * places_label, excerpt) rechnet GroupListRenderer::prepareGroups() vor.
  *
+ * Die Kachel ist nicht klickbar; nach ChurchTools fuehrt der Button darunter
+ * (partials/group-cta.php, siehe GroupListRenderer).
+ *
  * @var array $groups
  * @var array $args
  */
@@ -28,9 +31,10 @@ if (!defined('ABSPATH')) {
         <p class="ctp-events__empty"><?php esc_html_e('Zurzeit sind keine Gruppen eingetragen.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
         <div class="ctp-events__list" role="list">
-            <?php foreach ($groups as $group) : ?>
+            <?php foreach ($groups as $index => $group) : ?>
+                <?php $titleId = $args['instance'] . '-' . (int) $index; ?>
                 <div class="ctp-events__cell" role="listitem">
-                    <article class="ctp-events__card ctp-events__card--clickable">
+                    <article class="ctp-events__card ctp-groups__card">
                         <?php if ($group['show_media']) : ?>
                             <div class="ctp-events__media">
                                 <?php if ($group['image_src'] !== '') : ?>
@@ -48,10 +52,7 @@ if (!defined('ABSPATH')) {
                         <?php endif; ?>
                         <div class="ctp-events__content">
                             <span class="ctp-events__title">
-                                <?php // Der Verweis ist das ganze Kachelziel, siehe .ctp-events__card-trigger in frontend.css. ?>
-                                <a class="ctp-events__card-trigger" href="<?php echo esc_url($group['url']); ?>">
-                                    <?php echo esc_html($group['name']); ?>
-                                </a>
+                                <span id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($group['name']); ?></span>
                                 <?php if ($group['places_label'] !== '') : ?>
                                     <span class="ctp-events__badge"><?php echo esc_html($group['places_label']); ?></span>
                                 <?php endif; ?>
@@ -68,6 +69,7 @@ if (!defined('ABSPATH')) {
                             <?php endif; ?>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup. ?>
                             <?php echo $args['design_separators']; ?>
+                            <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-cta.php'; ?>
                         </div>
                     </article>
                 </div>

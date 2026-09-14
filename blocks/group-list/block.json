@@ -5,14 +5,35 @@
     "title": "ChurchTools Gruppen",
     "category": "widgets",
     "icon": "groups",
-    "description": "Zeigt die Gruppen einer Gruppen-Homepage aus ChurchTools an.",
+    "description": "Zeigt die Gruppen einer Gruppen-Homepage oder einzeln ausgewählte Gruppen aus ChurchTools an.",
     "textdomain": "churchtools-plugin",
     "attributes": {
-        "homepage": { "type": "string", "default": "" },
-        "columns": { "type": "number", "default": 3 }
+        "source": {
+            "type": "string",
+            "default": "homepage"
+        },
+        "homepage": {
+            "type": "string",
+            "default": ""
+        },
+        "groups": {
+            "type": "string",
+            "default": ""
+        },
+        "layout": {
+            "type": "string",
+            "default": "grid"
+        },
+        "columns": {
+            "type": "number",
+            "default": 3
+        }
     },
     "supports": {
-        "align": ["wide", "full"]
+        "align": [
+            "wide",
+            "full"
+        ]
     },
     "editorScript": "file:./build/index.js",
     "style": "file:../../assets/css/frontend.css"

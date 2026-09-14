@@ -7,18 +7,6 @@ parameters:
 			path: includes/Admin/SettingsPage.php
 
 		-
-			message: '#^Parameter \#3 \$l10n of function wp_localize_script expects array\<string, mixed\>, list\<array\<string, mixed\>\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: includes/Blocks/EventListBlock.php
-
-		-
-			message: '#^Parameter \#3 \$l10n of function wp_localize_script expects array\<string, mixed\>, list\<array\<string, int\|string\>\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: includes/Blocks/GroupListBlock.php
-
-		-
 			message: '#^PHPDoc tag @var with type callable\(array\<string\>\)\: array\<string\> is not subtype of native type static\-Closure\(array\)\: list\<mixed\>\.$#'
 			identifier: varTag.nativeType
 			count: 2

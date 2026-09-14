@@ -335,6 +335,82 @@ final class GroupSync
         return is_array($groups) ? array_values(array_filter($groups, 'is_array')) : [];
     }
 
+    /**
+     * Alle Gruppen der angehakten Homepages, nach Gruppen-ID, ohne Doppelte -
+     * die Auswahl fuer „einzelne Gruppen" in Shortcode, Block und WPBakery.
+     *
+     * Bewusst nur, was ueber eine angehakte Homepage abgeglichen ist, und kein
+     * eigener Abruf je Gruppe: Sonst entschiede WordPress, welche Gruppe
+     * oeffentlich erscheint, und nicht mehr die Homepage in ChurchTools (siehe
+     * plan.md, G1). Eine noch gespeicherte, inzwischen abgewaehlte Homepage
+     * zaehlt nicht mit - ihre Gruppen verschwinden mit dem naechsten Lauf.
+     *
+     * Steht eine Gruppe auf zwei Homepages, gewinnt der Eintrag mit Bild: Auf
+     * einer Homepage mit abgeschalteten Gruppenbildern fehlt `image_url`, und
+     * die Gruppe haette sonst je nach Reihenfolge der Homepages mal ein Bild
+     * und mal keins.
+     *
+     * @return array<int, array>
+     */
+    public static function selectableGroups(): array
+    {
+        $groups = [];
+        foreach (array_keys(GroupSettings::enabledHomepages()) as $homepageId) {
+            foreach (self::groupsFor((int) $homepageId) as $group) {
+                $id = (int) ($group['id'] ?? 0);
+
+                if ($id <= 0) {
+                    continue;
+                }
+
+                if (!isset($groups[$id]) || ((string) ($groups[$id]['image_url'] ?? '') === '' && (string) ($group['image_url'] ?? '') !== '')) {
+                    $groups[$id] = $group;
+                }
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Die gewaehlten Gruppen in der angegebenen Reihenfolge. Was nicht (mehr)
+     * waehlbar ist, faellt still heraus - auf der Website soll keine Luecke
+     * und keine Fehlermeldung stehen; den Hinweis „nicht mehr verfuegbar"
+     * zeigt der Editor.
+     *
+     * @param int[] $ids
+     *
+     * @return list<array>
+     */
+    public static function groupsByIds(array $ids): array
+    {
+        $available = self::selectableGroups();
+        $selected = [];
+
+        foreach ($ids as $id) {
+            $id = (int) $id;
+
+            if ($id > 0 && isset($available[$id]) && !isset($selected[$id])) {
+                $selected[$id] = $available[$id];
+            }
+        }
+
+        return array_values($selected);
+    }
+
+    /**
+     * „123, 456,abc" → [123, 456]. Die Angabe kommt aus einem Shortcode, also
+     * von Hand getippt.
+     *
+     * @return int[]
+     */
+    public static function parseIds(string $raw): array
+    {
+        $ids = array_filter(array_map('intval', preg_split('/[\s,]+/', $raw) ?: []), static fn (int $id): bool => $id > 0);
+
+        return array_values(array_unique($ids));
+    }
+
     /** @return array<int, int> */
     public static function imageMap(): array
     {

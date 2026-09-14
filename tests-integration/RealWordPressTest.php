@@ -201,6 +201,31 @@ final class RealWordPressTest extends TestCase
         $this->assertStringContainsString('href="mailto:', $html);
     }
 
+    /**
+     * Die hervorgehobene Gruppe zeigt den ganzen Text - aufbereitet wie eine
+     * Terminbeschreibung, also mit der engen kses-Liste und verschleierten
+     * Adressen. Im echten WordPress, weil wp_kses() im Nachbau fehlt.
+     */
+    public function testAFeaturedGroupShowsItsFullTextSafely(): void
+    {
+        update_option(\ChurchToolsPlugin\Groups\GroupSettings::OPTION_KEY, ['homepages' => [9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]], 'sync_interval' => 'daily']);
+        update_option(\ChurchToolsPlugin\Groups\GroupSync::DATA_OPTION, [9 => ['fetched' => '', 'empty_runs' => 0, 'groups' => [[
+            'id' => 269, 'name' => 'Hauskreis', 'image_url' => '', 'weekday' => 'Donnerstag', 'meeting_time' => '19:30',
+            'max_members' => null, 'free_places' => null, 'waitinglist' => false, 'url' => 'https://musterkirche.church.tools/publicgroup/269',
+            'note' => "Wir lesen gemeinsam.\n\nKontakt: hauskreis@example.org<img src=\"https://tracker.example/p.gif\">",
+        ]]]]);
+
+        $html = (new \ChurchToolsPlugin\Frontend\GroupListRenderer())->render(['groups' => '269', 'layout' => 'featured']);
+
+        delete_option(\ChurchToolsPlugin\Groups\GroupSettings::OPTION_KEY);
+        delete_option(\ChurchToolsPlugin\Groups\GroupSync::DATA_OPTION);
+
+        $this->assertStringContainsString('<p>Wir lesen gemeinsam.</p>', $html);
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('hauskreis@example.org', $html);
+        $this->assertStringContainsString('href="https://musterkirche.church.tools/publicgroup/269"', $html);
+    }
+
     public function testThePrivacyPolicySuggestionReachesWordPress(): void
     {
         global $wp_current_filter;

@@ -27,22 +27,20 @@ $GLOBALS['ctp_test_options']['time_format'] = 'H:i';
 $GLOBALS['ctp_test_options']['date_format'] = 'd.m.Y';
 
 /*
- * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon:
- * eindeutige IDs im Eventfinder und die drei Schritte, aus denen
- * EventFormatter::descriptionHtml() besteht. wp_json_encode() stand hier
- * ebenfalls, bis der Bootstrap es selbst mitbrachte - eine zweite Deklaration
- * bricht PHP hart ab, deshalb kommt es nicht zurueck.
+ * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon: die
+ * Schritte, aus denen EventFormatter::descriptionHtml() besteht. wp_json_encode()
+ * und wp_unique_id() standen hier ebenfalls, bis der Bootstrap sie selbst
+ * mitbrachte - eine zweite Deklaration bricht PHP hart ab, deshalb kommen sie
+ * nicht zurueck.
  */
-function wp_unique_id(string $prefix = ''): string
-{
-    static $counter = 0;
-
-    return $prefix . ++$counter;
-}
-
-function wp_kses_post(string $html): string
+function wp_kses(string $html, array $allowed): string
 {
     return $html;
+}
+
+function antispambot(string $email): string
+{
+    return $email;
 }
 
 function make_clickable(string $text): string
@@ -135,6 +133,7 @@ function ctp_demo_args(array $overrides = []): array
         'toolbar_config' => [],
         'paging' => false,
         'paging_config' => [],
+        'instance' => wp_unique_id('ctp-demo-'),
     ], $overrides);
 }
 
@@ -193,6 +192,7 @@ foreach ([
         'schedule' => $zeit,
         'places_label' => $plaetze,
         'excerpt' => $text,
+        'description_html' => '<p>' . $text . '</p>',
     ];
 }
 
@@ -205,6 +205,15 @@ $abschnitte['gruppen'] = (static function (array $groups): string {
     // das Playwright zuerst sieht - mit loading="lazy" kaeme das Bild nie an.
     return str_replace('loading="lazy"', 'loading="eager"', (string) ob_get_clean());
 })($gruppen);
+
+// Hervorgehobene Gruppen (layout="featured"): die ersten beiden, mit Bild.
+$abschnitte['gruppen-hervorgehoben'] = (static function (array $groups): string {
+    $args = ctp_demo_args();
+    ob_start();
+    require CTP_PLUGIN_DIR . 'includes/Frontend/templates/group-featured.php';
+
+    return str_replace('loading="lazy"', 'loading="eager"', (string) ob_get_clean());
+})(array_slice($gruppen, 0, 2));
 
 $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
 $rahmen = 'body{margin:0;padding:40px;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1f2933;}'

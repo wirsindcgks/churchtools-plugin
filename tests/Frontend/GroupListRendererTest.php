@@ -109,6 +109,77 @@ final class GroupListRendererTest extends TestCase
         $this->assertStringNotContainsString('role="listitem"', $html);
     }
 
+    /**
+     * G4: Die Kachel ist nicht mehr klickbar - kein Stretched Link, keine
+     * Hover-Klasse. Nach ChurchTools fuehrt allein der Button, und der sagt
+     * das, samt Gruppenname fuer Screenreader.
+     */
+    public function testTheCardIsNotClickableAndTheButtonLeadsToChurchTools(): void
+    {
+        $this->homepageWith([$this->group(269, ''), $this->group(514, '')]);
+
+        $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen']);
+
+        $this->assertStringNotContainsString('ctp-events__card-trigger', $html);
+        $this->assertStringNotContainsString('ctp-events__card--clickable', $html);
+        $this->assertSame(2, substr_count($html, 'class="ctp-events__cta"'));
+        $this->assertStringContainsString('In ChurchTools ansehen', $html);
+
+        preg_match_all('/aria-describedby="([^"]+)"/', $html, $described);
+        foreach ($described[1] as $id) {
+            $this->assertStringContainsString('id="' . $id . '"', $html, 'Der Button verweist auf den Titel seiner eigenen Kachel.');
+        }
+        $this->assertCount(2, array_unique($described[1]));
+    }
+
+    /** G1: einzelne Gruppen nach ID, in der angegebenen Reihenfolge, statt der Homepage. */
+    public function testSelectedGroupsAppearInTheGivenOrderInsteadOfTheHomepage(): void
+    {
+        $this->homepageWith([$this->group(269, ''), $this->group(514, ''), $this->group(83, '')]);
+
+        $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen', 'groups' => '514, 269']);
+
+        $this->assertStringNotContainsString('Gruppe 83', $html);
+        $this->assertLessThan(strpos($html, 'Gruppe 269'), strpos($html, 'Gruppe 514'));
+    }
+
+    /** Eine Angabe ohne einzige gueltige ID ist eine misslungene Auswahl, nicht „alle der Homepage". */
+    public function testAnUnusableSelectionShowsNothingRatherThanTheWholeHomepage(): void
+    {
+        $this->homepageWith([$this->group(269, '')]);
+
+        $this->assertSame([], GroupListRenderer::selectGroups('Kleingruppen', 'abc'));
+        $this->assertCount(1, GroupListRenderer::selectGroups('Kleingruppen', ''));
+    }
+
+    /** G2: grosse Kachel je Gruppe, eigene Vorlage, ohne Spaltenraster. */
+    public function testTheFeaturedLayoutUsesItsOwnTemplate(): void
+    {
+        $this->homepageWith([array_merge($this->group(269, ''), ['note' => ''])]);
+
+        $html = (new GroupListRenderer())->render(['groups' => '269', 'layout' => 'featured']);
+
+        $this->assertStringContainsString('ctp-groups--featured', $html);
+        $this->assertStringContainsString('ctp-groups__feature ', $html);
+        $this->assertStringNotContainsString('--ctp-columns', $html);
+        $this->assertStringContainsString('class="ctp-events__cta"', $html);
+    }
+
+    public function testAnUnknownLayoutFallsBackToTheGrid(): void
+    {
+        $this->homepageWith([$this->group(269, '')]);
+
+        $this->assertStringContainsString('ctp-events--grid', (new GroupListRenderer())->render(['homepage' => 'Kleingruppen', 'layout' => 'carousel']));
+    }
+
+    private function homepageWith(array $groups): void
+    {
+        ctp_test_set_option(GroupSettings::OPTION_KEY, ['homepages' => [
+            9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true],
+        ]]);
+        ctp_test_set_option(GroupSync::DATA_OPTION, [9 => ['fetched' => '', 'empty_runs' => 0, 'groups' => $groups]]);
+    }
+
     private function group(int $id, string $imageUrl): array
     {
         return [

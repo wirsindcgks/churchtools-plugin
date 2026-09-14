@@ -61,7 +61,7 @@ Shortcode, Gutenberg-Block und WPBakery-Element rufen alle `EventListRenderer::r
 
 ## Theme-Overrides
 
-`yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`, für die Gruppen `group-grid.php`. Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
+`yourtheme/churchtools-plugin/event-{list|grid|upcoming|detail}.php`, für die Gruppen `group-grid.php` und `group-featured.php` (der Button nach ChurchTools liegt in `partials/group-cta.php`). Die einzelnen Zeilen/Karten liegen in `partials/` und werden vom Nachlade-Endpunkt separat gerendert – ein eigenes Layout-Template sollte diese Partials weiterhin einbinden oder `paging="0"` setzen.
 
 ## Auffindbarkeit
 

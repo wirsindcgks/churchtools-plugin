@@ -929,3 +929,11 @@ function wp_html_excerpt(string $str, int $count, string $more = ''): string
 
     return mb_strlen($str) > $count ? $excerpt . $more : $excerpt;
 }
+
+/** Fortlaufende IDs wie in WordPress, für Kennungen im Markup. */
+function wp_unique_id(string $prefix = ''): string
+{
+    static $counter = 0;
+
+    return $prefix . (string) ++$counter;
+}

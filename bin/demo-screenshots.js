@@ -21,7 +21,7 @@ const repo = path.resolve(__dirname, '..');
 const build = path.join(repo, 'docs', '.demo');
 const out = path.join(repo, 'docs', 'screenshots');
 
-const abschnitte = ['liste', 'grid', 'naechster-termin', 'eventfinder', 'gruppen'];
+const abschnitte = ['liste', 'grid', 'naechster-termin', 'eventfinder', 'gruppen', 'gruppen-hervorgehoben'];
 
 /*
  * 1.3 statt 2: Die Bilder liegen im Repo und stehen im README, brauchen dort
@@ -31,7 +31,10 @@ const abschnitte = ['liste', 'grid', 'naechster-termin', 'eventfinder', 'gruppen
 const scale = 1.3;
 
 (async () => {
-	const browser = await chromium.launch();
+	// CTP_CHROMIUM zeigt auf einen schon vorhandenen Chromium, falls die
+	// Playwright-Version nach einem npm-Update ihren eigenen noch nicht
+	// heruntergeladen hat (npx playwright install).
+	const browser = await chromium.launch(process.env.CTP_CHROMIUM ? { executablePath: process.env.CTP_CHROMIUM } : {});
 
 	const page = await browser.newPage({ viewport: { width: 1180, height: 900 }, deviceScaleFactor: scale });
 	await page.goto('file://' + path.join(build, 'demo.html'), { waitUntil: 'networkidle' });

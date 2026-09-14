@@ -363,6 +363,37 @@ final class GroupSyncTest extends TestCase
         RunLock::release(GroupSync::LOCK, (string) $token);
     }
 
+    /**
+     * Waehlbar ist nur, was eine *angehakte* Homepage zeigt - eine noch
+     * gespeicherte, abgewaehlte zaehlt nicht. Doppelte Gruppen einmal, und
+     * dann mit Bild, wenn eine der Homepages eins zeigt.
+     */
+    public function testSelectableGroupsComeFromEnabledHomepagesOnlyAndPreferTheImage(): void
+    {
+        ctp_test_set_option(GroupSettings::OPTION_KEY, ['homepages' => [
+            1 => ['name' => 'Ohne Bilder', 'hash' => 'a1', 'enabled' => true],
+            2 => ['name' => 'Mit Bildern', 'hash' => 'b2', 'enabled' => true],
+            3 => ['name' => 'Abgewaehlt', 'hash' => 'c3', 'enabled' => false],
+        ]]);
+        ctp_test_set_option(GroupSync::DATA_OPTION, [
+            1 => ['groups' => [['id' => 269, 'name' => 'Hauskreis', 'image_url' => '']]],
+            2 => ['groups' => [['id' => 269, 'name' => 'Hauskreis', 'image_url' => 'https://x/269'], ['id' => 514, 'name' => 'Chor', 'image_url' => '']]],
+            3 => ['groups' => [['id' => 83, 'name' => 'Nicht mehr oeffentlich', 'image_url' => '']]],
+        ]);
+
+        $groups = GroupSync::selectableGroups();
+
+        $this->assertSame([269, 514], array_keys($groups));
+        $this->assertSame('https://x/269', $groups[269]['image_url']);
+        $this->assertSame([514, 269], array_column(GroupSync::groupsByIds([514, 83, 269, 514]), 'id'), 'Reihenfolge wie angegeben, Unbekanntes und Doppeltes faellt heraus.');
+    }
+
+    public function testParseIdsToleratesHandTypedInput(): void
+    {
+        $this->assertSame([514, 269], GroupSync::parseIds(' 514, 269,abc,,-3 514 '));
+        $this->assertSame([], GroupSync::parseIds(''));
+    }
+
     private function configure(array $homepages, string $apiKey = 'gruppen-token'): void
     {
         ctp_test_set_option('ctp_settings', ['instance' => 'musterkirche', 'api_key' => Crypto::encrypt($apiKey)]);

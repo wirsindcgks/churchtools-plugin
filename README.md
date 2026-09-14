@@ -15,7 +15,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 - **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
 - **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit Knöpfen für „Teilen“, „Importieren“ und „Abonnieren“ — teilen über das Teilen-Menü des Geräts bzw. die Zwischenablage, importieren als Kalenderdatei für Handy, Outlook und Thunderbird (bei einer Terminserie auf Wunsch gleich alle Termine), abonnieren als Feed, der sich von selbst aktualisiert. Ohne Drittanbieter-Skript und ohne Zählpixel.
 - **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math. Der Ort steht dabei als vollständige Anschrift mit Koordinaten, wo ChurchTools eine kennt: bei einem gebuchten Raum die Anschrift der Gemeinde, bei einem auswärtigen Termin dessen eigene.
-- **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in derselben Optik wie die Termine, mit freien Plätzen und eigenem Sync-Intervall. Welche Gruppen erscheinen, entscheidet die Homepage in ChurchTools.
+- **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in derselben Optik wie die Termine, mit freien Plätzen und eigenem Sync-Intervall – oder einzelne Gruppen groß hervorgehoben. Welche Gruppen erscheinen können, entscheidet die Homepage in ChurchTools.
 - **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
 - **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
 - **Updates** kommen wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
@@ -58,9 +58,13 @@ Die heruntergeladene Datei ist eine Momentaufnahme: Ändert sich der Termin spä
 
 ![Eigene Terminseite mit „Teilen"-Button und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
 
-**Gruppen** — die Gruppen einer Gruppen-Homepage als Kacheln, mit Treffzeit, Auszug und – wo die Gruppe eine Höchstzahl hat – den freien Plätzen. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet.
+**Gruppen** — die Gruppen einer Gruppen-Homepage als Kacheln, mit Treffzeit, Auszug und – wo die Gruppe eine Höchstzahl hat – den freien Plätzen. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet.
 
-![Drei Gruppenkacheln, eine davon mit der Zahl der freien Plätze](docs/screenshots/gruppen.png)
+![Drei Gruppenkacheln mit dem Button „In ChurchTools ansehen“, eine davon mit der Zahl der freien Plätze](docs/screenshots/gruppen.png)
+
+**Einzelne Gruppen hervorgehoben** — ausgewählte Gruppen je als große Kachel, Bild neben dem ganzen Text.
+
+![Zwei hervorgehobene Gruppen, Bild links, rechts Name, Text, Treffzeit und Button](docs/screenshots/gruppen-hervorgehoben.png)
 
 ## Installation
 
@@ -150,14 +154,18 @@ Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in de
 
 ```
 [ctp_groups homepage="Kleingruppen" columns="3"]
+[ctp_groups groups="514,269" layout="featured"]
 ```
 
-Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen", jeweils mit einer Auswahl der angehakten Homepages.
+Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen": Dort lässt sich eine angehakte Homepage wählen oder einzelne Gruppen anhaken, dazu die Ansicht „Raster" oder „Hervorgehoben".
+
+- **Einzelne Gruppen** stehen mit `groups="…"` in der angegebenen Reihenfolge da; die IDs stehen unter *Gruppen → Gruppenliste*. Wählbar sind nur Gruppen der angehakten Homepages – so bleibt ChurchTools die Stelle, die entscheidet, was öffentlich ist. Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar".
+- **Absprung mit Ansage**: Unter jeder Gruppe steht der Button „In ChurchTools ansehen". Die Kachel selbst ist nicht klickbar – ein Klick auf eine Kachel führt bei den Terminen zu einer Ansicht auf der eigenen Website, bei Gruppen hätte dieselbe Geste unangekündigt in ein anderes System geführt.
 
 - **ChurchTools entscheidet, was erscheint.** Es erscheinen die Gruppen, die die Homepage in ChurchTools öffentlich zeigt, Bilder nur, wo sie Gruppenbilder zeigt. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild – keine Leiter und nichts über Personen, auch wenn ChurchTools dem API-Key mehr mitschickt.
 - **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das Intervall kürzer.
 - **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
-- **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Der volle Text und die Anmeldung liegen in ChurchTools.
+- **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Den vollen Text zeigt die hervorgehobene Ansicht, die Anmeldung liegt in ChurchTools.
 
 ## Gut zu wissen
 

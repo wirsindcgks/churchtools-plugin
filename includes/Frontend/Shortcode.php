@@ -18,16 +18,25 @@ final class Shortcode
      * [ctp_groups homepage="Kleingruppen" columns="3"] - die Homepage als Name
      * oder ID, wie `calendar` bei den Terminen. Ohne Angabe gilt die einzige
      * angehakte Homepage (siehe GroupSettings::resolveHomepageId()).
+     *
+     * [ctp_groups groups="514,269" layout="featured"] - einzelne Gruppen nach
+     * ID, in dieser Reihenfolge, statt einer Homepage (plan.md, G1/G2). IDs und
+     * keine Namen: Gruppennamen sind nicht eindeutig und werden oefter
+     * umbenannt als Homepages. Steht beides da, gilt `groups`.
      */
     public function renderGroups($atts): string
     {
         $atts = shortcode_atts([
             'homepage' => '',
+            'groups' => '',
+            'layout' => 'grid',
             'columns' => 3,
         ], $atts, 'ctp_groups');
 
         return (new GroupListRenderer())->render([
             'homepage' => (string) $atts['homepage'],
+            'groups' => (string) $atts['groups'],
+            'layout' => (string) $atts['layout'],
             'columns' => (int) $atts['columns'],
         ]);
     }

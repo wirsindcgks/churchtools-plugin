@@ -9,13 +9,19 @@ use ChurchToolsPlugin\Groups\GroupSync;
 use ChurchToolsPlugin\Settings;
 
 /**
- * Die Gruppen einer Gruppen-Homepage als Kachelraster, fuer [ctp_groups], den
- * Block und das WPBakery-Element.
+ * Gruppen als Kacheln, fuer [ctp_groups], den Block und das WPBakery-Element -
+ * entweder alle Gruppen einer Homepage oder einzeln ausgewaehlte.
  *
  * Eine Gruppen*liste*, kein Gruppen*finder* (Grillrunde 2026-09-01): keine
- * Filterleiste, kein Paging, keine eigene Detailseite. Ein Klick fuehrt direkt
- * zur Gruppe in ChurchTools - dort steht der volle Text, und angemeldet wird
- * ohnehin dort.
+ * Filterleiste, kein Paging, keine eigene Detailseite. Der Weg nach
+ * ChurchTools ist ein sichtbarer Button „In ChurchTools ansehen" - die Kachel
+ * selbst ist nicht klickbar (plan.md, G4): Bei Terminen verspricht ein Klick
+ * auf die Kachel eine Ansicht auf *dieser* Website, bei Gruppen fuehrte
+ * dieselbe Geste unangekuendigt in ein anderes System.
+ *
+ * Zwei Darstellungen: `grid` (Raster mit Auszug) und `featured` (grosse
+ * Kachel je Gruppe, Bild neben dem vollen Text) fuer wenige, hervorgehobene
+ * Gruppen.
  *
  * Die Kacheln tragen dieselben Klassen wie die der Termine, damit Vorlage,
  * Farben, Ecken, Bildformat und Reihenfolge aus dem Design-Tab ohne eigene
@@ -31,20 +37,30 @@ final class GroupListRenderer
     /** Woerter im Auszug - der laengste Text der Referenzinstanz hat 1330 Zeichen. */
     private const EXCERPT_WORDS = 24;
 
+    public const LAYOUTS = ['grid', 'featured'];
+
+    /**
+     * @param array{homepage?: string, groups?: string, layout?: string, columns?: int|string} $args
+     */
     public function render(array $args): string
     {
-        $args = wp_parse_args($args, ['homepage' => '', 'columns' => self::DEFAULT_COLUMNS]);
+        $args = wp_parse_args($args, ['homepage' => '', 'groups' => '', 'layout' => 'grid', 'columns' => self::DEFAULT_COLUMNS]);
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
+        $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'grid';
+        $args['instance'] = wp_unique_id('ctp-groups-');
         $args = array_merge($args, EventListRenderer::designArgs(Settings::get()));
 
-        $homepageId = GroupSettings::resolveHomepageId((string) $args['homepage']);
-        $groups = $homepageId !== null
-            ? self::prepareGroups(GroupSync::groupsFor($homepageId), GroupSync::imageMap(), $args['hidden_elements'])
-            : [];
+        $groups = self::prepareGroups(
+            self::selectGroups((string) $args['homepage'], (string) $args['groups']),
+            GroupSync::imageMap(),
+            $args['hidden_elements'],
+            $args['layout'] === 'featured'
+        );
 
-        $template = locate_template('churchtools-plugin/group-grid.php');
+        $file = $args['layout'] === 'featured' ? 'group-featured.php' : 'group-grid.php';
+        $template = locate_template('churchtools-plugin/' . $file);
         if ($template === '') {
-            $template = CTP_PLUGIN_DIR . 'includes/Frontend/templates/group-grid.php';
+            $template = CTP_PLUGIN_DIR . 'includes/Frontend/templates/' . $file;
         }
 
         ob_start();
@@ -54,8 +70,40 @@ final class GroupListRenderer
     }
 
     /**
+     * Einzelne Gruppen vor der Homepage: Wer beides angibt, hat mit `groups`
+     * die genauere Auswahl getroffen.
+     *
+     * @return list<array>
+     */
+    public static function selectGroups(string $homepage, string $groups): array
+    {
+        $ids = GroupSync::parseIds($groups);
+
+        if ($ids !== []) {
+            return GroupSync::groupsByIds($ids);
+        }
+
+        // Eine Angabe, aus der keine einzige ID wird („abc"), ist eine
+        // misslungene Auswahl und nicht „alle der Homepage".
+        if (trim($groups) !== '') {
+            return [];
+        }
+
+        $homepageId = GroupSettings::resolveHomepageId($homepage);
+
+        return $homepageId !== null ? GroupSync::groupsFor($homepageId) : [];
+    }
+
+    /** Die Beschriftung des Absprungs - ein Wort fuer alle Gruppen, siehe plan.md G3. */
+    public static function ctaLabel(): string
+    {
+        return __('In ChurchTools ansehen', 'churchtools-plugin');
+    }
+
+    /**
      * Ergaenzt, was das Template anzeigt, statt es dort auszurechnen: Bild aus
-     * der Mediathek, Zeitangabe, Platzhinweis, Auszug.
+     * der Mediathek, Zeitangabe, Platzhinweis, Auszug - und fuer die
+     * hervorgehobene Darstellung den vollen Text.
      *
      * Ein Bild erscheint nur, wenn die Homepage selbst eins liefert
      * (`image_url` der Gruppe auf *dieser* Homepage) *und* es importiert ist.
@@ -74,7 +122,7 @@ final class GroupListRenderer
      *
      * @return list<array>
      */
-    public static function prepareGroups(array $groups, array $imageMap, array $hiddenElements = []): array
+    public static function prepareGroups(array $groups, array $imageMap, array $hiddenElements = [], bool $withDescription = false): array
     {
         $prepared = [];
 
@@ -93,6 +141,12 @@ final class GroupListRenderer
             $group['excerpt'] = in_array('excerpt', $hiddenElements, true) || (string) ($group['note'] ?? '') === ''
                 ? ''
                 : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS);
+            // Der volle Text geht durch dieselbe Aufbereitung wie eine
+            // Terminbeschreibung: enge kses-Liste, klickbare Links,
+            // verschleierte E-Mail-Adressen (EventFormatter::descriptionHtml()).
+            $group['description_html'] = $withDescription && (string) ($group['note'] ?? '') !== ''
+                ? EventFormatter::descriptionHtml((string) $group['note'])
+                : '';
 
             $prepared[] = $group;
         }

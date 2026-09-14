@@ -2661,3 +2661,139 @@
 .ctp-events.ctp-events--preset-strukturiert .ctp-events__card--clickable:hover .ctp-events__media img {
     transform: none;
 }
+
+/* ---------- Gruppen: Absprung nach ChurchTools und hervorgehobene Darstellung ---------- */
+
+/*
+ * Der Button unter jeder Gruppe (partials/group-cta.php). Die Kachel selbst ist
+ * seit plan.md G4 nicht mehr klickbar - dieser Button ist der einzige Weg nach
+ * ChurchTools und sagt, dass es dorthin geht.
+ *
+ * Immer am unteren Rand der Kachel (`margin-block-start: auto` in der
+ * Flex-Spalte von .ctp-events__content), damit die Buttons einer Reihe auf
+ * einer Linie stehen, egal wie lang der Auszug darueber ist. `order` hoch,
+ * weil die Design-Reihenfolge die uebrigen Felder ueber --ctp-order-* sortiert
+ * und der Button darin nicht vorkommt.
+ */
+.ctp-events__cta-row {
+    order: 99;
+    margin: 0;
+    margin-block-start: auto;
+    padding-block-start: 0.6rem;
+}
+
+/*
+ * Farben wie der Zurueck-Button (.ctp-events__back), die Groesse aber vom
+ * Teilen-Chip (.ctp-events__share-btn): In der Schriftgroesse des
+ * Zurueck-Buttons brach „In ChurchTools ansehen" in Versalien schon in einer
+ * 300px-Kachel auf zwei Zeilen um (gemessen 2026-09-14, Inhaltsbreite 267px,
+ * Button 55px hoch); in Chip-Groesse ist er dort einzeilig (230px). Erst in der
+ * kleinsten Kachel (240px, 202px Inhalt) bricht er um - `white-space: nowrap`
+ * stand kurz hier und schob ihn dort 27px ueber den Kachelrand, wo
+ * `overflow: hidden` ihn abschnitt. Zwei Zeilen sind besser als ein halber
+ * Button. Die Spezifitaet mit .ctp-events davor und `!important` im
+ * Hover aus demselben Grund wie beim Zurueck-Button: Themes faerben Links, die
+ * Live-Seite mit einer Regel auf (0,4,1).
+ */
+.ctp-events .ctp-events__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--ctp-color-button-border);
+    border-radius: var(--ctp-radius-pill);
+    background-color: var(--ctp-color-button);
+    color: var(--ctp-color-button-text);
+    font-size: var(--ctp-font-xs);
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ctp-events .ctp-events__cta:hover,
+.ctp-events .ctp-events__cta:focus {
+    border-color: var(--ctp-color-button-strong) !important;
+    background-color: var(--ctp-color-button-strong) !important;
+    color: var(--ctp-color-button-strong-text) !important;
+    text-decoration: none;
+}
+
+.ctp-events .ctp-events__cta:focus-visible {
+    outline: 2px solid var(--ctp-accent);
+    outline-offset: 2px;
+}
+
+/*
+ * layout="featured": eine Kachel je Gruppe untereinander, Bild neben dem
+ * Text. Die Aufteilung haengt an der Breite, die der Block *hier* bekommt,
+ * nicht am Fenster - wie bei der eigenen Terminseite (@container ctp-detail),
+ * weil viele Themes den Inhalt auch auf breiten Bildschirmen schmal halten.
+ */
+.ctp-groups--featured {
+    container-type: inline-size;
+    container-name: ctp-groups-featured;
+}
+
+.ctp-groups__features {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.ctp-groups__feature .ctp-events__media {
+    order: 0;
+}
+
+.ctp-groups__feature-content {
+    order: 1;
+}
+
+.ctp-events .ctp-groups__feature-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin: 0;
+    font-size: var(--ctp-font-xl, 1.5rem);
+    line-height: 1.25;
+}
+
+/* Die Stelle des Auszugs in der Design-Reihenfolge: Die Felder der Kachel
+   sortieren sich ueber --ctp-order-*, und ohne eigene Angabe stand der Text
+   mit `order: 0` ueber dem Titel (so im ersten Anlauf gesehen). */
+.ctp-groups__feature-text {
+    order: var(--ctp-order-excerpt);
+    color: var(--ctp-color-text, inherit);
+    line-height: 1.6;
+    max-width: 42rem;
+}
+
+.ctp-groups__feature-text > :first-child {
+    margin-block-start: 0;
+}
+
+.ctp-groups__feature-text > :last-child {
+    margin-block-end: 0;
+}
+
+@container ctp-groups-featured (min-width: 40rem) {
+    .ctp-groups__feature:not(.ctp-groups__feature--no-media) {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        align-items: stretch;
+    }
+
+    /* Neben dem Text fuellt das Bild die Hoehe der Kachel, statt oben mit
+       seinem Seitenverhaeltnis zu stehen und darunter eine Luecke zu lassen. */
+    .ctp-groups__feature:not(.ctp-groups__feature--no-media) .ctp-events__media {
+        aspect-ratio: auto;
+        min-height: 100%;
+    }
+
+    .ctp-groups__feature .ctp-groups__feature-content {
+        padding: 1.5rem 1.75rem;
+    }
+}

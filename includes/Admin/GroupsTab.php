@@ -329,6 +329,7 @@ final class GroupsTab
                     <table class="widefat striped ctp-borderless ctp-events-table ctp-group-list">
                         <thead>
                             <tr>
+                                <th scope="col" class="ctp-group-list__id"><?php esc_html_e('ID', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Gruppe', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Treffen', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Plätze', 'churchtools-plugin'); ?></th>
@@ -337,6 +338,8 @@ final class GroupsTab
                         <tbody>
                             <?php foreach ($groups as $group) : ?>
                                 <tr>
+                                    <?php // Die ID ist das, was `groups` im Shortcode erwartet - hier liest man sie ab. ?>
+                                    <td class="ctp-group-list__id"><code><?php echo (int) $group['id']; ?></code></td>
                                     <td>
                                         <a href="<?php echo esc_url($group['url']); ?>" target="_blank" rel="noopener">
                                             <?php echo esc_html($group['name']); ?>
@@ -487,6 +490,17 @@ final class GroupsTab
                 'code' => sprintf('[ctp_groups homepage="%s" columns="2"]', $firstRef),
             ];
         }
+
+        // Mit echten IDs dieser Instanz, damit das Beispiel ohne Anpassen etwas
+        // zeigt - welche Gruppe welche ID hat, steht in der Gruppenliste.
+        $someIds = array_slice(array_keys(GroupSync::selectableGroups()), 0, 2);
+
+        if ($someIds !== []) {
+            $examples[] = [
+                'label' => __('Einzelne Gruppen hervorheben', 'churchtools-plugin'),
+                'code' => sprintf('[ctp_groups groups="%s" layout="featured"]', implode(',', $someIds)),
+            ];
+        }
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Drei Wege, dieselbe Darstellung', 'churchtools-plugin'); ?></h2>
@@ -494,7 +508,10 @@ final class GroupsTab
                 <?php esc_html_e('Gruppen lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Gruppen“ oder über das WPBakery-Element „ChurchTools Gruppen“ einbinden. Alle drei zeigen dieselben Kacheln; Vorlage, Farben und Ecken kommen aus „Einstellungen → Design“.', 'churchtools-plugin'); ?>
             </p>
             <p class="description">
-                <?php esc_html_e('Block und WPBakery-Element bieten die angehakten Homepages als Auswahl an. Ein Klick auf eine Kachel führt zur Gruppe in ChurchTools, wo man sich anmeldet.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Block und WPBakery-Element bieten die angehakten Homepages und ihre Gruppen als Auswahl an. Unter jeder Gruppe steht der Button „In ChurchTools ansehen“; er führt zur Gruppe in ChurchTools, wo man sich anmeldet. Die Kachel selbst ist nicht klickbar.', 'churchtools-plugin'); ?>
+            </p>
+            <p class="description">
+                <?php esc_html_e('Einzeln wählbar sind die Gruppen der angehakten Homepages – eine Gruppe, die auf keiner steht, entscheidet ChurchTools nicht als öffentlich und erscheint deshalb auch hier nicht.', 'churchtools-plugin'); ?>
             </p>
         </div>
 
@@ -547,8 +564,18 @@ final class GroupsTab
                         <td>&ndash;</td>
                     </tr>
                     <tr>
+                        <td><code>groups</code></td>
+                        <td><?php esc_html_e('Einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge (IDs stehen unter „Gruppen → Gruppenliste“). Gilt statt homepage. Nur Gruppen der angehakten Homepages.', 'churchtools-plugin'); ?></td>
+                        <td>&ndash;</td>
+                    </tr>
+                    <tr>
+                        <td><code>layout</code></td>
+                        <td><?php esc_html_e('grid: Kachelraster mit Auszug. featured: je Gruppe eine große Kachel mit dem ganzen Text, Bild daneben.', 'churchtools-plugin'); ?></td>
+                        <td><code>grid</code></td>
+                    </tr>
+                    <tr>
                         <td><code>columns</code></td>
-                        <td><?php esc_html_e('Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px.', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Nur bei grid.', 'churchtools-plugin'); ?></td>
                         <td><code>3</code></td>
                     </tr>
                 </tbody>

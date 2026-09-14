@@ -50,7 +50,8 @@ final class EventListBlock
             ];
         }
 
-        wp_localize_script(self::EDITOR_SCRIPT_HANDLE, 'ctpBlockCalendars', $calendars);
+        // Siehe GroupListBlock::localizeHomepages() fuer wp_add_inline_script().
+        wp_add_inline_script(self::EDITOR_SCRIPT_HANDLE, 'window.ctpBlockCalendars = ' . wp_json_encode($calendars) . ';', 'before');
     }
 
     /**

@@ -100,15 +100,18 @@ Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; 
 Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus ChurchTools – als Ersatz für deren iframe, in derselben Optik wie die Termine. Unter Gruppen → Homepages mit „Homepages von ChurchTools laden“ die Liste holen, die gewünschten anhaken und speichern; der erste Abgleich startet danach von selbst. Fertige Shortcodes mit den angehakten Homepages stehen unter Gruppen → Einbinden.
 
 `[ctp_groups homepage="Kleingruppen" columns="3"]`
+`[ctp_groups groups="514,269" layout="featured"]`
 
 * `homepage` – Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage (bei mehreren angehakten bleibt die Liste leer).
-* `columns` – höchstens so viele Spalten, 2–6 (Standard: 3); wie bei den Terminen nur so viele, wie in den Inhaltsbereich passen.
+* `groups` – einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge. Gilt statt `homepage`. Die IDs stehen unter Gruppen → Gruppenliste; wählbar sind nur Gruppen der angehakten Homepages.
+* `layout` – `grid` (Kachelraster mit Auszug, Standard) oder `featured` (je Gruppe eine große Kachel, Bild neben dem ganzen Text).
+* `columns` – höchstens so viele Spalten, 2–6 (Standard: 3); wie bei den Terminen nur so viele, wie in den Inhaltsbereich passen. Nur bei `grid`.
 
-Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ steht dieselbe Auswahl als Liste der angehakten Homepages.
+Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: eine angehakte Homepage oder einzelne Gruppen zum Anhaken, dazu die Ansicht. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
 
 Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 
-Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
+Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung (in der hervorgehobenen Ansicht den ganzen Text). Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet; die Kachel selbst ist nicht klickbar, damit niemand unangekündigt in ein anderes System springt. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
 
 Die Gruppen haben ein eigenes „Sync-Intervall“ unter Gruppen → Homepages: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Gruppen jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Abwählen einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
 
