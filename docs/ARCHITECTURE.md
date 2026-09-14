@@ -27,6 +27,8 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 | Klasse | Aufgabe |
 | --- | --- |
 | `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden); Gruppen (Homepages, Einbinden – gerendert von `Admin\GroupsTab`); Einstellungen (Verbindung, Design, Updates). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der gespeicherte API-Key geht nur an die gespeicherte Instanz (`effectiveConnection()`). |
+| `Settings` | Die Option `ctp_settings`: Vorgaben, Lesen, Basis-Adresse, aktive Kalender. `writeUnsanitized()` schreibt frisch aus ChurchTools geholte Listen und Migrationen am Formular-Sanitizer vorbei, ohne dass der Aufrufer die Admin-Klasse kennen muss. |
+| `Sync\CalendarList` / `ResourceList` / `ChurchAddress` | Abruf und Abgleich von Kalenderliste, Raumliste und Gemeindeanschrift – für die Knöpfe im Backend und für jeden Sync-Lauf, mit dem Schutz gegen leere Antworten. |
 | `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). Jeder Aufruf mit Key, ohne Key keiner; Weiterleitungen abgeschaltet (WordPress gäbe den Header sonst an den neuen Host weiter). |
 | `Security\ApiKey` | Woher der Key kommt: Konstante oder Umgebungsvariable `CTP_API_KEY` vor dem verschlüsselten Wert in `ctp_settings`; `isUsable()`, `decryptionFailed()`, `migrate()` für alte Verschlüsselungen. |
 | `Security\Crypto` | libsodium `crypto_secretbox`, Schlüssel per HKDF aus `AUTH_KEY` mit eigenem Kontext; liest die alte AES-CBC-Form (`ctp1:`, ohne Präfix) nur noch. |

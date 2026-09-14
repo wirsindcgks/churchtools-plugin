@@ -135,9 +135,9 @@ final class RunLock
         return $since > 0 && ($now ?? time()) - $since < self::STALE_AFTER;
     }
 
-    /** Fuer uninstall.php, das diese Klasse nicht laedt. */
-    public static function optionNames(): array
+    /** Siehe run(): Ein zweiter Lauf wartet nicht, er meldet sich. */
+    public static function busyMessage(): string
     {
-        return [self::OPTION_PREFIX . SyncEngine::LOCK, self::OPTION_PREFIX . 'groups'];
+        return __('Gerade läuft bereits eine Synchronisation. Bitte in ein paar Minuten erneut versuchen.', 'churchtools-plugin');
     }
 }

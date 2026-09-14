@@ -19,6 +19,7 @@ use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\CalendarList;
 use ChurchToolsPlugin\Sync\ResourceList;
 use ChurchToolsPlugin\Sync\RoomLookup;
+use ChurchToolsPlugin\Sync\RunLock;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use ChurchToolsPlugin\Update\GitHubUpdateChecker;
 use Throwable;
@@ -4676,12 +4677,6 @@ final class SettingsPage
         wp_send_json_success(['message' => __('Das Plugin ist auf dem aktuellen Stand.', 'churchtools-plugin')]);
     }
 
-    /** Siehe Sync\RunLock: Ein zweiter Lauf wartet nicht, er meldet sich. */
-    public static function syncRunningMessage(): string
-    {
-        return __('Gerade läuft bereits eine Synchronisation. Bitte in ein paar Minuten erneut versuchen.', 'churchtools-plugin');
-    }
-
     public function ajaxRunSync(): void
     {
         check_ajax_referer('ctp_run_sync', 'nonce');
@@ -4705,7 +4700,7 @@ final class SettingsPage
         // dass sich daran etwas machen liess.
         if ($calendarIds === []) {
             if (!SyncEngine::run()) {
-                wp_send_json_error(['message' => self::syncRunningMessage()]);
+                wp_send_json_error(['message' => RunLock::busyMessage()]);
             }
 
             // Auch das Aufraeumen meldet einen Fehler nicht mehr durch eine
@@ -4741,7 +4736,7 @@ final class SettingsPage
         // here no longer surfaces as a thrown exception, it has to be read back via
         // getLastError() instead.
         if (!SyncEngine::run()) {
-            wp_send_json_error(['message' => self::syncRunningMessage()]);
+            wp_send_json_error(['message' => RunLock::busyMessage()]);
         }
 
         $lastError = SyncEngine::getLastError();

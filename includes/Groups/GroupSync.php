@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Groups;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
@@ -461,7 +460,7 @@ final class GroupSync
         }
 
         if (!self::run()) {
-            throw new RuntimeException(SettingsPage::syncRunningMessage());
+            throw new RuntimeException(RunLock::busyMessage());
         }
 
         $error = self::getLastError();
