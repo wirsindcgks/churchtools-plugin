@@ -65,3 +65,28 @@ jobs:
       - run: composer install --prefer-dist --no-progress
 
       - run: composer analyse
+
+  # Gegen ein echtes WordPress mit SQLite (tests-integration/): Speichern ueber
+  # die Settings-API, Verschluesselung, Migration, Sperre, Weiterleitungen,
+  # Deinstallation. Die Installation entsteht bei jedem Lauf frisch.
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.1'
+          extensions: pdo_sqlite, sqlite3
+          tools: composer, wp-cli
+
+      - run: composer install --prefer-dist --no-progress
+
+      - run: bin/integration-setup.sh "${RUNNER_TEMP}/wordpress"
+
+      - run: composer test:integration
+        env:
+          CTP_WP_DIR: ${{ runner.temp }}/wordpress
+

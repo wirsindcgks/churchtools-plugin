@@ -4,6 +4,8 @@
 .editorconfig
 .phpunit.result.cache
 tests/
+tests-integration/
+phpunit-integration.xml.dist
 node_modules/
 phpcs.xml.dist
 phpunit.xml.dist

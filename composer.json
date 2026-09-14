@@ -30,6 +30,7 @@
         "lint": "phpcs",
         "lint:fix": "phpcbf",
         "test": "phpunit",
-        "analyse": "phpstan analyse --memory-limit=2G --no-progress"
+        "analyse": "phpstan analyse --memory-limit=2G --no-progress",
+        "test:integration": "phpunit -c phpunit-integration.xml.dist"
     }
 }
