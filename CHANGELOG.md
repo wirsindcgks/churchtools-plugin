@@ -5,6 +5,34 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.27.0] - 2026-09-14
+
+Sicherheit und Datenschutz, nach einem kritischen Durchgang über den ganzen Stand des Plugins.
+
+### Changed
+
+- **Alle Abrufe laufen mit dem API-Key.** Auch die Gruppen-Homepages und die Anschrift der Gemeinde fragt das Plugin jetzt angemeldet ab; ohne hinterlegten Key fragt es ChurchTools gar nicht. Wer Gruppen bisher ganz ohne Key genutzt hat, trägt unter „Einstellungen → Verbindung" einen ein. An der Referenzinstanz lieferte ChurchTools mit und ohne Key dieselben Gruppen – welche erscheinen, entscheidet weiter die Gruppen-Homepage.
+- **Der API-Key ist zeitgemäß verschlüsselt** (libsodium, verschlüsselt und gegen Veränderung gesichert). Der gespeicherte Key wird beim Update einmal umgeschrieben, neu eintragen muss ihn niemand.
+- **Beschreibungen können keine fremden Inhalte mehr einbinden.** Bilder, Rahmen oder Stile aus einer Terminbeschreibung, die von anderen Servern nachladen würden, fallen heraus; Links und Gliederung bleiben. E-Mail-Adressen darin sind weiter klickbar, stehen aber verschleiert im Quelltext.
+- **Die gespeicherte Rohantwort eines Termins enthält keine Verweise auf Personen mehr** (wer ihn angelegt oder geändert hat). Bereits gespeicherte Termine werden beim Update bereinigt.
+- Beim Deinstallieren wird der API-Key immer gelöscht, auch wenn „Daten behalten" eingeschaltet ist.
+
+### Added
+
+- **Der API-Key kann in wp-config.php stehen** (`define( 'CTP_API_KEY', '…' );` oder als Umgebungsvariable). Dann liegt er nicht in der Datenbank, und das Feld im Backend ist gesperrt.
+- **Textvorschlag für die Datenschutzerklärung** unter „Einstellungen → Datenschutz".
+- Ein fehlgeschlagener Abgleich der Gruppen erscheint jetzt als Hinweis auf allen Seiten des Backends, wie bei den Terminen.
+- In der Doku: welche Rechte der API-Key braucht – am besten ein eigener ChurchTools-Benutzer nur für die Website.
+
+### Fixed
+
+- **Der API-Key ging bei einer Weiterleitung an den neuen Server mit.** WordPress folgt Weiterleitungen und schickt dabei den Anmelde-Header weiter, auch an einen fremden Host. Das Plugin folgt keiner Weiterleitung mehr und meldet sie stattdessen.
+- **Der Test „Verbindung testen" schickte den gespeicherten Key an jede eingetippte Instanz.** Er geht jetzt nur noch an die gespeicherte; für eine andere muss deren Key mit eingetragen werden.
+- **Termin- und Gruppen-Abgleich konnten gleichzeitig laufen** (Zeitplan und „Jetzt synchronisieren"), und dabei konnte ein gerade importiertes Bild wieder gelöscht werden. Ein zweiter Lauf wartet jetzt nicht mehr, sondern meldet sich.
+- Der Abo-Feed lieferte einen abgewählten Kalender noch aus, bis der nächste Abgleich seine Termine abgeräumt hatte.
+- Bei einem ungültigen Key schrieb das Plugin Warnungen von `openssl_decrypt()` ins Fehlerprotokoll.
+- Die Doku zu 1.26.0 behauptete, ChurchTools liefere Gruppenleiter ohne Anmeldung nicht aus. Das stimmt nicht; das Plugin übernimmt sie bewusst nicht.
+
 ## [1.26.0] - 2026-09-14
 
 ### Added

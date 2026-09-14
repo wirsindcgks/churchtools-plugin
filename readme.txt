@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.26.0
+Stable tag: 1.27.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -262,6 +262,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.27.0 =
+
+Sicherheit und Datenschutz: Das Plugin fragt ChurchTools nur noch mit API-Key ab – auch die Gruppen. Wer Gruppen bisher ohne Key angezeigt hat, trägt unter „Einstellungen → Verbindung“ einen ein, sonst bleiben die zuletzt geladenen Gruppen stehen und das Backend meldet den fehlenden Key. Der gespeicherte Key wird beim Update neu verschlüsselt, bereits gespeicherte Termine werden von Personenverweisen bereinigt; beides läuft beim nächsten Seitenaufruf von allein. Neu ist die Möglichkeit, den Key als `CTP_API_KEY` in `wp-config.php` zu hinterlegen.
+
 = 1.26.0 =
 
 Das Backend ist neu geordnet: Im WordPress-Menü stehen unter „ChurchTools“ jetzt Übersicht, Events, Gruppen und Einstellungen. Design, Verbindung und Updates liegen unter „Einstellungen“, Kalender und Synchronisation unter „Events“; alte Adressen leiten weiter, Einstellungen bleiben unverändert. Neu sind die Gruppen: Die Gruppen einer Gruppen-Homepage aus ChurchTools lassen sich als Ersatz für den iframe in der Optik des Plugins zeigen. Nach dem Update ändert sich auf der Website nichts, bis unter „Gruppen → Homepages“ eine Homepage angehakt ist.
@@ -397,6 +401,21 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.27.0 =
+
+* Geändert: Alle Abrufe laufen mit dem API-Key, auch Gruppen-Homepages und Gemeindeanschrift; ohne Key fragt das Plugin ChurchTools nicht
+* Geändert: API-Key mit libsodium verschlüsselt, der gespeicherte wird beim Update umgeschrieben
+* Geändert: Beschreibungen können keine fremden Bilder, Rahmen oder Stile mehr einbinden; E-Mail-Adressen verschleiert
+* Geändert: Gespeicherte Rohdaten eines Termins ohne Verweise auf Personen, Bestand wird beim Update bereinigt
+* Geändert: Beim Deinstallieren wird der API-Key immer gelöscht
+* Neu: API-Key wahlweise als `CTP_API_KEY` in `wp-config.php` oder als Umgebungsvariable
+* Neu: Textvorschlag für die Datenschutzerklärung; Hinweis im Backend bei fehlgeschlagenem Gruppen-Abgleich
+* Behoben: Bei einer Weiterleitung ging der API-Key an den neuen Server mit – das Plugin folgt keiner Weiterleitung mehr
+* Behoben: „Verbindung testen“ schickte den gespeicherten Key an jede eingetippte Instanz
+* Behoben: Termin- und Gruppen-Abgleich konnten gleichzeitig laufen und dabei ein frisch importiertes Bild löschen
+* Behoben: Der Abo-Feed lieferte abgewählte Kalender noch bis zum nächsten Abgleich aus
+* Behoben: Warnungen von `openssl_decrypt()` im Fehlerprotokoll bei ungültigem Key
 
 = 1.26.0 =
 
