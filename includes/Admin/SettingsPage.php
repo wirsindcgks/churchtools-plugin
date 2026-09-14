@@ -131,13 +131,16 @@ final class SettingsPage
 
     /**
      * Welche Reiter zu welchem Bereich gehoeren, in der Reihenfolge ihrer
-     * Knoepfe. Die Reiter-Schluessel sind dieselben wie vorher - sie benennen
+     * Knoepfe. Vorne steht, was der Bereich *zeigt*, dahinter, womit man ihn
+     * einrichtet (Nutzerwunsch 2026-09-14: „die primaeren Infos in die erste
+     * Position") - der erste Reiter ist zugleich das, was ein Klick auf den
+     * Menueeintrag oeffnet. Die Reiter-Schluessel sind dieselben wie vorher - sie benennen
      * zugleich die Settings-Seiten (siehe registerSettings()), und
      * `&tab=calendars` bleibt als Adresse gueltig.
      */
     private const AREA_TABS = [
         'overview' => ['status'],
-        'events' => ['calendars', 'rooms', 'sync', 'events', 'embed'],
+        'events' => ['events', 'calendars', 'rooms', 'sync', 'embed'],
         'groups' => ['groups', 'group_embed'],
         'settings' => ['connection', 'design', 'updates'],
     ];

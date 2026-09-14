@@ -72,7 +72,7 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 
 ## Einrichten in fünf Minuten
 
-Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter *ChurchTools*: **Übersicht** (Zustand von Events und Gruppen), **Events** (Kalender, Räume, Synchronisation, Terminliste, Einbinden), **Gruppen** (Homepages, Einbinden) und **Einstellungen** (Verbindung, Design, Updates). Innerhalb eines Bereichs wechseln die Reiter oben auf der Seite.
+Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter *ChurchTools*: **Übersicht** (Zustand von Events und Gruppen), **Events** (Terminliste, Kalender, Räume, Synchronisation, Einbinden), **Gruppen** (Homepages, Einbinden) und **Einstellungen** (Verbindung, Design, Updates). Innerhalb eines Bereichs wechseln die Reiter oben auf der Seite.
 
 1. **Verbindung herstellen.** *ChurchTools → Einstellungen → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
 2. **Kalender auswählen.** *ChurchTools → Events → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.

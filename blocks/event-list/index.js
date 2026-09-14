@@ -58,7 +58,7 @@ registerBlockType(metadata.name, {
 						{calendarOptions.length === 0 ? (
 							<p>
 								{__(
-									'Keine Kalender geladen. Unter „ChurchTools → Events“ zuerst Kalender laden.',
+									'Keine Kalender geladen. Unter „ChurchTools → Events → Kalender“ zuerst Kalender laden.',
 									'churchtools-plugin'
 								)}
 							</p>
