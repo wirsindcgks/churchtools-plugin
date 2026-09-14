@@ -67,7 +67,13 @@ final class GroupSync
 
     public static function registerHooks(): void
     {
-        add_action(self::HOOK, [self::class, 'run']);
+        add_action(self::HOOK, [self::class, 'runScheduled']);
+    }
+
+    /** Fuer WP-Cron: Eine Action gibt nichts zurueck, run() sagt, ob es lief. */
+    public static function runScheduled(): void
+    {
+        self::run();
     }
 
     /** Name der Sperre dieses Abgleichs, siehe Sync\RunLock. */

@@ -578,8 +578,6 @@ final class GroupsTab
             $result = GroupSync::refreshHomepageList(new Client($baseUrl, ApiKey::current()));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
-
-            return;
         }
 
         if ($result['status'] === 'empty') {
@@ -601,8 +599,6 @@ final class GroupsTab
             GroupSync::runNow();
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
-
-            return;
         }
 
         wp_send_json_success();

@@ -21,7 +21,13 @@ final class SyncEngine
 {
     public static function registerHooks(): void
     {
-        add_action('ctp_run_sync', [self::class, 'run']);
+        add_action('ctp_run_sync', [self::class, 'runScheduled']);
+    }
+
+    /** Fuer WP-Cron: Eine Action gibt nichts zurueck, run() sagt, ob es lief. */
+    public static function runScheduled(): void
+    {
+        self::run();
     }
 
     private const OPTION_LAST_SYNC_ERROR = 'ctp_last_sync_error';

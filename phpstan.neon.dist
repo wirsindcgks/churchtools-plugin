@@ -1,0 +1,27 @@
+# Statische Analyse (Sicherheits-Review 2026-09-14, Phase 5). Start auf Stufe 5
+# mit Baseline: Die Baseline haelt fest, was beim Einfuehren schon da war, und
+# jeder neue Befund faellt auf. Sie soll schrumpfen, nicht wachsen.
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    # Viele Pruefungen hier misstrauen bewusst dem eigenen PHPDoc: Optionen,
+    # API-Antworten und Backups koennen etwas anderes enthalten, als der Typ
+    # verspricht (siehe GroupSettings::get()). Solche Schutzabfragen sind
+    # gewollt und keine toten Zweige.
+    treatPhpDocTypesAsCertain: false
+    phpVersion: 80100
+    paths:
+        - churchtools-plugin.php
+        - uninstall.php
+        - includes
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
+    # Die Update-Bibliothek liegt nur nach composer install vor und ist
+    # bewusst ohne Typ angebunden (siehe GitHubUpdateChecker).
+    ignoreErrors:
+        -
+            message: '#YahnisElsts\\PluginUpdateChecker#'
+            reportUnmatched: false

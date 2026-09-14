@@ -7,6 +7,8 @@ tests/
 node_modules/
 phpcs.xml.dist
 phpunit.xml.dist
+phpstan.neon.dist
+phpstan-baseline.neon
 composer.lock
 package.json
 package-lock.json

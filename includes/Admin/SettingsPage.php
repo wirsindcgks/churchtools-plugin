@@ -58,7 +58,6 @@ final class SettingsPage
      * ihre Pfade direkt an.
      */
     private const REPO_URL = 'https://github.com/wirsindcgks/churchtools-plugin/';
-    private const DEFAULT_TAB = 'status';
 
     /**
      * Der Stil ist die Grundlage, auf der Kachel und Detailansicht aufsetzen —
@@ -2883,9 +2882,7 @@ final class SettingsPage
                         'value' => $facts['last_sync_label'],
                         'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
                     ],
-                // Schmal: darunter steht das Verbindungsformular, kein
-                // Spalteninhalt.
-                ], false);
+                ]);
 
                 return;
             case 'calendars':
@@ -2963,8 +2960,7 @@ final class SettingsPage
                             : self::dayCountLabel((int) $settings['retention_days']),
                         'label' => __('Aufbewahrung nach Event-Ende', 'churchtools-plugin'),
                     ],
-                // Schmal, wie das Sync-Formular darunter.
-                ], false);
+                ]);
 
                 return;
             case 'updates':
@@ -3304,7 +3300,7 @@ final class SettingsPage
     }
 
     /**
-     * Landing tab (see DEFAULT_TAB): bundles what was previously scattered
+     * Landing tab (the Übersicht area): bundles what was previously scattered
      * across the Verbindung/Sync/Updates tabs into a single at-a-glance
      * overview, per the "Welcome/Status-Seite"-idea in plan.md.
      */
@@ -3604,7 +3600,7 @@ final class SettingsPage
      * template below, so the same normalized array can drive both the query
      * and the "keep my filters" links in the pager.
      *
-     * @return array{scope: string, calendar_id: int, search: string, paged: int}
+     * @return array{scope: string, calendar_id: int, search: string, paged: int, view: 'series'|'occurrences'}
      */
     private static function eventsFilters(): array
     {
@@ -4831,8 +4827,6 @@ final class SettingsPage
             $result = self::refreshResources(new Client($connection['base_url'], $connection['api_key']));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
-
-            return;
         }
 
         // Wie bei den Kalendern: Der Erfolgszweig laedt die Seite neu, eine
@@ -4864,8 +4858,6 @@ final class SettingsPage
             $result = self::refreshCalendars(new Client($connection['base_url'], $connection['api_key']));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
-
-            return;
         }
 
         if ($result['status'] === 'empty') {
