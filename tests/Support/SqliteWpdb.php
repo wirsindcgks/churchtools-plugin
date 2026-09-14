@@ -29,6 +29,8 @@ final class SqliteWpdb
 {
     public string $prefix = 'wp_';
 
+    public string $options = 'wp_options';
+
     /**
      * Wie das Feld gleichen Namens am echten $wpdb: wie viele Abfragen bisher
      * gelaufen sind. Gezaehlt werden nur die *lesenden und schreibenden*
@@ -53,6 +55,17 @@ final class SqliteWpdb
 
         // Nur die Spalten, welche die hier geprueften Abfragen lesen - die
         // uebrigen aus Installer::createTables() wuerden nichts entscheiden.
+        // Nur so viel von wp_options, wie Sync\RunLock braucht: der eindeutige
+        // Schluessel auf option_name ist dort die ganze Sperre.
+        $this->pdo->exec(
+            'CREATE TABLE `wp_options` (
+                option_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                option_name TEXT NOT NULL UNIQUE,
+                option_value TEXT NOT NULL,
+                autoload TEXT NOT NULL DEFAULT \'yes\'
+            )'
+        );
+
         $this->pdo->exec(
             'CREATE TABLE `wp_ctp_events` (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,9 +184,20 @@ final class SqliteWpdb
         return $this->pdo->query($query)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** @return array<int, string> */
+    public function get_col(string $query): array
+    {
+        $this->num_queries++;
+
+        return array_map('strval', $this->pdo->query($query)->fetchAll(PDO::FETCH_COLUMN));
+    }
+
     public function query(string $query): int
     {
         $this->num_queries++;
+
+        // MySQL schreibt INSERT IGNORE, SQLite INSERT OR IGNORE - dieselbe Bedeutung.
+        $query = (string) preg_replace('/^\s*INSERT IGNORE\b/i', 'INSERT OR IGNORE', $query);
 
         return $this->pdo->exec($query);
     }

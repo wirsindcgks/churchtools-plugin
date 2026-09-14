@@ -82,13 +82,10 @@ final class ClientTest extends TestCase
     }
 
     /**
-     * Der Aufruf geht bewusst ohne `Authorization`: /api/info ist der einzige
-     * Endpunkt der Spec ohne Auth-Pflicht, und mit einem abgelaufenen Key
-     * antwortet er 401 statt der oeffentlichen Anschrift. Ein Header hier
-     * macht die Anschrift also genau dann unerreichbar, wenn ohnehin etwas
-     * klemmt.
+     * Seit dem Sicherheits-Review vom 2026-09-14 geht jeder Aufruf mit Key,
+     * /api/info eingeschlossen - bis 1.26.0 ging dieser eine bewusst ohne.
      */
-    public function testGetInfoAsksWithoutTheAuthorizationHeader(): void
+    public function testGetInfoAsksWithTheAuthorizationHeader(): void
     {
         ctp_test_reset_http();
         ctp_test_queue_raw_http('{"version":"3.136.2"}');
@@ -99,7 +96,64 @@ final class ClientTest extends TestCase
 
         $this->assertCount(1, $calls);
         $this->assertSame('https://example.church.tools/api/info', $calls[0]['url']);
-        $this->assertArrayNotHasKey('Authorization', $calls[0]['args']['headers']);
+        $this->assertSame('Login token', $calls[0]['args']['headers']['Authorization']);
+    }
+
+    /**
+     * WordPress folgt Weiterleitungen und schickt den Header an den neuen Host
+     * mit, auch an einen fremden. Der Client schaltet das ab - fuer jeden
+     * Endpunkt, deshalb hier an allen oeffentlichen Methoden geprueft.
+     */
+    public function testNoCallFollowsRedirects(): void
+    {
+        ctp_test_reset_http();
+        $client = new Client('https://example.church.tools', 'token');
+
+        ctp_test_queue_raw_http('{"version":"3.136.2"}');
+        $client->getInfo();
+        ctp_test_queue_http([]);
+        $client->getCalendars();
+        ctp_test_queue_http([]);
+        $client->getGroupHomepages();
+        ctp_test_queue_http(['groups' => []]);
+        $client->getGroupHomepage('AbC123');
+
+        foreach (ctp_test_http_calls() as $call) {
+            $this->assertSame(0, $call['args']['redirection'], $call['url']);
+            $this->assertSame('Login token', $call['args']['headers']['Authorization'], $call['url']);
+        }
+    }
+
+    /**
+     * Kaeme eine Weiterleitung doch an (redirection => 0 reicht sie als
+     * Antwort durch), ist sie ein Fehler - nicht der Koerper einer
+     * Weiterleitungsseite, der dann an der `data`-Pruefung scheitert und eine
+     * irrefuehrende Meldung ergaebe.
+     */
+    public function testARedirectIsReportedAsSuch(): void
+    {
+        ctp_test_reset_http();
+        ctp_test_queue_raw_http('', 302);
+
+        try {
+            (new Client('https://example.church.tools', 'token'))->getCalendars();
+            $this->fail('Eine Weiterleitung muss eine Ausnahme ergeben.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('HTTP 302', $exception->getMessage());
+        }
+    }
+
+    /** Ohne Key kein Netzaufruf - der anonyme Weg ist abgeschafft. */
+    public function testWithoutAKeyNothingIsSent(): void
+    {
+        ctp_test_reset_http();
+
+        try {
+            (new Client('https://example.church.tools', ''))->getGroupHomepages();
+            $this->fail('Ohne Key muss der Client abbrechen.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame([], ctp_test_http_calls());
+        }
     }
 
     /**

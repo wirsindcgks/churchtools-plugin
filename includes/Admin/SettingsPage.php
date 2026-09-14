@@ -13,6 +13,7 @@ use ChurchToolsPlugin\Frontend\DetailDesign;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\RoomLookup;
 use ChurchToolsPlugin\Sync\SyncEngine;
@@ -638,12 +639,20 @@ final class SettingsPage
      * admin hasn't clicked "Speichern" for yet — falling back to the stored value
      * only where a field was left empty (mirrors the same "empty means keep
      * existing" rule sanitizeSettings() uses when saving the API key).
+     *
+     * Mit einer Ausnahme (Sicherheits-Review 2026-09-14): Der gespeicherte Key
+     * geht nur an die gespeicherte Instanz. Vorher liess sich eine andere
+     * Instanz eintippen und der gespeicherte Key dazunehmen - er ging dann an
+     * einen fremden `*.church.tools`-Host, und wer dort mitliest, hatte ihn.
+     * Wer eine andere Instanz testen will, tippt deren Key mit ein.
+     *
+     * @return array{instance: string, api_key: string, base_url: string, error: string}
      */
     private static function effectiveConnection(): array
     {
         $stored = self::get();
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- both callers (ajaxTestConnection/ajaxFetchCalendars) already run check_ajax_referer() before reaching this helper.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every caller runs check_ajax_referer() before reaching this helper.
         $instance = self::sanitizeInstance((string) wp_unslash($_POST['instance'] ?? ''));
         if ($instance === '') {
             $instance = $stored['instance'];
@@ -651,14 +660,31 @@ final class SettingsPage
 
         // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- see above.
         $apiKey = trim((string) wp_unslash($_POST['api_key'] ?? ''));
+        $error = '';
+
         if ($apiKey === '') {
-            $apiKey = self::getDecryptedApiKey();
+            if (ApiKey::isConfigured() && $stored['instance'] !== '' && $instance !== $stored['instance']) {
+                $error = sprintf(
+                    /* translators: %s: name of the stored ChurchTools instance */
+                    __('Der hinterlegte API-Key gehört zur Instanz „%s“ und wird an keine andere geschickt. Für eine andere Instanz bitte deren Key mit eingeben.', 'churchtools-plugin'),
+                    $stored['instance']
+                );
+            } elseif (ApiKey::decryptionFailed()) {
+                $error = ApiKey::decryptionErrorMessage();
+            } else {
+                $apiKey = ApiKey::current();
+            }
+        }
+
+        if ($error === '' && ($instance === '' || $apiKey === '')) {
+            $error = __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin');
         }
 
         return [
             'instance' => $instance,
-            'api_key' => $apiKey,
+            'api_key' => $error === '' ? $apiKey : '',
             'base_url' => self::buildBaseUrl($instance),
+            'error' => $error,
         ];
     }
 
@@ -689,69 +715,27 @@ final class SettingsPage
         return Crypto::isCiphertext($submitted) ? $submitted : Crypto::encrypt($submitted);
     }
 
+    /**
+     * Der API-Key im Klartext - aus der Serverkonfiguration oder entschluesselt
+     * aus der Datenbank, siehe Security\ApiKey. Bleibt als Name bestehen, weil
+     * ihn Sync und Tests seit jeher so aufrufen.
+     */
     public static function getDecryptedApiKey(): string
     {
-        return self::storedApiKey();
+        return ApiKey::current();
     }
 
     /**
-     * Der gespeicherte Token, entschluesselt - oder '', wenn dabei nichts
-     * Brauchbares herauskommt.
-     *
-     * Packt dabei aus, was vor 0.12.4 beim allerersten Speichern doppelt
-     * verschluesselt wurde (siehe apiKeyToStore(); davor entsteht ein solcher
-     * Wert nicht mehr, die bereits gespeicherten tragen das Praefix aber
-     * nicht). Einmal entschluesselt kommt bei ihnen der base64-Text der
-     * inneren Verschluesselung heraus - druckbar und kurz genug, also fuer
-     * isPlausibleApiKey() ein gueltiger Token, der dann als
-     * "401: No valid token" bei ChurchTools landete. Hier wird er beim Lesen
-     * ausgepackt, damit niemand seinen Token deswegen neu eintragen muss; das
-     * naechste Speichern legt ihn ohnehin einfach verschluesselt ab.
-     *
-     * Ein echter Token entschluesselt sich zu nichts, deshalb entscheidet
-     * allein das Ergebnis der zweiten Runde, ob es eine zu entpacken gab.
-     */
-    private static function storedApiKey(): string
-    {
-        $stored = self::get()['api_key'];
-        if ($stored === '') {
-            return '';
-        }
-
-        $decrypted = Crypto::decrypt($stored);
-        $unwrapped = Crypto::decrypt($decrypted);
-
-        if (self::isPlausibleApiKey($unwrapped)) {
-            return $unwrapped;
-        }
-
-        return self::isPlausibleApiKey($decrypted) ? $decrypted : '';
-    }
-
-    /**
-     * Detects a stored, encrypted API key that no longer decrypts to a plausible
-     * token — the symptom of an AUTH_KEY rotation (salt change, server move,
-     * secrets-management switch), which silently breaks Crypto::decrypt() since the
-     * key is derived from AUTH_KEY (see Crypto::key()). A failed openssl_decrypt()
-     * already returns '' on its own, but a wrong key can also "succeed" by chance
-     * and hand back binary garbage — this used to be sent straight into the
-     * Authorization header and fail as a generic, misleading 401 (see the
-     * 2026-08-14 "No valid token" incident in plan.md, which had a different root
-     * cause but the same confusing symptom).
+     * Hinterlegt, aber nicht mehr lesbar - siehe ApiKey::decryptionFailed().
      */
     public static function apiKeyDecryptionFailed(): bool
     {
-        return self::get()['api_key'] !== '' && self::storedApiKey() === '';
-    }
-
-    private static function isPlausibleApiKey(string $token): bool
-    {
-        return $token !== '' && strlen($token) <= 512 && ctype_print($token);
+        return ApiKey::decryptionFailed();
     }
 
     public static function apiKeyDecryptionErrorMessage(): string
     {
-        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte unter „Einstellungen → Verbindung“ neu eingeben.', 'churchtools-plugin');
+        return ApiKey::decryptionErrorMessage();
     }
 
     public static function getEnabledCalendarIds(): array
@@ -1105,7 +1089,16 @@ final class SettingsPage
 
     public function renderApiKeyField(): void
     {
-        $hasKey = self::get()['api_key'] !== '';
+        $fromConfig = ApiKey::isFromConfig();
+        $hasKey = ApiKey::isConfigured();
+
+        if ($fromConfig) {
+            $placeholder = __('Aus der Serverkonfiguration (CTP_API_KEY)', 'churchtools-plugin');
+            $description = __('Der Key steht in wp-config.php oder in einer Umgebungsvariable und nicht in der Datenbank. Ändern lässt er sich nur dort. Der Test prüft ihn mit der Instanz aus dem Feld oben.', 'churchtools-plugin');
+        } else {
+            $placeholder = $hasKey ? __('Hinterlegt – zum Ändern neuen Key eingeben', 'churchtools-plugin') : '';
+            $description = __('Der Test fragt ChurchTools mit Instanz und Key aus den Feldern oben ab – auch ungespeichert. Ein leeres Key-Feld greift auf den gespeicherten Key zurück, aber nur für die gespeicherte Instanz. Empfohlen: ein eigener ChurchTools-Benutzer, der nur die übernommenen Kalender und Räume sehen darf. Wer den Key nicht in der Datenbank haben will, trägt ihn als Konstante CTP_API_KEY in wp-config.php ein.', 'churchtools-plugin');
+        }
 
         // „Verbindung testen“ bleibt bewusst am Feld statt in der
         // Aktionsleiste unter der Ueberschrift: der Knopf prueft genau das,
@@ -1115,15 +1108,16 @@ final class SettingsPage
         // Backend.
         printf(
             '<span class="ctp-field-with-button">'
-            . '<input type="password" id="ctp-api-key" name="%1$s[api_key]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s" />'
+            . '<input type="password" id="ctp-api-key" name="%1$s[api_key]" value="" class="regular-text" autocomplete="new-password" placeholder="%2$s"%5$s />'
             . '<button type="button" class="button" id="ctp-test-connection">%3$s</button>'
             . '<span class="ctp-inline-status" id="ctp-test-connection-result" role="status" aria-live="polite"></span>'
             . '</span>'
             . '<p class="description">%4$s</p>',
             esc_attr(self::OPTION_KEY),
-            $hasKey ? esc_attr__('Hinterlegt – zum Ändern neuen Key eingeben', 'churchtools-plugin') : '',
+            esc_attr($placeholder),
             esc_html__('Verbindung testen', 'churchtools-plugin'),
-            esc_html__('Der Test fragt ChurchTools mit Instanz und Key aus den Feldern oben ab – auch ungespeichert. Leere Felder greifen dabei auf die gespeicherten Werte zurück.', 'churchtools-plugin')
+            esc_html($description),
+            $fromConfig ? ' disabled' : ''
         );
     }
 
@@ -2733,7 +2727,7 @@ final class SettingsPage
             // AUTH_KEY-Rotation (siehe apiKeyDecryptionFailed()). Hier aus dem
             // bereits entschluesselten Wert abgeleitet, statt ein zweites Mal
             // durch Crypto::decrypt() zu gehen.
-            'api_key_broken' => $settings['api_key'] !== '' && $apiKey === '',
+            'api_key_broken' => ApiKey::decryptionFailed(),
             'last_sync' => $lastSync,
             'last_sync_label' => $lastSync !== ''
                 ? (string) mysql2date($dateFormat, $lastSync)
@@ -2864,13 +2858,15 @@ final class SettingsPage
                         'icon' => 'lock',
                         'value' => $facts['api_key_broken']
                             ? __('nicht lesbar', 'churchtools-plugin')
-                            : ($settings['api_key'] !== ''
-                                ? __('hinterlegt', 'churchtools-plugin')
-                                : __('fehlt', 'churchtools-plugin')),
+                            : (ApiKey::isFromConfig()
+                                ? __('aus Konfiguration', 'churchtools-plugin')
+                                : (ApiKey::isConfigured()
+                                    ? __('hinterlegt', 'churchtools-plugin')
+                                    : __('fehlt', 'churchtools-plugin'))),
                         'label' => __('API-Key', 'churchtools-plugin'),
                         'tone' => $facts['api_key_broken']
                             ? 'error'
-                            : ($settings['api_key'] !== '' ? 'ok' : 'warn'),
+                            : (ApiKey::isConfigured() ? 'ok' : 'warn'),
                     ],
                     [
                         'icon' => 'calendar-alt',
@@ -4073,7 +4069,7 @@ final class SettingsPage
                     <?php if ($event['description'] !== '') : ?>
                         <tr>
                             <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
-                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses_post() before adding any markup of its own (see its docblock). ?>
+                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses() with its own allowlist before adding any markup of its own (see its docblock). ?>
                             <td><?php echo EventFormatter::descriptionHtml($event['description']); ?></td>
                         </tr>
                     <?php endif; ?>
@@ -4797,12 +4793,8 @@ final class SettingsPage
 
         $connection = self::effectiveConnection();
 
-        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
-            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
-        }
-
-        if ($connection['instance'] === '' || $connection['api_key'] === '') {
-            wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
+        if ($connection['error'] !== '') {
+            wp_send_json_error(['message' => $connection['error']]);
         }
 
         try {
@@ -4831,12 +4823,8 @@ final class SettingsPage
 
         $connection = self::effectiveConnection();
 
-        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
-            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
-        }
-
-        if ($connection['instance'] === '' || $connection['api_key'] === '') {
-            wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
+        if ($connection['error'] !== '') {
+            wp_send_json_error(['message' => $connection['error']]);
         }
 
         try {
@@ -4868,12 +4856,8 @@ final class SettingsPage
 
         $connection = self::effectiveConnection();
 
-        if ($connection['api_key'] === '' && self::apiKeyDecryptionFailed()) {
-            wp_send_json_error(['message' => self::apiKeyDecryptionErrorMessage()]);
-        }
-
-        if ($connection['instance'] === '' || $connection['api_key'] === '') {
-            wp_send_json_error(['message' => __('Bitte Instanz und API-Key eingeben.', 'churchtools-plugin')]);
+        if ($connection['error'] !== '') {
+            wp_send_json_error(['message' => $connection['error']]);
         }
 
         try {
@@ -5090,6 +5074,12 @@ final class SettingsPage
         wp_send_json_success(['message' => __('Das Plugin ist auf dem aktuellen Stand.', 'churchtools-plugin')]);
     }
 
+    /** Siehe Sync\RunLock: Ein zweiter Lauf wartet nicht, er meldet sich. */
+    public static function syncRunningMessage(): string
+    {
+        return __('Gerade läuft bereits eine Synchronisation. Bitte in ein paar Minuten erneut versuchen.', 'churchtools-plugin');
+    }
+
     public function ajaxRunSync(): void
     {
         check_ajax_referer('ctp_run_sync', 'nonce');
@@ -5101,8 +5091,8 @@ final class SettingsPage
         $settings = self::get();
         $calendarIds = self::getEnabledCalendarIds();
 
-        if ($settings['instance'] === '' || $settings['api_key'] === '') {
-            wp_send_json_error(['message' => __('Bitte zuerst die Verbindung zu ChurchTools einrichten.', 'churchtools-plugin')]);
+        if ($settings['instance'] === '' || !ApiKey::isUsable()) {
+            wp_send_json_error(['message' => $settings['instance'] === '' ? __('Bitte zuerst die Verbindung zu ChurchTools einrichten.', 'churchtools-plugin') : ApiKey::unusableMessage()]);
         }
 
         // Ohne aktiven Kalender ist dieser Lauf kein Abgleich mehr, sondern ein
@@ -5112,7 +5102,9 @@ final class SettingsPage
         // naechsten planmaessigen Lauf im Tab "Events" stehen blieben, ohne
         // dass sich daran etwas machen liess.
         if ($calendarIds === []) {
-            SyncEngine::run();
+            if (!SyncEngine::run()) {
+                wp_send_json_error(['message' => self::syncRunningMessage()]);
+            }
 
             // Auch das Aufraeumen meldet einen Fehler nicht mehr durch eine
             // Ausnahme, sondern ueber die Option (siehe unten).
@@ -5146,7 +5138,10 @@ final class SettingsPage
         // docblock) so an unattended WP-Cron run never fatals — that means a failure
         // here no longer surfaces as a thrown exception, it has to be read back via
         // getLastError() instead.
-        SyncEngine::run();
+        if (!SyncEngine::run()) {
+            wp_send_json_error(['message' => self::syncRunningMessage()]);
+        }
+
         $lastError = SyncEngine::getLastError();
 
         if ($lastError !== null) {

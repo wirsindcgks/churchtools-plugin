@@ -6,11 +6,14 @@ namespace ChurchToolsPlugin\Tests\Groups;
 
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Security\Crypto;
+use ChurchToolsPlugin\Sync\RunLock;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Die Antwortformen hier sind an der echten Instanz abgelesen (2026-09-14,
- * ChurchTools 3.136.2, ohne Key), mit ausgedachten Namen und Hashes.
+ * ChurchTools 3.136.2, mit und ohne Key - beide gleich), mit ausgedachten
+ * Namen und Hashes.
  */
 final class GroupSyncTest extends TestCase
 {
@@ -23,6 +26,7 @@ final class GroupSyncTest extends TestCase
         ctp_test_reset_deleted_attachments();
         ctp_test_reset_post_meta();
         ctp_test_set_current_time('2026-09-14 12:00:00');
+        ctp_test_install_wpdb();
     }
 
     /**
@@ -137,6 +141,32 @@ final class GroupSyncTest extends TestCase
         $this->assertSame('', $group['note']);
     }
 
+    /**
+     * Mit Key traegt eine Gruppe laut Spec Angaben ueber den API-Benutzer
+     * (`signUpPersons`: Ehepartner, Kinder, gleiche E-Mail-Adresse) und ihre
+     * Leiter als Personenobjekte. Nichts davon darf in die gespeicherte Kopie -
+     * und damit auf die Website.
+     */
+    public function testNormalizeGroupKeepsNoPersonalData(): void
+    {
+        $person = ['title' => 'Erika Mustermann', 'domainIdentifier' => '4711', 'imageUrl' => 'https://x/p.jpg', 'infos' => ['erika@example.org']];
+        $raw = $this->group(44, 'Seniorenarbeit', [
+            'signUpPersons' => [['person' => $person, 'status' => 'IN_GROUP']],
+            'canSignUp' => false,
+            'signUpConditions' => ['groupIsPublic' => true],
+        ]);
+        $raw['information']['leader'] = [$person];
+
+        $group = GroupSync::normalizeGroup($raw, self::BASE);
+
+        $this->assertSame(
+            ['id', 'name', 'note', 'image_url', 'weekday', 'meeting_time', 'max_members', 'free_places', 'waitinglist', 'url'],
+            array_keys($group)
+        );
+        $this->assertStringNotContainsString('Erika', (string) wp_json_encode($group));
+        $this->assertStringNotContainsString('4711', (string) wp_json_encode($group));
+    }
+
     public function testNormalizeGroupSkipsGroupsWithoutIdOrName(): void
     {
         $this->assertNull(GroupSync::normalizeGroup(['id' => 5, 'name' => '  '], self::BASE));
@@ -206,7 +236,7 @@ final class GroupSyncTest extends TestCase
         $this->assertNotSame('_ctp_source_image_url', GroupSync::IMAGE_META_KEY);
     }
 
-    public function testRunStoresTheGroupsOfEnabledHomepagesAndAsksWithoutKey(): void
+    public function testRunStoresTheGroupsOfEnabledHomepagesAndAsksWithTheKey(): void
     {
         $this->configure([
             9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true],
@@ -225,7 +255,7 @@ final class GroupSyncTest extends TestCase
         $this->assertSame(self::BASE . '/api/grouphomepages/AbC123', $calls[1]['url']);
 
         foreach ($calls as $call) {
-            $this->assertArrayNotHasKey('Authorization', $call['args']['headers']);
+            $this->assertSame('Login gruppen-token', $call['args']['headers']['Authorization']);
         }
 
         $this->assertSame([9], array_keys(GroupSync::storedData()));
@@ -300,9 +330,42 @@ final class GroupSyncTest extends TestCase
         $this->assertNotNull(GroupSync::getLastError());
     }
 
-    private function configure(array $homepages): void
+    /** Ohne Key fragt der Gruppen-Sync nicht - und sagt das, sobald es etwas abzugleichen gaebe. */
+    public function testWithoutAKeyNothingIsAskedAndTheErrorSaysWhy(): void
     {
-        ctp_test_set_option('ctp_settings', ['instance' => 'musterkirche']);
+        $this->configure([9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]], '');
+
+        GroupSync::run();
+
+        $this->assertSame([], ctp_test_http_calls());
+        $this->assertStringContainsString('API-Key', GroupSync::getLastError()['message']);
+    }
+
+    /** Eine Installation ohne angehakte Homepage bekommt keine Gruppen-Meldung. */
+    public function testWithoutAKeyAndWithoutHomepagesItStaysQuiet(): void
+    {
+        $this->configure([9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => false]], '');
+
+        GroupSync::run();
+
+        $this->assertNull(GroupSync::getLastError());
+    }
+
+    /** Haelt ein anderer Lauf die Sperre, tut dieser nichts und meldet es. */
+    public function testASecondRunWhileTheFirstHoldsTheLockDoesNothing(): void
+    {
+        $this->configure([9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]]);
+        $token = RunLock::acquire(GroupSync::LOCK);
+
+        $this->assertFalse(GroupSync::run());
+        $this->assertSame([], ctp_test_http_calls());
+
+        RunLock::release(GroupSync::LOCK, (string) $token);
+    }
+
+    private function configure(array $homepages, string $apiKey = 'gruppen-token'): void
+    {
+        ctp_test_set_option('ctp_settings', ['instance' => 'musterkirche', 'api_key' => Crypto::encrypt($apiKey)]);
         ctp_test_set_option(GroupSettings::OPTION_KEY, ['homepages' => $homepages, 'sync_interval' => 'daily']);
     }
 

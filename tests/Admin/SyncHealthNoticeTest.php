@@ -123,4 +123,18 @@ final class SyncHealthNoticeTest extends TestCase
 
         return $method->invoke(null, $lastSync, $nextRun, self::NOW, self::ALLOWED);
     }
+    /** Ein fehlgeschlagener Gruppen-Lauf wird gemeldet - aber nur, wenn Gruppen uebernommen werden. */
+    public function testAFailedGroupSyncIsReportedOnlyWithEnabledHomepages(): void
+    {
+        ctp_test_reset_options();
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSync::ERROR_OPTION, ['time' => '2026-09-14 12:00:00', 'message' => 'ChurchTools API error 401: No valid token']);
+
+        $this->assertNull(SyncHealthNotice::groupProblem());
+
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSettings::OPTION_KEY, ['homepages' => [9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]]]);
+
+        $problem = SyncHealthNotice::groupProblem();
+        $this->assertSame('error', $problem['type']);
+        $this->assertStringContainsString('No valid token', $problem['message']);
+    }
 }

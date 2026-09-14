@@ -7,10 +7,12 @@ namespace ChurchToolsPlugin\Db;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Sync\SyncEngine;
 
 final class Installer
 {
-    public const DB_VERSION = '1.7.0';
+    public const DB_VERSION = '1.8.0';
 
     /**
      * The three recurrences the "Sync-Intervall" select offers — kept here
@@ -294,7 +296,51 @@ final class Installer
 
         self::createTables();
         self::dropRetiredSettings();
+        ApiKey::migrate();
+        self::stripPersonReferencesFromRawData();
         update_option('ctp_db_version', self::DB_VERSION);
+    }
+
+    /**
+     * Einmalig mit 1.8.0: entfernt die Personenverweise aus bereits
+     * gespeicherten Rohantworten (siehe SyncEngine::withoutPersonReferences()).
+     * Kuenftige Termine speichert der Sync ohnehin ohne; vergangene fasst er
+     * nicht mehr an und liesse sie bis zum Ablauf der Aufbewahrungsfrist
+     * stehen.
+     *
+     * Zeilenweise und nur dort geschrieben, wo sich etwas aendert - die
+     * Tabelle hat einige hundert Zeilen, und ein UPDATE ohne Aenderung waere
+     * reine Last.
+     */
+    private static function stripPersonReferencesFromRawData(): void
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'ctp_events';
+        $lastId = 0;
+
+        do {
+            $rows = $wpdb->get_results($wpdb->prepare(
+                'SELECT id, raw_data FROM %i WHERE id > %d ORDER BY id LIMIT 200',
+                $table,
+                $lastId
+            ), ARRAY_A);
+
+            foreach ($rows as $row) {
+                $lastId = (int) $row['id'];
+                $decoded = json_decode((string) $row['raw_data'], true);
+
+                if (!is_array($decoded)) {
+                    continue;
+                }
+
+                $stripped = SyncEngine::withoutPersonReferences($decoded);
+
+                if ($stripped !== $decoded) {
+                    $wpdb->update($table, ['raw_data' => wp_json_encode($stripped)], ['id' => $lastId]);
+                }
+            }
+        } while (count($rows) === 200);
     }
 
     /**

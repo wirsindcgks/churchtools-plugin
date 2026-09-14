@@ -14,7 +14,23 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     global $wpdb;
 
     $settings = get_option('ctp_settings', []);
+
+    // Die Sperren der Abgleiche (Sync\RunLock) sind kein Datenbestand, sie
+    // gehen in jedem Fall.
+    delete_option('ctp_lock_events');
+    delete_option('ctp_lock_groups');
+
     if (!empty($settings['keep_data_on_uninstall'])) {
+        // „Daten behalten" heisst Termine, Gruppen und Einstellungen - nicht
+        // das Geheimnis. Ein API-Key in der Datenbank eines Plugins, das es
+        // nicht mehr gibt, liest niemand mehr und zieht auch niemand mehr
+        // zurueck (Sicherheits-Review 2026-09-14). Bei einer Neuinstallation
+        // wird er einmal neu eingetragen.
+        if (is_array($settings) && array_key_exists('api_key', $settings)) {
+            unset($settings['api_key']);
+            update_option('ctp_settings', $settings);
+        }
+
         return;
     }
 
@@ -27,6 +43,8 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     delete_option('ctp_db_version');
     delete_option('ctp_events_cache_version');
     delete_option('ctp_rewrite_version');
+    delete_option('ctp_church_address');
+    delete_option('ctp_resources_fetched');
 
     // Die Gruppen (siehe Groups\GroupSync::optionNames() - die Klasse ist hier
     // nicht geladen, also dieselbe Liste noch einmal). Ihre Bilder stehen in

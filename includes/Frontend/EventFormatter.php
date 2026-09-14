@@ -207,21 +207,69 @@ final class EventFormatter
      * text, which is why a carefully laid-out program note arrived on the site
      * as a wall.
      *
-     * The three passes, in the order WordPress itself applies them to comment
-     * text:
-     *   - wp_kses_post() first, on the raw value, so the allowlist decides what
+     * The passes, in the order WordPress itself applies them to comment text:
+     *   - wp_kses() first, on the raw value, so the allowlist decides what
      *     HTML survives before anything else adds markup of its own. (A
      *     ChurchTools instance *can* deliver HTML here; both shapes have to
-     *     work.)
+     *     work.) Seit dem Sicherheits-Review vom 2026-09-14 eine eigene, enge
+     *     Liste statt wp_kses_post(): Die liess `<img>`, `<video>` und
+     *     Inline-Styles mit beliebiger Quelle durch - Besucher haetten dann
+     *     Dateien von fremden Servern geladen, und das Plugin verspricht, dass
+     *     sie das nicht tun (Bilder werden deshalb importiert).
      *   - make_clickable() turns bare URLs and mail addresses into links —
      *     ChurchTools descriptions carry registration links as plain text, and
      *     they were previously unreachable.
-     *   - wpautop() last, translating blank lines into <p> and single newlines
+     *   - wpautop() translating blank lines into <p> and single newlines
      *     into <br>. It leaves existing block-level markup alone, so a
      *     description that already *is* HTML doesn't get double-wrapped.
+     *   - E-Mail-Adressen zuletzt durch antispambot(): Sie bleiben klickbar und
+     *     lesbar, stehen aber nicht mehr als Klartext im Quelltext, den
+     *     Adresssammler abgrasen.
      */
     public static function descriptionHtml(string $description): string
     {
-        return wpautop(make_clickable(wp_kses_post($description)));
+        $html = wpautop(make_clickable(wp_kses($description, self::DESCRIPTION_TAGS)));
+
+        return self::obfuscateMailLinks($html);
+    }
+
+    /**
+     * Was eine Terminbeschreibung an Markup behalten darf: Text, Gliederung,
+     * Links. Nichts, was eine Datei nachlaedt oder das Layout der Seite
+     * uebersteuert.
+     */
+    private const DESCRIPTION_TAGS = [
+        'p' => [],
+        'br' => [],
+        'strong' => [],
+        'b' => [],
+        'em' => [],
+        'i' => [],
+        'u' => [],
+        'ul' => [],
+        'ol' => [],
+        'li' => [],
+        'h3' => [],
+        'h4' => [],
+        'blockquote' => [],
+        'a' => ['href' => true, 'title' => true],
+    ];
+
+    /**
+     * Ersetzt in `mailto:`-Links Adresse und Linktext durch antispambot() -
+     * dieselbe Verschleierung, die WordPress fuer Adressen in Themes anbietet.
+     */
+    private static function obfuscateMailLinks(string $html): string
+    {
+        return (string) preg_replace_callback(
+            '#<a([^>]*?)href="mailto:([^"]+)"([^>]*)>(.*?)</a>#i',
+            static function (array $match): string {
+                $address = html_entity_decode($match[2], ENT_QUOTES);
+                $text = html_entity_decode($match[4], ENT_QUOTES) === $address ? antispambot($address) : $match[4];
+
+                return '<a' . $match[1] . 'href="mailto:' . antispambot($address) . '"' . $match[3] . '>' . $text . '</a>';
+            },
+            $html
+        );
     }
 }

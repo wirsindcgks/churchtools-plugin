@@ -11,6 +11,7 @@ use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
+use ChurchToolsPlugin\Security\ApiKey;
 use DateTimeImmutable;
 use DateTimeInterface;
 use RuntimeException;
@@ -40,11 +41,37 @@ final class SyncEngine
      */
     private const OPTION_CALENDARS_ERROR = 'ctp_calendars_sync_error';
 
-    public static function run(): void
+    /** Name der Sperre dieses Abgleichs, siehe RunLock. */
+    public const LOCK = 'events';
+
+    /**
+     * Ein Abgleich unter der Sperre `events` - WP-Cron und der Knopf „Jetzt
+     * synchronisieren" laufen damit nie gleichzeitig.
+     *
+     * @return bool false, wenn gerade ein anderer Lauf die Sperre hielt und
+     *              dieser deshalb nichts getan hat
+     */
+    public static function run(): bool
+    {
+        return RunLock::run(self::LOCK, static function (): void {
+            self::runUnlocked();
+        });
+    }
+
+    private static function runUnlocked(): void
     {
         $settings = SettingsPage::get();
 
-        if ($settings['instance'] === '' || $settings['api_key'] === '') {
+        if ($settings['instance'] === '' || !ApiKey::isConfigured()) {
+            return;
+        }
+
+        // Eingerichtet, aber nicht lesbar (AUTH_KEY geaendert): melden statt
+        // die Kalender- und Raumliste mit einem leeren Key abzufragen - deren
+        // Fehler landeten sonst als irrefuehrende Meldung in eigenen Optionen.
+        if (!ApiKey::isUsable()) {
+            self::rememberError(new RuntimeException(ApiKey::unusableMessage()));
+
             return;
         }
 
@@ -246,10 +273,8 @@ final class SyncEngine
 
     private static function doRun(array $settings, array $calendarIds): void
     {
-        // $settings['api_key'] (checked in run()) is the encrypted value, so it
-        // stays non-empty even after an AUTH_KEY rotation breaks decryption —
-        // without this check, a garbage/empty decrypted key would silently reach
-        // the Client and fail as a generic 401 instead of this explicit message.
+        // run() prueft das schon vorher; der Aufruf bleibt fuer den Fall, dass
+        // doRun() einmal von anderswo gerufen wird.
         if (SettingsPage::apiKeyDecryptionFailed()) {
             throw new RuntimeException(SettingsPage::apiKeyDecryptionErrorMessage());
         }
@@ -565,7 +590,7 @@ final class SyncEngine
             'location_at_church' => false,
             'location_data' => self::locationData(is_array($base['address'] ?? null) ? $base['address'] : null),
             'image_url' => $imageUrl,
-            'raw_data' => self::withoutDeprecated($envelope),
+            'raw_data' => self::withoutPersonReferences(self::withoutDeprecated($envelope)),
         ];
     }
 
@@ -616,6 +641,44 @@ final class SyncEngine
         foreach ($node as $key => $value) {
             if (is_array($value) && $key !== '@deprecated') {
                 $node[$key] = self::withoutDeprecated($value);
+            }
+        }
+
+        return $node;
+    }
+
+    /**
+     * Schluessel, die in der gespeicherten Rohantwort nichts zu suchen haben,
+     * weil sie auf Personen zeigen. Aus der Spec der Instanz (2026-09-14):
+     * `meta.createdPerson`/`meta.modifiedPerson` stehen an Termin, Kalender,
+     * Bild, Ausnahmen und Zusatzterminen, `onBehalfOfPid` am Termin,
+     * `meetingRequests` traegt eingeladene Personen samt Personenobjekt.
+     */
+    private const PERSON_REFERENCE_KEYS = ['createdPerson', 'modifiedPerson', 'onBehalfOfPid', 'meetingRequests'];
+
+    /**
+     * Die gespeicherte Rohantwort ohne Verweise auf Personen.
+     *
+     * `raw_data` liest das Plugin selbst nicht; die Spalte beantwortet
+     * Strukturfragen, ohne ChurchTools erneut zu fragen (siehe
+     * withoutDeprecated()). Dafuer braucht niemand, wer einen Termin angelegt
+     * oder zuletzt geaendert hat - die IDs sind pseudonym, aber
+     * personenbezogen, und stuenden in jedem Datenbank-Backup
+     * (Sicherheits-Review 2026-09-14). Die Zeitstempel daneben bleiben.
+     *
+     * Wie bei withoutDeprecated() nur an der gespeicherten Kopie:
+     * mapOccurrence() liest seine Spalten vorher aus der unveraenderten Huelle.
+     */
+    public static function withoutPersonReferences(array $node): array
+    {
+        foreach ($node as $key => $value) {
+            if (is_string($key) && in_array($key, self::PERSON_REFERENCE_KEYS, true)) {
+                unset($node[$key]);
+                continue;
+            }
+
+            if (is_array($value)) {
+                $node[$key] = self::withoutPersonReferences($value);
             }
         }
 

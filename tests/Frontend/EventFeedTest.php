@@ -97,6 +97,27 @@ final class EventFeedTest extends TestCase
     }
 
     /**
+     * Ein abgewaehlter Kalender ist ueber den Feed nicht mehr abrufbar, auch
+     * nicht fuer die Zeit, bis der naechste Lauf seine Termine abraeumt - und
+     * „keiner der gewuenschten ist aktiv" heisst nicht „dann eben alle".
+     */
+    public function testADisabledCalendarYieldsNoEvents(): void
+    {
+        ctp_test_set_option('ctp_settings', ['calendars' => [
+            32 => ['name' => 'Gottesdienst', 'enabled' => true],
+            41 => ['name' => 'Konzerte', 'enabled' => false],
+        ]]);
+
+        $_GET['kalender'] = '41';
+        $this->assertSame([0], $this->requestedCalendars());
+
+        $_GET['kalender'] = '32,41';
+        $this->assertSame([32], $this->requestedCalendars());
+
+        unset($_GET['kalender']);
+    }
+
+    /**
      * Ohne Angabe alles — dieselbe Bedeutung, die ein Shortcode ohne
      * `calendar` hat.
      */

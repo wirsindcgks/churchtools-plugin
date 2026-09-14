@@ -6,6 +6,8 @@ namespace ChurchToolsPlugin\Groups;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
+use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Sync\RunLock;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use RuntimeException;
 use Throwable;
@@ -14,11 +16,16 @@ use Throwable;
  * Uebernimmt die Gruppen der angehakten Gruppen-Homepages als Kopie nach
  * WordPress - der Ersatz fuer den iframe, mit der Optik des Plugins.
  *
- * Abgefragt wird ohne API-Key (siehe Client::getGroupHomepage()). ChurchTools
- * entscheidet damit selbst, welche Gruppen erscheinen und was an ihnen zu sehen
- * ist: Die Homepage „Hauskreise" hat zehn Untergruppen, zurueck kommen zwei; wo
- * die Homepage keine Gruppenbilder zeigt, fehlt `imageUrl` in der Antwort. Eine
- * zweite Auswahl in WordPress gibt es deshalb nicht.
+ * ChurchTools entscheidet selbst, welche Gruppen erscheinen und was an ihnen
+ * zu sehen ist: Die Homepage „Hauskreise" hat zehn Untergruppen, zurueck kommen
+ * zwei; wo die Homepage keine Gruppenbilder zeigt, fehlt `imageUrl` in der
+ * Antwort. Eine zweite Auswahl in WordPress gibt es deshalb nicht.
+ *
+ * Abgefragt wird mit dem API-Key, wie jeder andere Aufruf (bis 1.26.0 ohne,
+ * siehe Client::getGroupHomepages() fuer den Vergleich, der die Umstellung
+ * getragen hat). Was die Antwort mit Key zusaetzlich traegt - Angaben ueber
+ * den API-Benutzer, Leiter mit Personenobjekten -, bleibt draussen:
+ * normalizeGroup() uebernimmt nur benannte Felder.
  *
  * Gespeichert wird in Optionen statt in einer Tabelle: Eine Homepage hat an der
  * Referenzinstanz hoechstens zwoelf Gruppen, und es gibt weder ein Zeitfenster
@@ -63,7 +70,20 @@ final class GroupSync
         add_action(self::HOOK, [self::class, 'run']);
     }
 
-    public static function run(): void
+    /** Name der Sperre dieses Abgleichs, siehe Sync\RunLock. */
+    public const LOCK = 'groups';
+
+    /**
+     * @return bool false, wenn gerade ein anderer Gruppen-Lauf die Sperre hielt
+     */
+    public static function run(): bool
+    {
+        return RunLock::run(self::LOCK, static function (): void {
+            self::runUnlocked();
+        });
+    }
+
+    private static function runUnlocked(): void
     {
         $baseUrl = SettingsPage::getBaseUrl();
 
@@ -71,8 +91,20 @@ final class GroupSync
             return;
         }
 
-        // Ohne Key: Client verlangt einen, benutzt ihn fuer diese Aufrufe aber nicht.
-        $client = new Client($baseUrl, '');
+        if (!ApiKey::isUsable()) {
+            // Still bleiben, solange es nichts abzugleichen gibt - eine
+            // Installation ohne Gruppen soll keine Gruppen-Meldung bekommen.
+            if (GroupSettings::enabledHomepages() !== []) {
+                update_option(self::ERROR_OPTION, [
+                    'time' => current_time('mysql'),
+                    'message' => ApiKey::unusableMessage(),
+                ]);
+            }
+
+            return;
+        }
+
+        $client = new Client($baseUrl, ApiKey::current());
         $errors = [];
 
         // Faellt der Listenabruf aus, laufen die angehakten Homepages trotzdem:
@@ -417,7 +449,13 @@ final class GroupSync
             throw new RuntimeException(__('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin'));
         }
 
-        self::run();
+        if (!ApiKey::isUsable()) {
+            throw new RuntimeException(ApiKey::unusableMessage());
+        }
+
+        if (!self::run()) {
+            throw new RuntimeException(SettingsPage::syncRunningMessage());
+        }
 
         $error = self::getLastError();
 

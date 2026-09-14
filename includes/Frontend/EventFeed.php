@@ -175,6 +175,13 @@ final class EventFeed
      * oder Namen). Eine leere oder unbekannte Angabe heisst „alle aktiven" -
      * dasselbe, was der Shortcode ohne `calendar` zeigt.
      *
+     * Eine bekannte, aber *nicht aktive* Kalender-ID ergibt dagegen keine
+     * Termine (Sicherheits-Review 2026-09-14). resolveCalendarIds() laesst jede
+     * Zahl durch, und bis der naechste Lauf die Termine eines abgewaehlten
+     * Kalenders abraeumt, standen sie ueber den Feed noch zum Abruf - der
+     * Nachlade-Endpunkt und die Detailseite gleichen laengst mit den aktiven
+     * Kalendern ab. Wie dort heisst „nichts uebrig" nicht „alle".
+     *
      * Ohne Nonce, wie beim Nachlade-Endpunkt (Frontend\EventsEndpoint): Das
      * hier ist ein oeffentlicher Lesezugriff auf Daten, die ohnehin auf der
      * Seite stehen, und ein Kalenderprogramm kann keinen Nonce mitschicken.
@@ -189,8 +196,15 @@ final class EventFeed
         // Zerlegt wie im Shortcode: resolveCalendarIds() nimmt die einzelnen
         // Angaben, nicht die Zeile.
         $refs = array_filter(array_map('trim', explode(',', $raw)));
+        $requested = $refs === [] ? [] : SettingsPage::resolveCalendarIds($refs);
 
-        return $refs === [] ? [] : SettingsPage::resolveCalendarIds($refs);
+        if ($requested === []) {
+            return [];
+        }
+
+        $allowed = array_values(array_intersect($requested, SettingsPage::getEnabledCalendarIds()));
+
+        return $allowed !== [] ? $allowed : [0];
     }
 
     /**

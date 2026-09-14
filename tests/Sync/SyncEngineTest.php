@@ -397,6 +397,33 @@ final class SyncEngineTest extends TestCase
         return $method->invoke(null, $envelope);
     }
 
+    /**
+     * Wer einen Termin angelegt oder geaendert hat, hat in der gespeicherten
+     * Rohantwort nichts zu suchen (Sicherheits-Review 2026-09-14) - an jeder
+     * Ebene, an der ChurchTools es mitschickt. Die Zeitstempel daneben bleiben.
+     */
+    public function testRawDataCarriesNoPersonReferences(): void
+    {
+        $meta = ['createdDate' => '2026-01-01T00:00:00Z', 'createdPerson' => ['id' => 17], 'modifiedDate' => '2026-02-01T00:00:00Z', 'modifiedPerson' => ['id' => 18]];
+        $envelope = $this->envelope(['appointment' => ['base' => [
+            'meta' => $meta,
+            'onBehalfOfPid' => 42,
+            'calendar' => ['id' => 32, 'meta' => $meta],
+            'exceptions' => [['id' => 1, 'meta' => $meta]],
+        ]]]);
+        $envelope['meetingRequests'] = [['person' => ['id' => 99, 'title' => 'Erika Mustermann']]];
+
+        $row = $this->mapOccurrence($envelope);
+        $json = (string) wp_json_encode($row['raw_data']);
+
+        foreach (['createdPerson', 'modifiedPerson', 'onBehalfOfPid', 'meetingRequests', 'Erika'] as $needle) {
+            $this->assertStringNotContainsString($needle, $json);
+        }
+
+        $this->assertSame('2026-02-01T00:00:00Z', $row['raw_data']['appointment']['base']['calendar']['meta']['modifiedDate']);
+        $this->assertSame('Gottesdienst', $row['title'], 'Die Spalten kommen weiter aus der vollstaendigen Antwort.');
+    }
+
     private function envelope(array $overrides = []): array
     {
         $base = [

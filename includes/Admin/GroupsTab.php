@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Frontend\GroupListRenderer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Security\ApiKey;
 use Throwable;
 
 /**
@@ -127,7 +128,7 @@ final class GroupsTab
                 SettingsPage::renderActionBar(
                     'ctp-fetch-group-homepages',
                     __('Homepages von ChurchTools laden', 'churchtools-plugin'),
-                    __('Braucht keinen API-Key: Geladen wird, was ChurchTools ohne Anmeldung zeigt.', 'churchtools-plugin')
+                    __('Nutzt den API-Key aus „Einstellungen → Verbindung“. Übernommen werden nur Name, Beschreibung, Treffzeit, Plätze und Bild – keine Leiter und keine Angaben über Personen.', 'churchtools-plugin')
                 );
                 ?>
 
@@ -569,8 +570,12 @@ final class GroupsTab
             wp_send_json_error(['message' => __('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin')]);
         }
 
+        if (!ApiKey::isUsable()) {
+            wp_send_json_error(['message' => ApiKey::unusableMessage()]);
+        }
+
         try {
-            $result = GroupSync::refreshHomepageList(new Client($baseUrl, ''));
+            $result = GroupSync::refreshHomepageList(new Client($baseUrl, ApiKey::current()));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
 

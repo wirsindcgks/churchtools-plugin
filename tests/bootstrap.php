@@ -549,6 +549,18 @@ function remove_filter(string $hook, $callback, int $priority = 10): bool
     return true;
 }
 
+/** Die Priorität, unter der $callback an $hook hängt, oder false - wie in WordPress. */
+function has_filter(string $hook, $callback = false)
+{
+    foreach ($GLOBALS['ctp_test_hooks'][$hook] ?? [] as $eintrag) {
+        if ($callback === false || $eintrag['callback'] === $callback) {
+            return $callback === false ? true : $eintrag['priority'];
+        }
+    }
+
+    return false;
+}
+
 function add_filter(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
 {
     // Die Priorität kommt mit in den Speicher, seit sie selbst eine Zusage ist:
@@ -907,4 +919,13 @@ class WP_Block_Supports
 function get_block_wrapper_attributes(array $extra = []): string
 {
     return 'class="wp-block-churchtools-plugin-group-list alignwide"';
+}
+
+/** Kürzt wie WordPress: Tags raus, dann auf $length Zeichen plus Anhang. */
+function wp_html_excerpt(string $str, int $count, string $more = ''): string
+{
+    $str = wp_strip_all_tags($str, true);
+    $excerpt = mb_substr($str, 0, $count);
+
+    return mb_strlen($str) > $count ? $excerpt . $more : $excerpt;
 }

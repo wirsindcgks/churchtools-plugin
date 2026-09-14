@@ -101,16 +101,17 @@ final class Client
     /**
      * Name und Anschrift der Gemeinde, wie ChurchTools sie selbst fuehrt.
      *
-     * Zwei Dinge sind hier anders als bei jedem anderen Aufruf, beide am
-     * 2026-09-12 an der echten Instanz nachgesehen:
+     * Die Antwort steckt *nicht* in einem `data`-Feld, sondern liegt flach
+     * (`build`, `version`, `siteName`, `address`; am 2026-09-12 an der echten
+     * Instanz nachgesehen). request() wuerde sie deshalb als „keine Antwort
+     * dieser API" verwerfen.
      *
-     * 1. Die Antwort steckt *nicht* in einem `data`-Feld, sondern liegt flach
-     *    (`build`, `version`, `siteName`, `address`). request() wuerde sie
-     *    deshalb als „keine Antwort dieser API" verwerfen.
-     * 2. `/api/info` ist in der Spec der einzige Endpunkt ohne Auth-Pflicht.
-     *    Der Aufruf geht deshalb bewusst *ohne* `Authorization`-Header: Mit
-     *    einem abgelaufenen Key antwortet er 401, ohne Header 200 - und
-     *    oeffentlich ist die Anschrift ohnehin.
+     * Bis 1.26.0 ging dieser Aufruf ohne Key, weil ein abgelaufener Key hier
+     * 401 lieferte, die oeffentliche Anschrift aber ohne Header erreichbar
+     * war. Seit der Entscheidung, alles ueber die Anmeldung an die API zu
+     * loesen (Sicherheits-Review 2026-09-14), geht er mit: Ein ungueltiger
+     * Key soll auffallen und nicht an einer Stelle umgangen werden. Mit
+     * gueltigem Key antwortet die Instanz hier ebenso mit Anschrift.
      *
      * Statt `data` haelt hier `version` die Antwort gegen eine Fehlerseite mit
      * HTTP 200: `address` taugt nicht dafuer, eine Gemeinde ohne gepflegte
@@ -118,7 +119,7 @@ final class Client
      */
     public function getInfo(): array
     {
-        $rawBody = $this->send('GET', '/api/info', [], false);
+        $rawBody = $this->send('GET', '/api/info');
         $body = json_decode($rawBody, true);
 
         if (!is_array($body) || !isset($body['version'])) {
@@ -133,27 +134,30 @@ final class Client
     }
 
     /**
-     * Die Gruppen-Homepages der Instanz, bewusst *ohne* `Authorization`-Header.
-     *
-     * Ohne Key antwortet ChurchTools als oeffentlicher Benutzer und liefert
-     * damit genau die Homepages, die ein Besucher sehen darf - die Antwort auf
-     * „was ist oeffentlich?" gibt ChurchTools selbst, nicht dieses Plugin. Ein
-     * Key mit mehr Rechten saehe mehr, als oeffentlich ist.
+     * Die Gruppen-Homepages der Instanz.
      *
      * Die Eintraege tragen den Hash nicht als eigenes Feld, sondern am Ende von
      * `apiUrl` (am 2026-09-14 an der echten Instanz nachgesehen), die ID als
      * `domainIdentifier` - siehe GroupSync::mergeHomepages().
+     *
+     * Bis 1.26.0 ohne Key abgefragt. Umgestellt nach einem Vergleich an der
+     * echten Instanz (2026-09-14, nur GETs): Mit und ohne Key kamen dieselben
+     * Homepages und Gruppen, kein Feld wich ab. Laut Spec liefert der Endpunkt
+     * „alle aktivierten" Homepages - die Freigabe entscheidet also weiterhin
+     * ChurchTools an der Homepage, nicht der Key.
      */
     public function getGroupHomepages(): array
     {
-        return $this->request('GET', '/api/grouphomepages', [], false);
+        return $this->request('GET', '/api/grouphomepages');
     }
 
     /**
-     * Eine Gruppen-Homepage samt ihren Gruppen, ebenfalls ohne Key - aus einem
-     * zweiten Grund ueber den oben hinaus: `canSignUp` und die Platzangaben
-     * gelten laut Spec fuer den *abfragenden* Benutzer. Mit dem Key stuende
-     * dort der Anmeldestand des API-Benutzers, nicht der eines Besuchers.
+     * Eine Gruppen-Homepage samt ihren Gruppen.
+     *
+     * Mit Key traegt die Antwort laut Spec Angaben ueber den *abfragenden*
+     * Benutzer (`signUpPersons`, `canSignUp`) und die Leiter mit
+     * Personenobjekten. Uebernommen wird davon nichts - GroupSync::normalizeGroup()
+     * nimmt nur benannte Felder, und GroupSyncTest haelt genau das fest.
      *
      * Der Hash wird vor dem Einsetzen geprueft: Er stammt zwar aus einer
      * ChurchTools-Antwort, landet aber im Pfad der Adresse, und ein `../`
@@ -165,7 +169,7 @@ final class Client
             throw new RuntimeException(__('Ungültige Kennung einer Gruppen-Homepage.', 'churchtools-plugin'));
         }
 
-        return $this->request('GET', '/api/grouphomepages/' . $hash, [], false);
+        return $this->request('GET', '/api/grouphomepages/' . $hash);
     }
 
     /**
@@ -178,9 +182,9 @@ final class Client
         return preg_match('/^[A-Za-z0-9]+$/', $hash) === 1;
     }
 
-    private function request(string $method, string $path, array $query = [], bool $authenticated = true): array
+    private function request(string $method, string $path, array $query = []): array
     {
-        $rawBody = $this->send($method, $path, $query, $authenticated);
+        $rawBody = $this->send($method, $path, $query);
         $body = json_decode($rawBody, true);
 
         // Jede Antwort dieser API steckt in einem "data"-Feld (verifiziert gegen
@@ -207,25 +211,37 @@ final class Client
      * Der gemeinsame HTTP-Teil: Adresse bauen, senden, Statuscode pruefen. Was
      * im Koerper stehen muss, entscheidet der Aufrufer - das ist der einzige
      * Unterschied zwischen den Endpunkten mit `data`-Huelle und /api/info.
+     *
+     * Jeder Aufruf geht mit Key, ohne Ausnahme; ohne Key gibt es keinen
+     * Netzaufruf, sondern eine Ausnahme. Frueher lief ein Teil bewusst ohne
+     * Anmeldung - seit 2026-09-14 gibt es keinen Weg mehr daran vorbei.
+     *
+     * Weiterleitungen sind abgeschaltet: WordPress folgt sonst bis zu fuenf
+     * davon und schickt den `Authorization`-Header an den neuen Host mit, auch
+     * an einen fremden (lokal nachgewiesen am 2026-09-14: 302 von einem Host
+     * auf einen anderen, der zweite bekam den Token). Die API leitet regulaer
+     * nicht um; tut sie es doch, ist das ein Fehler, den jemand sehen soll.
      */
-    private function send(string $method, string $path, array $query = [], bool $authenticated = true): string
+    private function send(string $method, string $path, array $query = []): string
     {
+        if ($this->apiKey === '') {
+            throw new RuntimeException(__('Kein API-Key hinterlegt – bitte unter „Einstellungen → Verbindung“ eintragen.', 'churchtools-plugin'));
+        }
+
         $url = trailingslashit($this->baseUrl) . ltrim($path, '/');
 
         if ($query !== []) {
             $url .= '?' . $this->buildQuery($query);
         }
 
-        $headers = ['Accept' => 'application/json'];
-
-        if ($authenticated) {
-            $headers['Authorization'] = 'Login ' . $this->apiKey;
-        }
-
         $response = wp_remote_request($url, [
             'method' => $method,
-            'headers' => $headers,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Login ' . $this->apiKey,
+            ],
             'timeout' => 15,
+            'redirection' => 0,
         ]);
 
         if (is_wp_error($response)) {
@@ -234,6 +250,14 @@ final class Client
 
         $code = wp_remote_retrieve_response_code($response);
         $rawBody = wp_remote_retrieve_body($response);
+
+        if ($code >= 300 && $code < 400) {
+            throw new RuntimeException(sprintf(
+                /* translators: %d: HTTP status code of the redirect */
+                __('ChurchTools hat auf eine andere Adresse umgeleitet (HTTP %d). Aus Sicherheitsgründen folgt das Plugin keiner Weiterleitung – bitte den Instanznamen prüfen.', 'churchtools-plugin'),
+                $code
+            ));
+        }
 
         if ($code >= 400) {
             throw new RuntimeException(sprintf(

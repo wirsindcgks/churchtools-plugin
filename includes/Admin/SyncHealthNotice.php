@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Admin;
 
 use ChurchToolsPlugin\Db\Installer;
+use ChurchToolsPlugin\Groups\GroupSettings;
+use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Sync\SyncEngine;
 
 /**
@@ -66,22 +69,69 @@ final class SyncHealthNotice
 
         // Eine frische, noch nicht eingerichtete Installation hat nichts zu melden.
         $settings = SettingsPage::get();
-        if ($settings['instance'] === '' || $settings['api_key'] === '' || SettingsPage::getEnabledCalendarIds() === []) {
+        if ($settings['instance'] === '') {
             return;
         }
 
-        $problem = self::problem($settings);
-        if ($problem === null) {
-            return;
+        $problem = ApiKey::isConfigured() && SettingsPage::getEnabledCalendarIds() !== [] ? self::problem($settings) : null;
+
+        if ($problem !== null) {
+            self::printNotice($problem, SettingsPage::tabUrl('status'), __('Zur Übersicht', 'churchtools-plugin'));
         }
 
+        $groupProblem = self::groupProblem();
+
+        if ($groupProblem !== null) {
+            self::printNotice($groupProblem, SettingsPage::tabUrl('groups'), __('Zu den Gruppen', 'churchtools-plugin'));
+        }
+    }
+
+    /**
+     * Der Gruppen-Abgleich laeuft auf eigenem Zeitplan und schreibt seinen
+     * Fehler in eine eigene Option - bis zum Sicherheits-Review vom 2026-09-14
+     * stand er nur in der Uebersicht und im Reiter „Homepages". Seit die
+     * Gruppen den API-Key brauchen, ist ein Fehler hier genauso wahrscheinlich
+     * wie bei den Terminen: Ein abgelaufener Key trifft beide.
+     *
+     * Nur der Fehler, keine Ueberfaelligkeit: Das Intervall reicht bis
+     * „woechentlich", und eine Woche ohne Lauf ist dort der Normalfall.
+     *
+     * @return array{type: string, message: string}|null
+     */
+    public static function groupProblem(): ?array
+    {
+        if (GroupSettings::enabledHomepages() === []) {
+            return null;
+        }
+
+        $error = GroupSync::getLastError();
+
+        if ($error === null) {
+            return null;
+        }
+
+        return [
+            'type' => 'error',
+            'message' => sprintf(
+                /* translators: %s: error message from the last failed group sync */
+                __('Die letzte Synchronisation der Gruppen ist fehlgeschlagen: %s', 'churchtools-plugin'),
+                self::shorten($error['message'])
+            ),
+        ];
+    }
+
+    /**
+     * @param array{type: string, message: string} $problem
+     */
+    private static function printNotice(array $problem, string $url, string $linkLabel): void
+    {
         printf(
             '<div class="notice notice-%1$s is-dismissible"><p><strong>%2$s</strong> %3$s <a href="%4$s">%5$s</a></p></div>',
             esc_attr($problem['type']),
             esc_html__('ChurchTools Events:', 'churchtools-plugin'),
             esc_html($problem['message']),
-            esc_url(SettingsPage::tabUrl('status')),
-            esc_html__('Zur Übersicht', 'churchtools-plugin')
+            esc_url($url),
+            esc_html($linkLabel)
         );
     }
 
