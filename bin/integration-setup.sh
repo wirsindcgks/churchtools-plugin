@@ -16,8 +16,11 @@ WP_CLI=${WP_CLI:-wp}
 PLUGIN_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
 wp() {
+    # `command`, weil WP_CLI standardmaessig selbst `wp` heisst: Ohne das riefe
+    # sich diese Funktion endlos selbst auf (im ersten CI-Lauf so passiert -
+    # lokal fiel es nicht auf, weil WP_CLI dort auf die .phar zeigte).
     # shellcheck disable=SC2086 # WP_CLI darf aus mehreren Woertern bestehen
-    $WP_CLI --path="$TARGET" "$@"
+    command $WP_CLI --path="$TARGET" "$@"
 }
 
 rm -rf "$TARGET"
