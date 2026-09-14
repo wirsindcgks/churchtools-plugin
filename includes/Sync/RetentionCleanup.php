@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Sync;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Settings;
 
 final class RetentionCleanup
 {
@@ -16,7 +16,7 @@ final class RetentionCleanup
 
     public static function run(): void
     {
-        $retentionDays = SettingsPage::get()['retention_days'];
+        $retentionDays = Settings::get()['retention_days'];
 
         // current_datetime() matches the WordPress-configured timezone that
         // SyncEngine::toMysqlDate() stores end_date in — using the PHP-default

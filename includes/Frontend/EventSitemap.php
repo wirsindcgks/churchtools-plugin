@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Settings;
 use DateTimeImmutable;
 use Throwable;
 
@@ -144,13 +144,13 @@ final class EventSitemap
      */
     public static function entries(): array
     {
-        $settings = SettingsPage::get();
+        $settings = Settings::get();
 
         if (($settings['click_behavior'] ?? '') === 'none') {
             return [];
         }
 
-        $calendarIds = SettingsPage::getEnabledCalendarIds();
+        $calendarIds = Settings::getEnabledCalendarIds();
         if ($calendarIds === []) {
             return [];
         }

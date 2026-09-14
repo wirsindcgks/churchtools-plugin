@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Blocks;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Frontend\EventListRenderer;
+use ChurchToolsPlugin\Settings;
 
 final class EventListBlock
 {
@@ -43,7 +43,7 @@ final class EventListBlock
     {
         $calendars = [];
 
-        foreach (SettingsPage::get()['calendars'] as $id => $calendar) {
+        foreach (Settings::get()['calendars'] as $id => $calendar) {
             $calendars[] = [
                 'id' => (int) $id,
                 'name' => $calendar['name'] !== '' ? $calendar['name'] : sprintf('#%d', (int) $id),
@@ -68,7 +68,7 @@ final class EventListBlock
     public function render(array $attributes): string
     {
         return self::wrap((new EventListRenderer())->render([
-            'calendar_ids' => SettingsPage::resolveCalendarIds($attributes['calendarIds'] ?? []),
+            'calendar_ids' => Settings::resolveCalendarIds($attributes['calendarIds'] ?? []),
             'layout' => $attributes['layout'] ?? 'list',
             'limit' => (int) ($attributes['limit'] ?? 0),
             'columns' => (int) ($attributes['columns'] ?? 3),

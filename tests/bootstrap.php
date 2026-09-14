@@ -28,9 +28,9 @@ define('AUTH_KEY', 'phpunit-test-auth-key-do-not-use-in-production');
 define('CTP_PLUGIN_DIR', dirname(__DIR__) . '/');
 
 /**
- * In-memory stand-in for the options table, only as deep as SettingsPage::get()
+ * In-memory stand-in for the options table, only as deep as Settings::get()
  * needs: reading a single named option. Tests populate it via ctp_test_set_option()
- * before exercising code that calls SettingsPage::get()/resolveCalendarIds().
+ * before exercising code that calls Settings::get()/resolveCalendarIds().
  */
 $GLOBALS['ctp_test_options'] = [];
 
@@ -141,7 +141,7 @@ function delete_option(string $name): bool
 
 /**
  * Mirrors WP core's actual merge behaviour (array args override matching default
- * keys, defaults fill in the rest) closely enough for SettingsPage::get()'s use —
+ * keys, defaults fill in the rest) closely enough for Settings::get()'s use —
  * it always passes two arrays, never the string/object forms wp_parse_args() also
  * accepts.
  */
@@ -531,7 +531,7 @@ $GLOBALS['ctp_test_hooks'] = [];
 
 /**
  * Das Gegenstück zu add_filter(). Gebraucht von den Stellen, die bewusst am
- * Sanitizer vorbei schreiben (SettingsPage::refreshResources()/refreshCalendars()):
+ * Sanitizer vorbei schreiben (ResourceList::refresh()/refreshCalendars()):
  * Ohne diese Funktion wäre dieser Weg im Test gar nicht erst begehbar.
  */
 function remove_filter(string $hook, $callback, int $priority = 10): bool
@@ -716,7 +716,7 @@ function ctp_test_reset_settings(): void
 /**
  * Der HTTP-Ersatz für Api\Client. Diese Testreihe verzichtet ansonsten auf
  * jeden Netzzugriff (siehe die Notiz in SyncEngineTest) — für den Schutz in
- * SettingsPage::refreshResources() reicht das nicht: Was dort geprüft wird, ist
+ * ResourceList::refresh() reicht das nicht: Was dort geprüft wird, ist
  * gerade der Übergang von der API-Antwort in die gespeicherten Einstellungen,
  * und ohne Antwort lässt sich nur die Hälfte davon prüfen.
  *

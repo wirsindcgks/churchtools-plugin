@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Was im <head> einer Terminseite über den Termin stehen muss: Dokumenttitel,
@@ -225,7 +225,7 @@ final class DetailSeo
         }
 
         if (self::$imageUrl === null) {
-            $calendars = SettingsPage::get()['calendars'];
+            $calendars = Settings::get()['calendars'];
             $calendar = $calendars[(int) (self::$event['ct_calendar_id'] ?? 0)] ?? null;
             self::$imageUrl = EventListRenderer::resolveImage(self::$event, $calendar)['url'];
         }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Security;
 
+use ChurchToolsPlugin\Settings;
+
 /**
  * Woher der ChurchTools-API-Key kommt und ob er brauchbar ist - die eine
  * Stelle, die Sync, Gruppen-Sync, Backend und Hinweise danach fragen.
@@ -112,10 +114,9 @@ final class ApiKey
      * aktuellen neu. Laeuft einmal je Versionssprung (Installer::maybeUpgrade()),
      * nicht bei jedem Lesen.
      *
-     * Am Sanitizer vorbei, aus demselben Grund wie SettingsPage::refreshCalendars():
-     * sanitizeSettings() haengt an jedem update_option() dieser Option. Hier
-     * reichte er einen `ctp1:`-Wert ohnehin unveraendert durch - er soll ja
-     * gerade ersetzt werden.
+     * Am Sanitizer vorbei (Settings::writeUnsanitized()): Er reichte einen
+     * `ctp1:`-Wert unveraendert durch - der soll hier aber gerade ersetzt
+     * werden.
      *
      * @return bool ob neu geschrieben wurde
      */
@@ -139,22 +140,7 @@ final class ApiKey
         $settings = get_option(self::SETTINGS_OPTION, []);
         $settings['api_key'] = Crypto::encrypt($plaintext);
 
-        // Nur den eigenen Sanitizer aushaengen und danach wieder einhaengen -
-        // laeuft das in einer Anfrage, die gleich noch Einstellungen speichert,
-        // muss er dafuer wieder da sein.
-        $hook = 'sanitize_option_' . self::SETTINGS_OPTION;
-        $sanitizer = [\ChurchToolsPlugin\Admin\SettingsPage::class, 'sanitizeSettings'];
-        $priority = has_filter($hook, $sanitizer);
-
-        if ($priority !== false) {
-            remove_filter($hook, $sanitizer, (int) $priority);
-        }
-
-        update_option(self::SETTINGS_OPTION, $settings);
-
-        if ($priority !== false) {
-            add_filter($hook, $sanitizer, (int) $priority);
-        }
+        Settings::writeUnsanitized($settings);
 
         return true;
     }

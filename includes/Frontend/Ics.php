@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Address;
+use ChurchToolsPlugin\Sync\ChurchAddress;
 use DateTimeImmutable;
 use DateTimeZone;
 use Throwable;
@@ -222,7 +222,7 @@ final class Ics
              * stellt hier der Raum.
              */
             $atChurch = !empty($event['location_at_church']);
-            $address = $atChurch ? SettingsPage::churchAddress() : self::ownAddress($event);
+            $address = $atChurch ? ChurchAddress::get() : self::ownAddress($event);
 
             /*
              * Die Anschrift kommt nur beim Raum im eigenen Haus dazu — trägt

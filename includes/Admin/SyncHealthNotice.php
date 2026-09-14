@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
 use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\SyncEngine;
 
 /**
@@ -68,12 +69,12 @@ final class SyncHealthNotice
         }
 
         // Eine frische, noch nicht eingerichtete Installation hat nichts zu melden.
-        $settings = SettingsPage::get();
+        $settings = Settings::get();
         if ($settings['instance'] === '') {
             return;
         }
 
-        $problem = ApiKey::isConfigured() && SettingsPage::getEnabledCalendarIds() !== [] ? self::problem($settings) : null;
+        $problem = ApiKey::isConfigured() && Settings::getEnabledCalendarIds() !== [] ? self::problem($settings) : null;
 
         if ($problem !== null) {
             self::printNotice($problem, SettingsPage::tabUrl('status'), __('Zur Übersicht', 'churchtools-plugin'));

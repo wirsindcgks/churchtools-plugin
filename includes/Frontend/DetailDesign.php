@@ -68,7 +68,7 @@ final class DetailDesign
      * Bestandsseite auf DEFAULT_ORDER zurück und verlöre ihre eingestellte
      * Anordnung. Angehängt wird ans Ende: Der Knopf gehört unter den Termin,
      * nicht zwischen dessen Angaben. Läuft wie die Meta-Verbreiterung bei
-     * jedem Lesen (SettingsPage::get()), nicht als einmalige Migration.
+     * jedem Lesen (Settings::get()), nicht als einmalige Migration.
      *
      * @param string[] $order
      *

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Public, read-only AJAX endpoint behind the "Weitere Termine laden" button:
@@ -153,7 +153,7 @@ final class EventsEndpoint
 
         // [] means "every enabled calendar" (see sanitizeCalendarIds()), so the
         // membership test has to be made against that same set.
-        $allowed = $calendarIds === [] ? SettingsPage::getEnabledCalendarIds() : $calendarIds;
+        $allowed = $calendarIds === [] ? Settings::getEnabledCalendarIds() : $calendarIds;
 
         return in_array($calendar, array_map('intval', $allowed), true) ? [$calendar] : [0];
     }
@@ -177,7 +177,7 @@ final class EventsEndpoint
      *
      * The intersection is a guard, not a filter that changes normal behavior:
      * SyncEngine only ever writes rows for enabled calendars
-     * (SettingsPage::getEnabledCalendarIds()), so a disabled or unknown ID could
+     * (Settings::getEnabledCalendarIds()), so a disabled or unknown ID could
      * not return anything anyway — it just keeps a hand-crafted request from
      * probing for combinations no shortcode on the site actually renders.
      */
@@ -189,7 +189,7 @@ final class EventsEndpoint
             return [];
         }
 
-        $allowed = array_values(array_intersect($requested, SettingsPage::getEnabledCalendarIds()));
+        $allowed = array_values(array_intersect($requested, Settings::getEnabledCalendarIds()));
 
         // Not the same as an empty request: the caller asked for specific
         // calendars and none of them survived the check (all disabled since the

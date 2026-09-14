@@ -9,6 +9,7 @@ use ChurchToolsPlugin\Frontend\GroupListRenderer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
 use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Settings;
 use Throwable;
 
 /**
@@ -564,7 +565,7 @@ final class GroupsTab
             wp_send_json_error(['message' => __('Keine Berechtigung.', 'churchtools-plugin')], 403);
         }
 
-        $baseUrl = SettingsPage::getBaseUrl();
+        $baseUrl = Settings::getBaseUrl();
 
         if ($baseUrl === '') {
             wp_send_json_error(['message' => __('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin')]);

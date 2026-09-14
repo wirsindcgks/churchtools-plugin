@@ -13,7 +13,7 @@ namespace ChurchToolsPlugin;
  * (`street`, `zip`, `city`, `district`, `latitude`, ...):
  *
  * - die der *Gemeinde* aus `/api/info`, abgelegt von
- *   SettingsPage::refreshChurchAddress(). Sie tritt neben einen Raumnamen,
+ *   ChurchAddress::refresh(). Sie tritt neben einen Raumnamen,
  *   denn „Saal 1" verortet nichts.
  * - die des *Termins* aus seinem eigenen Adressfeld, abgelegt vom Sync. Sie
  *   traegt bei auswaertigen Terminen Koordinaten - und genau dort, an einem

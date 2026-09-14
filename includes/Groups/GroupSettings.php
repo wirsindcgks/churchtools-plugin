@@ -122,7 +122,7 @@ final class GroupSettings
 
     /**
      * Schreibt eine frisch aus ChurchTools gebaute Liste am Sanitizer vorbei -
-     * aus demselben Grund wie SettingsPage::refreshCalendars(): Der Sanitizer
+     * aus demselben Grund wie CalendarList::refresh(): Der Sanitizer
      * haengt an jedem update_option() dieser Option und liesse beim ersten
      * Abruf keine einzige Homepage durch, weil noch keine „bekannt" ist.
      */

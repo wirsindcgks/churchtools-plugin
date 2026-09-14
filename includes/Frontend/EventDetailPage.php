@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Die Einzelansicht eines Termins als eigene Adresse. Es gibt sie in zwei
@@ -508,7 +508,7 @@ final class EventDetailPage
      */
     private static function hostPageId(): int
     {
-        $pageId = (int) (SettingsPage::get()['detail_page_id'] ?? 0);
+        $pageId = (int) (Settings::get()['detail_page_id'] ?? 0);
 
         return $pageId > 0 && get_post_status($pageId) === 'publish' && self::mayHostEvents($pageId)
             ? $pageId
@@ -545,7 +545,7 @@ final class EventDetailPage
             return null;
         }
 
-        $enabledIds = SettingsPage::getEnabledCalendarIds();
+        $enabledIds = Settings::getEnabledCalendarIds();
         if ($enabledIds === []) {
             // Ohne diese Zeile wäre die Kalenderbedingung in findOnDate() leer
             // und die Abfrage gäbe *jeden* Termin des Tages zurück — die
@@ -565,7 +565,7 @@ final class EventDetailPage
 
     private static function isVisible(array $event): bool
     {
-        return in_array((int) $event['ct_calendar_id'], SettingsPage::getEnabledCalendarIds(), true);
+        return in_array((int) $event['ct_calendar_id'], Settings::getEnabledCalendarIds(), true);
     }
 
     private static function send404(): void

@@ -55,6 +55,34 @@ final class RealWordPressTest extends TestCase
         $this->assertSame('integrations-token', ApiKey::current());
     }
 
+    /**
+     * Frisch geholte Kalender gehen am Formular-Sanitizer vorbei - der liesse
+     * beim ersten Laden keine einzige ID durch, weil noch keine „bekannt" ist.
+     * Seit Settings::writeUnsanitized() fragt der Sanitizer selbst nach, statt
+     * dass jeder Aufrufer ihn aushaengt; hier mit registriertem Sanitizer.
+     */
+    public function testFetchedCalendarsSurviveTheRegisteredSanitizer(): void
+    {
+        update_option('ctp_settings', ['instance' => 'musterkirche', 'calendars' => []]);
+        (new SettingsPage())->registerSettings();
+
+        \ChurchToolsPlugin\Settings::writeUnsanitized(array_merge(get_option('ctp_settings'), [
+            'calendars' => [32 => ['name' => 'Gottesdienst', 'enabled' => false, 'color' => '#123456', 'default_color' => '#123456', 'default_image_id' => 0, 'is_public' => true]],
+        ]));
+
+        $this->assertArrayHasKey(32, get_option('ctp_settings')['calendars']);
+
+        // Und ein normales Speichern laeuft danach wieder durch den Sanitizer:
+        // Eine erfundene ID faellt heraus.
+        update_option('ctp_settings', array_merge(get_option('ctp_settings'), [
+            'calendars' => [32 => ['enabled' => '1'], 999 => ['enabled' => '1', 'name' => 'Erfunden']],
+        ]));
+
+        $calendars = get_option('ctp_settings')['calendars'];
+        $this->assertArrayHasKey(32, $calendars);
+        $this->assertArrayNotHasKey(999, $calendars);
+    }
+
     /** Der Versionssprung schreibt einen Key der alten Verschluesselung neu - mit sodium oder sodium_compat. */
     public function testTheUpgradeRewritesALegacyKey(): void
     {
@@ -104,6 +132,9 @@ final class RealWordPressTest extends TestCase
      */
     public function testTheRunLockIsExclusiveOnTheRealDatabase(): void
     {
+        // Ein abgebrochener frueherer Lauf dieser Suite darf nicht mitspielen.
+        delete_option('ctp_lock_integration');
+
         $token = RunLock::acquire('integration');
 
         try {

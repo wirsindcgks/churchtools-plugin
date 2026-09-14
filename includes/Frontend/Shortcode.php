@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Settings;
 
 final class Shortcode
 {
@@ -54,7 +54,7 @@ final class Shortcode
         ], $atts, 'ctp_events');
 
         $refs = array_filter(array_map('trim', explode(',', (string) $atts['calendar'])));
-        $calendarIds = SettingsPage::resolveCalendarIds($refs);
+        $calendarIds = Settings::resolveCalendarIds($refs);
 
         return (new EventListRenderer())->render([
             'calendar_ids' => $calendarIds,

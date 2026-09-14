@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Sync;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
-use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Address;
+use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
 use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Settings;
 use DateTimeImmutable;
 use DateTimeInterface;
 use RuntimeException;
@@ -66,7 +66,7 @@ final class SyncEngine
 
     private static function runUnlocked(): void
     {
-        $settings = SettingsPage::get();
+        $settings = Settings::get();
 
         if ($settings['instance'] === '' || !ApiKey::isConfigured()) {
             return;
@@ -88,7 +88,7 @@ final class SyncEngine
         self::refreshCalendarList();
         self::refreshResourceList();
 
-        $calendarIds = SettingsPage::getEnabledCalendarIds();
+        $calendarIds = Settings::getEnabledCalendarIds();
 
         if ($calendarIds === []) {
             // Unter demselben Schutz wie der Abgleich darunter, aus demselben
@@ -139,8 +139,8 @@ final class SyncEngine
     private static function refreshCalendarList(): void
     {
         try {
-            $client = new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey());
-            $result = SettingsPage::refreshCalendars($client);
+            $client = new Client(Settings::getBaseUrl(), ApiKey::current());
+            $result = CalendarList::refresh($client);
 
             if ($result['status'] === 'empty') {
                 update_option(self::OPTION_CALENDARS_ERROR, [
@@ -182,7 +182,7 @@ final class SyncEngine
     private static function refreshResourceList(): void
     {
         try {
-            SettingsPage::refreshResources(new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey()));
+            ResourceList::refresh(new Client(Settings::getBaseUrl(), ApiKey::current()));
         } catch (Throwable) {
             return;
         }
@@ -281,11 +281,11 @@ final class SyncEngine
     {
         // run() prueft das schon vorher; der Aufruf bleibt fuer den Fall, dass
         // doRun() einmal von anderswo gerufen wird.
-        if (SettingsPage::apiKeyDecryptionFailed()) {
-            throw new RuntimeException(SettingsPage::apiKeyDecryptionErrorMessage());
+        if (ApiKey::decryptionFailed()) {
+            throw new RuntimeException(ApiKey::decryptionErrorMessage());
         }
 
-        $client = new Client(SettingsPage::getBaseUrl(), SettingsPage::getDecryptedApiKey());
+        $client = new Client(Settings::getBaseUrl(), ApiKey::current());
         $repository = new EventRepository();
 
         // current_datetime() (unlike `new DateTimeImmutable()`) is anchored to the
@@ -361,13 +361,13 @@ final class SyncEngine
          * bleibt dabei stehen (siehe refreshChurchAddress()).
          */
         try {
-            SettingsPage::refreshChurchAddress($client);
+            ChurchAddress::refresh($client);
         } catch (Throwable) {
             // Bewusst still: siehe oben.
         }
 
-        $roomIdsAtChurch = SettingsPage::resourceIdsInBuilding(
-            (string) (SettingsPage::churchAddress()['name'] ?? '')
+        $roomIdsAtChurch = ResourceList::idsInBuilding(
+            (string) (ChurchAddress::get()['name'] ?? '')
         );
 
         foreach ($appointmentEnvelopes as $envelope) {
@@ -418,13 +418,13 @@ final class SyncEngine
      */
     private static function lookUpRooms(Client $client, DateTimeInterface $from, DateTimeInterface $to): RoomLookup
     {
-        $resourceIds = SettingsPage::enabledResourceIds();
+        $resourceIds = ResourceList::enabledIds();
 
         if ($resourceIds === []) {
             return RoomLookup::fromBookings([], []);
         }
 
-        $mode = SettingsPage::roomsMode();
+        $mode = ResourceList::mode();
 
         /*
          * Im strengen Modus muessen die Buchungen *aller* bekannten Raeume
@@ -435,7 +435,7 @@ final class SyncEngine
          * die angehakten ab, und der strenge Modus blieb dadurch wirkungslos,
          * ohne dass ein Test das zeigen konnte.
          */
-        $fetchIds = $mode === RoomLookup::MODE_EXCLUSIVE ? SettingsPage::knownResourceIds() : $resourceIds;
+        $fetchIds = $mode === RoomLookup::MODE_EXCLUSIVE ? ResourceList::knownIds() : $resourceIds;
 
         try {
             return RoomLookup::fromBookings(

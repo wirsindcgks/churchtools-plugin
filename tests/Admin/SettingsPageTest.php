@@ -6,11 +6,16 @@ namespace ChurchToolsPlugin\Tests\Admin;
 
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
-use ChurchToolsPlugin\Frontend\DesignPreset;
 use ChurchToolsPlugin\Frontend\CardDesign;
+use ChurchToolsPlugin\Frontend\DesignPreset;
+use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Security\Crypto;
-use PHPUnit\Framework\TestCase;
+use ChurchToolsPlugin\Settings;
+use ChurchToolsPlugin\Sync\CalendarList;
+use ChurchToolsPlugin\Sync\ChurchAddress;
+use ChurchToolsPlugin\Sync\ResourceList;
 use ChurchToolsPlugin\Sync\RoomLookup;
+use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 final class SettingsPageTest extends TestCase
@@ -539,7 +544,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testWithoutADetailPageTheSettingStaysAtNone(): void
     {
-        $this->assertSame(0, SettingsPage::defaults()['detail_page_id']);
+        $this->assertSame(0, Settings::defaults()['detail_page_id']);
         $this->assertSame(0, SettingsPage::sanitizeSettings([])['detail_page_id']);
     }
 
@@ -584,7 +589,7 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_set_option('ctp_settings', ['calendars' => []]);
 
-        $this->assertSame([1, 2, 3], SettingsPage::resolveCalendarIds(['1', '2', '3']));
+        $this->assertSame([1, 2, 3], Settings::resolveCalendarIds(['1', '2', '3']));
     }
 
     public function testResolveCalendarIdsResolvesNamesCaseInsensitively(): void
@@ -596,7 +601,7 @@ final class SettingsPageTest extends TestCase
             ],
         ]);
 
-        $this->assertSame([32, 29], SettingsPage::resolveCalendarIds(['gottesdienst', 'ROYAL RANGERS']));
+        $this->assertSame([32, 29], Settings::resolveCalendarIds(['gottesdienst', 'ROYAL RANGERS']));
     }
 
     public function testResolveCalendarIdsMixesIdsAndNames(): void
@@ -607,14 +612,14 @@ final class SettingsPageTest extends TestCase
             ],
         ]);
 
-        $this->assertSame([99, 32], SettingsPage::resolveCalendarIds(['99', 'Gottesdienst']));
+        $this->assertSame([99, 32], Settings::resolveCalendarIds(['99', 'Gottesdienst']));
     }
 
     public function testResolveCalendarIdsIgnoresUnknownNamesAndEmptyRefs(): void
     {
         ctp_test_set_option('ctp_settings', ['calendars' => []]);
 
-        $this->assertSame([], SettingsPage::resolveCalendarIds(['', '  ', 'Nicht Vorhanden']));
+        $this->assertSame([], Settings::resolveCalendarIds(['', '  ', 'Nicht Vorhanden']));
     }
 
     public function testResolveCalendarIdsDeduplicates(): void
@@ -625,7 +630,7 @@ final class SettingsPageTest extends TestCase
             ],
         ]);
 
-        $this->assertSame([32], SettingsPage::resolveCalendarIds(['32', 'Gottesdienst']));
+        $this->assertSame([32], Settings::resolveCalendarIds(['32', 'Gottesdienst']));
     }
 
     /**
@@ -639,7 +644,7 @@ final class SettingsPageTest extends TestCase
         $sanitized = SettingsPage::sanitizeSettings([]);
 
         $this->assertSame(365, $sanitized['sync_days_ahead']);
-        $this->assertSame(SettingsPage::defaults()['sync_days_ahead'], $sanitized['sync_days_ahead']);
+        $this->assertSame(Settings::defaults()['sync_days_ahead'], $sanitized['sync_days_ahead']);
     }
 
     public function testSanitizeSettingsAcceptsCustomSyncDaysAhead(): void
@@ -697,7 +702,7 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_set_option('ctp_settings', ['corner_style' => 'square']);
 
-        $this->assertSame(DesignPreset::DEFAULT_PRESET, SettingsPage::get()['design_preset']);
+        $this->assertSame(DesignPreset::DEFAULT_PRESET, Settings::get()['design_preset']);
     }
 
     public function testSanitizeSettingsAcceptsValidCornerStyle(): void
@@ -857,7 +862,7 @@ final class SettingsPageTest extends TestCase
             'hidden_elements' => ['meta'],
         ]);
 
-        $settings = SettingsPage::get();
+        $settings = Settings::get();
 
         $this->assertSame(
             ['date', 'time', 'location', 'media', 'calendar', 'title', 'subtitle', 'excerpt'],
@@ -880,7 +885,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testShareButtonIsOffUntilItIsSwitchedOn(): void
     {
-        $this->assertFalse(SettingsPage::defaults()['detail_share_enabled']);
+        $this->assertFalse(Settings::defaults()['detail_share_enabled']);
         $this->assertFalse(SettingsPage::sanitizeSettings([])['detail_share_enabled']);
         $this->assertTrue(SettingsPage::sanitizeSettings(['detail_share_enabled' => '1'])['detail_share_enabled']);
     }
@@ -1062,16 +1067,16 @@ final class SettingsPageTest extends TestCase
             'api_key' => ctp_test_legacy_encrypt(ctp_test_legacy_encrypt('token-aus-der-kaputten-zeit')),
         ]);
 
-        $this->assertSame('token-aus-der-kaputten-zeit', SettingsPage::getDecryptedApiKey());
-        $this->assertFalse(SettingsPage::apiKeyDecryptionFailed());
+        $this->assertSame('token-aus-der-kaputten-zeit', ApiKey::current());
+        $this->assertFalse(ApiKey::decryptionFailed());
     }
 
     public function testSinglyEncryptedKeyIsReadUnchanged(): void
     {
         ctp_test_set_option('ctp_settings', ['api_key' => Crypto::encrypt('ganz-normaler-token')]);
 
-        $this->assertSame('ganz-normaler-token', SettingsPage::getDecryptedApiKey());
-        $this->assertFalse(SettingsPage::apiKeyDecryptionFailed());
+        $this->assertSame('ganz-normaler-token', ApiKey::current());
+        $this->assertFalse(ApiKey::decryptionFailed());
     }
 
     /**
@@ -1083,8 +1088,8 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_set_option('ctp_settings', ['api_key' => base64_encode(random_bytes(48))]);
 
-        $this->assertSame('', SettingsPage::getDecryptedApiKey());
-        $this->assertTrue(SettingsPage::apiKeyDecryptionFailed());
+        $this->assertSame('', ApiKey::current());
+        $this->assertTrue(ApiKey::decryptionFailed());
     }
 
     /**
@@ -1096,7 +1101,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeCalendarsTreatsTypeChurchAsPublic(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Gottesdienste', 'type' => 'church'],
@@ -1111,7 +1116,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeCalendarsTreatsTypeGroupAndPersonalAsNotPublic(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Gruppe', 'type' => 'group'],
@@ -1128,7 +1133,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeCalendarsFallsBackToIsPublicWhenTypeIsMissing(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Intern', 'isPublic' => false],
@@ -1146,7 +1151,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeCalendarsPrefersTypeOverIsPublicWhenBothArePresent(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Gruppe', 'type' => 'group', 'isPublic' => true],
@@ -1163,7 +1168,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testNullValuesAreNoStatementAboutPublicity(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Null', 'isPublic' => null],
@@ -1180,7 +1185,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testAnUnknownTypeFallsBackInsteadOfWarning(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 7, 'name' => 'Neu', 'type' => 'resource'],
@@ -1199,7 +1204,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testACalendarWithoutThePublicFlagCountsAsPublic(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeCalendars');
+        $method = new ReflectionMethod(CalendarList::class, 'merge');
 
         $merged = $method->invoke(null, [], [['id' => 9, 'name' => 'Alt']]);
 
@@ -1237,7 +1242,7 @@ final class SettingsPageTest extends TestCase
             10 => ['name' => 'Ohne Angabe', 'enabled' => true],
         ]]);
 
-        $this->assertSame([7 => 'Intern aktiv'], SettingsPage::nonPublicEnabledCalendars());
+        $this->assertSame([7 => 'Intern aktiv'], CalendarList::nonPublicEnabled());
     }
 
     /**
@@ -1254,7 +1259,7 @@ final class SettingsPageTest extends TestCase
             9 => ['name' => 'Anbau', 'location' => ' gemeindehaus '],
         ]]);
 
-        $this->assertSame([7, 8, 9], SettingsPage::resourceIdsInBuilding('GEMEINDEHAUS'));
+        $this->assertSame([7, 8, 9], ResourceList::idsInBuilding('GEMEINDEHAUS'));
     }
 
     /**
@@ -1269,7 +1274,7 @@ final class SettingsPageTest extends TestCase
             8 => ['name' => 'Kapelle', 'location' => ''],
         ]]);
 
-        $this->assertSame([], SettingsPage::resourceIdsInBuilding('Haus'));
+        $this->assertSame([], ResourceList::idsInBuilding('Haus'));
     }
 
     /**
@@ -1284,8 +1289,8 @@ final class SettingsPageTest extends TestCase
             7 => ['name' => 'Saal', 'location' => 'Gemeindehaus'],
         ]]);
 
-        $this->assertSame([], SettingsPage::resourceIdsInBuilding(''));
-        $this->assertSame([], SettingsPage::resourceIdsInBuilding('   '));
+        $this->assertSame([], ResourceList::idsInBuilding(''));
+        $this->assertSame([], ResourceList::idsInBuilding('   '));
     }
 
     /**
@@ -1297,9 +1302,9 @@ final class SettingsPageTest extends TestCase
         ctp_test_reset_http();
         ctp_test_queue_raw_http('{"version":"3.136.2","address":{"name":"GEMEINDEHAUS","street":"Hauptstraße 1","zip":"75015","city":"Bretten","district":"Ruit","country":"DE","latitude":"49.0368","longitude":"8.7057"}}');
 
-        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+        ChurchAddress::refresh(new Client('https://example.church.tools', 'token'));
 
-        $address = SettingsPage::churchAddress();
+        $address = ChurchAddress::get();
 
         $this->assertSame('GEMEINDEHAUS', $address['name']);
         $this->assertSame('Hauptstraße 1', $address['street']);
@@ -1319,9 +1324,9 @@ final class SettingsPageTest extends TestCase
         ctp_test_reset_http();
         ctp_test_queue_raw_http('{"version":"3.136.2","address":null}');
 
-        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+        ChurchAddress::refresh(new Client('https://example.church.tools', 'token'));
 
-        $this->assertSame('GEMEINDEHAUS', SettingsPage::churchAddress()['name']);
+        $this->assertSame('GEMEINDEHAUS', ChurchAddress::get()['name']);
     }
 
     /**
@@ -1335,9 +1340,9 @@ final class SettingsPageTest extends TestCase
         ctp_test_reset_http();
         ctp_test_queue_raw_http('{"version":"3.136.2","address":{"city":"Bretten"}}');
 
-        SettingsPage::refreshChurchAddress(new Client('https://example.church.tools', 'token'));
+        ChurchAddress::refresh(new Client('https://example.church.tools', 'token'));
 
-        $this->assertSame('GEMEINDEHAUS', SettingsPage::churchAddress()['name']);
+        $this->assertSame('GEMEINDEHAUS', ChurchAddress::get()['name']);
     }
 
     /**
@@ -1347,7 +1352,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeResourcesKeepsOnlyRooms(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+        $method = new ReflectionMethod(ResourceList::class, 'merge');
 
         $merged = $method->invoke(null, [], [
             ['id' => 23, 'name' => 'Grosser Saal', 'resourceTypeId' => 2, 'sortKey' => 5],
@@ -1367,7 +1372,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testAnEmptyTypeListKeepsEveryRoomInsteadOfNone(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+        $method = new ReflectionMethod(ResourceList::class, 'merge');
 
         $merged = $method->invoke(null, [
             23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5],
@@ -1394,13 +1399,13 @@ final class SettingsPageTest extends TestCase
         ]]);
 
         ctp_test_queue_http([]);
-        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+        $result = ResourceList::refresh(new Client('https://example.church.tools', 'token'));
 
         $this->assertSame('empty', $result['status']);
         $this->assertFalse($result['changed']);
         $this->assertSame(
             [23 => ['name' => 'Grosser Saal', 'enabled' => true, 'sort_key' => 5]],
-            SettingsPage::get()['resources']
+            Settings::get()['resources']
         );
     }
 
@@ -1419,7 +1424,7 @@ final class SettingsPageTest extends TestCase
         ctp_test_set_option('ctp_resources_fetched', '2026-09-01 08:00:00');
 
         ctp_test_queue_http([]);
-        SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+        ResourceList::refresh(new Client('https://example.church.tools', 'token'));
 
         $this->assertSame('2026-09-01 08:00:00', get_option('ctp_resources_fetched'));
     }
@@ -1435,7 +1440,7 @@ final class SettingsPageTest extends TestCase
         ctp_test_reset_http();
         ctp_test_queue_http([]);
 
-        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
+        $result = ResourceList::refresh(new Client('https://example.church.tools', 'token'));
 
         $this->assertSame('updated', $result['status']);
         $this->assertSame(0, $result['count']);
@@ -1463,8 +1468,8 @@ final class SettingsPageTest extends TestCase
             ],
         ]);
 
-        $result = SettingsPage::refreshResources(new Client('https://example.church.tools', 'token'));
-        $gespeichert = SettingsPage::get()['resources'];
+        $result = ResourceList::refresh(new Client('https://example.church.tools', 'token'));
+        $gespeichert = Settings::get()['resources'];
 
         $this->assertSame('updated', $result['status']);
         $this->assertTrue($result['changed']);
@@ -1480,7 +1485,7 @@ final class SettingsPageTest extends TestCase
      */
     public function testMergeResourcesKeepsTheTickAndTakesTheNewName(): void
     {
-        $method = new ReflectionMethod(SettingsPage::class, 'mergeResources');
+        $method = new ReflectionMethod(ResourceList::class, 'merge');
 
         $merged = $method->invoke(null, [
             23 => ['name' => 'Alter Name', 'enabled' => true, 'sort_key' => 99],
@@ -1526,7 +1531,7 @@ final class SettingsPageTest extends TestCase
             24 => ['name' => 'Foyer', 'enabled' => false, 'sort_key' => 10],
         ]]);
 
-        $this->assertSame([23], SettingsPage::enabledResourceIds());
+        $this->assertSame([23], ResourceList::enabledIds());
     }
 
     /**
@@ -1538,7 +1543,7 @@ final class SettingsPageTest extends TestCase
     {
         ctp_test_set_option('ctp_settings', []);
 
-        $this->assertSame([], SettingsPage::enabledResourceIds());
+        $this->assertSame([], ResourceList::enabledIds());
     }
 
     /**
@@ -1575,7 +1580,7 @@ final class SettingsPageTest extends TestCase
             24 => ['name' => 'Foyer', 'enabled' => true, 'sort_key' => 10],
         ]]);
 
-        $this->assertSame([23, 24, 25], SettingsPage::enabledResourceIds());
+        $this->assertSame([23, 24, 25], ResourceList::enabledIds());
     }
 
     /**
@@ -1585,18 +1590,18 @@ final class SettingsPageTest extends TestCase
     public function testTheOldExclusiveCheckboxStillDecidesWhenNoModeIsStored(): void
     {
         ctp_test_set_option('ctp_settings', ['rooms_exclusive' => true]);
-        $this->assertSame(RoomLookup::MODE_EXCLUSIVE, SettingsPage::roomsMode());
+        $this->assertSame(RoomLookup::MODE_EXCLUSIVE, ResourceList::mode());
 
         ctp_test_set_option('ctp_settings', ['rooms_exclusive' => false]);
-        $this->assertSame(RoomLookup::MODE_SINGLE, SettingsPage::roomsMode());
+        $this->assertSame(RoomLookup::MODE_SINGLE, ResourceList::mode());
     }
 
     public function testAStoredModeWinsAndNonsenseFallsBackToTheDefault(): void
     {
         ctp_test_set_option('ctp_settings', ['rooms_mode' => RoomLookup::MODE_ALL]);
-        $this->assertSame(RoomLookup::MODE_ALL, SettingsPage::roomsMode());
+        $this->assertSame(RoomLookup::MODE_ALL, ResourceList::mode());
 
         ctp_test_set_option('ctp_settings', ['rooms_mode' => 'ausgedacht']);
-        $this->assertSame(RoomLookup::MODE_SINGLE, SettingsPage::roomsMode());
+        $this->assertSame(RoomLookup::MODE_SINGLE, ResourceList::mode());
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Address;
+use ChurchToolsPlugin\Sync\ChurchAddress;
 use DateTimeImmutable;
 use Throwable;
 
@@ -243,7 +243,7 @@ final class EventSchema
     private static function place(string $location, array $event): array
     {
         $address = !empty($event['location_at_church'])
-            ? SettingsPage::churchAddress()
+            ? ChurchAddress::get()
             : self::ownAddress($event);
 
         $postal = $address === [] ? [] : Address::schemaAddress($address);

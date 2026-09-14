@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
+use ChurchToolsPlugin\Settings;
 
 final class EventListRenderer
 {
@@ -43,7 +43,7 @@ final class EventListRenderer
     public function render(array $args): string
     {
         $args = $this->prepareArgs($args);
-        $designSettings = SettingsPage::get();
+        $designSettings = Settings::get();
 
         if ($args['layout'] === 'upcoming') {
             $limit = $args['limit'] > 0 ? $args['limit'] : self::UPCOMING_FALLBACK_LIMIT;
@@ -129,7 +129,7 @@ final class EventListRenderer
             return ['html' => '', 'next_page' => null, 'next_offset' => 0];
         }
 
-        $designSettings = SettingsPage::get();
+        $designSettings = Settings::get();
         $result = EventPager::load($args['calendar_ids'], $page, $args['months'], $args['limit'], $offset);
         $events = $this->withCalendarMeta(
             $result['events'],
@@ -189,7 +189,7 @@ final class EventListRenderer
         }
 
         $bounds = Timeframe::bounds($timeframe);
-        $designSettings = SettingsPage::get();
+        $designSettings = Settings::get();
         $events = EventQueryCache::findMatching(
             $args['calendar_ids'],
             $search,
@@ -282,7 +282,7 @@ final class EventListRenderer
      */
     private static function enabledOnly(array $calendarIds): array
     {
-        $enabled = SettingsPage::getEnabledCalendarIds();
+        $enabled = Settings::getEnabledCalendarIds();
 
         if ($calendarIds === []) {
             return $enabled !== [] ? $enabled : [0];
@@ -370,7 +370,7 @@ final class EventListRenderer
         $args['limit'] = max(0, (int) $args['limit']);
         $args['paging'] = (bool) $args['paging'];
 
-        $designSettings = SettingsPage::get();
+        $designSettings = Settings::get();
 
         $args['months'] = EventWindow::sanitizeMonths(
             (int) $args['months'] > 0 ? (int) $args['months'] : (int) $designSettings['paging_months']
@@ -467,7 +467,7 @@ final class EventListRenderer
      */
     public function renderDetail(array $rawEvent, bool $hosted = false): string
     {
-        $designSettings = SettingsPage::get();
+        $designSettings = Settings::get();
         $event = $this->withCalendarMeta([$rawEvent], 'page', $designSettings['detail_element_order'])[0];
         $order = DetailDesign::isValidOrder($designSettings['detail_element_order'])
             ? $designSettings['detail_element_order']
@@ -565,7 +565,7 @@ final class EventListRenderer
      */
     private function withCalendarMeta(array $events, string $clickBehavior = 'none', array $detailOrder = []): array
     {
-        $settings = SettingsPage::get();
+        $settings = Settings::get();
         $calendars = $settings['calendars'];
         $shareEnabled = (bool) $settings['detail_share_enabled'];
         $icsEnabled = (bool) $settings['detail_ics_enabled'];
@@ -779,8 +779,8 @@ final class EventListRenderer
      */
     private function configuredCalendars(array $calendarIds): array
     {
-        $known = SettingsPage::get()['calendars'];
-        $ids = $calendarIds !== [] ? array_map('intval', $calendarIds) : SettingsPage::getEnabledCalendarIds();
+        $known = Settings::get()['calendars'];
+        $ids = $calendarIds !== [] ? array_map('intval', $calendarIds) : Settings::getEnabledCalendarIds();
         $calendars = [];
 
         foreach ($ids as $id) {

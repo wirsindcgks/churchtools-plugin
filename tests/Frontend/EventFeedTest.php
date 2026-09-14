@@ -78,7 +78,7 @@ final class EventFeedTest extends TestCase
      * Die Gegenrichtung zur Adressbildung: was aus der Adresse wieder
      * herausgelesen wird. Getrennt geprüft, weil genau hier der erste Anlauf
      * gescheitert ist — die Auswahl ging als *Zeichenkette* an
-     * SettingsPage::resolveCalendarIds(), das ein Array erwartet. Die Adresse
+     * Settings::resolveCalendarIds(), das ein Array erwartet. Die Adresse
      * war korrekt gebildet, der Aufruf antwortete trotzdem mit HTTP 500, und
      * kein Test hat es gemerkt.
      */

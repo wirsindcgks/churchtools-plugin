@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Db;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
 use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\SyncEngine;
 
 final class Installer
@@ -203,7 +203,7 @@ final class Installer
      */
     public static function ensureSchedules(): void
     {
-        $interval = SettingsPage::get()['sync_interval'];
+        $interval = Settings::get()['sync_interval'];
         if (!in_array($interval, self::SYNC_INTERVALS, true)) {
             $interval = 'hourly';
         }
@@ -355,7 +355,7 @@ final class Installer
      * liest und deshalb auch niemand mehr zurueckziehen kann.
      *
      * Bewusst am Settings-Array vorbei geschrieben, ohne den Sanitizer:
-     * dieselbe Ueberlegung wie in SettingsPage::refreshCalendars() - der
+     * dieselbe Ueberlegung wie in CalendarList::refresh() - der
      * Sanitizer wuerde hier bereits geprueften Bestand ein zweites Mal durch
      * seine Allowlists schicken.
      */
@@ -369,9 +369,7 @@ final class Installer
 
         unset($settings['github_token']);
 
-        remove_filter('sanitize_option_ctp_settings', [SettingsPage::class, 'sanitizeSettings']);
-        update_option('ctp_settings', $settings);
-        add_filter('sanitize_option_ctp_settings', [SettingsPage::class, 'sanitizeSettings']);
+        Settings::writeUnsanitized($settings);
     }
 
     private static function createTables(): void

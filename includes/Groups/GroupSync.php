@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Groups;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Security\ApiKey;
+use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\RunLock;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use RuntimeException;
@@ -91,7 +92,7 @@ final class GroupSync
 
     private static function runUnlocked(): void
     {
-        $baseUrl = SettingsPage::getBaseUrl();
+        $baseUrl = Settings::getBaseUrl();
 
         if ($baseUrl === '') {
             return;
@@ -177,7 +178,7 @@ final class GroupSync
     /**
      * Gleicht die Liste der Homepages im Reiter mit ChurchTools ab.
      *
-     * Mit dem Schutz aus SettingsPage::refreshCalendars(): Eine leere Antwort
+     * Mit dem Schutz aus CalendarList::refresh(): Eine leere Antwort
      * bei nicht leerem Bestand wird verworfen. Der Haken an einer Homepage
      * steht nirgends sonst, und eine einzige leere Antwort haette ihn geloescht
      * (siehe den Fall der Raumliste in 1.20.1).
@@ -451,7 +452,7 @@ final class GroupSync
      */
     public static function runNow(): void
     {
-        if (SettingsPage::getBaseUrl() === '') {
+        if (Settings::getBaseUrl() === '') {
             throw new RuntimeException(__('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin'));
         }
 

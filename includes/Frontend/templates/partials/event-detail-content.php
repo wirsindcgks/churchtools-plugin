@@ -5,7 +5,7 @@
  * (event-detail.php) and the popup <template> embedded per card in
  * event-list.php/event-grid.php/event-upcoming.php. Renders the
  * DetailDesign::ELEMENT_KEYS in the admin-configured order (see
- * SettingsPage::get()['detail_element_order']) — no CSS `order` trick here
+ * Settings::get()['detail_element_order']) — no CSS `order` trick here
  * since this is a single event, not a repeated list item (see DetailDesign
  * docblock).
  *

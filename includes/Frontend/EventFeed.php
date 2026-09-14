@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Der Abo-Feed: dieselben Termine als iCalendar-Datei, die ein Kalender in
@@ -196,13 +196,13 @@ final class EventFeed
         // Zerlegt wie im Shortcode: resolveCalendarIds() nimmt die einzelnen
         // Angaben, nicht die Zeile.
         $refs = array_filter(array_map('trim', explode(',', $raw)));
-        $requested = $refs === [] ? [] : SettingsPage::resolveCalendarIds($refs);
+        $requested = $refs === [] ? [] : Settings::resolveCalendarIds($refs);
 
         if ($requested === []) {
             return [];
         }
 
-        $allowed = array_values(array_intersect($requested, SettingsPage::getEnabledCalendarIds()));
+        $allowed = array_values(array_intersect($requested, Settings::getEnabledCalendarIds()));
 
         return $allowed !== [] ? $allowed : [0];
     }

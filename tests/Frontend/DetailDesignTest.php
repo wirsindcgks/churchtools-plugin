@@ -77,7 +77,7 @@ final class DetailDesignTest extends TestCase
     }
 
     /**
-     * Läuft bei jedem Lesen (SettingsPage::get()), nicht als einmalige
+     * Läuft bei jedem Lesen (Settings::get()), nicht als einmalige
      * Migration — ein zweiter Durchlauf darf deshalb keinen zweiten Knopf
      * erzeugen. Und eine bereits verschobene Position bleibt, wo der Betreiber
      * sie hingezogen hat: Angehängt wird nur, was fehlt.

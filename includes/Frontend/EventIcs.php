@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Die Adresse, unter der ein Termin als iCalendar-Datei herauskommt — das, was
@@ -170,7 +170,7 @@ final class EventIcs
      */
     public static function withMeta(array $events): array
     {
-        $calendars = SettingsPage::get()['calendars'];
+        $calendars = Settings::get()['calendars'];
 
         foreach ($events as &$event) {
             $calendar = $calendars[(int) ($event['ct_calendar_id'] ?? 0)] ?? null;

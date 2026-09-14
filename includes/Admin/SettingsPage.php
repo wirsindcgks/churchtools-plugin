@@ -15,6 +15,9 @@ use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Security\Crypto;
+use ChurchToolsPlugin\Settings;
+use ChurchToolsPlugin\Sync\CalendarList;
+use ChurchToolsPlugin\Sync\ResourceList;
 use ChurchToolsPlugin\Sync\RoomLookup;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use ChurchToolsPlugin\Update\GitHubUpdateChecker;
@@ -22,31 +25,7 @@ use Throwable;
 
 final class SettingsPage
 {
-    private const OPTION_KEY = 'ctp_settings';
-
-    /**
-     * Wann die Kalenderliste zuletzt von ChurchTools geholt wurde. Steht in der
-     * Statuszeile des Tabs „Kalender“ - ohne sie sieht eine Liste, die seit
-     * einem halben Jahr niemand mehr aktualisiert hat, genauso aus wie eine
-     * gerade eben geladene.
-     */
-    private const OPTION_CALENDARS_FETCHED = 'ctp_calendars_fetched';
-
-    /**
-     * Dasselbe fuer die Raumliste. Sie kommt aus einem anderen Modul und
-     * haengt an einer eigenen Freigabe des API-Keys - eine leere Liste kann
-     * deshalb auch heissen „darf dieser Key nicht sehen" statt „gibt es
-     * nicht", und dann ist der Zeitstempel die einzige Auskunft darueber, ob
-     * ueberhaupt schon einmal nachgesehen wurde.
-     */
-    private const OPTION_RESOURCES_FETCHED = 'ctp_resources_fetched';
-
-    /**
-     * Name und Anschrift der Gemeinde aus `/api/info`, beim Sync
-     * aufgefrischt. Keine Einstellung, sondern eine Kopie - deshalb eine
-     * eigene Option und kein Feld in ctp_settings (siehe churchAddress()).
-     */
-    private const CHURCH_ADDRESS_OPTION = 'ctp_church_address';
+    private const OPTION_KEY = Settings::OPTION_KEY;
 
     private const PAGE_SLUG = 'churchtools-plugin';
 
@@ -401,7 +380,7 @@ final class SettingsPage
         register_setting(self::PAGE_SLUG, self::OPTION_KEY, [
             'type' => 'array',
             'sanitize_callback' => [self::class, 'sanitizeSettings'],
-            'default' => self::defaults(),
+            'default' => Settings::defaults(),
         ]);
 
         $connectionPage = self::PAGE_SLUG . '_connection';
@@ -515,123 +494,6 @@ final class SettingsPage
         add_settings_field('paging_months', __('Zeitraum pro Seite', 'churchtools-plugin'), [$this, 'renderPagingMonthsField'], $designListPage, 'ctp_design_list');
     }
 
-    public static function defaults(): array
-    {
-        return [
-            'instance' => '',
-            'api_key' => '',
-            /**
-             * Keyed by ChurchTools calendar ID:
-             * [ 'name' => string, 'enabled' => bool, 'color' => '#rrggbb',
-             *   'default_color' => '#rrggbb' (ChurchTools' own color, for the "reset" button, see renderCalendarCard()),
-             *   'default_image_id' => int (attachment ID) ]
-             */
-            'calendars' => [],
-            /**
-             * Keyed by ChurchTools resource ID:
-             * [ 'name' => string, 'enabled' => bool, 'sort_key' => int ]
-             *
-             * Ein Haken heisst „dieser Raum ist es wert, oeffentlich genannt zu
-             * werden". Leer ist der Normalzustand: Ohne Auswahl fragt der Sync
-             * die Buchungen gar nicht erst ab.
-             */
-            'resources' => [],
-            /**
-             * Wie streng die Ortsangabe aus den Buchungen gebildet wird - eine
-             * der RoomLookup::MODE_*-Konstanten. An den Daten der
-             * Referenzinstanz: „exclusive" 50, „single" 81, „all" 85 Termine
-             * (bei drei angehakten Raeumen).
-             *
-             * Der Standardwert ist bewusst leer und nicht MODE_SINGLE: Sonst
-             * stuende hier nach dem Zusammenfuehren mit den Vorgaben immer ein
-             * gueltiger Modus, und der Rueckfall auf das Kaestchen aus 1.12.0
-             * (`rooms_exclusive`) kaeme nie zum Zug. Aufgeloest wird in
-             * resolveRoomsMode().
-             */
-            'rooms_mode' => '',
-            'sync_interval' => 'hourly',
-            // Ein volles Jahr, nicht ein halbes: Der Gemeindekalender ist ein
-            // Jahreszyklus (Weihnachten, Ostern, Konfirmation, Freizeiten), und
-            // bei 180 Tagen fehlt davon regelmäßig die zweite Hälfte, ohne dass
-            // im Frontend erkennbar wäre, dass da noch etwas käme — die Liste
-            // hört einfach auf. Der Preis ist gering: auf der Referenzinstanz
-            // sind es 156 statt 125 Zeilen.
-            'sync_days_ahead' => 365,
-            'retention_days' => 30,
-            'keep_data_on_uninstall' => false,
-            'design_preset' => DesignPreset::DEFAULT_PRESET,
-            'element_order' => CardDesign::DEFAULT_ORDER,
-            'corner_style' => 'rounded',
-            'hidden_elements' => [],
-            'media_aspect_ratio' => 'wide',
-            'accent_color_enabled' => false,
-            // Matches frontend.css's own --ctp-accent fallback, so the color
-            // picker starts on the value that's already visually in effect
-            // rather than on an arbitrary, surprising default.
-            'accent_color' => '#2563eb',
-            'button_color_enabled' => false,
-            // Matches frontend.css's own --ctp-color-button-strong fallback,
-            // same "start on the value already in effect" rule as accent_color.
-            'button_color' => '#111827',
-            'click_behavior' => 'popup',
-            // 0 = keine Elternseite: Termine behalten die Adresse
-            // /churchtools-termin/<id>/, mit der sie bis 1.4.1 ausgeliefert
-            // wurden. Bestandsseiten aendern ihre Adressen also nicht von
-            // selbst, nur weil aktualisiert wurde.
-            'detail_page_id' => 0,
-            'detail_element_order' => DetailDesign::DEFAULT_ORDER,
-            /**
-             * Der „Teilen"-Knopf in Popup und eigener Terminseite. Aus, und
-             * zwar aus zwei Gründen: Dasselbe Opt-in-Muster tragen `filter`,
-             * `search`, `month_dividers` und `eventfinder` schon, und ohne den
-             * Standard „aus" bekäme jede Bestandsseite beim Update ungefragt
-             * ein neues Bedienelement in ihre Termine.
-             */
-            'detail_share_enabled' => false,
-            /**
-             * Der Button „Importieren". Aus demselben Grund aus wie
-             * der Teilen-Knopf darueber: Eine Bestandsseite soll beim Update
-             * kein Bedienelement dazubekommen, das niemand bestellt hat.
-             */
-            'detail_ics_enabled' => false,
-            /*
-             * Wie der Importieren-Knopf aus: Ein Abonnement ist eine
-             * Zusage ueber alle kuenftigen Termine, und die trifft der
-             * Betreiber ausdruecklich oder gar nicht.
-             */
-            'detail_subscribe_enabled' => false,
-            'paging_months' => EventWindow::DEFAULT_MONTHS,
-        ];
-    }
-
-    /**
-     * Widens both stored element orders (and the hidden-field list) from the
-     * pre-split key set on every read — date, time and location used to be one
-     * "meta" element. Doing it here rather than in a one-shot upgrade means a
-     * site that never re-saves its Design tab still renders correctly; the
-     * migrated value is written back the next time anything saves.
-     */
-    public static function get(): array
-    {
-        $settings = wp_parse_args(get_option(self::OPTION_KEY, []), self::defaults());
-
-        $settings['element_order'] = CardDesign::upgradeOrder((array) $settings['element_order']);
-        $settings['detail_element_order'] = DetailDesign::upgradeOrder((array) $settings['detail_element_order']);
-        $settings['hidden_elements'] = CardDesign::upgradeHiddenElements((array) $settings['hidden_elements']);
-
-        return $settings;
-    }
-
-    public static function getBaseUrl(): string
-    {
-        return self::buildBaseUrl(self::get()['instance']);
-    }
-
-    private static function buildBaseUrl(string $instance): string
-    {
-        return $instance === '' ? '' : "https://{$instance}.church.tools";
-    }
-
     /**
      * The "Verbindung testen" / "Kalender laden" buttons should test whatever is
      * currently typed into the instance/API-key fields — including a value the
@@ -649,7 +511,7 @@ final class SettingsPage
      */
     private static function effectiveConnection(): array
     {
-        $stored = self::get();
+        $stored = Settings::get();
 
         // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every caller runs check_ajax_referer() before reaching this helper.
         $instance = self::sanitizeInstance((string) wp_unslash($_POST['instance'] ?? ''));
@@ -682,7 +544,7 @@ final class SettingsPage
         return [
             'instance' => $instance,
             'api_key' => $error === '' ? $apiKey : '',
-            'base_url' => self::buildBaseUrl($instance),
+            'base_url' => Settings::buildBaseUrl($instance),
             'error' => $error,
         ];
     }
@@ -715,71 +577,6 @@ final class SettingsPage
     }
 
     /**
-     * Der API-Key im Klartext - aus der Serverkonfiguration oder entschluesselt
-     * aus der Datenbank, siehe Security\ApiKey. Bleibt als Name bestehen, weil
-     * ihn Sync und Tests seit jeher so aufrufen.
-     */
-    public static function getDecryptedApiKey(): string
-    {
-        return ApiKey::current();
-    }
-
-    /**
-     * Hinterlegt, aber nicht mehr lesbar - siehe ApiKey::decryptionFailed().
-     */
-    public static function apiKeyDecryptionFailed(): bool
-    {
-        return ApiKey::decryptionFailed();
-    }
-
-    public static function apiKeyDecryptionErrorMessage(): string
-    {
-        return ApiKey::decryptionErrorMessage();
-    }
-
-    public static function getEnabledCalendarIds(): array
-    {
-        $enabled = array_filter(self::get()['calendars'], static fn (array $calendar): bool => !empty($calendar['enabled']));
-
-        return array_map('intval', array_keys($enabled));
-    }
-
-    /**
-     * Resolves shortcode/block calendar references, which may be a mix of numeric
-     * ChurchTools calendar IDs and calendar names, into known calendar IDs. Only
-     * calendars the admin has fetched into settings (see ajaxFetchCalendars) can be
-     * matched by name — unknown IDs typed by hand still work since the sync itself
-     * validates them against ChurchTools.
-     */
-    public static function resolveCalendarIds(array $refs): array
-    {
-        $calendars = self::get()['calendars'];
-        $resolved = [];
-
-        foreach ($refs as $ref) {
-            $ref = trim((string) $ref);
-
-            if ($ref === '') {
-                continue;
-            }
-
-            if (ctype_digit($ref)) {
-                $resolved[] = (int) $ref;
-                continue;
-            }
-
-            foreach ($calendars as $id => $calendar) {
-                if (strcasecmp($calendar['name'], $ref) === 0) {
-                    $resolved[] = (int) $id;
-                    break;
-                }
-            }
-        }
-
-        return array_values(array_unique($resolved));
-    }
-
-    /**
      * Each admin-UI tab is its own <form> and only posts the fields it renders, so
      * $input only ever contains a subset of the keys below (see tabs()). A key that
      * is entirely absent means "this tab wasn't submitted", not "clear this value" —
@@ -791,8 +588,14 @@ final class SettingsPage
      */
     public static function sanitizeSettings(?array $input): array
     {
+        // Frisch aus ChurchTools geholte Listen und Migrationen schreiben am
+        // Formular vorbei - siehe Settings::writeUnsanitized().
+        if (Settings::isWritingUnsanitized() && $input !== null) {
+            return $input;
+        }
+
         $input ??= [];
-        $existing = self::get();
+        $existing = Settings::get();
         $apiKey = trim((string) ($input['api_key'] ?? ''));
 
         $syncInterval = $existing['sync_interval'];
@@ -1081,7 +884,7 @@ final class SettingsPage
             . '</span>'
             . '<p class="description">%3$s</p>',
             esc_attr(self::OPTION_KEY),
-            esc_attr(self::get()['instance']),
+            esc_attr(Settings::get()['instance']),
             esc_html__('Nur der Instanz-Name eintragen, z. B. „musterkirche“ für https://musterkirche.church.tools', 'churchtools-plugin')
         );
     }
@@ -1121,67 +924,6 @@ final class SettingsPage
     }
 
     /**
-     * Der Tab „Kalender“ - eine Kachelliste statt der bisherigen Tabelle.
-     *
-     * Vorher steckte die ganze Kalenderauswahl als *ein* Settings-API-Feld in
-     * einer .form-table. Das kostete links rund 200 Pixel fuer eine
-     * Beschriftung („Kalender“), die nur die Ueberschrift darueber
-     * wiederholte, und presste vier Spalten - Haken, Name, Farbe, Standardbild -
-     * in den Rest. Die Farbe war ein 36px-Kaestchen zwischen zwei
-     * Bedienelementen, und woran man einen Kalender ueberhaupt erkennt,
-     * naemlich wie viele Termine er liefert, stand nirgends.
-     *
-     * Die Kachelliste dreht das um:
-     *   - Die Kalenderfarbe ist der farbige Balken der Kachel, also das, was
-     *     man zuerst sieht - nicht mehr ein Kaestchen in Spalte drei.
-     *   - Jede Kachel nennt ihre Termine (kommend/gesamt, siehe
-     *     EventRepository::countsByCalendar()). Ein Kalender, der seit Monaten
-     *     nichts liefert, faellt damit auf.
-     *   - Inaktive Kalender sind sichtbar gedimmt, statt sich nur durch einen
-     *     leeren Haken ganz links von den aktiven zu unterscheiden.
-     *   - Suche und „Alle aktivieren/deaktivieren“ machen die Liste auch bei
-     *     zwei Dutzend Kalendern noch bedienbar.
-     *   - Jede Kachel liefert den fertigen Shortcode fuer genau diesen
-     *     Kalender zum Kopieren - dieselbe Schaltflaeche wie in der
-     *     Shortcode-Referenz im Tab „Design“.
-     *
-     * Kein Settings-API-Abschnitt mehr, sondern direkt gerendert: die
-     * Feldnamen sind unveraendert (ctp_settings[calendars][ID][...]), also
-     * greifen settings_fields() und sanitizeCalendars() genau wie zuvor.
-     */
-    /**
-     * Angehakte Kalender, die ChurchTools selbst nicht als oeffentlich fuehrt.
-     *
-     * Bewusst nur gemeldet und nicht stillschweigend uebergangen: Anders als
-     * ein interner Termin (den SyncEngine::mapOccurrence() gar nicht erst
-     * speichert) ist ein angehakter Kalender eine ausdrueckliche Entscheidung
-     * im WordPress-Backend. Verschwaende sein Inhalt wortlos, suchte man den
-     * Grund an der falschen Stelle - und die Person, die das Haekchen gesetzt
-     * hat, sitzt genau dort, wo dieser Hinweis erscheint.
-     *
-     * @return array<int, string> Kalender-ID => Name
-     */
-    public static function nonPublicEnabledCalendars(): array
-    {
-        $found = [];
-
-        foreach (self::get()['calendars'] as $id => $calendar) {
-            if (empty($calendar['enabled'])) {
-                continue;
-            }
-
-            // Fehlendes Feld gilt als oeffentlich - siehe mergeCalendars().
-            if (($calendar['is_public'] ?? true)) {
-                continue;
-            }
-
-            $found[(int) $id] = (string) ($calendar['name'] ?? (string) $id);
-        }
-
-        return $found;
-    }
-
-    /**
      * Der Tab „Raeume". Eine Liste mit Haken, sonst nichts - und das ist die
      * ganze Bedienung dieser Funktion.
      *
@@ -1195,14 +937,14 @@ final class SettingsPage
      */
     private function renderRoomsTab(): void
     {
-        $resources = self::get()['resources'] ?? [];
+        $resources = Settings::get()['resources'] ?? [];
 
         // ChurchTools' eigene Ordnung: grosse Raeume oben, Testressourcen unten.
         uasort($resources, static function (array $a, array $b): int {
             return [$a['sort_key'] ?? 0, $a['name']] <=> [$b['sort_key'] ?? 0, $b['name']];
         });
 
-        $fetched = (string) get_option(self::OPTION_RESOURCES_FETCHED, '');
+        $fetched = (string) get_option(ResourceList::FETCHED_OPTION, '');
         ?>
         <form method="post" action="options.php" class="ctp-settings-form">
             <div class="ctp-panel">
@@ -1324,7 +1066,7 @@ final class SettingsPage
 
                     <h3><?php esc_html_e('Wenn für einen Termin mehrere Räume gebucht sind', 'churchtools-plugin'); ?></h3>
 
-                    <?php $mode = self::roomsMode(); ?>
+                    <?php $mode = ResourceList::mode(); ?>
                     <fieldset>
                         <p>
                             <label>
@@ -1378,9 +1120,38 @@ final class SettingsPage
         <?php
     }
 
+    /**
+     * Der Tab „Kalender“ - eine Kachelliste statt der bisherigen Tabelle.
+     *
+     * Vorher steckte die ganze Kalenderauswahl als *ein* Settings-API-Feld in
+     * einer .form-table. Das kostete links rund 200 Pixel fuer eine
+     * Beschriftung („Kalender“), die nur die Ueberschrift darueber
+     * wiederholte, und presste vier Spalten - Haken, Name, Farbe, Standardbild -
+     * in den Rest. Die Farbe war ein 36px-Kaestchen zwischen zwei
+     * Bedienelementen, und woran man einen Kalender ueberhaupt erkennt,
+     * naemlich wie viele Termine er liefert, stand nirgends.
+     *
+     * Die Kachelliste dreht das um:
+     *   - Die Kalenderfarbe ist der farbige Balken der Kachel, also das, was
+     *     man zuerst sieht - nicht mehr ein Kaestchen in Spalte drei.
+     *   - Jede Kachel nennt ihre Termine (kommend/gesamt, siehe
+     *     EventRepository::countsByCalendar()). Ein Kalender, der seit Monaten
+     *     nichts liefert, faellt damit auf.
+     *   - Inaktive Kalender sind sichtbar gedimmt, statt sich nur durch einen
+     *     leeren Haken ganz links von den aktiven zu unterscheiden.
+     *   - Suche und „Alle aktivieren/deaktivieren“ machen die Liste auch bei
+     *     zwei Dutzend Kalendern noch bedienbar.
+     *   - Jede Kachel liefert den fertigen Shortcode fuer genau diesen
+     *     Kalender zum Kopieren - dieselbe Schaltflaeche wie in der
+     *     Shortcode-Referenz im Tab „Design“.
+     *
+     * Kein Settings-API-Abschnitt mehr, sondern direkt gerendert: die
+     * Feldnamen sind unveraendert (ctp_settings[calendars][ID][...]), also
+     * greifen settings_fields() und sanitizeCalendars() genau wie zuvor.
+     */
     private function renderCalendarsTab(): void
     {
-        $calendars = self::get()['calendars'];
+        $calendars = Settings::get()['calendars'];
         uasort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
         $counts = self::calendarEventCounts();
         ?>
@@ -1420,7 +1191,7 @@ final class SettingsPage
                 </div>
             <?php endif; ?>
 
-            <?php $nonPublic = self::nonPublicEnabledCalendars(); ?>
+            <?php $nonPublic = CalendarList::nonPublicEnabled(); ?>
             <?php if ($nonPublic !== []) : ?>
                 <?php // Zahl-neutral formuliert: bin/make-pot.php kann keine Plurale (_n). ?>
                 <div class="notice notice-warning inline">
@@ -1612,7 +1383,7 @@ final class SettingsPage
 
     public function renderSyncIntervalField(): void
     {
-        $current = self::get()['sync_interval'];
+        $current = Settings::get()['sync_interval'];
 
         echo '<select name="' . esc_attr(self::OPTION_KEY) . '[sync_interval]">';
         foreach (self::syncIntervalLabels() as $value => $label) {
@@ -1634,7 +1405,7 @@ final class SettingsPage
         printf(
             '<input type="number" min="1" name="%1$s[sync_days_ahead]" value="%2$s" class="small-text" /> %3$s',
             esc_attr(self::OPTION_KEY),
-            esc_attr((string) self::get()['sync_days_ahead']),
+            esc_attr((string) Settings::get()['sync_days_ahead']),
             esc_html__('Tage', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -1655,7 +1426,7 @@ final class SettingsPage
             esc_attr((string) EventWindow::MIN_MONTHS),
             esc_attr((string) EventWindow::MAX_MONTHS),
             esc_attr(self::OPTION_KEY),
-            esc_attr((string) self::get()['paging_months']),
+            esc_attr((string) Settings::get()['paging_months']),
             esc_html__('Monate', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -1673,7 +1444,7 @@ final class SettingsPage
         printf(
             '<input type="number" min="0" name="%1$s[retention_days]" value="%2$s" class="small-text" /> %3$s',
             esc_attr(self::OPTION_KEY),
-            esc_attr((string) self::get()['retention_days']),
+            esc_attr((string) Settings::get()['retention_days']),
             esc_html__('Tage', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -1693,7 +1464,7 @@ final class SettingsPage
         printf(
             '<label><input type="checkbox" name="%1$s[keep_data_on_uninstall]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
-            checked(!empty(self::get()['keep_data_on_uninstall']), true, false),
+            checked(!empty(Settings::get()['keep_data_on_uninstall']), true, false),
             esc_html__('Termindaten, importierte Bilder und Einstellungen beim Deinstallieren behalten', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -1732,7 +1503,7 @@ final class SettingsPage
     {
         $labels = self::elementOrderLabels();
         $separatorLabels = self::separatorLabels();
-        $order = self::get()['element_order'];
+        $order = Settings::get()['element_order'];
         ?>
         <ul
             id="ctp-design-order"
@@ -1869,7 +1640,7 @@ final class SettingsPage
      */
     public function renderDesignPresetField(): void
     {
-        $current = DesignPreset::sanitize((string) self::get()['design_preset']);
+        $current = DesignPreset::sanitize((string) Settings::get()['design_preset']);
         $labels = self::designPresetLabels();
 
         echo '<div class="ctp-preset-grid">';
@@ -1926,7 +1697,7 @@ final class SettingsPage
 
     public function renderCornerStyleField(): void
     {
-        $current = self::get()['corner_style'];
+        $current = Settings::get()['corner_style'];
         $options = [
             'rounded' => __('Rund', 'churchtools-plugin'),
             'square' => __('Eckig', 'churchtools-plugin'),
@@ -1953,7 +1724,7 @@ final class SettingsPage
     public function renderFieldVisibilityField(): void
     {
         $labels = self::elementOrderLabels();
-        $hidden = self::get()['hidden_elements'];
+        $hidden = Settings::get()['hidden_elements'];
         printf('<input type="hidden" name="%1$s[hidden_elements][]" value="" />', esc_attr(self::OPTION_KEY));
         foreach (CardDesign::TOGGLEABLE_KEYS as $key) {
             printf(
@@ -1971,7 +1742,7 @@ final class SettingsPage
 
     public function renderMediaAspectRatioField(): void
     {
-        $current = self::get()['media_aspect_ratio'];
+        $current = Settings::get()['media_aspect_ratio'];
         $options = [
             'wide' => __('Breit – 16:9 (Standard)', 'churchtools-plugin'),
             'square' => __('Quadratisch – 1:1', 'churchtools-plugin'),
@@ -2004,7 +1775,7 @@ final class SettingsPage
      */
     public function renderAccentColorField(): void
     {
-        $settings = self::get();
+        $settings = Settings::get();
         printf('<input type="hidden" name="%1$s[accent_color_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
         printf(
             '<label><input type="checkbox" id="ctp-design-accent-enabled" name="%1$s[accent_color_enabled]" value="1" %2$s /> %3$s</label>',
@@ -2026,7 +1797,7 @@ final class SettingsPage
             esc_attr__('Akzentfarbe wählen', 'churchtools-plugin'),
             esc_attr__('Akzentfarbe als Hex-Code', 'churchtools-plugin'),
             disabled(empty($settings['accent_color_enabled']), true, false),
-            esc_attr(self::defaults()['accent_color']),
+            esc_attr(Settings::defaults()['accent_color']),
             esc_html__('Zurücksetzen', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -2043,7 +1814,7 @@ final class SettingsPage
      */
     public function renderButtonColorField(): void
     {
-        $settings = self::get();
+        $settings = Settings::get();
         printf('<input type="hidden" name="%1$s[button_color_enabled]" value="0" />', esc_attr(self::OPTION_KEY));
         printf(
             '<label><input type="checkbox" id="ctp-design-button-enabled" name="%1$s[button_color_enabled]" value="1" %2$s /> %3$s</label>',
@@ -2062,7 +1833,7 @@ final class SettingsPage
             esc_attr__('Buttonfarbe wählen', 'churchtools-plugin'),
             esc_attr__('Buttonfarbe als Hex-Code', 'churchtools-plugin'),
             disabled(empty($settings['button_color_enabled']), true, false),
-            esc_attr(self::defaults()['button_color']),
+            esc_attr(Settings::defaults()['button_color']),
             esc_html__('Zurücksetzen', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -2072,7 +1843,7 @@ final class SettingsPage
 
     public function renderClickBehaviorField(): void
     {
-        $current = self::get()['click_behavior'];
+        $current = Settings::get()['click_behavior'];
         $options = [
             'none' => __('Keine – Kacheln bleiben wie bisher unklickbar', 'churchtools-plugin'),
             'popup' => __('Popup – öffnet die Details in einem Fenster auf derselben Seite', 'churchtools-plugin'),
@@ -2107,7 +1878,7 @@ final class SettingsPage
      */
     public function renderDetailPageField(): void
     {
-        $settings = self::get();
+        $settings = Settings::get();
         $current = (int) $settings['detail_page_id'];
 
         /*
@@ -2164,7 +1935,7 @@ final class SettingsPage
         printf(
             '<label><input type="checkbox" id="ctp-design-detail-share" name="%1$s[detail_share_enabled]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
-            checked(!empty(self::get()['detail_share_enabled']), true, false),
+            checked(!empty(Settings::get()['detail_share_enabled']), true, false),
             esc_html__('„Teilen“-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -2186,7 +1957,7 @@ final class SettingsPage
         printf(
             '<label><input type="checkbox" id="ctp-design-detail-ics" name="%1$s[detail_ics_enabled]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
-            checked(!empty(self::get()['detail_ics_enabled']), true, false),
+            checked(!empty(Settings::get()['detail_ics_enabled']), true, false),
             esc_html__('„Importieren"-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -2214,7 +1985,7 @@ final class SettingsPage
         printf(
             '<label><input type="checkbox" id="ctp-design-detail-subscribe" name="%1$s[detail_subscribe_enabled]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
-            checked(!empty(self::get()['detail_subscribe_enabled']), true, false),
+            checked(!empty(Settings::get()['detail_subscribe_enabled']), true, false),
             esc_html__('„Abonnieren"-Button in Popup und eigener Terminseite anzeigen', 'churchtools-plugin')
         );
         echo '<p class="description">'
@@ -2251,7 +2022,7 @@ final class SettingsPage
     public function renderDetailElementOrderField(): void
     {
         $labels = self::detailElementOrderLabels();
-        $order = self::get()['detail_element_order'];
+        $order = Settings::get()['detail_element_order'];
         ?>
         <ul
             id="ctp-design-detail-order"
@@ -2293,7 +2064,7 @@ final class SettingsPage
      */
     private function renderDesignPreview(): void
     {
-        $settings = self::get();
+        $settings = Settings::get();
         $style = CardDesign::styleAttribute(
             $settings['element_order'],
             $settings['corner_style'],
@@ -2367,7 +2138,7 @@ final class SettingsPage
      */
     private function renderDetailPreview(): void
     {
-        $settings = self::get();
+        $settings = Settings::get();
         $order = DetailDesign::isValidOrder($settings['detail_element_order'])
             ? $settings['detail_element_order']
             : DetailDesign::DEFAULT_ORDER;
@@ -2544,8 +2315,8 @@ final class SettingsPage
 
     private function renderShortcodeReference(): void
     {
-        $calendars = self::get()['calendars'];
-        $enabledIds = self::getEnabledCalendarIds();
+        $calendars = Settings::get()['calendars'];
+        $enabledIds = Settings::getEnabledCalendarIds();
         $exampleCalendar = '';
         if ($enabledIds !== []) {
             $firstId = $enabledIds[0];
@@ -2641,7 +2412,7 @@ final class SettingsPage
                             printf(
                                 /* translators: %d: globally configured number of months per page. */
                                 esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = die Einstellung unter „Einstellungen → Design“ (aktuell %d).', 'churchtools-plugin'),
-                                (int) self::get()['paging_months']
+                                (int) Settings::get()['paging_months']
                             );
                             ?>
                         </td>
@@ -2707,14 +2478,14 @@ final class SettingsPage
      */
     private static function statusFacts(): array
     {
-        $settings = self::get();
+        $settings = Settings::get();
         $calendars = $settings['calendars'];
         $enabled = array_filter($calendars, static fn (array $calendar): bool => !empty($calendar['enabled']));
         $lastSync = (string) get_option('ctp_last_sync', '');
         $nextSync = wp_next_scheduled('ctp_run_sync');
         $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
 
-        $apiKey = self::getDecryptedApiKey();
+        $apiKey = ApiKey::current();
 
         return [
             'settings' => $settings,
@@ -2887,8 +2658,8 @@ final class SettingsPage
                 return;
             case 'calendars':
                 $counts = self::calendarEventCounts();
-                $fetched = (string) get_option(self::OPTION_CALENDARS_FETCHED, '');
-                $enabledIds = self::getEnabledCalendarIds();
+                $fetched = (string) get_option(CalendarList::FETCHED_OPTION, '');
+                $enabledIds = Settings::getEnabledCalendarIds();
                 $eventsFromEnabled = 0;
                 foreach ($enabledIds as $enabledId) {
                     $eventsFromEnabled += $counts[$enabledId]['total'] ?? 0;
@@ -3645,7 +3416,7 @@ final class SettingsPage
         $repository = new EventRepository();
         $filters = self::eventsFilters();
         $stats = $repository->stats();
-        $calendars = self::get()['calendars'];
+        $calendars = Settings::get()['calendars'];
 
         $isSeriesView = $filters['view'] === 'series';
         $totalMatching = $isSeriesView
@@ -3992,7 +3763,7 @@ final class SettingsPage
         }
 
         $calendarId = (int) $event['ct_calendar_id'];
-        $calendar = self::get()['calendars'][$calendarId] ?? null;
+        $calendar = Settings::get()['calendars'][$calendarId] ?? null;
 
         // Prefer the imported WP attachment over the raw ChurchTools image_url — see
         // EventListRenderer::withCalendarMeta() for why (avoids hotlinking the
@@ -4824,7 +4595,7 @@ final class SettingsPage
         }
 
         try {
-            $result = self::refreshResources(new Client($connection['base_url'], $connection['api_key']));
+            $result = ResourceList::refresh(new Client($connection['base_url'], $connection['api_key']));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
         }
@@ -4855,7 +4626,7 @@ final class SettingsPage
         }
 
         try {
-            $result = self::refreshCalendars(new Client($connection['base_url'], $connection['api_key']));
+            $result = CalendarList::refresh(new Client($connection['base_url'], $connection['api_key']));
         } catch (Throwable $exception) {
             wp_send_json_error(['message' => $exception->getMessage()]);
         }
@@ -4865,167 +4636,6 @@ final class SettingsPage
         }
 
         wp_send_json_success(['count' => $result['count']]);
-    }
-
-    /**
-     * ChurchTools benennt die Ressourcentypen ueber Uebersetzungsschluessel;
-     * `resource.type.room` ist der Raum. Am Schluessel erkannt und nicht am
-     * angezeigten Namen, weil der uebersetzt und umbenannt werden kann.
-     */
-    private const ROOM_TYPE_KEY = 'resource.type.room';
-
-    /** Erlaubte Werte fuer `rooms_mode` - alles andere faellt auf den Standard zurueck. */
-    private const ROOM_MODES = [RoomLookup::MODE_EXCLUSIVE, RoomLookup::MODE_SINGLE, RoomLookup::MODE_ALL];
-
-    /**
-     * Zwilling von refreshCalendars(), mit demselben Schutz gegen die leere
-     * Antwort - und der stand hier bis 1.20.0 nicht.
-     *
-     * Die Begruendung dafuer lautete: an der Raumliste haenge nichts, was
-     * verloren gehen koenne (keine Farben, keine Standardbilder), der Haken
-     * ueberlebe in $existing. Der zweite Halbsatz war der Fehler. Der Haken
-     * ueberlebt nur, solange die ID wiederkommt - und mergeResources() baut die
-     * Liste ausschliesslich aus der Antwort neu auf. Eine einzige leere Antwort
-     * (ein `data: []` kommt durch Client::request(), das nur einen fehlenden
-     * `data`-Schluessel abfaengt) loeschte damit die ganze Auswahl, und die
-     * naechste, wieder vollstaendige Antwort brachte die Raeume unangehakt
-     * zurueck. Der Haken *ist* das, was verloren gehen kann: Er steht nirgends
-     * sonst, und ob er fehlt, sieht man nicht an der Liste, sondern erst Tage
-     * spaeter an fehlenden Ortsangaben im Frontend (Nutzerbefund 2026-09-08:
-     * „Bei dem Update ging wohl die Raumauswahl verloren").
-     *
-     * Geschuetzt ist wie bei den Kalendern nur der Alles-oder-nichts-Fall.
-     * Verschwindet ein einzelner Raum, verschwindet er weiterhin samt Haken -
-     * von hier aus sehen ein in ChurchTools geloeschter Raum und ein
-     * zurueckgezogenes „Ressource sehen" gleich aus, und „faellt aus der Liste"
-     * ist auf beides die richtige Antwort. Nur wenn *alle* auf einmal gehen,
-     * ist der Datenverlust groesser als jede Erklaerung dafuer.
-     *
-     * Dass gar keine Raeume ausgewaehlt sind, bleibt der Normalzustand dieses
-     * Plugins: Ist auch die gespeicherte Liste leer, ist die leere Antwort kein
-     * Sonderfall, sondern das erwartete Ergebnis eines API-Keys ohne Freigabe
-     * fuer Ressourcen.
-     *
-     * @return array{status: 'updated'|'empty', count: int, changed: bool, message?: string}
-     */
-    public static function refreshResources(Client $client): array
-    {
-        $settings = self::get();
-        $existing = $settings['resources'] ?? [];
-        $masterdata = $client->getResourceMasterdata();
-
-        $roomTypeIds = [];
-
-        foreach ($masterdata['resourceTypes'] as $type) {
-            if ((string) ($type['name'] ?? '') === self::ROOM_TYPE_KEY) {
-                $roomTypeIds[] = (int) ($type['id'] ?? 0);
-            }
-        }
-
-        // Keine Ersatzliste mehr aus allen Typen: mergeResources() liest die
-        // leere Liste selbst als „nicht filtern". Die Ersatzliste war der
-        // zweite Weg in denselben Verlust - kam `resourceTypes` leer zurueck,
-        // lief array_map() ueber ein leeres Array und ergab wieder eine leere
-        // Erlaubnisliste, die dann *jeden* Raum aussortierte. Gemeint war das
-        // Gegenteil: Wer die Typen nicht kennt, filtert nicht.
-        $merged = self::mergeResources($existing, $masterdata['resources'], $roomTypeIds);
-
-        if ($merged === [] && $existing !== []) {
-            return [
-                'status' => 'empty',
-                'count' => count($existing),
-                'changed' => false,
-                'message' => __('ChurchTools hat keine Räume zurückgeliefert. Die gespeicherte Raumliste bleibt deshalb unverändert, damit die angehakten Räume nicht verloren gehen – bitte die Freigabe „Ressource sehen“ des API-Keys prüfen. Sind die Räume dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin'),
-            ];
-        }
-
-        $changed = $merged !== $existing;
-
-        if ($changed) {
-            // Wie bei refreshCalendars(): sanitizeSettings() haengt an jedem
-            // update_option() dieser Option und wuerde frisch geholte, noch
-            // unbekannte IDs an der eigenen Allowlist wieder herausfiltern.
-            remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-            update_option(self::OPTION_KEY, array_merge($settings, ['resources' => $merged]));
-            add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-        }
-
-        update_option(self::OPTION_RESOURCES_FETCHED, current_time('mysql'));
-
-        return [
-            'status' => 'updated',
-            'count' => count($merged),
-            'changed' => $changed,
-        ];
-    }
-
-    /**
-     * Holt die Kalenderliste von ChurchTools und schreibt sie zurueck - der
-     * eine Weg fuer beide Aufrufer: den Knopf „Kalender von ChurchTools laden“
-     * und den planmaessigen Sync (siehe SyncEngine::run()).
-     *
-     * Vorher lag diese Logik nur im AJAX-Handler, und die Kalenderliste
-     * veraenderte sich damit ausschliesslich dann, wenn ein Mensch daran
-     * dachte. Ein in ChurchTools umbenannter Kalender behielt im Plugin
-     * monatelang seinen alten Namen, eine dort geaenderte Farbe kam nie an,
-     * und ein neu angelegter Kalender tauchte in der Auswahl gar nicht erst
-     * auf - waehrend der Sync daneben stuendlich lief.
-     *
-     * Wirft nur, was der Client wirft (Netz, HTTP-Fehler, unerwartete
-     * Antwort). Die leere Antwort ist kein Fehler, sondern ein eigener
-     * Zustand: mergeCalendars() baut die Liste ausschliesslich aus der Antwort
-     * neu auf, eine leere Antwort loeschte sie also samt eingestellter Farben
-     * und Standardbilder. Ein kaputter Body wirft inzwischen in
-     * Client::request(), ein wohlgeformtes data: [] kaeme aber weiterhin bis
-     * hierher. Sind die Kalender wirklich alle weg, bleiben sie abwaehlbar in
-     * der Liste stehen - ihre Termine raeumt der Sync ueber seinen eigenen
-     * Schutz ab.
-     *
-     * @return array{status: 'updated'|'empty', count: int, changed: bool, message: string}
-     */
-    public static function refreshCalendars(Client $client): array
-    {
-        $settings = self::get();
-        $merged = self::mergeCalendars($settings['calendars'], $client->getCalendars());
-
-        if ($merged === [] && $settings['calendars'] !== []) {
-            return [
-                'status' => 'empty',
-                'count' => 0,
-                'changed' => false,
-                'message' => __('ChurchTools hat keine Kalender zurückgeliefert. Die gespeicherte Kalenderliste bleibt deshalb unverändert, damit eingestellte Farben und Standardbilder nicht verloren gehen – bitte die Berechtigungen des API-Keys prüfen. Sind die Kalender dort wirklich alle entfernt worden, lassen sie sich in der Liste einzeln abwählen.', 'churchtools-plugin'),
-            ];
-        }
-
-        // Nur bei echter Aenderung schreiben. Der Sync ruft das jetzt
-        // stuendlich auf, und ein update_option() mit unveraendertem Inhalt
-        // waere zwar folgenlos, aber onSettingsUpdated() haengt an diesem
-        // Hook - und der Frontend-Cache unten soll nicht stuendlich ohne Grund
-        // verworfen werden.
-        $changed = $merged !== $settings['calendars'];
-
-        if ($changed) {
-            // register_setting() hooks sanitize_option_{option} onto every
-            // update_option() call for this option, not just Settings API form
-            // submissions — without removing it here, sanitizeSettings() would run
-            // $merged (already-trusted, freshly-fetched data) back through
-            // sanitizeCalendars()'s "only IDs already known" allowlist and silently
-            // drop every calendar on the very first fetch (nothing was "known" yet).
-            remove_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-            update_option(self::OPTION_KEY, array_merge($settings, ['calendars' => $merged]));
-            add_filter('sanitize_option_' . self::OPTION_KEY, [self::class, 'sanitizeSettings']);
-        }
-
-        // Auch ohne Aenderung: der Zeitstempel beantwortet „wann wurde zuletzt
-        // nachgesehen“, nicht „wann hat sich zuletzt etwas geaendert“.
-        update_option(self::OPTION_CALENDARS_FETCHED, current_time('mysql'));
-
-        return [
-            'status' => 'updated',
-            'count' => count($merged),
-            'changed' => $changed,
-            'message' => '',
-        ];
     }
 
     /**
@@ -5080,8 +4690,8 @@ final class SettingsPage
             wp_send_json_error(['message' => __('Keine Berechtigung.', 'churchtools-plugin')], 403);
         }
 
-        $settings = self::get();
-        $calendarIds = self::getEnabledCalendarIds();
+        $settings = Settings::get();
+        $calendarIds = Settings::getEnabledCalendarIds();
 
         if ($settings['instance'] === '' || !ApiKey::isUsable()) {
             wp_send_json_error(['message' => $settings['instance'] === '' ? __('Bitte zuerst die Verbindung zu ChurchTools einrichten.', 'churchtools-plugin') : ApiKey::unusableMessage()]);
@@ -5171,108 +4781,6 @@ final class SettingsPage
     }
 
     /**
-     * Keeps enabled/color/default_image_id for calendars that still exist remotely,
-     * seeds new ones as disabled with ChurchTools' own color, and drops ones that
-     * were removed on the ChurchTools side — that a *single* calendar disappearing
-     * takes its settings with it is deliberate: from here a revoked read permission
-     * and a deleted calendar look identical, and "verschwindet aus der Liste" is the
-     * right answer to both. Only the all-or-nothing case is guarded, by the caller
-     * (see ajaxFetchCalendars()), because there the same ambiguity costs every
-     * calendar at once. `default_color` is always overwritten
-     * with ChurchTools' current value (never carried over from $existing) so the
-     * "Auf Standardfarbe zurücksetzen" button (renderCalendarCard()) keeps pointing
-     * at ChurchTools' actual color even if it changed there since the last fetch.
-     */
-    /**
-     * Zwilling von mergeCalendars(). Der Haken bleibt beim Betreiber, Name und
-     * Sortierschluessel kommen bei jedem Abgleich frisch aus ChurchTools - ein
-     * umbenannter Raum heisst damit auch hier neu, ohne dass jemand etwas tun
-     * muss.
-     *
-     * Gegenstaende bleiben draussen. `/api/resource/masterdata` fuehrt neben
-     * Raeumen auch Technik und Aehnliches; als Ortsangabe kommt davon nichts in
-     * Frage, und eine Liste, in der man sie erst wegsehen muss, waere schlechter
-     * als eine kurze. Erkannt wird das am Typ, nicht am Namen.
-     *
-     * Eine leere $roomTypeIds heisst „nicht filtern", nicht „nichts erlauben" -
-     * eine Instanz, die ihre Typen anders benannt hat, bekommt lieber Technik
-     * zu viel in der Liste als eine Liste, die wortlos leer bleibt (und dabei
-     * jeden Haken mitnimmt, siehe refreshResources()).
-     *
-     * @param int[] $roomTypeIds IDs der Ressourcentypen, die Raeume sind; leer heisst „alle"
-     */
-    private static function mergeResources(array $existing, array $remoteResources, array $roomTypeIds): array
-    {
-        $merged = [];
-        $rooms = array_flip(array_map('intval', $roomTypeIds));
-
-        foreach ($remoteResources as $resource) {
-            $id = (int) ($resource['id'] ?? 0);
-
-            if ($id === 0) {
-                continue;
-            }
-
-            if ($rooms !== [] && !isset($rooms[(int) ($resource['resourceTypeId'] ?? 0)])) {
-                continue;
-            }
-
-            $merged[$id] = [
-                'name' => (string) ($resource['name'] ?? ''),
-                'enabled' => (bool) ($existing[$id]['enabled'] ?? false),
-                // ChurchTools' eigene Ordnung, nur zum Sortieren der Liste im
-                // Backend - grosse Raeume oben, Testressourcen unten. Sie
-                // entscheidet nichts, siehe RoomLookup.
-                'sort_key' => (int) ($resource['sortKey'] ?? 0),
-                // Das Feld „Ort" an der Ressource: ein Gebaeudename, keine
-                // Anschrift (an der Instanz nachgesehen 2026-09-11). Es
-                // beantwortet die einzige Frage, die von aussen nicht zu
-                // erraten ist - liegt dieser Raum im Haus der Gemeinde?
-                // Siehe resourceIdsInBuilding().
-                'location' => (string) ($resource['location'] ?? ''),
-            ];
-        }
-
-        return $merged;
-    }
-
-    /**
-     * Alle bekannten Raeume, angehakt oder nicht. Gebraucht wird das fuer den
-     * strengen Modus: Um zu wissen, ob *nebenher* noch ein Raum belegt ist, muss
-     * der Sync auch die Buchungen der nicht angehakten Raeume sehen.
-     *
-     * @return int[]
-     */
-    public static function knownResourceIds(): array
-    {
-        return array_map('intval', array_keys(self::get()['resources'] ?? []));
-    }
-
-    /**
-     * Wie die Ortsangabe aus den Buchungen gebildet wird - siehe die
-     * Beschreibung im Tab „Raeume" und die MODE_*-Konstanten.
-     *
-     * Der Rueckfall auf `rooms_exclusive` ist die Bruecke aus 1.12.0, wo an
-     * dieser Stelle noch ein Kaestchen stand: Eine Installation, die damals
-     * streng eingestellt war, bleibt es.
-     */
-    public static function roomsMode(): string
-    {
-        return self::resolveRoomsMode(self::get());
-    }
-
-    private static function resolveRoomsMode(array $settings): string
-    {
-        $mode = (string) ($settings['rooms_mode'] ?? '');
-
-        if (in_array($mode, self::ROOM_MODES, true)) {
-            return $mode;
-        }
-
-        return !empty($settings['rooms_exclusive']) ? RoomLookup::MODE_EXCLUSIVE : RoomLookup::MODE_SINGLE;
-    }
-
-    /**
      * Der Reiter schickt das Feld immer mit (das Formular traegt die ganze
      * Raumauswahl), ein fehlendes `resources` heisst deshalb „von einem anderen
      * Reiter gespeichert" und laesst die Einstellung unangetastet.
@@ -5282,7 +4790,7 @@ final class SettingsPage
         // Ueber resolveRoomsMode() und nicht direkt aus $existing: Sonst
         // schriebe das Speichern eines *anderen* Reiters die Bruecke aus 1.12.0
         // still auf den Standard um.
-        $bestehend = self::resolveRoomsMode($existing);
+        $bestehend = ResourceList::resolveMode($existing);
 
         if (!array_key_exists('resources', $input)) {
             return $bestehend;
@@ -5290,186 +4798,6 @@ final class SettingsPage
 
         $gewaehlt = (string) ($input['rooms_mode'] ?? '');
 
-        return in_array($gewaehlt, self::ROOM_MODES, true) ? $gewaehlt : $bestehend;
-    }
-
-    /**
-     * Die im Backend angehakten Raeume. Ist nichts angehakt, fragt der Sync die
-     * Buchungen gar nicht erst ab - das Ressourcenmodul kostet dann nichts.
-     *
-     * @return int[]
-     */
-    public static function enabledResourceIds(): array
-    {
-        $resources = array_filter(self::get()['resources'] ?? [], static fn (array $r): bool => !empty($r['enabled']));
-
-        // In ChurchTools' eigener Ordnung, weil diese Reihenfolge im Modus
-        // „alle Raeume nennen" die Anzeigereihenfolge ist - sonst haengt die
-        // Zeile daran, wer wann gebucht hat.
-        uasort($resources, static fn (array $a, array $b): int
-            => [$a['sort_key'] ?? 0, $a['name']] <=> [$b['sort_key'] ?? 0, $b['name']]);
-
-        return array_map('intval', array_keys($resources));
-    }
-
-    /**
-     * Name und Anschrift der Gemeinde, wie ChurchTools sie fuehrt - leer,
-     * solange noch kein Sync gelaufen ist.
-     *
-     * Eigene Option statt eines Feldes in den Einstellungen: Hier tippt
-     * niemand etwas ein, es ist eine Kopie aus `/api/info`.
-     *
-     * @return array{name?: string, street?: string, zip?: string, city?: string, district?: string, country?: string, latitude?: string, longitude?: string, postal_line?: string}
-     */
-    public static function churchAddress(): array
-    {
-        $stored = get_option(self::CHURCH_ADDRESS_OPTION, []);
-
-        return is_array($stored) ? $stored : [];
-    }
-
-    /**
-     * Holt die Anschrift der Gemeinde und legt sie ab. Laeuft bei jedem Sync
-     * mit, damit ein Umzug oder eine korrigierte Schreibweise von selbst
-     * ankommt.
-     *
-     * Eine unbrauchbare Antwort ueberschreibt den Bestand nicht (dieselbe
-     * Regel wie bei Kalendern und Raeumen seit 1.20.1). Der Preis ist
-     * bekannt: Loescht eine Gemeinde ihre Anschrift in ChurchTools wirklich,
-     * bleibt die gespeicherte stehen. Das ist die harmlosere Haelfte - sie
-     * steht nur in strukturierten Daten, waehrend eine leere Antwort sonst
-     * jedem Termin im Haus seine Anschrift naehme.
-     */
-    public static function refreshChurchAddress(Client $client): void
-    {
-        $address = $client->getInfo()['address'] ?? null;
-
-        if (!is_array($address)) {
-            return;
-        }
-
-        $stored = [
-            'name' => trim((string) ($address['name'] ?? '')),
-            'street' => trim((string) ($address['street'] ?? '')),
-            'zip' => trim((string) ($address['zip'] ?? '')),
-            'city' => trim((string) ($address['city'] ?? '')),
-            'district' => trim((string) ($address['district'] ?? '')),
-            'country' => trim((string) ($address['country'] ?? '')),
-            'latitude' => trim((string) ($address['latitude'] ?? '')),
-            'longitude' => trim((string) ($address['longitude'] ?? '')),
-        ];
-
-        // Ohne Gebaeudenamen laesst sich kein Raum zuordnen, ohne Strasse
-        // keine Anschrift ausweisen - fehlt beides, ist die Antwort fuer
-        // diesen Zweck leer.
-        if ($stored['name'] === '' && $stored['street'] === '') {
-            return;
-        }
-
-        update_option(self::CHURCH_ADDRESS_OPTION, $stored);
-    }
-
-    /**
-     * Die Raeume, die ChurchTools im angegebenen Gebaeude fuehrt.
-     *
-     * Der Vergleich geht ueber das Feld „Ort" an der Ressource gegen den Namen
-     * der Gemeindeanschrift aus `/api/info` - beides sind Gebaeudenamen, die
-     * dieselbe Person in dieselbe Instanz getippt hat, und genau deshalb
-     * unterscheiden sie sich in Schreibweise und Leerzeichen (an der echten
-     * Instanz steht der Gebaeudename an der Anschrift in Grossbuchstaben, an
-     * den Raeumen gemischt - streng verglichen traefe kein einziger Raum).
-     * Normalisiert wird deshalb auf Kleinschreibung ohne
-     * Leerraum - und keinen Schritt weiter: Aus „Haus 2" darf nie „Haus"
-     * werden.
-     *
-     * Ein leerer Gebaeudename heisst „keine Aussage moeglich" und liefert eine
-     * leere Liste, nicht etwa alle Raeume: Die Anschrift der Gemeinde an einen
-     * Raum zu haengen, von dem niemand weiss, wo er liegt, waere geraten.
-     *
-     * @return int[]
-     */
-    public static function resourceIdsInBuilding(string $buildingName): array
-    {
-        $needle = self::normalizeBuildingName($buildingName);
-
-        if ($needle === '') {
-            return [];
-        }
-
-        $found = [];
-
-        foreach (self::get()['resources'] ?? [] as $id => $resource) {
-            if (self::normalizeBuildingName((string) ($resource['location'] ?? '')) === $needle) {
-                $found[] = (int) $id;
-            }
-        }
-
-        return $found;
-    }
-
-    private static function normalizeBuildingName(string $name): string
-    {
-        return preg_replace('/\s+/u', '', mb_strtolower(trim($name))) ?? '';
-    }
-
-    private static function mergeCalendars(array $existing, array $remoteCalendars): array
-    {
-        $merged = [];
-
-        foreach ($remoteCalendars as $calendar) {
-            $id = (int) ($calendar['id'] ?? 0);
-
-            if ($id === 0) {
-                continue;
-            }
-
-            $remoteColor = (string) ($calendar['color'] ?? '#3388ff');
-
-            $merged[$id] = [
-                'name' => (string) ($calendar['name'] ?? ''),
-                'enabled' => (bool) ($existing[$id]['enabled'] ?? false),
-                'color' => (string) ($existing[$id]['color'] ?? $remoteColor),
-                'default_color' => $remoteColor,
-                'default_image_id' => (int) ($existing[$id]['default_image_id'] ?? 0),
-                'is_public' => self::calendarIsPublic($calendar),
-            ];
-        }
-
-        return $merged;
-    }
-
-    /**
-     * ChurchTools' eigene Einschaetzung, nicht unsere: `type` (`church` /
-     * `group` / `personal`) ist der Nachfolger von `isPublic`/`isPrivate` -
-     * beide stehen an der Instanz, gegen die dies verifiziert wurde, unter
-     * `@deprecated` als Alias von `type`, und `isPublic === true` deckt sich
-     * dort lueckenlos mit `type === 'church'`.
-     *
-     * Gewarnt wird nur auf eine ausdrueckliche Aussage hin: `type` group oder
-     * personal, sonst ein `isPublic: false`. Ein `null` oder ein Typ, den
-     * diese Fassung nicht kennt, ist keine Aussage - er faellt auf `isPublic`
-     * zurueck und zuletzt auf `true`, wie ein ganz fehlendes Feld (aeltere
-     * Instanz, geaenderte Antwortform). Ein Fehlalarm auf jedem Kalender
-     * waere schlimmer als ein ausbleibender Hinweis. Deshalb `isset` und kein
-     * `array_key_exists`: Die Fassung vor dem Umbau las `isPublic ?? true`
-     * und liess ein `null` damit ebenfalls durch.
-     */
-    private static function calendarIsPublic(array $calendar): bool
-    {
-        $type = $calendar['type'] ?? null;
-
-        if ($type === 'church') {
-            return true;
-        }
-
-        if ($type === 'group' || $type === 'personal') {
-            return false;
-        }
-
-        if (isset($calendar['isPublic'])) {
-            return (bool) $calendar['isPublic'];
-        }
-
-        return true;
+        return in_array($gewaehlt, ResourceList::MODES, true) ? $gewaehlt : $bestehend;
     }
 }

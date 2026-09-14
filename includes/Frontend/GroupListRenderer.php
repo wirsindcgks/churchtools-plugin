@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Frontend;
 
-use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Settings;
 
 /**
  * Die Gruppen einer Gruppen-Homepage als Kachelraster, fuer [ctp_groups], den
@@ -35,7 +35,7 @@ final class GroupListRenderer
     {
         $args = wp_parse_args($args, ['homepage' => '', 'columns' => self::DEFAULT_COLUMNS]);
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
-        $args = array_merge($args, EventListRenderer::designArgs(SettingsPage::get()));
+        $args = array_merge($args, EventListRenderer::designArgs(Settings::get()));
 
         $homepageId = GroupSettings::resolveHomepageId((string) $args['homepage']);
         $groups = $homepageId !== null
