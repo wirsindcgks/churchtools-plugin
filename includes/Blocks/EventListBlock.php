@@ -53,9 +53,21 @@ final class EventListBlock
         wp_localize_script(self::EDITOR_SCRIPT_HANDLE, 'ctpBlockCalendars', $calendars);
     }
 
+    /**
+     * Die Ausgabe steckt im Wrapper, den WordPress fuer jeden Block baut
+     * (get_block_wrapper_attributes()): Dort landen die Klassen aus
+     * block.json-`supports` - vor allem `alignwide`/`alignfull`. Ohne ihn
+     * waehlte man im Editor „Weite Breite", und auf der Seite geschah nichts,
+     * weil ein Block mit render_callback seinen Wrapper selbst ausgeben muss.
+     *
+     * Anlass (Nutzerbefund 2026-09-14): `columns="3"` ergab zwei Spalten, weil
+     * der Inhaltsbereich des Themes 645px breit ist und drei Kacheln
+     * mindestens 788px brauchen. Die weite Breite des Themes (1340px) gibt
+     * dem Raster den Platz.
+     */
     public function render(array $attributes): string
     {
-        return (new EventListRenderer())->render([
+        return self::wrap((new EventListRenderer())->render([
             'calendar_ids' => SettingsPage::resolveCalendarIds($attributes['calendarIds'] ?? []),
             'layout' => $attributes['layout'] ?? 'list',
             'limit' => (int) ($attributes['limit'] ?? 0),
@@ -70,6 +82,20 @@ final class EventListBlock
             'eventfinder' => (bool) ($attributes['eventfinder'] ?? false),
             'months' => (int) ($attributes['months'] ?? 0),
             'paging' => (bool) ($attributes['paging'] ?? true),
-        ]);
+        ]));
+    }
+
+    /**
+     * Ausserhalb eines Block-Renderlaufs (etwa in einem Test) gibt es keinen
+     * Block, dessen Wrapper sich bauen liesse - dann bleibt die Ausgabe, wie
+     * sie ist.
+     */
+    public static function wrap(string $html): string
+    {
+        if (!function_exists('get_block_wrapper_attributes') || \WP_Block_Supports::$block_to_render === null) {
+            return $html;
+        }
+
+        return '<div ' . get_block_wrapper_attributes() . '>' . $html . '</div>';
     }
 }

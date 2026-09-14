@@ -2661,7 +2661,7 @@ final class SettingsPage
                     </tr>
                     <tr>
                         <td><code>columns</code></td>
-                        <td><?php esc_html_e('Nur bei Grid-Layout relevant: Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Nur bei Grid-Layout: höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px.', 'churchtools-plugin'); ?></td>
                         <td><code>3</code></td>
                     </tr>
                     <tr>

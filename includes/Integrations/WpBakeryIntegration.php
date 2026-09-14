@@ -226,6 +226,7 @@ final class WpBakeryIntegration
                 [
                     'type' => 'textfield',
                     'heading' => __('Spalten (nur Grid)', 'churchtools-plugin'),
+                    'description' => __('Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px.', 'churchtools-plugin'),
                     'param_name' => 'columns',
                     'value' => '3',
                     'dependency' => ['element' => 'layout', 'value' => 'grid'],
@@ -328,6 +329,7 @@ final class WpBakeryIntegration
                 [
                     'type' => 'textfield',
                     'heading' => __('Spalten', 'churchtools-plugin'),
+                    'description' => __('Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px.', 'churchtools-plugin'),
                     'param_name' => 'columns',
                     'value' => '3',
                 ],

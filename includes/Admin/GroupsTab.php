@@ -546,7 +546,7 @@ final class GroupsTab
                     </tr>
                     <tr>
                         <td><code>columns</code></td>
-                        <td><?php esc_html_e('Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px.', 'churchtools-plugin'); ?></td>
                         <td><code>3</code></td>
                     </tr>
                 </tbody>

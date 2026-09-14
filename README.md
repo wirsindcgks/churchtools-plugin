@@ -134,7 +134,7 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt *Events → Kalender
 | --- | --- |
 | `calendar` | Kalender-IDs und/oder -Namen, kommagetrennt. Leer = alle aktiven |
 | `layout` | `list` (Standard), `grid` oder `upcoming` |
-| `columns` | Spalten bei `grid`, 2–6 (Standard 3); auf schmalen Bildschirmen automatisch weniger |
+| `columns` | Spalten bei `grid`, 2–6 (Standard 3) – höchstens so viele, wie in den Inhaltsbereich passen, je Kachel mindestens 240px |
 | `limit` | Obergrenze; bei `upcoming` die Gesamtzahl inklusive der großen Kachel |
 | `eventfinder` | Geführte Leiste mit Themen- und Zeitraum-Knöpfen |
 | `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
@@ -166,6 +166,8 @@ Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools 
 **Filter und Suche laufen im Browser** und funktionieren deshalb auch hinter einem Caching-Plugin. Was jenseits des geladenen Zeitraums liegt, holt das Plugin bei Bedarf nach.
 
 **Ein Caching-Plugin braucht eine Ausnahme.** Zusammengefasstes JavaScript („Minify“/„Combine“) sollte `assets/js/frontend.js` und `assets/css/frontend.css` auslassen. Das Plugin hängt seine Versionsnummer an beide Adressen, ein Update erneuert sie damit von selbst; in einer zusammengefassten Datei entfällt dieser Mechanismus, und wiederkehrende Besucher können nach einem Update noch tagelang das alte Skript benutzen. Dasselbe gilt für „JavaScript erst bei der ersten Interaktion laden“ – diese erste Interaktion ist der Klick auf einen Termin. Näheres im FAQ-Teil der [readme.txt](readme.txt).
+
+**Weniger Spalten als eingestellt?** `columns` ist eine Obergrenze. Jede Kachel ist mindestens 240px breit; passt die gewünschte Zahl nicht in den Inhaltsbereich des Themes, stehen weniger nebeneinander – drei Kacheln brauchen rund 790px, viele Block-Themes geben dem Inhalt nur um 650px. Abhilfe: den Block „ChurchTools Events“ bzw. „ChurchTools Gruppen“ in der Werkzeugleiste auf **Weite Breite** oder **Volle Breite** stellen, einen Shortcode-Block dafür in einen Gruppe-Block mit weiter Breite legen.
 
 **Die Adresse eines Termins besteht aus Titel und Datum** (`gottesdienst-06-09-2026`), nicht aus einer Nummer und nicht aus dem Titel allein: „Gottesdienst" gibt es jedes Wochenende, ein Titel benennt also eine Serie und nicht einen Termin. Ändert sich der Titel in ChurchTools, ändert sich die Adresse mit. Wird die Elternseite nachträglich gesetzt, leiten die bisherigen Adressen dauerhaft auf die neuen weiter.
 

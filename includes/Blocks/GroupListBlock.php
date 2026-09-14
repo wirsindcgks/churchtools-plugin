@@ -45,11 +45,12 @@ final class GroupListBlock
         wp_localize_script(self::EDITOR_SCRIPT_HANDLE, 'ctpBlockGroupHomepages', $homepages);
     }
 
+    /** Im Block-Wrapper, siehe EventListBlock::render(). */
     public function render(array $attributes): string
     {
-        return (new GroupListRenderer())->render([
+        return EventListBlock::wrap((new GroupListRenderer())->render([
             'homepage' => (string) ($attributes['homepage'] ?? ''),
             'columns' => (int) ($attributes['columns'] ?? 3),
-        ]);
+        ]));
     }
 }

@@ -40,6 +40,9 @@ final class DocumentationLabelsTest extends TestCase
     private const FREMDE_BEGRIFFE = [
         // WordPress selbst
         'Einfach',
+        // Ausrichtung eines Blocks in der Werkzeugleiste („Weite Breite" nennt
+        // der Hilfetext des Plugins selbst, „Volle Breite" nur WordPress)
+        'Volle Breite',
         // Caching- und Optimierungs-Plugins, siehe FAQ-Teil der readme.txt
         'Minify',
         'Combine',

@@ -49,7 +49,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `calendar` – Kommagetrennte Liste von Kalender-IDs und/oder -Namen. Leer = alle aktiven Kalender.
 * `layout` – Ansicht: `list` (Standard), `grid` oder `upcoming`.
 * `limit` – Obergrenze für die Anzahl der Termine (Standard: `0` = unbegrenzt). Bei `layout="list"`/`"grid"` bestimmt der Zeitraum (`months`), wie viel angezeigt wird; `limit` wirkt dort nur als Deckel pro Nachlade-Schritt. Bei `layout="upcoming"` die Gesamtzahl inklusive Hero-Kachel (`0` = 10).
-* `columns` – Nur bei `layout="grid"` relevant: Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3). Auf schmaleren Bildschirmen wird automatisch reduziert (1 Spalte auf Smartphones, 2 auf Tablets), unabhängig vom gewählten Wert.
+* `columns` – Nur bei `layout="grid"` relevant: höchstens so viele Spalten, 2–6 (Standard: 3). Das ist eine Obergrenze: Jede Kachel ist mindestens 240px breit, und es stehen nur so viele nebeneinander, wie in den Inhaltsbereich passen – gemessen wird die Breite, die das Raster tatsächlich hat, nicht der Bildschirm. Drei Kacheln brauchen rund 790px; viele Block-Themes geben dem Inhalt nur um 650px, dann werden es zwei. Abhilfe steht unter „Gutenberg-Block“.
 * `click` – Klickverhalten pro Kachel: `default` (Standard, folgt der Einstellung unter „Einstellungen → Design“), `none`, `popup` oder `page`.
 * `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
 * `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
@@ -88,6 +88,8 @@ Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`)
 
 Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der unter Events → Kalender geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid), maximale Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung, Nachladen-Button und Zeitraum pro Seite festlegen.
 
+Beide Blöcke – „ChurchTools Events“ und „ChurchTools Gruppen“ – lassen sich in der Werkzeugleiste auf „Weite Breite“ oder „Volle Breite“ stellen, sofern das Theme das anbietet. Das ist der Weg zu mehr Spalten, wenn der Inhaltsbereich des Themes schmal ist. Ein Shortcode im Shortcode-Block bekommt dieselbe Breite, wenn er in einem Gruppe-Block mit weiter Breite steht.
+
 = WPBakery-Element =
 
 Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Grid“ als Ansicht gewählt ist.
@@ -99,7 +101,7 @@ Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus Chur
 `[ctp_groups homepage="Kleingruppen" columns="3"]`
 
 * `homepage` – Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage (bei mehreren angehakten bleibt die Liste leer).
-* `columns` – Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3).
+* `columns` – höchstens so viele Spalten, 2–6 (Standard: 3); wie bei den Terminen nur so viele, wie in den Inhaltsbereich passen.
 
 Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ steht dieselbe Auswahl als Liste der angehakten Homepages.
 

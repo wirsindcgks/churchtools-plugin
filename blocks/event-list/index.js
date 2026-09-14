@@ -85,6 +85,10 @@ registerBlockType(metadata.name, {
 						{layout === 'grid' && (
 							<RangeControl
 								label={__('Spalten', 'churchtools-plugin')}
+								help={__(
+									'Höchstens so viele, wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Für mehr Spalten den Block auf „Weite Breite“ stellen.',
+									'churchtools-plugin'
+								)}
 								value={columns}
 								onChange={(value) => setAttributes({ columns: value })}
 								min={2}

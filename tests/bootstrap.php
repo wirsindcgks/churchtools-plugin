@@ -891,3 +891,20 @@ function esc_attr__(string $text, string $domain = ''): string
 {
     return esc_attr($text);
 }
+
+/**
+ * Block-Wrapper (Blocks\EventListBlock::wrap()): WordPress setzt den gerade
+ * gerenderten Block auf WP_Block_Supports::$block_to_render und baut daraus
+ * die Klassen aus block.json-`supports`. Hier ein fester Wert, damit der Test
+ * sieht, ob die Ausgabe hineingelegt wird.
+ */
+class WP_Block_Supports
+{
+    /** @var array|null */
+    public static $block_to_render = null;
+}
+
+function get_block_wrapper_attributes(array $extra = []): string
+{
+    return 'class="wp-block-churchtools-plugin-group-list alignwide"';
+}
