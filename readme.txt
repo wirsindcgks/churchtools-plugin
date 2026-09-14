@@ -19,7 +19,7 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
 * **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in der Optik des Plugins, mit Treffzeit und freien Plätzen – per Shortcode, Block oder WPBakery-Element, mit eigenem Sync-Intervall und ohne API-Key.
-* **Design-Tab** mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
+* **Design** unter „Einstellungen“ mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
 * **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
@@ -31,16 +31,16 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 
 1. Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` hochladen.
 2. Plugin aktivieren.
-3. Im Menü „ChurchTools“ → Tab „Verbindung“ den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
-4. Im Tab „Kalender“ auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
-5. Im Tab „Übersicht“ einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
-6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele im Tab „Einbinden“).
+3. Unter ChurchTools → Einstellungen → Verbindung den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
+4. Unter ChurchTools → Events → Kalender auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
+5. In der Übersicht einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
+6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele unter Events → Einbinden, für Gruppen unter Gruppen → Einbinden).
 
-Alle zehn Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter „ChurchTools“ nur die drei, die man auch von anderswo aus ansteuert: „Übersicht“, „Design“ und „Events“.
+Das Backend hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen), Events (Kalender, Räume, Synchronisation, Terminliste, Einbinden), Gruppen (Homepages, Einbinden) und Einstellungen (Verbindung, Design, Updates).
 
 == Verwendung ==
 
-Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbinden – alle drei nutzen dieselbe Rendering-Basis und bieten dieselben Optionen. Welche Kalender-IDs/-Namen zur Verfügung stehen, zeigt der „Kalender“-Tab in den Plugin-Einstellungen.
+Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbinden – alle drei nutzen dieselbe Rendering-Basis und bieten dieselben Optionen. Welche Kalender-IDs/-Namen zur Verfügung stehen, zeigt Events → Kalender im Backend.
 
 = Shortcode =
 
@@ -50,12 +50,12 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `layout` – Ansicht: `list` (Standard), `grid` oder `upcoming`.
 * `limit` – Obergrenze für die Anzahl der Termine (Standard: `0` = unbegrenzt). Bei `layout="list"`/`"grid"` bestimmt der Zeitraum (`months`), wie viel angezeigt wird; `limit` wirkt dort nur als Deckel pro Nachlade-Schritt. Bei `layout="upcoming"` die Gesamtzahl inklusive Hero-Kachel (`0` = 10).
 * `columns` – Nur bei `layout="grid"` relevant: Spaltenzahl auf breiten Bildschirmen, 2–6 (Standard: 3). Auf schmaleren Bildschirmen wird automatisch reduziert (1 Spalte auf Smartphones, 2 auf Tablets), unabhängig vom gewählten Wert.
-* `click` – Klickverhalten pro Kachel: `default` (Standard, folgt der Design-Tab-Einstellung), `none`, `popup` oder `page`.
+* `click` – Klickverhalten pro Kachel: `default` (Standard, folgt der Einstellung unter „Einstellungen → Design“), `none`, `popup` oder `page`.
 * `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
 * `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
 * `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
 * `eventfinder` – Geführte Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
-* `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung im „Design“-Tab unter „Listen“, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
+* `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung unter „Einstellungen → Design“ im Bereich „Listen“, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
 * `paging` – Button „Weitere Termine laden“ anzeigen: `1` (Standard) oder `0`. Nur bei `layout="list"`/`"grid"`.
 
 = Die drei Ansichten =
@@ -78,15 +78,15 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 **Liste** und **Grid** zeigen nicht alle synchronisierten Termine auf einmal, sondern zunächst den angebrochenen laufenden Monat plus den darauffolgenden – bei Bedarf hängt ein Klick auf „Weitere Termine laden“ die jeweils nächsten zwei Monate unten an, ohne die Seite neu zu laden. Das hält die erste Seitenauslieferung klein, gerade bei vielen Kalendern mit wöchentlichen Serien.
 
-Die Zeitraumlänge ist global im „Design“-Tab im Bereich „Listen“ einstellbar (Standard: 2 Monate) und pro Shortcode/Block/Element per `months` überschreibbar; der Nachladen-Button lässt sich mit `paging="0"` abschalten (z. B. für eine kurze Teaser-Liste mit `limit="3"`). Die Grenzen liegen immer auf Monatsanfängen, passen also exakt zu den Monatstrennern (`month_dividers="1"`). Enthält ein Zeitraum überhaupt keine Termine, springt die Ansicht automatisch weiter bis zum nächsten Monat mit Terminen, statt eine leere Liste zu zeigen.
+Die Zeitraumlänge ist global unter „Einstellungen → Design“ im Bereich „Listen“ einstellbar (Standard: 2 Monate) und pro Shortcode/Block/Element per `months` überschreibbar; der Nachladen-Button lässt sich mit `paging="0"` abschalten (z. B. für eine kurze Teaser-Liste mit `limit="3"`). Die Grenzen liegen immer auf Monatsanfängen, passen also exakt zu den Monatstrennern (`month_dividers="1"`). Enthält ein Zeitraum überhaupt keine Termine, springt die Ansicht automatisch weiter bis zum nächsten Monat mit Terminen, statt eine leere Liste zu zeigen.
 
-Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ im Sync-Tab) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
+Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ unter Events → Synchronisation) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
 
 Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte Werkzeugleiste unter der Frage „Welche Angebote sprechen dich an?“, mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
 
 = Gutenberg-Block =
 
-Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der im „Kalender“-Tab geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid), maximale Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung, Nachladen-Button und Zeitraum pro Seite festlegen.
+Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der unter Events → Kalender geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid), maximale Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung, Nachladen-Button und Zeitraum pro Seite festlegen.
 
 = WPBakery-Element =
 
@@ -94,7 +94,7 @@ Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; 
 
 = Gruppen =
 
-Der Reiter „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus ChurchTools – als Ersatz für deren iframe, in derselben Optik wie die Termine. Mit „Homepages von ChurchTools laden“ die Liste holen, die gewünschten anhaken und speichern; der erste Abgleich startet danach von selbst.
+Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus ChurchTools – als Ersatz für deren iframe, in derselben Optik wie die Termine. Unter Gruppen → Homepages mit „Homepages von ChurchTools laden“ die Liste holen, die gewünschten anhaken und speichern; der erste Abgleich startet danach von selbst. Fertige Shortcodes mit den angehakten Homepages stehen unter Gruppen → Einbinden.
 
 `[ctp_groups homepage="Kleingruppen" columns="3"]`
 
@@ -105,13 +105,13 @@ Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppe
 
 Abgefragt wird ohne API-Key, also so, wie ein Besucher die Homepage sieht. ChurchTools entscheidet damit selbst, welche Gruppen erscheinen und ob Bilder dabei sind; eine zweite Auswahl in WordPress gibt es nicht. Leiter werden nicht angezeigt – ChurchTools liefert sie ohne Anmeldung nicht aus.
 
-Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder aus dem „Design“-Tab gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
+Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
 
-Die Gruppen haben ein eigenes „Sync-Intervall“ im Reiter „Gruppen“: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Gruppen jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Abwählen einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
+Die Gruppen haben ein eigenes „Sync-Intervall“ unter Gruppen → Homepages: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Gruppen jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Abwählen einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
 
 = Adresse der Terminseite =
 
-Wer als Klickverhalten „Eigene Seite“ nutzt, sollte im Tab „Design“ im Bereich „Detailansicht“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
+Wer als Klickverhalten „Eigene Seite“ nutzt, sollte unter „Einstellungen → Design“ im Bereich „Detailansicht“ unter „Adresse der Terminseite“ eine bestehende Seite auswählen – typischerweise die, auf der die Terminliste steht. Zwei Dinge ändern sich damit:
 
 * Die Adressen werden lesbar: `/termine/gottesdienst-06-09-2026/` statt `/churchtools-termin/4021/`. Titel *und* Datum, weil ein Titel allein eine Terminserie benennt und nicht einen einzelnen Termin.
 * Der Termin wird zum Inhalt dieser Seite. WordPress liefert damit eine ganz normale Seite aus – mit der Vorlage des Theme, dessen Kopf- und Fußbereich und allem, was sonst dazugehört. Ohne ausgewählte Seite gibt es für den Termin keinen echten WordPress-Beitrag; auf einem Block-Theme (Twenty Twenty-Two und neuer) fehlt der Terminseite dann die Vorlage des Theme.
@@ -120,13 +120,13 @@ Die ausgewählte Seite bleibt ganz normal erreichbar und behält ihren eigenen I
 
 = Teilen-Button =
 
-Popup und eigene Terminseite können einen „Teilen“-Button zeigen. Er ist standardmäßig aus und wird im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
+Popup und eigene Terminseite können einen „Teilen“-Button zeigen. Er ist standardmäßig aus und wird unter „Einstellungen → Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“ eingeschaltet; in derselben Drag&Drop-Liste lässt er sich auch platzieren wie jedes andere Feld der Detailansicht. Die Kacheln in Liste und Grid bekommen ihn nicht – er gehört zum geöffneten Termin.
 
 Auf dem Telefon öffnet er das Teilen-Menü des Geräts (WhatsApp, Signal, Mail und alles, was dort installiert ist). Am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“; wo auch die Zwischenablage nicht zur Verfügung steht (kein HTTPS), wird die Adresse zum Markieren angezeigt. Es wird kein Skript eines Drittanbieters geladen und kein Zählpixel eingebunden: Solange niemand den Button drückt, geht nichts ins Netz.
 
 = Importieren-Button =
 
-Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls im Tab „Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild. Benennt die Ortszeile einen Raum im eigenen Haus, stehen die Anschrift der Gemeinde und ihre Koordinaten dabei – erst damit kann eine Karten-App eine Route anbieten, ein Raumname allein verortet nichts. Bei einem Termin mit eigener Adresse kommen dessen Koordinaten aus ChurchTools mit.
+Daneben lässt sich ein „Importieren“-Button einschalten – ebenfalls unter „Einstellungen → Design“ im Bereich „Detailansicht“ unter „Aufbau der Detailansicht“, mit eigenem Häkchen und eigener Position. Er legt den Termin als Kalenderdatei (.ics) ab, die Handy, Outlook und Thunderbird direkt öffnen. Mit übernommen werden Titel, Untertitel, Zeit, Ort, Beschreibung, Kalendername und Bild. Benennt die Ortszeile einen Raum im eigenen Haus, stehen die Anschrift der Gemeinde und ihre Koordinaten dabei – erst damit kann eine Karten-App eine Route anbieten, ein Raumname allein verortet nichts. Bei einem Termin mit eigener Adresse kommen dessen Koordinaten aus ChurchTools mit.
 
 Daneben steht wahlweise ein **„Abonnieren“-Button** (eigenes Häkchen, eigene Position). Er trägt nicht diesen einen Termin ein, sondern alle künftigen des Kalenders, zu dem er gehört – und zwar dauerhaft: Der Kalender des Besuchers holt sich die Liste selbst wieder ab, Verschiebungen und Absagen kommen von allein an. Der Feed liegt unter `/churchtools-termine.ics`, auf Wunsch je Kalender (`?kalender=Gottesdienst`), und enthält genau das, was auch auf der Website steht. Der Link benutzt `webcal://`, woran iPhone, Mac, Outlook und Thunderbird ein Abonnement erkennen; Android und Google Kalender kennen das nicht – dort die Adresse kopieren und im Kalender unter „Per URL hinzufügen“ einfügen.
 
@@ -146,7 +146,7 @@ Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `eve
 
 = Wie weit im Voraus werden Termine synchronisiert? =
 
-Standardmäßig 365 Tage, einstellbar im Tab „Synchronisation“. Der Wert bestimmt zugleich, wie weit „Weitere Termine laden“ im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.
+Standardmäßig 365 Tage, einstellbar unter Events → Synchronisation. Der Wert bestimmt zugleich, wie weit „Weitere Termine laden“ im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.
 
 = Was passiert, wenn ich einen Kalender wieder deaktiviere? =
 
@@ -154,7 +154,7 @@ Seine Termine verschwinden sofort aus allen Frontend-Ansichten – auch dort, wo
 
 = Wie werde ich einen Kalender ganz aus der Liste los? =
 
-Gar nicht von Hand – und das ist Absicht: Die Liste im Tab „Kalender“ spiegelt, was ChurchTools dem hinterlegten API-Zugang zeigt. Jede Synchronisation gleicht sie automatisch mit ab, ein Klick auf „Kalender von ChurchTools laden“ holt sie sofort. Verliert der Zugang die Leseberechtigung für einen Kalender (oder wird der Kalender dort gelöscht), verschwindet er damit von selbst aus der Liste; ein dort neu angelegter Kalender taucht ebenso von selbst auf (zunächst deaktiviert). Bleibt er trotzdem stehen, liefert die API ihn weiterhin aus – dann ist die Berechtigung auf ChurchTools-Seite noch nicht so gesetzt, wie gedacht.
+Gar nicht von Hand – und das ist Absicht: Die Liste unter Events → Kalender spiegelt, was ChurchTools dem hinterlegten API-Zugang zeigt. Jede Synchronisation gleicht sie automatisch mit ab, ein Klick auf „Kalender von ChurchTools laden“ holt sie sofort. Verliert der Zugang die Leseberechtigung für einen Kalender (oder wird der Kalender dort gelöscht), verschwindet er damit von selbst aus der Liste; ein dort neu angelegter Kalender taucht ebenso von selbst auf (zunächst deaktiviert). Bleibt er trotzdem stehen, liefert die API ihn weiterhin aus – dann ist die Berechtigung auf ChurchTools-Seite noch nicht so gesetzt, wie gedacht.
 
 Seine gespeicherten Termine ist ein Kalender schon los, sobald er hier abgewählt ist (siehe die Frage davor) – dafür muss er nicht aus der Liste verschwinden.
 
@@ -166,7 +166,7 @@ Kommt von ChurchTools gar keine Antwort mit Terminen zurück, obwohl für den ab
 
 = Wie zuverlässig läuft der Sync im eingestellten Intervall? =
 
-Standardmäßig nutzt das Plugin WP-Cron, WordPress' eingebauten Cron-Mechanismus. WP-Cron feuert aber nicht wie ein echter Systemdienst zur genauen Uhrzeit, sondern nur, wenn tatsächlich ein Seitenaufruf stattfindet – auf wenig besuchten Gemeinde-Websites kann ein als „stündlich“ eingestellter Sync dadurch real deutlich seltener laufen (auch der „Jetzt synchronisieren“-Button im „Synchronisation“-Tab löst jederzeit einen sofortigen, manuellen Lauf aus, unabhängig davon).
+Standardmäßig nutzt das Plugin WP-Cron, WordPress' eingebauten Cron-Mechanismus. WP-Cron feuert aber nicht wie ein echter Systemdienst zur genauen Uhrzeit, sondern nur, wenn tatsächlich ein Seitenaufruf stattfindet – auf wenig besuchten Gemeinde-Websites kann ein als „stündlich“ eingestellter Sync dadurch real deutlich seltener laufen (auch der „Jetzt synchronisieren“-Button (in der Übersicht und unter Events → Synchronisation) löst jederzeit einen sofortigen, manuellen Lauf aus, unabhängig davon).
 
 Wer verlässlichere Zeitabstände braucht, kann WP-Cron über die Konstante `DISABLE_WP_CRON` in `wp-config.php` deaktivieren und stattdessen einen echten System-Cronjob einrichten, der `wp-cron.php` in regelmäßigen Abständen per `wget`/`curl` aufruft, z. B. alle 15 Minuten:
 
@@ -184,7 +184,7 @@ Ungetestet. Technisch legt es seine Tabelle mit dem Tabellenpräfix der jeweilig
 
 = Was passiert bei einem Serverumzug oder einer Änderung der WordPress-Salts? =
 
-Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es im Tab „Übersicht“ ausdrücklich; der Key muss dann im Tab „Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
+Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es in der Übersicht ausdrücklich; der Key muss dann unter „Einstellungen → Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
 
 = Werden die Termine von Suchmaschinen gefunden? =
 
@@ -195,7 +195,7 @@ Ja, und dafür ist ab 1.16.0 nichts einzustellen:
 * Unter `/churchtools-termine-sitemap.xml` liegt eine Sitemap aller kommenden Termine, in der robots.txt angekündigt. Sie ist der Weg zu allem, was erst hinter „Weitere Termine laden“ steht – dort klickt keine Suchmaschine.
 * Terminseiten tragen einen eigenen Seitentitel, eine eigene Kurzbeschreibung (Datum, Uhrzeit, Ort zuerst), das Bild des Termins als Vorschau und ein Canonical auf sich selbst.
 
-Empfehlung bleibt die Einstellung *Adresse der Terminseite* im Design-Tab, Bereich *Detailansicht*: Ohne sie liegen die Termine unter `/churchtools-termin/<id>/` und damit außerhalb der Vorlage des Theme – als Ziel eines Suchtreffers ist eine Seite mit Kopf- und Fußbereich die bessere Landung.
+Empfehlung bleibt die Einstellung *Adresse der Terminseite* unter „Einstellungen → Design“, Bereich *Detailansicht*: Ohne sie liegen die Termine unter `/churchtools-termin/<id>/` und damit außerhalb der Vorlage des Theme – als Ziel eines Suchtreffers ist eine Seite mit Kopf- und Fußbereich die bessere Landung.
 
 Mit **Yoast SEO** oder **Rank Math** greifen deren Angaben; das Plugin füllt sie mit den Daten des Termins (Titel, Beschreibung, Canonical, Vorschau). Andere SEO-Plugins (SEOPress, All in One SEO, The SEO Framework) werden erkannt, damit nichts doppelt im Seitenkopf steht – ihre Titel und Canonicals bleiben dann aber die der Terminliste. Strukturierte Daten und Sitemap sind davon unberührt.
 
@@ -228,14 +228,14 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 * Ein Gruppenfinder mit Filtern oder eine Anmeldung zu Gruppen in WordPress – die Gruppenliste führt zur Anmeldung in ChurchTools
 * Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
 * Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
-* Die Drag-and-drop-Sortierung im Tab „Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
+* Die Drag-and-drop-Sortierung unter „Einstellungen → Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
 * Titel und Canonical einer Terminseite an SEOPress, All in One SEO oder The SEO Framework übergeben – unterstützt sind Yoast SEO und Rank Math
 
 == Datenschutz ==
 
 = Welche Daten werden gespeichert? =
 
-Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe „Synchronisation“-Tab).
+Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe Events → Synchronisation).
 
 Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Wochentag, Treffzeit, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder.
 

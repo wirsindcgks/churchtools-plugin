@@ -138,7 +138,7 @@ final class SettingsPage
     private const AREA_TABS = [
         'overview' => ['status'],
         'events' => ['calendars', 'rooms', 'sync', 'events', 'embed'],
-        'groups' => ['groups'],
+        'groups' => ['groups', 'group_embed'],
         'settings' => ['connection', 'design', 'updates'],
     ];
 
@@ -148,6 +148,38 @@ final class SettingsPage
      * auf den ersten davon (wp-admin/menu-header.php), und ein Klick auf
      * „ChurchTools" soll weiter dorthin fuehren, wo er immer hinfuehrte.
      */
+    /**
+     * Symbol und Unterzeile im Kopf jeder Bereichsseite. Die Ueberschrift ist
+     * der Name des Menueeintrags (Nutzerwunsch 2026-09-14: „matche sie auf das
+     * entsprechende Menue") - vorher stand auf jeder Seite „ChurchTools
+     * Events" mit einer Unterzeile ueber Kalender, auch unter „Gruppen".
+     *
+     * @return array{icon: string, tagline: string}
+     */
+    private static function areaHeader(string $area): array
+    {
+        $headers = [
+            'overview' => [
+                'icon' => 'dashboard',
+                'tagline' => __('Der Zustand von Events und Gruppen auf einen Blick.', 'churchtools-plugin'),
+            ],
+            'events' => [
+                'icon' => 'calendar-alt',
+                'tagline' => __('Kalender-Events aus ChurchTools synchronisieren und anzeigen.', 'churchtools-plugin'),
+            ],
+            'groups' => [
+                'icon' => 'groups',
+                'tagline' => __('Gruppen aus den Gruppen-Homepages in ChurchTools übernehmen und anzeigen.', 'churchtools-plugin'),
+            ],
+            'settings' => [
+                'icon' => 'admin-settings',
+                'tagline' => __('Verbindung, Design und Updates – gilt für Events und Gruppen.', 'churchtools-plugin'),
+            ],
+        ];
+
+        return $headers[$area] ?? $headers['overview'];
+    }
+
     private static function areaSlug(string $area): string
     {
         return $area === 'overview' ? self::PAGE_SLUG : self::PAGE_SLUG . '-' . $area;
@@ -240,11 +272,15 @@ final class SettingsPage
             'connection' => __('Verbindung', 'churchtools-plugin'),
             'calendars' => __('Kalender', 'churchtools-plugin'),
             'rooms' => __('Räume', 'churchtools-plugin'),
-            'groups' => __('Gruppen', 'churchtools-plugin'),
+            'groups' => __('Homepages', 'churchtools-plugin'),
+            'group_embed' => __('Einbinden', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
             'embed' => __('Einbinden', 'churchtools-plugin'),
-            'events' => __('Events', 'churchtools-plugin'),
+            // „Terminliste" statt „Events": Der Bereich heisst seit 2026-09-14
+            // selbst „Events", ein gleichnamiger Reiter darin sagte nicht, was
+            // er zeigt.
+            'events' => __('Terminliste', 'churchtools-plugin'),
             'updates' => __('Updates', 'churchtools-plugin'),
         ];
     }
@@ -309,6 +345,7 @@ final class SettingsPage
             'calendars' => 'calendar-alt',
             'rooms' => 'location-alt',
             'groups' => 'groups',
+            'group_embed' => 'editor-code',
             'sync' => 'update',
             'design' => 'admin-appearance',
             'embed' => 'editor-code',
@@ -709,7 +746,7 @@ final class SettingsPage
 
     public static function apiKeyDecryptionErrorMessage(): string
     {
-        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte im Tab „Verbindung“ neu eingeben.', 'churchtools-plugin');
+        return __('Der gespeicherte API-Key lässt sich nicht mehr entschlüsseln (z. B. nach einer Änderung von AUTH_KEY) – bitte unter „Einstellungen → Verbindung“ neu eingeben.', 'churchtools-plugin');
     }
 
     public static function getEnabledCalendarIds(): array
@@ -2054,7 +2091,7 @@ final class SettingsPage
             );
         }
         echo '<p class="description">'
-            . esc_html__('Gilt überall, wo Termine eingebunden sind – außer ein Eintrag setzt click selbst (siehe Reiter „Einbinden“).', 'churchtools-plugin')
+            . esc_html__('Gilt überall, wo Termine eingebunden sind – außer ein Eintrag setzt click selbst (siehe „Events → Einbinden“).', 'churchtools-plugin')
             . '</p>';
     }
 
@@ -2497,7 +2534,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Drei Wege, dieselbe Darstellung', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Termine lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Events“ oder über das WPBakery-Element „ChurchTools Events“ einbinden. Alle drei rendern dasselbe – was im Tab „Design“ eingestellt ist, gilt für jeden von ihnen, ohne ein weiteres Attribut. Die Optionen unten überschreiben diese Einstellungen nur für den einen Baustein, in dem sie stehen.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Termine lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Events“ oder über das WPBakery-Element „ChurchTools Events“ einbinden. Alle drei rendern dasselbe – was unter „Einstellungen → Design“ eingestellt ist, gilt für jeden von ihnen, ohne ein weiteres Attribut. Die Optionen unten überschreiben diese Einstellungen nur für den einen Baustein, in dem sie stehen.', 'churchtools-plugin'); ?>
             </p>
             <p class="description">
                 <?php esc_html_e('Block und WPBakery-Element bieten dieselben Optionen in ihrer eigenen Seitenleiste an. Zu eigenen Theme-Templates siehe readme.txt.', 'churchtools-plugin'); ?>
@@ -2570,7 +2607,7 @@ final class SettingsPage
         <div class="ctp-panel">
             <h2><?php esc_html_e('Alle Attribute', 'churchtools-plugin'); ?></h2>
             <p class="description">
-                <?php esc_html_e('Jedes Attribut ist optional. Weggelassen gilt der Standard aus der rechten Spalte – und wo dort auf den Tab „Design“ verwiesen wird, die dortige Einstellung.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Jedes Attribut ist optional. Weggelassen gilt der Standard aus der rechten Spalte – und wo dort auf „Einstellungen → Design“ verwiesen wird, die dortige Einstellung.', 'churchtools-plugin'); ?>
             </p>
 
             <table class="widefat striped ctp-borderless">
@@ -2605,7 +2642,7 @@ final class SettingsPage
                             <?php
                             printf(
                                 /* translators: %d: globally configured number of months per page. */
-                                esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = die Einstellung im Tab „Design“ (aktuell %d).', 'churchtools-plugin'),
+                                esc_html__('Zeitraum pro Seite in Monaten (nur list/grid). 0 = die Einstellung unter „Einstellungen → Design“ (aktuell %d).', 'churchtools-plugin'),
                                 (int) self::get()['paging_months']
                             );
                             ?>
@@ -2626,7 +2663,7 @@ final class SettingsPage
                         <td><code>click</code></td>
                         <td>
                             <code>default</code> &middot; <code>none</code> &middot; <code>popup</code> &middot; <code>page</code>
-                            &ndash; <?php esc_html_e('überschreibt das Klickverhalten aus dem Tab „Design“ nur für diesen Shortcode', 'churchtools-plugin'); ?>
+                            &ndash; <?php esc_html_e('überschreibt das Klickverhalten aus „Einstellungen → Design“ nur für diesen Shortcode', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>default</code></td>
                     </tr>
@@ -2653,43 +2690,6 @@ final class SettingsPage
                             <?php esc_html_e('Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>0</code></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <?php
-        /*
-         * Eigenes Panel statt weiterer Zeilen in der Tabelle darueber: Die
-         * Gruppen haben einen eigenen Shortcode, und keins der Attribute oben
-         * gilt fuer ihn. Die fertigen Shortcodes je Homepage stehen im Reiter
-         * „Gruppen" zum Kopieren - hier nur die Referenz.
-         */
-        ?>
-        <div class="ctp-panel">
-            <h2><?php esc_html_e('Gruppen', 'churchtools-plugin'); ?></h2>
-            <p class="description">
-                <?php esc_html_e('[ctp_groups] zeigt die Gruppen einer Gruppen-Homepage. Die Homepage muss im Reiter „Gruppen“ angehakt sein; dort steht der passende Shortcode zum Kopieren.', 'churchtools-plugin'); ?>
-            </p>
-
-            <table class="widefat striped ctp-borderless">
-                <thead>
-                    <tr>
-                        <th><?php esc_html_e('Attribut', 'churchtools-plugin'); ?></th>
-                        <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
-                        <th><?php esc_html_e('Standard', 'churchtools-plugin'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>homepage</code></td>
-                        <td><?php esc_html_e('Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage.', 'churchtools-plugin'); ?></td>
-                        <td>&ndash;</td>
-                    </tr>
-                    <tr>
-                        <td><code>columns</code></td>
-                        <td><?php esc_html_e('Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
-                        <td><code>3</code></td>
                     </tr>
                 </tbody>
             </table>
@@ -3320,7 +3320,8 @@ final class SettingsPage
         $update = self::updateStatus();
         ?>
         <div class="ctp-panel">
-            <h2><?php esc_html_e('Verbindung & Betrieb', 'churchtools-plugin'); ?></h2>
+            <?php // Seit der Teilung in Bereiche (2026-09-14) neben dem Panel „Gruppen" darunter - vorher „Verbindung & Betrieb", obwohl alles darin die Termine betrifft. ?>
+            <h2><?php esc_html_e('Events', 'churchtools-plugin'); ?></h2>
             <?php
             /*
              * Aktionsleiste direkt unter der Ueberschrift, nicht mehr am Fuss
@@ -3357,10 +3358,10 @@ final class SettingsPage
                     <p>
                         <?php
                         printf(
-                            /* translators: %s: link to the "Verbindung" tab */
-                            esc_html__('Noch keine Instanz/API-Key hinterlegt. Im %s eintragen.', 'churchtools-plugin'),
+                            /* translators: %s: link to "Einstellungen → Verbindung" */
+                            esc_html__('Noch keine Instanz/API-Key hinterlegt. Unter %s eintragen.', 'churchtools-plugin'),
                             '<a href="' . esc_url(self::tabUrl('connection')) . '">'
-                                . esc_html__('Verbindung-Tab', 'churchtools-plugin') . '</a>'
+                                . esc_html__('Einstellungen → Verbindung', 'churchtools-plugin') . '</a>'
                         );
                         ?>
                     </p>
@@ -3431,6 +3432,8 @@ final class SettingsPage
             </p>
         </div>
 
+        <?php GroupsTab::renderOverviewPanel(); ?>
+
         <div class="ctp-panel">
             <h2><?php esc_html_e('Version', 'churchtools-plugin'); ?></h2>
             <table class="widefat striped ctp-borderless ctp-keyvalue-table">
@@ -3460,7 +3463,7 @@ final class SettingsPage
             <?php $latest = self::changelogReleases(1, 5); ?>
             <?php if ($latest !== []) : ?>
                 <h3><?php esc_html_e('Letzte Änderungen', 'churchtools-plugin'); ?></h3>
-                <?php // Nur die Kurzfassung - die Erklaerung dazu steht im Tab „Updates“. ?>
+                <?php // Nur die Kurzfassung - die Erklaerung dazu steht unter Einstellungen → Updates. ?>
                 <ul class="ctp-changelog-excerpt">
                     <?php foreach ($latest[0]['items'] as $item) : ?>
                         <li><?php echo esc_html($item['lead']); ?></li>
@@ -3468,7 +3471,7 @@ final class SettingsPage
                 </ul>
                 <p class="description">
                     <a href="<?php echo esc_url(self::tabUrl('updates')); ?>">
-                        <?php esc_html_e('Alle Änderungen im Tab „Updates“', 'churchtools-plugin'); ?>
+                        <?php esc_html_e('Alle Änderungen unter „Einstellungen → Updates“', 'churchtools-plugin'); ?>
                     </a>
                 </p>
             <?php endif; ?>
@@ -4088,14 +4091,18 @@ final class SettingsPage
         $icons = self::tabIcons();
         ?>
         <div class="wrap ctp-admin">
+            <?php
+            $area = self::currentArea();
+            $areaHeader = self::areaHeader($area);
+            ?>
             <div class="ctp-admin-header">
                 <span class="ctp-admin-logo" aria-hidden="true">
-                    <span class="dashicons dashicons-calendar-alt"></span>
+                    <span class="dashicons dashicons-<?php echo esc_attr($areaHeader['icon']); ?>"></span>
                 </span>
-                <h1><?php esc_html_e('ChurchTools Events', 'churchtools-plugin'); ?></h1>
+                <h1><?php echo esc_html(self::areas()[$area]); ?></h1>
             </div>
             <p class="ctp-admin-tagline">
-                <?php esc_html_e('Kalender-Events aus ChurchTools synchronisieren, gestalten und anzeigen.', 'churchtools-plugin'); ?>
+                <?php echo esc_html($areaHeader['tagline']); ?>
             </p>
             <?php
             /*
@@ -4124,7 +4131,7 @@ final class SettingsPage
             ?>
             <?php if (count($areaTabs) > 1) : ?>
             <nav class="ctp-tabnav" aria-label="<?php esc_attr_e('Bereiche', 'churchtools-plugin'); ?>">
-                <div class="ctp-tabs ctp-tabs--area" style="--ctp-tab-count:<?php echo (int) count($areaTabs); ?>">
+                <div class="ctp-tabs" style="--ctp-tab-count:<?php echo (int) count($areaTabs); ?>">
                     <?php foreach ($areaTabs as $tabSlug) : ?>
                         <a href="<?php echo esc_url(self::tabUrl($tabSlug)); ?>"
                             class="button <?php echo $tab === $tabSlug ? 'button-primary' : ''; ?>"
@@ -4176,6 +4183,8 @@ final class SettingsPage
                 <?php $this->renderRoomsTab(); ?>
             <?php elseif ($tab === 'groups') : ?>
                 <?php GroupsTab::render(); ?>
+            <?php elseif ($tab === 'group_embed') : ?>
+                <?php GroupsTab::renderEmbed(); ?>
             <?php elseif ($tab === 'updates') : ?>
                 <?php $this->renderUpdatesTab(); ?>
             <?php elseif ($tab === 'design') : ?>

@@ -259,6 +259,16 @@ function get_permalink($post = null)
 
 function add_query_arg($key, $value = null, $url = '')
 {
+    // Die Array-Form (`add_query_arg([...], $url)`) - dort ist das zweite
+    // Argument die Adresse. SettingsPage::tabUrl() benutzt sie.
+    if (is_array($key)) {
+        foreach ($key as $name => $wert) {
+            $value = add_query_arg((string) $name, $wert, (string) $value);
+        }
+
+        return (string) $value;
+    }
+
     $trenner = str_contains((string) $url, '?') ? '&' : '?';
 
     return $url . $trenner . rawurlencode((string) $key) . '=' . rawurlencode((string) $value);
@@ -863,4 +873,10 @@ function locate_template($templateNames, bool $load = false, bool $loadOnce = tr
 function wp_get_attachment_image_srcset(int $attachmentId, $size = 'medium')
 {
     return false;
+}
+
+/** Der Backend-Rahmen: SettingsPage::tabUrl() baut seine Adressen darauf. */
+function admin_url(string $path = ''): string
+{
+    return 'https://example.org/wp-admin/' . ltrim($path, '/');
 }

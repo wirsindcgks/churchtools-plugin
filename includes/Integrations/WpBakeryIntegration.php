@@ -304,7 +304,7 @@ final class WpBakeryIntegration
                 [
                     'type' => 'textfield',
                     'heading' => __('Zeitraum pro Seite in Monaten (0 = Standard)', 'churchtools-plugin'),
-                    'description' => __('Überschreibt die globale Einstellung im Plugin-Tab „Design“ nur für dieses Element.', 'churchtools-plugin'),
+                    'description' => __('Überschreibt die globale Einstellung unter „Einstellungen → Design“ nur für dieses Element.', 'churchtools-plugin'),
                     'param_name' => 'months',
                     'value' => '0',
                     'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],

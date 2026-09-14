@@ -251,6 +251,199 @@ final class GroupsTab
         <?php
     }
 
+    /**
+     * Das Panel „Gruppen" auf der Uebersicht - die Uebersicht zeigt seit der
+     * Teilung in Bereiche den Zustand von beidem, und ein dauerhaft
+     * scheiternder Gruppen-Sync fiel bis dahin nur im Reiter der Gruppen auf.
+     *
+     * Ohne angehakte Homepage bleibt es bei einem Satz und einem Verweis:
+     * Die meisten Installationen zeigen keine Gruppen, und vier Zahlen, die
+     * alle „nichts" sagen, waeren auf ihrer Uebersicht nur Rauschen.
+     */
+    public static function renderOverviewPanel(): void
+    {
+        $settings = GroupSettings::get();
+        $enabled = GroupSettings::enabledHomepages($settings);
+        $error = GroupSync::getLastError();
+        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Gruppen', 'churchtools-plugin'); ?></h2>
+            <?php if ($enabled === []) : ?>
+                <p class="description">
+                    <?php
+                    printf(
+                        /* translators: %s: link to the "Homepages" tab */
+                        esc_html__('Es werden keine Gruppen übernommen. Unter %s lässt sich eine Gruppen-Homepage aus ChurchTools auswählen.', 'churchtools-plugin'),
+                        '<a href="' . esc_url(SettingsPage::tabUrl('groups')) . '">' . esc_html__('Gruppen → Homepages', 'churchtools-plugin') . '</a>'
+                    );
+                    ?>
+                </p>
+            <?php else : ?>
+                <?php
+                SettingsPage::renderActionBar(
+                    'ctp-run-group-sync',
+                    __('Gruppen jetzt synchronisieren', 'churchtools-plugin'),
+                    __('Unabhängig vom Termin-Sync, mit eigenem Intervall.', 'churchtools-plugin')
+                );
+                ?>
+                <?php if ($error !== null) : ?>
+                    <div class="notice notice-error inline">
+                        <p>
+                            <?php
+                            printf(
+                                /* translators: 1: date/time the group sync last failed, 2: error message */
+                                esc_html__('Letzter Fehler beim Gruppen-Sync (%1$s): %2$s', 'churchtools-plugin'),
+                                esc_html(mysql2date($dateFormat, $error['time'])),
+                                esc_html(wp_html_excerpt($error['message'], 600, '…'))
+                            );
+                            ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+                <?php $next = wp_next_scheduled(GroupSync::HOOK); ?>
+                <table class="widefat striped ctp-borderless ctp-keyvalue-table">
+                    <tbody>
+                        <?php foreach (self::statusCards() as $card) : ?>
+                            <tr>
+                                <th><?php echo esc_html($card['label']); ?></th>
+                                <td><?php echo esc_html($card['value']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <tr>
+                            <th><?php esc_html_e('Nächste Synchronisation', 'churchtools-plugin'); ?></th>
+                            <td>
+                                <?php
+                                echo esc_html($next !== false
+                                    ? (string) wp_date($dateFormat, $next)
+                                    : __('nicht geplant', 'churchtools-plugin'));
+                                ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="ctp-quicklinks">
+                    <a href="<?php echo esc_url(SettingsPage::tabUrl('groups')); ?>">
+                        <span class="dashicons dashicons-groups" aria-hidden="true"></span>
+                        <?php esc_html_e('Homepages auswählen', 'churchtools-plugin'); ?>
+                    </a>
+                    <a href="<?php echo esc_url(SettingsPage::tabUrl('group_embed')); ?>">
+                        <span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
+                        <?php esc_html_e('Gruppen einbinden', 'churchtools-plugin'); ?>
+                    </a>
+                </p>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Der Reiter „Einbinden" der Gruppen - aufgebaut wie der der Events:
+     * erst die Wege, dann fertige Shortcodes, dann alle Attribute. Bis zur
+     * Teilung in Bereiche stand die Gruppen-Referenz als letztes Panel im
+     * Einbinden-Reiter der Termine, wo sie niemand suchte, der gerade Gruppen
+     * einrichtet.
+     *
+     * Die Beispiele nennen die angehakten Homepages beim Namen, damit sie
+     * ohne Anpassen funktionieren; ohne angehakte Homepage steht statt ihrer
+     * der Weg dorthin - ein Beispiel mit erfundenem Namen erzeugte beim
+     * Einfuegen nur eine leere Liste.
+     */
+    public static function renderEmbed(): void
+    {
+        $enabled = GroupSettings::enabledHomepages();
+        $examples = [];
+        $firstRef = null;
+
+        foreach ($enabled as $id => $homepage) {
+            $name = $homepage['name'] !== '' && strpbrk($homepage['name'], '"[]') === false
+                ? $homepage['name']
+                : (string) $id;
+
+            $firstRef ??= $name;
+            $examples[] = [
+                /* translators: %s: name of a group homepage */
+                'label' => sprintf(__('Gruppen der Homepage „%s“', 'churchtools-plugin'), $homepage['name'] !== '' ? $homepage['name'] : $name),
+                'code' => sprintf('[ctp_groups homepage="%s"]', $name),
+            ];
+        }
+
+        if ($firstRef !== null) {
+            $examples[] = [
+                'label' => __('Zwei Spalten, etwa neben einem Text', 'churchtools-plugin'),
+                'code' => sprintf('[ctp_groups homepage="%s" columns="2"]', $firstRef),
+            ];
+        }
+        ?>
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Drei Wege, dieselbe Darstellung', 'churchtools-plugin'); ?></h2>
+            <p class="description">
+                <?php esc_html_e('Gruppen lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Gruppen“ oder über das WPBakery-Element „ChurchTools Gruppen“ einbinden. Alle drei zeigen dieselben Kacheln; Vorlage, Farben und Ecken kommen aus „Einstellungen → Design“.', 'churchtools-plugin'); ?>
+            </p>
+            <p class="description">
+                <?php esc_html_e('Block und WPBakery-Element bieten die angehakten Homepages als Auswahl an. Ein Klick auf eine Kachel führt zur Gruppe in ChurchTools, wo man sich anmeldet.', 'churchtools-plugin'); ?>
+            </p>
+        </div>
+
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Beispiele zum Kopieren', 'churchtools-plugin'); ?></h2>
+            <?php if ($examples === []) : ?>
+                <div class="notice notice-info inline">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: %s: link to the "Homepages" tab */
+                            esc_html__('Noch keine Gruppen-Homepage angehakt. Unter %s laden und anhaken, dann stehen hier fertige Shortcodes.', 'churchtools-plugin'),
+                            '<a href="' . esc_url(SettingsPage::tabUrl('groups')) . '">' . esc_html__('Homepages', 'churchtools-plugin') . '</a>'
+                        );
+                        ?>
+                    </p>
+                </div>
+            <?php else : ?>
+                <p class="description">
+                    <?php esc_html_e('Fertige Shortcodes mit den angehakten Homepages dieser Instanz.', 'churchtools-plugin'); ?>
+                </p>
+                <ul class="ctp-shortcode-examples">
+                    <?php foreach ($examples as $example) : ?>
+                        <li>
+                            <span class="ctp-shortcode-label"><?php echo esc_html($example['label']); ?></span>
+                            <code><?php echo esc_html($example['code']); ?></code>
+                            <button type="button" class="button button-small ctp-copy-shortcode" data-shortcode="<?php echo esc_attr($example['code']); ?>">
+                                <?php esc_html_e('Kopieren', 'churchtools-plugin'); ?>
+                            </button>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+
+        <div class="ctp-panel">
+            <h2><?php esc_html_e('Alle Attribute', 'churchtools-plugin'); ?></h2>
+            <table class="widefat striped ctp-borderless">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Attribut', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Beschreibung', 'churchtools-plugin'); ?></th>
+                        <th><?php esc_html_e('Standard', 'churchtools-plugin'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>homepage</code></td>
+                        <td><?php esc_html_e('Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage.', 'churchtools-plugin'); ?></td>
+                        <td>&ndash;</td>
+                    </tr>
+                    <tr>
+                        <td><code>columns</code></td>
+                        <td><?php esc_html_e('Spaltenzahl auf breiten Bildschirmen (2–6)', 'churchtools-plugin'); ?></td>
+                        <td><code>3</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
     public function ajaxFetchHomepages(): void
     {
         check_ajax_referer('ctp_fetch_group_homepages', 'nonce');
@@ -262,7 +455,7 @@ final class GroupsTab
         $baseUrl = SettingsPage::getBaseUrl();
 
         if ($baseUrl === '') {
-            wp_send_json_error(['message' => __('Bitte zuerst im Reiter „Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin')]);
+            wp_send_json_error(['message' => __('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin')]);
         }
 
         try {

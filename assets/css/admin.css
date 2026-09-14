@@ -135,42 +135,26 @@
     container-type: inline-size;
 }
 
-/* Die Bereiche laufen ueber die volle Breite - in einer Reihe, solange es geht.
+/* Die Reiter eines Bereichs laufen ueber die volle Breite - in einer Reihe,
+ * solange es geht.
  *
  * Jede Spalte ist mindestens so breit wie ihre Beschriftung
  * (`minmax(max-content, 1fr)`), der Rest der Zeile wird gleichmaessig
- * verteilt. Das ergibt fast gleich breite Knoepfe: Nur "Synchronisation" ist
- * spuerbar breiter, weil es das laengste Wort ist - die uebrigen acht teilen
- * sich den verbleibenden Platz zu gleichen Teilen.
+ * verteilt. Wie viele Spalten es sind, gibt das Markup als --ctp-tab-count mit
+ * (SettingsPage::renderPage()), denn jeder Bereich hat eine andere Zahl.
  *
- * Bis 1.21.0 stand hier eine einzige Reihe fuer jede Breite und ein Umbruch
- * erst unter 960px Fensterbreite - berechnet fuer die *sieben* Reiter von
- * damals. Mit neun lief die Reihe dazwischen ueber: gemessen 206px Ueberstand
- * bei 1000px Fensterbreite, 182px bei 1024px, und die ganze Seite liess sich
- * seitlich schieben. Ein erster Umbau auf gleich breite Reiter in zwei kurzen
- * Reihen (5 + 4) war dem Nutzer zu schmal („das Menue oben soll ueber der
- * ganzen Breite laufen") - daher jetzt die volle Breite in jeder Stufe.
- *
- * Die Stufen sind aus den gemessenen Breiten der Buttons gerechnet (WordPress
- * 7.1, klassische Buttons, gemessen am 2026-09-14 mit dem zehnten Reiter
- * „Gruppen"): zusammen 1140px mit Symbolen, 920px ohne, der breiteste
- * ("Synchronisation") 156px - plus neun Abstaende von 4px:
- *   ab 1200px   eine Reihe mit Symbolen (braucht 1176px)
- *   ab  980px   eine Reihe ohne Symbole (braucht 956px)
- *   ab  820px   zwei Reihen zu fuenf Buttons (braucht 5 x 156 + 16 = 796px)
- *   ab  480px   drei Buttons je Reihe (braucht 3 x 156 + 8 = 476px)
- *   ab  320px   zwei Spalten (braucht 316px), darunter eine
- * Die Zweierreihe ist mit dem zehnten Reiter dazugekommen: Zehn gehen in
- * fuenf glatt auf, bei drei je Reihe bliebe ab 820px ein einzelner Knopf in
- * einer vierten Reihe stehen. Mit neun Reitern lagen die Schwellen bei
- * 1070 / 890 / 480 / 320px.
- * Jede Schwelle mit rund 20px Luft, weil Schriften je nach System etwas
- * breiter laufen. Die ersten Schwellen (1000 / 800px) stammten noch von den
- * WordPress-Reitern, deren Beschriftung schmaler war; mit den Buttons lief die
- * Reihe knapp darunter wieder ueber.
- * Kommt ein Bereich dazu oder wird eine Beschriftung laenger, stimmen die
- * Schwellen nicht mehr - SettingsPageTest haelt deshalb die Spaltenzahl der
- * obersten Stufe an die Zahl der Bereiche gebunden. */
+ * Bis 2026-09-14 stand hier eine Reihe mit *allen* Reitern - zuletzt zehn, mit
+ * fuenf Breitenstufen, die bei jedem neuen Reiter neu gemessen werden mussten
+ * (von sieben auf neun lief sie bis 1.21.0 zwischen 960 und 1400px ueber den
+ * Rand). Seit die Bereiche links im WordPress-Menue stehen, traegt die Reihe
+ * hoechstens fuenf Knoepfe, und zwei Stufen genuegen. Gemessen am
+ * breitesten Bereich, „Events" (WordPress 7.1, klassische Buttons, mit
+ * Symbolen, gemessen am 2026-09-14): zusammen 607px, der breiteste Knopf
+ * („Synchronisation") 156px:
+ *   ab 660px   eine Reihe (braucht 623px mit den vier Abstaenden)
+ *   ab 320px   zwei Spalten, darunter eine
+ * SettingsPageTest haelt fest, dass kein Bereich mehr Reiter bekommt, als
+ * diese Rechnung traegt. */
 .ctp-admin .ctp-tabs {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -183,51 +167,9 @@
     }
 }
 
-@container (min-width: 480px) {
+@container (min-width: 660px) {
     .ctp-admin .ctp-tabs {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@container (min-width: 820px) {
-    .ctp-admin .ctp-tabs {
-        grid-template-columns: repeat(5, 1fr);
-    }
-}
-
-@container (min-width: 980px) {
-    .ctp-admin .ctp-tabs {
-        grid-template-columns: repeat(10, minmax(max-content, 1fr));
-    }
-}
-
-/* Die Reiterreihe eines Bereichs (seit 2026-09-14, siehe SettingsPage::areas()):
- * hoechstens fuenf Knoepfe, deren Zahl das Markup als --ctp-tab-count
- * mitgibt. Die Stufen oben sind fuer die alte Reihe mit allen zehn Reitern
- * gerechnet und greifen hier nicht - fuenf Knoepfe brauchen gemessen
- * rund 600px, darunter zwei Spalten. */
-.ctp-admin .ctp-tabs.ctp-tabs--area {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-@container (min-width: 620px) {
-    .ctp-admin .ctp-tabs.ctp-tabs--area {
         grid-template-columns: repeat(var(--ctp-tab-count), minmax(max-content, 1fr));
-    }
-
-    /* Gegen die Symbol-Regel der alten Reihe darunter, die zwischen 980 und
-     * 1200px ausblendet - fuenf Knoepfe haben dort reichlich Platz. */
-    .ctp-admin .ctp-tabs.ctp-tabs--area .dashicons {
-        display: inline-block;
-    }
-}
-
-/* Die einzige Stufe, in der sich etwas anderes aendert als die Spaltenzahl:
- * Im schmalsten Band der einzeiligen Reihe haelt der Verzicht auf die Symbole
- * sie einzeilig. Ohne ihn braeche sie hier in zwei Reihen um. */
-@container (min-width: 980px) and (max-width: 1199.98px) {
-    .ctp-admin .ctp-tabs .dashicons {
-        display: none;
     }
 }
 

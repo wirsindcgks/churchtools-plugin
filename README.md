@@ -72,19 +72,19 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 
 ## Einrichten in fünf Minuten
 
-Alle zehn Bereiche liegen als Reiter auf der Plugin-Seite. Im linken WordPress-Menü stehen unter *ChurchTools* nur die drei, die man auch von anderswo aus ansteuert: **Übersicht**, **Design** und **Events**.
+Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter *ChurchTools*: **Übersicht** (Zustand von Events und Gruppen), **Events** (Kalender, Räume, Synchronisation, Terminliste, Einbinden), **Gruppen** (Homepages, Einbinden) und **Einstellungen** (Verbindung, Design, Updates). Innerhalb eines Bereichs wechseln die Reiter oben auf der Seite.
 
-1. **Verbindung herstellen.** *ChurchTools → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
-2. **Kalender auswählen.** *ChurchTools → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
+1. **Verbindung herstellen.** *ChurchTools → Einstellungen → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
+2. **Kalender auswählen.** *ChurchTools → Events → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
 3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
 4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
-5. **Aussehen anpassen.** *ChurchTools → Design*, aufgeteilt in vier Bereiche: **Stil** (eine von vier Vorlagen als Grundlage — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), **Kachel** (Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis), **Detailansicht** (Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge) und **Listen** (Zeitraum pro Seite). Stil, Kachel und Detailansicht haben ihre Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
+5. **Aussehen anpassen.** *ChurchTools → Einstellungen → Design*, aufgeteilt in vier Unterbereiche: **Stil** (eine von vier Vorlagen als Grundlage — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), **Kachel** (Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis), **Detailansicht** (Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge) und **Listen** (Zeitraum pro Seite). Stil, Kachel und Detailansicht haben ihre Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
 
 6. **Wenn Termine eine eigene Seite bekommen sollen.** Im Bereich *Detailansicht* bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
 
-7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Dafür braucht es keinen API-Key. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
+7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Dafür braucht es keinen API-Key. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
 
-Läuft etwas nicht, steht der Grund auf der Übersichtsseite: Sie zeigt den letzten Abgleich, die Zahl gespeicherter Termine und Fehler im Klartext.
+Läuft etwas nicht, steht der Grund in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext.
 
 ## Termine auf einer Seite anzeigen
 
@@ -126,7 +126,7 @@ Alle drei Wege benutzen denselben Unterbau und können dasselbe:
 [ctp_events calendar="Gottesdienste,Jugend" layout="list" filter="1" search="1"]
 ```
 
-Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt der Tab *Kalender*. Im Tab *Einbinden* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
+Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt *Events → Kalender*. Unter *Events → Einbinden* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
 
 ### Die wichtigsten Optionen
 
@@ -146,7 +146,7 @@ Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [rea
 
 ## Gruppen auf einer Seite anzeigen
 
-Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in der Optik des Plugins. Im Reiter *Gruppen* steht neben jeder angehakten Homepage der passende Shortcode zum Kopieren:
+Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in der Optik des Plugins. Unter *Gruppen → Homepages* steht neben jeder angehakten Homepage der passende Shortcode zum Kopieren, unter *Gruppen → Einbinden* stehen fertige Beispiele samt allen Optionen:
 
 ```
 [ctp_groups homepage="Kleingruppen" columns="3"]
@@ -156,7 +156,7 @@ Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools 
 
 - **ChurchTools entscheidet, was erscheint.** Abgefragt wird ohne API-Key, also genau so, wie ein Besucher die Homepage sieht: nur öffentliche Gruppen, Bilder nur, wo die Homepage Gruppenbilder zeigt.
 - **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das Intervall kürzer.
-- **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus dem Tab *Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
+- **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
 - **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Der volle Text und die Anmeldung liegen in ChurchTools.
 
 ## Gut zu wissen
@@ -169,7 +169,7 @@ Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools 
 
 **Die Adresse eines Termins besteht aus Titel und Datum** (`gottesdienst-06-09-2026`), nicht aus einer Nummer und nicht aus dem Titel allein: „Gottesdienst" gibt es jedes Wochenende, ein Titel benennt also eine Serie und nicht einen Termin. Ändert sich der Titel in ChurchTools, ändert sich die Adresse mit. Wird die Elternseite nachträglich gesetzt, leiten die bisherigen Adressen dauerhaft auf die neuen weiter.
 
-**Alte Termine räumen sich selbst weg**, samt importierter Bilder, nach der im Tab *Synchronisation* eingestellten Frist.
+**Alte Termine räumen sich selbst weg**, samt importierter Bilder, nach der unter *Events → Synchronisation* eingestellten Frist.
 
 **Ein eigenes Layout** ist möglich, aber selten nötig: Die Templates aus `includes/Frontend/templates/` lassen sich nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort anpassen — updatesicher. Details dazu in [readme.txt](readme.txt).
 

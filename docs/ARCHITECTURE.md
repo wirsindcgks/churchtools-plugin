@@ -26,11 +26,11 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 
 | Klasse | Aufgabe |
 | --- | --- |
-| `Admin\SettingsPage` | Einstellungsseite mit sieben Tabs (Übersicht, Verbindung, Kalender, Synchronisation, Design, Events, Updates). Der API-Key wird verschlüsselt gespeichert (`Security\Crypto`, Schlüssel aus `AUTH_KEY` abgeleitet). |
+| `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Kalender, Räume, Synchronisation, Terminliste, Einbinden); Gruppen (Homepages, Einbinden – gerendert von `Admin\GroupsTab`); Einstellungen (Verbindung, Design, Updates). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der API-Key wird verschlüsselt gespeichert (`Security\Crypto`, Schlüssel aus `AUTH_KEY` abgeleitet). |
 | `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). |
 | `Sync\SyncEngine` | Per WP-Cron (`ctp_run_sync`) getriggerter Sync. Fängt eigene Exceptions ab und persistiert sie, damit ein unbeaufsichtigter Cron-Lauf nie fatalt. |
 | `Groups\GroupSync` / `GroupSettings` | Per WP-Cron (`ctp_run_group_sync`, eigenes Intervall, nur geplant, solange eine Homepage angehakt ist) übernommener Abgleich der Gruppen-Homepages – **ohne API-Key**, damit ChurchTools selbst entscheidet, was öffentlich ist. `GroupSettings` ist eine eigene Option mit eigenem Sanitizer, siehe dort. |
-| `Admin\GroupsTab` | Reiter „Gruppen" – eigene Klasse statt weiterer Methoden in `SettingsPage`, teilt mit ihr nur Reiterreihe, Statuszeile und Speicherleiste. |
+| `Admin\GroupsTab` | Reiter „Homepages" und „Einbinden" im Bereich Gruppen sowie das Gruppen-Panel der Übersicht – eigene Klasse statt weiterer Methoden in `SettingsPage`, teilt mit ihr nur Reiterreihe, Statuszeile und Speicherleiste. |
 | `Frontend\GroupListRenderer` | Kachelraster der Gruppen (`[ctp_groups]`, `Blocks\GroupListBlock`, WPBakery), mit denselben Klassen und Design-Einstellungen wie die Terminkacheln (`EventListRenderer::designArgs()`). |
 | `Sync\RetentionCleanup` | Per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist. |
 | `Db\Installer` | Schema via `dbDelta()`, Cron-Zeitpläne (inkl. Umplanung bei Intervall-Wechsel). |

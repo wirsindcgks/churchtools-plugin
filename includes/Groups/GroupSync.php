@@ -414,7 +414,7 @@ final class GroupSync
     public static function runNow(): void
     {
         if (SettingsPage::getBaseUrl() === '') {
-            throw new RuntimeException(__('Bitte zuerst im Reiter „Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin'));
+            throw new RuntimeException(__('Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen.', 'churchtools-plugin'));
         }
 
         self::run();

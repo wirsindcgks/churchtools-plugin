@@ -44,34 +44,37 @@ final class SettingsPageTest extends TestCase
         return (new ReflectionMethod(SettingsPage::class, $method))->invoke(null);
     }
 
+    private function currentTab(): string
+    {
+        return (new ReflectionMethod(SettingsPage::class, 'currentTab'))->invoke(null);
+    }
+
     /**
-     * Das linke WordPress-Menue traegt nicht die Navigation dieses Plugins,
-     * sondern drei Abkuerzungen (Nutzerentscheidung 2026-09-08: „im Menue
-     * links sollten maximal die Hauptpunkte rein"). Der Test haelt die Auswahl
-     * fest, weil sie sonst beim naechsten neuen Reiter unbemerkt mitwaechst -
-     * neun Eintraege waeren genau das, was hier vermieden werden sollte.
+     * Links im WordPress-Menue stehen die vier Bereiche (Nutzerentscheidung
+     * 2026-09-14: „links im Menue eine Uebersicht und Einstiegspunkte fuer
+     * Events bzw. Gruppen", Design unter „Einstellungen"). Der Test haelt die
+     * Liste fest, damit sie nicht beim naechsten Reiter unbemerkt mitwaechst -
+     * die Regel vom 2026-09-08 („maximal die Hauptpunkte") gilt weiter.
      */
-    public function testTheLeftMenuCarriesOnlyTheMainAreas(): void
+    public function testTheLeftMenuCarriesTheFourAreas(): void
     {
         ctp_test_reset_menu();
         (new SettingsPage())->addMenuPage();
 
-        $slugs = array_column(ctp_test_submenu('churchtools-plugin'), 'slug');
-
         $this->assertSame([
             'churchtools-plugin',
-            'churchtools-plugin&tab=design',
-            'churchtools-plugin&tab=events',
-        ], $slugs);
+            'churchtools-plugin-events',
+            'churchtools-plugin-groups',
+            'churchtools-plugin-settings',
+        ], array_column(ctp_test_submenu('churchtools-plugin'), 'slug'));
     }
 
     /**
      * Der *erste* Untereintrag muss den blanken Seiten-Slug tragen. Sobald ein
      * Menuepunkt Untereintraege hat, verlinkt er selbst nicht mehr auf sich,
      * sondern auf den ersten davon (wp-admin/menu-header.php:
-     * `admin.php?page={$submenu_items[0][2]}`) - traege der ein `&tab=…`,
-     * fuehrte ein Klick auf „ChurchTools" woandershin als bisher. Das sieht man
-     * dem Code nicht an, sondern nur der entstandenen Liste.
+     * `admin.php?page={$submenu_items[0][2]}`) - ein Klick auf „ChurchTools"
+     * soll weiter auf die Uebersicht fuehren.
      */
     public function testTheFirstMenuEntryCarriesThePlainSlug(): void
     {
@@ -85,62 +88,75 @@ final class SettingsPageTest extends TestCase
     }
 
     /**
-     * Jeder Menueeintrag muss einen Reiter meinen, den es gibt: Der Eintrag
-     * fuehrt sonst auf die Seite, die currentTab() als Rueckfall waehlt, und
-     * zwar wortlos.
+     * Jeder Reiter gehoert zu genau einem Bereich. Ein Reiter ohne Bereich
+     * waere nur ueber eine alte Adresse erreichbar, einer in zwei Bereichen
+     * haette zwei Adressen, von denen tabUrl() nur eine kennt.
      */
-    public function testEveryMenuEntryNamesARealTab(): void
+    public function testEveryTabBelongsToExactlyOneArea(): void
     {
-        $menuTabs = (new \ReflectionClass(SettingsPage::class))->getConstant('MENU_TABS');
+        $areaTabs = (new \ReflectionClass(SettingsPage::class))->getConstant('AREA_TABS');
+        $zugeordnet = array_merge(...array_values($areaTabs));
+        $tabs = array_keys($this->invokePrivate('tabs'));
 
-        $this->assertSame([], array_diff($menuTabs, array_keys($this->invokePrivate('tabs'))));
+        $this->assertSame(array_keys($this->invokePrivate('areas')), array_keys($areaTabs));
+        $this->assertSame($zugeordnet, array_unique($zugeordnet), 'Ein Reiter steht in zwei Bereichen.');
+        $this->assertEqualsCanonicalizing($tabs, $zugeordnet);
     }
 
     /**
-     * Die Hervorhebung im Menue. Ohne den Filter bliebe keiner der Eintraege
-     * markiert - verglichen wird mit `$plugin_page`, und das ist zur Laufzeit
-     * nur `churchtools-plugin`, ohne das `&tab=`.
+     * Die Reihe eines Bereichs ist fuer hoechstens fuenf Knoepfe gemessen
+     * (siehe .ctp-tabs in admin.css). Ein sechster laeuft nicht ueber, bricht
+     * aber schon bei mittlerer Breite in zwei Reihen um - dann die Schwelle
+     * neu messen und diese Grenze mit anheben.
      */
-    public function testTheHighlightPointsAtTheEntryOfTheCurrentTab(): void
+    public function testNoAreaHasMoreTabsThanTheRowIsMeasuredFor(): void
     {
-        ctp_test_reset_menu();
-        $page = new SettingsPage();
-        $page->addMenuPage();
-        $slugs = array_column(ctp_test_submenu('churchtools-plugin'), 'slug');
+        $areaTabs = (new \ReflectionClass(SettingsPage::class))->getConstant('AREA_TABS');
 
-        $_GET['page'] = 'churchtools-plugin';
-
-        foreach (['status' => 'churchtools-plugin', 'design' => 'churchtools-plugin&tab=design'] as $tab => $erwartet) {
-            $_GET['tab'] = $tab;
-
-            $this->assertSame($erwartet, $page->highlightMenuEntry(null));
-            $this->assertContains($erwartet, $slugs, 'Hervorgehoben wird ein Eintrag, den es nicht gibt.');
+        foreach ($areaTabs as $area => $tabs) {
+            $this->assertLessThanOrEqual(5, count($tabs), sprintf('Der Bereich „%s" hat mehr Reiter, als die Reiterreihe traegt.', $area));
         }
     }
 
-    /**
-     * Auf einem Reiter ohne eigenen Eintrag bleibt es beim durchgereichten
-     * Wert. Ersatzweise „Uebersicht" zu markieren waere der naheliegende
-     * Kurzschluss - er behauptete, man stuende dort, wo man nicht steht.
-     */
-    public function testATabWithoutAnEntryHighlightsNothing(): void
+    public function testTabUrlPointsAtThePageOfTheTabsArea(): void
     {
-        $_GET['page'] = 'churchtools-plugin';
-        $_GET['tab'] = 'connection';
-
-        $this->assertNull((new SettingsPage())->highlightMenuEntry(null));
+        $this->assertStringContainsString('page=churchtools-plugin-settings', SettingsPage::tabUrl('design', ['section' => 'list']));
+        $this->assertStringContainsString('section=list', SettingsPage::tabUrl('design', ['section' => 'list']));
+        $this->assertStringContainsString('page=churchtools-plugin-groups', SettingsPage::tabUrl('group_embed'));
+        $this->assertStringContainsString('page=churchtools-plugin&', SettingsPage::tabUrl('status'));
     }
 
     /**
-     * Und auf fremden Seiten haelt der Filter still: Er haengt an jedem
-     * Aufbau des Admin-Menues, nicht nur am eigenen.
+     * Ein Reiter aus einem anderen Bereich wird nicht angezeigt - sonst stuende
+     * unter „Gruppen" mit `&tab=design` das Design, und das Menue links
+     * behauptete etwas anderes als die Seite.
      */
-    public function testTheFilterLeavesOtherPagesAlone(): void
+    public function testATabFromAnotherAreaFallsBackToTheFirstTabOfTheArea(): void
     {
-        $_GET['page'] = 'woocommerce-settings';
+        $_GET['page'] = 'churchtools-plugin-groups';
         $_GET['tab'] = 'design';
+        $this->assertSame('groups', $this->currentTab());
 
-        $this->assertSame('fremd.php', (new SettingsPage())->highlightMenuEntry('fremd.php'));
+        $_GET['tab'] = 'group_embed';
+        $this->assertSame('group_embed', $this->currentTab());
+
+        $_GET['page'] = 'fremdes-plugin';
+        $this->assertSame('status', $this->currentTab(), 'Unbekannte Seite: Uebersicht.');
+    }
+
+    /** Jede Bereichsseite traegt Symbol und Unterzeile, keine faellt auf die der Uebersicht zurueck. */
+    public function testEveryAreaHasItsOwnHeader(): void
+    {
+        $method = new ReflectionMethod(SettingsPage::class, 'areaHeader');
+        $zeilen = [];
+
+        foreach (array_keys($this->invokePrivate('areas')) as $area) {
+            $header = $method->invoke(null, $area);
+            $this->assertNotSame('', $header['icon']);
+            $zeilen[] = $header['tagline'];
+        }
+
+        $this->assertSame($zeilen, array_unique($zeilen));
     }
 
     /**
@@ -353,26 +369,20 @@ final class SettingsPageTest extends TestCase
      * gehoeren zusammen, eine allein reicht nicht.
      */
     /**
-     * Die oberste Stufe der Reiterreihe stellt alle Reiter nebeneinander, und
-     * ihre Spaltenzahl steht fest im Stylesheet. Kommt ein zehnter Reiter
-     * dazu, rutscht er dort still in eine eigene Zeile - und die Schwellen
-     * darunter, die aus 9 x 152px gerechnet sind, stimmen auch nicht mehr.
-     * Bis 1.21.0 ist genau das passiert: Die Reihe war fuer sieben Reiter
-     * berechnet und lief mit neun zwischen 960 und 1400px ueber den Rand.
+     * Die Spaltenzahl der Reiterreihe kommt aus dem Markup, nicht aus einer
+     * festen Zahl im Stylesheet: Jeder Bereich hat eine andere Anzahl Reiter.
+     * Bis 2026-09-14 stand dort `repeat(10, …)` fuer die Reihe mit allen
+     * Reitern; eine feste Zahl liesse die Reihe mit drei Reitern auf einem
+     * Drittel der Breite enden.
      */
-    public function testTheTabRowIsSizedForTheCurrentNumberOfTabs(): void
+    public function testTheTabRowTakesItsColumnCountFromTheArea(): void
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/admin.css');
-        $anzahl = count($this->invokePrivate('tabs'));
+        $php = (string) file_get_contents(CTP_PLUGIN_DIR . 'includes/Admin/SettingsPage.php');
 
-        preg_match_all('/\.ctp-admin \.ctp-tabs\s*\{[^}]*grid-template-columns:\s*repeat\((\d+),/', $css, $treffer);
-
-        $this->assertNotSame([], $treffer[1], 'Keine Spaltenstufen der Reiterreihe gefunden.');
-        $this->assertSame(
-            $anzahl,
-            max(array_map('intval', $treffer[1])),
-            "Die oberste Stufe der Reiterreihe hat nicht so viele Spalten, wie es Reiter gibt ({$anzahl})."
-        );
+        $this->assertMatchesRegularExpression('/\.ctp-admin \.ctp-tabs\s*\{[^}]*grid-template-columns:\s*repeat\(var\(--ctp-tab-count\)/', $css);
+        $this->assertDoesNotMatchRegularExpression('/\.ctp-admin \.ctp-tabs\s*\{[^}]*grid-template-columns:\s*repeat\((?:[3-9]|\d{2}),/', $css, 'Eine feste Spaltenzahl ueber zwei fuer die Reiterreihe.');
+        $this->assertStringContainsString('--ctp-tab-count:<?php echo (int) count($areaTabs); ?>', $php);
     }
 
     /**

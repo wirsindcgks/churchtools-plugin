@@ -58,7 +58,7 @@ registerBlockType(metadata.name, {
 						{calendarOptions.length === 0 ? (
 							<p>
 								{__(
-									'Keine Kalender geladen. Im Plugin-Tab „Kalender“ zuerst Kalender laden.',
+									'Keine Kalender geladen. Unter „ChurchTools → Events“ zuerst Kalender laden.',
 									'churchtools-plugin'
 								)}
 							</p>
@@ -162,7 +162,7 @@ registerBlockType(metadata.name, {
 									max={24}
 									label={__('Zeitraum pro Seite in Monaten (0 = Standard)', 'churchtools-plugin')}
 									help={__(
-										'Überschreibt die globale Einstellung im Plugin-Tab „Design“ nur für diesen Block.',
+										'Überschreibt die globale Einstellung unter „Einstellungen → Design“ nur für diesen Block.',
 										'churchtools-plugin'
 									)}
 									value={months}

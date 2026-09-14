@@ -31,7 +31,7 @@ registerBlockType(metadata.name, {
 						{knownHomepages.length === 0 && (
 							<p>
 								{__(
-									'Keine Homepage aktiv. Im Plugin-Reiter „Gruppen“ zuerst eine Homepage laden und anhaken.',
+									'Keine Homepage aktiv. Unter „ChurchTools → Gruppen“ zuerst eine Homepage laden und anhaken.',
 									'churchtools-plugin'
 								)}
 							</p>
