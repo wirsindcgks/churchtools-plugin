@@ -4,7 +4,7 @@ WordPress-Plugin, das Kalender-Events aus der ChurchTools API synchronisiert, lo
 
 ## Rahmendaten
 
-- **Aktueller Stand (2026-09-11)**: Version **1.22.1** veröffentlicht (der Kacheltitel behält beim Überfahren seine Farbe), seit dem 2026-08-19 im produktiven Einsatz auf der Zielseite. Als Nächstes steht der Umsetzungsplan aus dem API-Durchgang vom 2026-09-11 an (unter „Offene ToDos"). DB-Schema `1.5.0`, `composer test` grün (483 Tests).
+- **Aktueller Stand (2026-09-14)**: Version **1.26.0** veröffentlicht (Gruppenliste, Backend in Bereiche geteilt), seit dem 2026-08-19 im produktiven Einsatz auf der Zielseite. Als Nächstes steht der **Umsetzungsplan aus dem Sicherheits- und Datenschutz-Review vom 2026-09-14** an (unter „Offene ToDos"). DB-Schema `1.7.0`, `composer test` grün (593 Tests).
 - **Lizenz**: GPL-2.0-or-later
 - **Ziel-Instanz für Tests**: die produktive ChurchTools-Instanz der Gemeinde. **Es gibt kein ChurchTools-Testsystem** (festgehalten 2026-09-01) – jeder Versuch, der neue Daten *in* ChurchTools braucht, findet in der produktiven Instanz statt und ist für die Gemeinde sichtbar. Umkehrbare Versuche (ein Textfeld setzen und wieder leeren) sind dadurch billig, nicht umkehrbare (eine Anmeldegruppe anlegen, eine Gruppe veröffentlichen) teuer. Das ist bei jedem Feature zu prüfen, das ChurchTools-seitig gepflegte Daten voraussetzt. Name hier bewusst nicht genannt – dieses Repo ist öffentlich (siehe „Verteilung" unten); wer die Instanz braucht, findet sie in den Einstellungen der lokalen Testumgebung
 - **PHP**: 8.1+, **WordPress**: 6.4+
@@ -686,7 +686,7 @@ Reihenfolge nach dem Leitgedanken unter „Nächste sinnvolle Schritte": erst, w
   - *Texte*: Verweise im Plugin („im Tab ‚Design'") auf „Einstellungen → Design" usw. umgestellt, README und readme.txt bis vor die Versionshinweise ebenso. Dabei gefunden: readme.txt nannte den Knopf „Jetzt synchronisieren" nur im Sync-Tab, er steht auch in der Übersicht.
   - *Gegengeprüft*: Tests neu für Menüeinträge, Zuordnung Reiter → Bereich, `tabUrl()`, Rückfall bei fremdem Reiter, Kopf je Bereich und die Spaltenzahl aus dem Markup (586 grün, Lint Exit 0); acht Sabotagen, jede vom vorgesehenen Test gefangen.
 
-- [ ] **Schritt 5 – Betrieb ohne Key** (zurückgestellt)
+- [x] **Schritt 5 – Betrieb ohne Key** – **2026-09-14 verworfen.** Nutzerentscheidung: „Mir wäre lieber, wenn wir alles rein über die Anmeldung an die API lösen." Damit fällt nicht nur dieser Schritt weg, auch die anonymen Abrufe aus Schritt 4 (Gruppen-Homepages) und `/api/info` werden auf den Key umgestellt – siehe Phase 3 im Review-Plan unten. Der ursprüngliche Zuschnitt bleibt als Begründung stehen:
   - Ohne Key liefe alles außer den Räumen. Für andere Gemeinden hieße das: Instanzname eintragen, fertig – und ChurchTools filtert selbst, was öffentlich ist.
   - *Voraussetzungen*: dieselbe `isInternal`-Prüfung wie in Schritt 3, diesmal für die Terminabfrage; ein Verbindungstest ohne `whoami?only_allow_authenticated` (etwa über `/api/info`); und eine Instanz, deren öffentlicher Benutzer keine Kalenderrechte hat, liefert ohne Key nichts – das muss als „nicht freigegeben" gemeldet werden, nicht als „keine Termine", sonst greift der Leer-Antwort-Schutz an der falschen Stelle.
   - *Warum zurückgestellt*: Für die eigene Installation bringt es nichts – der Key ist da, und die Räume brauchen ihn. Den Abruf ohne Key bauen Schritt 3 und 4 ohnehin; danach ist der Rest vor allem Oberfläche im Reiter „Verbindung".
@@ -705,6 +705,93 @@ Reihenfolge nach dem Leitgedanken unter „Nächste sinnvolle Schritte": erst, w
 - Die elf Beiträge sind für jeden ohne Anmeldung über die API lesbar – Folge der Einstellung „sichtbar für alle, die die Gruppe sehen" in öffentlichen Gruppen. Ein Hinweis an die Gemeinde, nicht ans Plugin.
 - Im Gemeindeprofil tragen die Social-Media-Links einen doppelten Schrägstrich nach der Domain – in ChurchTools zu korrigieren.
 - Für künftige Durchgänge: `GET /api/events/ical` ist kein reiner Lesezugriff, er legt ein Secret an, wenn keins existiert.
+
+### Sicherheits- und Datenschutz-Review vom 2026-09-14 – Umsetzungsplan
+
+Auftrag des Nutzers: „Kannst du den aktuellen Stand mal äußerst kritisch hinterfragen. Achte dabei neben Code-Qualität auch besonders auf State-of-the-art Sicherheit und Datenschutz." Vorausgegangen ist die Entscheidung, alles über die Anmeldung an die API zu lösen (Schritt 5 oben verworfen). Stand des Codes: 1.26.0. Nichts davon ist umgesetzt.
+
+**Wie geprüft wurde.** Code gelesen (API-Client, Verschlüsselung, Sync, Admin-Aktionen, öffentliche Endpunkte, Templates, Deinstallation, Update-Mechanismus, Workflows). Nachgewiesen statt nur gelesen: die Weiterleitung des Tokens (zwei lokale `php -S`-Server und ein Skript über `wp-load.php`), der Schutzstatus des Repos (GitHub-API als Repo-Konto), `composer audit`/`npm audit`, die Felder in `raw_data` (lokale Datenbank, nur Schlüssel und Zählungen) und die personenbezogenen Felder der Gruppen-Homepage (OpenAPI-Spec der Instanz). Nicht prüfbar: Zwei-Faktor-Status des Kontos; Antworten der Gruppen-Endpunkte *mit* Key, weil der Key der Testumgebung seit dem 2026-09-02 ungültig ist.
+
+**Eine Korrektur noch im Review.** Die erste Fassung meldete, `raw_data` enthalte interne Notizen (`note`). Falsch: `note` ist der alte Name des Untertitels (siehe oben, 2026-09-11 geklärt). In der lokalen Datenbank stand es nur noch, weil deren Zeilen vom 2026-09-02 stammen – vor dem Aufräumen der Aliase, und seitdem scheitert der lokale Sync. Nachgezählt: 31 von 31 `note`-Werten zeichengleich mit `subtitle`. Befund 1.2 unten ist entsprechend kleiner.
+
+**Was gut ist und so bleiben soll.** SQL durchgängig über `prepare()` samt `%i`; Ausgaben escaped; jede Admin-Aktion mit Nonce *und* `manage_options`; Sanitizer als Allowlist (Name und Hash nie aus dem Formular); Hash-Prüfung vor dem Einsetzen in den Pfad; Bilder lokal statt gehotlinkt, geladen über `download_url()` und damit mit WordPress' Sperre gegen interne Adressen; kein Leeren des Bestands bei leerer Antwort; `GroupSync::normalizeGroup()` übernimmt nur benannte Felder; Standard-Token der Actions nur lesend; 593 Tests grün.
+
+#### Phase 0 – Lieferkette absichern (sofort, überwiegend ohne Code)
+
+Größter Hebel des ganzen Reviews: Jede installierte Kopie liest `update.json` von `main` (`GitHubUpdateChecker::METADATA_URL`) und installiert, was dort unter `download_url` steht. Ein Push auf `main` genügt, ein Tag ist nicht nötig; es gibt weder Signatur noch Prüfsumme. Wer das Konto `wirsindcgks` übernimmt, führt Code auf jeder Installation aus.
+
+Befund (2026-09-14, GitHub-API): `main` ohne Branch-Schutz, keine Rulesets, kein Tag-Schutz; Secret Scanning, Push Protection und Dependabot aus. Im Release-Job laufen zwei Drittanbieter-Actions (`shivammathur/setup-php@v2`, `softprops/action-gh-release@v3`) über verschiebbare Tags mit `contents: write`.
+
+- [ ] **0.1 Konto** *(Nutzer)*: Zwei-Faktor mit Passkey oder App am Konto `wirsindcgks`, keine SMS. Wer sonst Zugriff hat, prüfen.
+- [ ] **0.2 Ruleset für `main`** *(Nutzer, GitHub → Settings → Rules)*: kein Force-Push, kein Löschen, Status-Checks `lint` und `test` Pflicht. Eine Pflicht-Review ist bei einem Maintainer nicht sinnvoll.
+- [ ] **0.3 Ruleset für Tags `v*`** *(Nutzer)*: kein Verschieben, kein Löschen. Passt zu „Releases bleiben stehen".
+- [ ] **0.4 Unveränderliche Releases** einschalten *(Nutzer, Settings → General → Releases)*: Ein veröffentlichtes Asset lässt sich danach nicht mehr austauschen.
+- [ ] **0.5 Secret Scanning, Push Protection, Dependabot-Warnungen** einschalten *(Nutzer, Settings → Code security; für öffentliche Repos kostenlos)*.
+- [ ] **0.6 Workflows** *(Code)*: Alle Actions auf Commit-SHA pinnen (Versionskommentar dahinter); `permissions: contents: read` ausdrücklich in `ci.yml`; im Release-Job Schreibrecht nur für den Schritt, der es braucht (Build und Veröffentlichen in zwei Jobs trennen). Dazu `.github/dependabot.yml` für `github-actions`, `composer` und `npm`, damit die gepinnten SHAs nicht veralten.
+- [ ] **0.7 Herkunftsnachweis** *(Code, klein)*: `actions/attest-build-provenance` für das Release-ZIP. Verhindert nichts, macht aber nachprüfbar, dass ein ZIP aus diesem Workflow stammt.
+- *Zurückgestellt*: **echte Signaturprüfung** der Updates – Ed25519-Schlüssel außerhalb von GitHub, lokal signiert, öffentlicher Schlüssel im Plugin, Prüfung über `upgrader_pre_download` mit `sodium_crypto_sign_verify_detached()`. Erst sinnvoll, wenn andere Gemeinden das Plugin einsetzen; bis dahin decken 0.1–0.5 den realistischen Fall ab (übernommenes Konto oder Token).
+- *Abnahme*: `gh api repos/wirsindcgks/churchtools-plugin/rulesets` listet beide Regeln, `…/branches/main/protection` bzw. die Regel-Ansicht zeigt die Status-Checks, `security_and_analysis` meldet Scanning und Push Protection als `enabled`.
+
+#### Phase 1 – Sicherheits-Release (1.26.1, klein)
+
+- [ ] **1.1 Kein Token an fremde Hosts** – *nachgewiesen*. `Client::send()` setzt keine Weiterleitungsgrenze; WordPress folgt bis zu fünf Weiterleitungen und schickt den `Authorization`-Header auch an einen anderen Host (lokal: `127.0.0.1:8911` → 302 → `localhost:8912`, der zweite Server bekam `Login GEHEIM-TEST`). Umsetzung: `'redirection' => 0`, jeder Status 300–399 wird zur Ausnahme mit eigener Meldung („ChurchTools hat auf eine andere Adresse umgeleitet"). Die ChurchTools-API leitet regulär nicht um. Tests: Stub prüft das Argument und die Ausnahme bei 301/302; einmalig mit zwei lokalen Servern gegengeprüft.
+- [ ] **1.2 `raw_data` verkleinern.** Die Spalte trägt die ganze API-Antwort je Termin, gelesen wird sie im Plugin nirgends (`EventRepository::upsert()` schreibt, niemand liest). Darin stehen Metadaten mit Personen-IDs (`meta.createdPerson.id`, `meta.modifiedPerson.id` an Termin, Kalender, Bild, Ausnahmen), dazu `onBehalfOfPid`. Namen stehen nicht darin; pseudonyme IDs sind trotzdem personenbezogen, und der Datenschutzabschnitt der readme.txt zählt die gespeicherten Felder abschließend auf, ohne diese. Der Nutzen der Spalte ist Strukturauskunft ohne CT-Eingriff (siehe „Kein ChurchTools-Testsystem"). *Entscheidung offen*, Empfehlung zuerst:
+  - (a) **`meta`-Knoten beim Speichern entfernen**, rekursiv wie `withoutDeprecated()`. Strukturauskunft bleibt, Personen-IDs gehen. Bestand wird beim nächsten Sync überschrieben; vergangene Zeilen per einmaliger Migration (`DB_VERSION` 1.8.0) bereinigen oder mit der Aufbewahrungsfrist auslaufen lassen.
+  - (b) Spalte nicht mehr befüllen und später entfernen. Datensparsamer, kostet die Strukturauskunft – die ließe sich durch ein lokales Probe-Skript ersetzen.
+  - In beiden Fällen: Datenschutzabschnitt der readme.txt ergänzen, `testRawDataIsTheEntireEnvelopeWithoutAliases` anpassen.
+- [ ] **1.3 Deinstallation**: Der API-Key wird immer gelöscht, auch mit „Daten beim Deinstallieren behalten" – behalten heißt Termine und Einstellungen, nicht das Geheimnis. Dabei die fehlenden Optionen `ctp_church_address` und `ctp_resources_fetched` mitnehmen (war als eigene Aufgabe vorgemerkt, hier zusammenführen). Test: Deinstallation mit `keep_data_on_uninstall` hinterlässt `ctp_settings` ohne `api_key`.
+- [ ] **1.4 Sync-Sperre.** Heute gibt es keine: WP-Cron, „Jetzt synchronisieren" und der Sofortlauf nach dem Speichern der Gruppen können gleichzeitig laufen. Denkbare Folge (aus dem Code abgeleitet, nicht nachgestellt): Die Aufräumung verwaister Bilder eines Laufs löscht einen Anhang, den ein paralleler Lauf gerade importiert, aber noch nicht in seine Zeile geschrieben hat. Umsetzung: `add_option('ctp_sync_lock', time(), '', false)` als atomare Sperre (schlägt fehl, wenn es die Option gibt), je eine für Termine und Gruppen, Übernahme nach 15 Minuten, Freigabe im `finally`. Der Knopf meldet „Läuft bereits". Tests für Sperre, Übernahme und Freigabe nach Ausnahme.
+- [ ] **1.5 Lauf nur mit brauchbarem Key.** `SyncEngine::run()` prüft, ob *ein* Key gespeichert ist, nicht ob er sich entschlüsseln lässt, und schickt dann `Login ` ohne Token. Prüfen über `apiKeyDecryptionFailed()` und die bekannte Meldung speichern.
+- [ ] **1.6 Abo-Feed nur für aktivierte Kalender.** `EventFeed::requestedCalendars()` lässt über `resolveCalendarIds()` jede Zahl durch. Nachladen-Endpunkt und Detailseite gleichen mit `getEnabledCalendarIds()` ab, der Feed nicht – ein abgewählter Kalender bleibt bis zum nächsten Aufräumen abrufbar. Schnittmenge bilden wie in `EventsEndpoint::sanitizeCalendarIds()`, samt der Regel „nichts übrig → keine Termine, nicht alle".
+- [ ] **1.7 Gespeicherter Key nur an die gespeicherte Instanz.** `effectiveConnection()` kombiniert eine eingetippte Instanz mit dem gespeicherten Key; ein Admin (oder eine übernommene Admin-Sitzung) kann ihn so an eine andere `*.church.tools`-Instanz schicken. Weicht die Instanz ab und ist das Key-Feld leer: „Bitte den API-Key für diese Instanz eingeben."
+- *Abnahme*: `composer test` und `composer lint` mit Exit 0, je Punkt eine Sabotage, CHANGELOG und readme.txt (Datenschutz, Upgrade Notice).
+
+#### Phase 2 – Geheimnis und Anmeldung (1.27.0)
+
+- [ ] **2.1 Key aus `wp-config.php` oder Umgebung.** Neue Konstante `CTP_API_KEY` (oder Umgebungsvariable gleichen Namens) hat Vorrang vor der Datenbank; der Reiter „Verbindung" zeigt dann „aus der Serverkonfiguration" und sperrt das Feld. Damit liegt das Geheimnis gar nicht in der Datenbank, und die heutige Grenze („Schutz nur, solange die Datenbank ohne `wp-config.php` abfließt") entfällt. Doku: README, readme.txt-FAQ „Serverumzug".
+- [ ] **2.2 Verschlüsselung auf Stand bringen.** Heute AES-256-CBC ohne Integritätsschutz, Schlüssel ist `sha256(AUTH_KEY)` ohne eigenen Kontext. Neu: `sodium_crypto_secretbox()` (XSalsa20-Poly1305, in PHP 8.1 enthalten), Schlüssel über `hash_hkdf('sha256', AUTH_KEY, 32, 'churchtools-plugin/api-key/v2')`, Präfix `ctp2:`. `ctp1:` wird weiter gelesen und beim nächsten Speichern ersetzt; das Auspacken der doppelt verschlüsselten Werte aus der Zeit vor 0.12.4 kann danach entfallen. Tests: Rundlauf, manipulierter Ciphertext wird abgelehnt, alter Wert wird gelesen.
+- [ ] **2.3 Minimale Rechte dokumentieren.** Ein ChurchTools-Login-Token läuft nicht ab und trägt alle Rechte seiner Person. Empfehlung in README und im Reiter „Verbindung": eigener technischer Benutzer, nur Leserechte auf die übernommenen Kalender, „Ressource sehen" für die Räume, sonst nichts. Welche Rechte die Gruppen-Homepages mit Key brauchen, klärt 3.1. Der Verbindungstest nennt heute den Namen der angemeldeten Person – er könnte zusätzlich warnen, wenn der Key mehr darf als nötig; *offen*, ob die API das ohne großen Aufwand hergibt.
+- [ ] **2.4 `/api/info` mit Key.** Heute bewusst anonym (`Client::getInfo()`), weil ein abgelaufener Key dort 401 lieferte. Nach der Nutzerentscheidung ist genau das richtig: Ein ungültiger Key soll auffallen, nicht umgangen werden.
+
+#### Phase 3 – Gruppen über den Key (1.27.0 oder 1.28.0)
+
+*Voraussetzung*: gültiger Key in der Testumgebung (der dortige ist 4 Zeichen lang und seit dem 2026-09-02 abgelehnt).
+
+- [ ] **3.1 Vergleich anonym gegen angemeldet**, nur GETs, Ergebnisse nur im Scratchpad: Welche Homepages und Gruppen kommen mit Key dazu? Unterscheiden sich Belegung, `canSignUp`, Bilder? Laut Spec liefert `/grouphomepages` „alle aktivierten" Homepages und `/{hash}` „die öffentlichen Gruppen, die angezeigt werden sollen" – das ist zu bestätigen, nicht anzunehmen.
+- [ ] **3.2 Personendaten bleiben draußen.** Laut Spec bringt eine Homepage mit Key zusätzlich `signUpPersons` (Personen, die *der API-Benutzer* anmelden darf: Ehepartner, Kinder unter 16, gleiche E-Mail-Adresse) und `information.leader` mit Personenobjekten. `normalizeGroup()` übernimmt heute nur benannte Felder – das wird *vor* der Umstellung per Test festgehalten: eine Antwort mit beiden Feldern hinein, genau die erwarteten Schlüssel heraus.
+- [ ] **3.3 Öffentlich bleibt öffentlich.** Zeigt 3.1 mit Key nicht öffentliche Gruppen, filtert der Sync über `signUpConditions.groupIsPublic`. Die Regel „ChurchTools ist die zentrale Wahrheit" bleibt: kein Häkchen je Gruppe in WordPress.
+- [ ] **3.4 Plätze.** `canSignUp` und die Zähler gelten laut Spec für den abfragenden Benutzer. `free_places` rechnet nur mit `maxMemberCount`, `currentMemberCount` und `requestedSeatsCount` – mit 3.1 prüfen, dass diese mit Key gleich bleiben.
+- [ ] **3.5 Anonymen Pfad entfernen.** Parameter `$authenticated` aus `Client::request()`/`send()` streichen, damit kein Aufruf mehr ohne Key möglich ist. `GroupSync::run()`, `GroupsTab::ajaxFetchHomepages()` und die Zeitplanung im `Installer` verlangen Instanz *und* brauchbaren Key (heute `new Client($baseUrl, '')`); `SyncHealthNotice` meldet dann auch fehlgeschlagene Gruppen-Läufe (war ohnehin offen aus Schritt 4).
+- [ ] **3.6 Texte**: Hinweis „Braucht keinen API-Key" im Reiter Homepages; README (Einrichtung Schritt 7, Abschnitt Gruppen), readme.txt (Merkmale, FAQ Gruppen), `docs/ARCHITECTURE.md`, Docblocks in `Client` und `GroupSync`, Kommentar in `SettingsPage` (Instanz- und Key-Feld). Memory `ct-api-anonym-abfragen` bleibt als Prüfwerkzeug, nicht als Betriebsweg.
+- *Offen*: Gruppenleiter anzeigen, wenn der Key sie liefert? Empfehlung: nein, nicht ohne ausdrückliche Entscheidung – Namen von Ehrenamtlichen auf der Website sind eine eigene Datenschutzfrage.
+
+#### Phase 4 – Datenschutz im Frontend (1.27.x, klein)
+
+- [ ] **4.1 Beschreibungen ohne fremde Einbettungen.** `EventFormatter::descriptionHtml()` nutzt `wp_kses_post()`, das `<img>` mit beliebiger Quelle durchlässt – Besucher würden dann Bilder von Dritten laden, entgegen „Besucher laden nichts von ChurchTools". Eigene Allowlist (Absätze, Umbrüche, Hervorhebung, Listen, Links). Im heutigen Bestand gibt es keine HTML-Beschreibungen, der Schaden ist also vorbeugend.
+- [ ] **4.2 E-Mail-Adressen.** `make_clickable()` macht Adressen aus Beschreibungen zu `mailto:`-Links und damit leicht abgreifbar. *Offen*: mit `antispambot()` verschleiern (Empfehlung) oder so lassen.
+- [ ] **4.3 Textvorschlag für die Datenschutzerklärung** über `wp_add_privacy_policy_content()`: welche Daten, woher, wie lange, keine Einbindung Dritter.
+- [ ] **4.4 Doku zu Gruppenbildern**: Bilder werden kopiert; entfernt ChurchTools ein Bild, verschwindet es erst mit dem nächsten Gruppen-Abgleich (bis zu einer Woche), aus Backups gar nicht.
+
+#### Phase 5 – Code-Qualität (laufend, ohne Release-Druck)
+
+- [ ] **5.1 `SettingsPage` aufteilen.** 5.488 Zeilen, 170 Funktionen, ein Inline-Skript von 516 Zeilen. Die Schichtung ist verkehrt: `SyncEngine` ruft `SettingsPage::refreshCalendars()` und `refreshResources()`. Vorbild ist die Aufteilung der Gruppen (`GroupSettings` für Daten, `GroupsTab` für die Oberfläche). Reihenfolge: zuerst die reinen Funktionen ohne Ausgabe (`mergeCalendars`, `mergeResources`, `refresh*`, Key-Handling) nach `Sync\CalendarList`, `Sync\ResourceList`, `Security\ApiKey` – die Tests ziehen mit um; danach die Reiter einzeln; das Inline-Skript nach `assets/js/admin.js`, Nonces über `wp_add_inline_script()`. Kein Verhalten ändert sich, jede Etappe ein eigener Commit.
+- [ ] **5.2 Integrationstests gegen echtes WordPress.** Die 593 Tests laufen gegen einen Nachbau (`tests/bootstrap.php`, 910 Zeilen). Fehler im Verhalten von WordPress selbst sieht der prinzipiell nicht – der doppelte Sanitizer beim ersten Speichern damals, die Weiterleitung jetzt. Ein kleiner zweiter Satz mit der WordPress-Testbibliothek (in CI mit SQLite, wie die lokale Testumgebung) für: Speichern über die Settings-API, Verschlüsselung im Rundlauf, Deinstallation, HTTP-Argumente des Clients.
+- [ ] **5.3 Statische Analyse**: PHPStan mit `szepeviktor/phpstan-wordpress`, Start auf Stufe 5 mit Baseline, als CI-Job.
+- [ ] **5.4 PHPCS-Warnungen wieder lesbar machen.** 373 Warnungen werden ignoriert, 302 davon Zeilenlänge, 64 Hinweise auf direkte Datenbankzugriffe (bei eigener Tabelle zwangsläufig). Zeilenlänge für Kommentare lockern oder abschalten, die DB-Hinweise gezielt an den Stellen begründen – danach Warnungen in CI sichtbar machen.
+- [ ] **5.5 Build-Abhängigkeiten.** `npm audit` meldet 46 Lücken (19 hoch) in der Kette von `@wordpress/scripts`. Betrifft Build und CI, nicht die Website – aus diesem Build fällt aber das ausgelieferte ZIP. `@wordpress/scripts` aktualisieren, `npm audit --audit-level=high` als nicht blockierenden CI-Schritt. `composer audit` ist sauber.
+
+#### Reihenfolge und offene Entscheidungen
+
+| Phase | Inhalt | Aufwand | Release |
+| --- | --- | --- | --- |
+| 0 | Konto, Rulesets, Releases, Scanning; Workflows pinnen | ~30 min Nutzer + klein | – |
+| 1 | Weiterleitung, `raw_data`, Deinstallation, Sperre, Feed, Verbindungstest | klein bis mittel | 1.26.1 |
+| 2 | Key aus Konfiguration, sodium, Rechte-Doku, `/api/info` | mittel | 1.27.0 |
+| 3 | Gruppen über den Key | mittel, braucht gültigen Key | 1.27.0 / 1.28.0 |
+| 4 | Frontend-Datenschutz | klein | 1.27.x |
+| 5 | Aufteilung, Integrationstests, PHPStan | groß, stückweise | laufend |
+
+Offen für den Nutzer: (1) `raw_data` – `meta` entfernen oder Spalte aufgeben (1.2). (2) Gruppenleiter anzeigen (3). (3) E-Mail-Adressen verschleiern (4.2). (4) Signierte Updates, sobald Dritte das Plugin nutzen (0). (5) **Wann dieser Abschnitt öffentlich wird**: `plan.md` liegt im öffentlichen Repo. Die Punkte sind allgemein gehalten und keiner ist ohne weiteren Zugang ausnutzbar, trotzdem ist es sauberer, Phase 0 und 1.1 vor dem Push umzusetzen oder mit ihnen zusammen zu pushen.
 
 ### Offene Kleinigkeiten im Frontend
 

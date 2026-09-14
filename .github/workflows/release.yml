@@ -7,19 +7,31 @@ name: Release
 # builds both, packages a clean plugin directory, and attaches it as a release asset
 # so GitHubUpdateChecker (see includes/Update/GitHubUpdateChecker.php) has something
 # installable to point admins at.
+#
+# Zwei Jobs statt einem (Sicherheits-Review 2026-09-14): Das ZIP installiert sich
+# auf fremden Seiten selbst, und Composer, npm und setup-php laufen mit fremdem
+# Code. Der Build bekommt deshalb nur Leserechte; Schreibrecht auf das Repo und
+# das Recht, die Herkunft zu bescheinigen, hat allein der zweite Job, und der
+# fuehrt keinen Code aus Abhaengigkeiten aus. Die Actions stehen auf Commit-SHAs
+# (Begruendung in ci.yml), und veroeffentlicht wird mit dem vorinstallierten
+# `gh` statt mit einer Drittanbieter-Action, die dafuer Schreibrecht braeuchte.
 
 on:
   push:
     tags:
       - 'v*'
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # update.json ist die Datei, aus der installierte Kopien von einer neuen
       # Version erfahren (siehe includes/Update/GitHubUpdateChecker.php). Sie
@@ -38,7 +50,7 @@ jobs:
             exit 1
           fi
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: '8.1'
           tools: composer
@@ -57,7 +69,7 @@ jobs:
       # gepinnt statt lts/*, weil aus diesem Schritt ein Artefakt faellt, das sich
       # auf fremden Seiten installiert: Welche Node-Version es gebaut hat, soll in
       # der Datei stehen und nicht davon abhaengen, wann der Lauf startet.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           package-manager-cache: false
@@ -72,19 +84,20 @@ jobs:
       # overlaps its own destination.
       - name: Stage plugin files
         run: |
-          mkdir -p "${{ runner.temp }}/churchtools-plugin"
-          rsync -a --exclude-from=.github/release-excludes.txt ./ "${{ runner.temp }}/churchtools-plugin/"
+          mkdir -p "${RUNNER_TEMP}/churchtools-plugin"
+          rsync -a --exclude-from=.github/release-excludes.txt ./ "${RUNNER_TEMP}/churchtools-plugin/"
 
       - name: Create zip
         run: |
-          cd "${{ runner.temp }}"
-          zip -r "${GITHUB_WORKSPACE}/churchtools-plugin-${GITHUB_REF_NAME}.zip" churchtools-plugin
+          mkdir -p "${RUNNER_TEMP}/dist"
+          cd "${RUNNER_TEMP}"
+          zip -r "${RUNNER_TEMP}/dist/churchtools-plugin-${GITHUB_REF_NAME}.zip" churchtools-plugin
 
       # Die Release-Seite trug bisher nur einen Link auf den Commit-Bereich. Der
       # CHANGELOG-Abschnitt dieses Tags sagt, was sich tatsaechlich geaendert hat,
       # und zwar in denselben Worten, die auch der Tab „Updates" im Backend zeigt -
-      # also wird er die Release-Notes. generate_release_notes bleibt an; GitHub
-      # haengt seine „Full Changelog"-Zeile darunter.
+      # also wird er die Release-Notes. GitHub haengt seine automatisch erzeugten
+      # Notizen samt „Full Changelog"-Zeile darunter.
       - name: Extract release notes from CHANGELOG
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -93,18 +106,54 @@ jobs:
             found && index($0, "## [") == 1 { exit }
             found && /^\[[^]]+\]: / { exit }
             found { print }
-          ' CHANGELOG.md > "${{ runner.temp }}/release-notes.md"
+          ' CHANGELOG.md > "${RUNNER_TEMP}/dist/release-notes.md"
           # Ein leerer Abschnitt heisst: Der Tag wurde ohne seinen CHANGELOG-Eintrag
           # gesetzt. Hier abzubrechen ist Absicht - lieber ein gestopptes Release als
           # ein veroeffentlichtes, dessen Seite nichts sagt.
-          if [ ! -s "${{ runner.temp }}/release-notes.md" ]; then
+          if [ ! -s "${RUNNER_TEMP}/dist/release-notes.md" ]; then
             echo "::error::CHANGELOG.md has no section for ${version}"
             exit 1
           fi
 
-      - name: Publish release
-        uses: softprops/action-gh-release@v3
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          files: churchtools-plugin-${{ github.ref_name }}.zip
-          body_path: ${{ runner.temp }}/release-notes.md
-          generate_release_notes: true
+          name: release
+          path: ${{ runner.temp }}/dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: dist
+
+      # Signierter Herkunftsnachweis (Sigstore) fuer das ZIP: Er bescheinigt,
+      # dass genau diese Datei aus diesem Workflow an diesem Commit stammt.
+      # Pruefen laesst er sich mit
+      #   gh attestation verify churchtools-plugin-vX.Y.Z.zip -R wirsindcgks/churchtools-plugin
+      # Er verhindert kein boeswilliges Release, macht aber ein untergeschobenes
+      # ZIP (nicht aus diesem Workflow) erkennbar.
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/churchtools-plugin-${{ github.ref_name }}.zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/churchtools-plugin-${GITHUB_REF_NAME}.zip" \
+            --verify-tag \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file dist/release-notes.md \
+            --generate-notes
