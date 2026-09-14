@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.25.1
+Stable tag: 1.26.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -251,6 +251,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.26.0 =
+
+Das Backend ist neu geordnet: Im WordPress-Menü stehen unter „ChurchTools“ jetzt Übersicht, Events, Gruppen und Einstellungen. Design, Verbindung und Updates liegen unter „Einstellungen“, Kalender und Synchronisation unter „Events“; alte Adressen leiten weiter, Einstellungen bleiben unverändert. Neu sind die Gruppen: Die Gruppen einer Gruppen-Homepage aus ChurchTools lassen sich als Ersatz für den iframe in der Optik des Plugins zeigen. Nach dem Update ändert sich auf der Website nichts, bis unter „Gruppen → Homepages“ eine Homepage angehakt ist.
+
 = 1.25.0 =
 
 Neu ist ein „Abonnieren“-Button: Er trägt alle künftigen Termine eines Kalenders dauerhaft in den Kalender des Besuchers ein, statt einen einzelnen herunterzuladen. Er ist standardmäßig aus und wird im Design-Tab eingeschaltet – nach dem Update ändert sich also zunächst nichts. Wer ihn einschaltet, schaltet „Importieren“ am besten ab: Zwei Buttons passen nebeneinander, drei werden im Popup eng.
@@ -382,6 +386,16 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.26.0 =
+
+* Neu: Gruppen aus den Gruppen-Homepages in ChurchTools als Kachelraster – mit Treffzeit, Auszug und freien Plätzen, per Shortcode `[ctp_groups]`, Block „ChurchTools Gruppen“ oder WPBakery-Element
+* Neu: Abgefragt wird ohne API-Key, ChurchTools entscheidet selbst, welche Gruppen öffentlich sind; eigenes Sync-Intervall bis „wöchentlich“
+* Neu: Bereich „Gruppen“ im Backend mit Gruppenliste, Homepages und Einbinden
+* Neu: Die Blöcke lassen sich auf „Weite Breite“ und „Volle Breite“ stellen – der Weg zu mehr Spalten bei schmalem Inhaltsbereich
+* Geändert: Backend in vier Bereiche geteilt (Übersicht, Events, Gruppen, Einstellungen), jeder mit eigenem Menüeintrag; alte Adressen leiten weiter
+* Geändert: „Events“ öffnet die Terminliste, die Übersicht zeigt Events und Gruppen getrennt
+* Geändert: `columns` ist als Obergrenze beschrieben – je Kachel mindestens 240px
 
 = 1.25.1 =
 

@@ -124,8 +124,9 @@ final class GroupListRenderer
 
     /**
      * Nur bei Gruppen mit Hoechstzahl; ohne sie gibt es nichts, was knapp
-     * werden koennte. Zwei Saetze statt _n(): bin/make-pot.php kennt keine
-     * Plurale.
+     * werden koennte. Zwei Saetze statt der Plural-Funktion von WordPress:
+     * bin/make-pot.php kennt keine Plurale und bricht schon ab, wenn ihr Name
+     * mit Klammern in einem Kommentar steht.
      */
     public static function placesLabel(array $group): string
     {

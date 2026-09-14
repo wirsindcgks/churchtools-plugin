@@ -5,6 +5,22 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.26.0] - 2026-09-14
+
+### Added
+
+- **Gruppen statt iframe.** Die Gruppen einer Gruppen-Homepage aus ChurchTools erscheinen jetzt als Kachelraster in derselben Optik wie die Termine – mit Bild, Wochentag und Treffzeit, einem Auszug der Beschreibung und, wo die Gruppe eine Höchstzahl hat, den freien Plätzen („Noch 3 Plätze frei", „Ausgebucht"). Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Eingebunden wird per Shortcode `[ctp_groups homepage="…"]`, über den neuen Block „ChurchTools Gruppen" oder das gleichnamige WPBakery-Element. Vorlage, Farben, Ecken und Bildformat kommen aus dem Design.
+- **ChurchTools entscheidet, was erscheint.** Die Gruppen werden ohne API-Key abgefragt, also so, wie ein Besucher die Homepage sieht: nur öffentliche Gruppen, Bilder nur, wo die Homepage Gruppenbilder zeigt. Eine zweite Auswahl in WordPress gibt es nicht – angehakt wird eine Homepage, nicht einzelne Gruppen.
+- **Eigenes Sync-Intervall für Gruppen**: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich; die Anmeldung in ChurchTools zeigt immer den echten Stand. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, damit eine kurze Störung der Website nicht die Gruppen nimmt.
+- **Neuer Bereich „Gruppen" im Backend** mit Gruppenliste (was gerade gespeichert ist), Homepages (Auswahl und Intervall) und Einbinden (fertige Shortcodes mit den angehakten Homepages).
+- **Die Blöcke „ChurchTools Events" und „ChurchTools Gruppen" lassen sich auf „Weite Breite" und „Volle Breite" stellen.** Das ist der Weg zu mehr Spalten, wenn der Inhaltsbereich des Themes schmal ist: Jede Kachel ist mindestens 240px breit, und drei brauchen rund 790px – viele Block-Themes geben dem Inhalt nur um 650px.
+
+### Changed
+
+- **Das Backend ist in vier Bereiche geteilt, jeder mit eigenem Eintrag im WordPress-Menü:** Übersicht, Events, Gruppen und Einstellungen. Oben auf der Seite stehen nur noch die Reiter des Bereichs, statt einer Reihe aus zehn Knöpfen. Design, Verbindung und Updates liegen unter „Einstellungen", Kalender, Räume, Synchronisation und Einbinden unter „Events". Alte Adressen und Lesezeichen leiten auf die neue Stelle weiter.
+- Jeder Bereich beginnt mit dem, was er zeigt: „Events" öffnet die Terminliste (bisher „Events" genannt), „Gruppen" die Gruppenliste. Die Übersicht zeigt den Zustand von Events und Gruppen getrennt, mit je eigenem Sync-Knopf.
+- `columns` ist in Hilfetexten und Doku als das beschrieben, was es ist: eine Obergrenze. Bisher hieß es „Spaltenzahl auf breiten Bildschirmen" – gemessen wird aber die Breite, die das Raster tatsächlich bekommt.
+
 ## [1.25.1] - 2026-09-14
 
 ### Fixed
