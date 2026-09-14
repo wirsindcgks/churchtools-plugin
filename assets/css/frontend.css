@@ -1739,6 +1739,22 @@
     overflow-wrap: break-word;
 }
 
+/*
+ * „Ganztaegig" steht im Titel und nicht daneben, und dort sass er auf der
+ * Grundlinie: 6px unter der Mitte des Datums-Chips, sichtbar schief neben der
+ * grossen Ueberschrift (gemeldet 2026-09-12). In den Kacheln faellt das nicht
+ * an, dort ist .ctp-events__title ein Flex-Container mit align-items: center.
+ *
+ * Mittig statt buendig mit der Oberkante des Chips: Oberkante ginge nur ausser-
+ * halb des Textflusses - als eigene Spalte nimmt der Chip dem Titel auf jeder
+ * Zeile Breite weg, als Float ueberlappt er ein langes Wort. Im Fluss bleibt
+ * er am Ende der letzten Zeile und bricht notfalls in eine eigene. Bei einem
+ * einzeiligen Titel trifft `middle` die Chip-Mitte auf 1px.
+ */
+.ctp-events__detail-title .ctp-events__badge {
+    vertical-align: middle;
+}
+
 /* Explicitly sized rather than left to inherit the theme's body font — that
    inheritance is what made popup body copy visibly larger than the card text
    it was opened from (see the type scale at the top of this file). */

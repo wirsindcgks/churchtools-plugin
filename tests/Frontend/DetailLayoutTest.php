@@ -363,6 +363,30 @@ final class DetailLayoutTest extends TestCase
     }
 
     /**
+     * „Ganztägig" steht in der Detailansicht *im* Titel, als Inline-Element
+     * hinter dem Text — und saß dort auf der Grundlinie, sichtbar tiefer als
+     * die Mitte des Datums-Chips daneben (gemeldet 2026-09-12). Die Kacheln
+     * brauchen die Regel nicht, dort zentriert der Flex-Container.
+     *
+     * Geprüft wird beides, denn beides trägt: dass der Chip im Titel steht
+     * (sonst greift die Regel nicht) und dass die Regel ihn mittig setzt.
+     */
+    public function testAllDayBadgeSitsCenteredInTheDetailTitle(): void
+    {
+        $badge = $this->render('page', null, 'https://example.test/flyer.jpg', false, 1)
+            ->query('//h1[@class="ctp-events__detail-title"]/span[@class="ctp-events__badge"]');
+        $this->assertCount(1, $badge, 'Der Ganztägig-Chip steht nicht mehr im Titel.');
+
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+        $this->assertSame(
+            1,
+            preg_match('/^\.ctp-events__detail-title \.ctp-events__badge \{([^}]*)\}/m', $css, $treffer),
+            'Keine Regel für den Chip im Detailtitel gefunden.'
+        );
+        $this->assertStringContainsString('vertical-align: middle;', $treffer[1]);
+    }
+
+    /**
      * @param string[]|null $order Ohne „description": deren Aufbereitung läuft
      *                             über wpautop()/make_clickable()/wp_kses_post(),
      *                             die diese Testumgebung bewusst nicht nachbaut
@@ -372,7 +396,8 @@ final class DetailLayoutTest extends TestCase
         string $detailContext,
         ?array $order = null,
         string $imageUrl = 'https://example.test/flyer.jpg',
-        bool $shareEnabled = false
+        bool $shareEnabled = false,
+        int $allDay = 0
     ): DOMXPath {
         $event = [
             'ct_calendar_id' => 7,
@@ -382,7 +407,7 @@ final class DetailLayoutTest extends TestCase
             'description' => '',
             'start_date' => '2026-09-06 10:00:00',
             'end_date' => '2026-09-06 11:30:00',
-            'all_day' => 0,
+            'all_day' => $allDay,
             'calendar_name' => 'Gottesdienste',
             'calendar_color' => '#006d8f',
             'image_url' => $imageUrl,
