@@ -7,6 +7,6 @@
         "start:groups": "wp-scripts start blocks/group-list/index.js --output-path=blocks/group-list/build"
     },
     "devDependencies": {
-        "@wordpress/scripts": "^30.0.0"
+        "@wordpress/scripts": "^35.0.0"
     }
 }
