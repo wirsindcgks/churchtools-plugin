@@ -80,7 +80,7 @@ final class SyncHealthNotice
             esc_attr($problem['type']),
             esc_html__('ChurchTools Events:', 'churchtools-plugin'),
             esc_html($problem['message']),
-            esc_url(add_query_arg(['page' => 'churchtools-plugin', 'tab' => 'status'], admin_url('admin.php'))),
+            esc_url(SettingsPage::tabUrl('status')),
             esc_html__('Zur Übersicht', 'churchtools-plugin')
         );
     }
@@ -223,7 +223,11 @@ final class SyncHealthNotice
             return false;
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation state (which tab is open), not a state change; same pattern as SettingsPage::currentTab().
-        return sanitize_key((string) ($_GET['tab'] ?? 'status')) === 'status';
+        // Seit die Bereiche eigene Unterseiten sind, reicht der fehlende
+        // `tab` nicht mehr: Auf „Events" ohne Reiter-Angabe steht nicht die
+        // Uebersicht, der Hinweis gehoert dort also hin. Die Uebersicht ist
+        // die Seite mit dem blanken Slug.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation state (which page is open), not a state change; same pattern as SettingsPage::currentTab().
+        return sanitize_key((string) ($_GET['page'] ?? '')) === 'churchtools-plugin';
     }
 }

@@ -65,12 +65,13 @@ final class SettingsPage
      */
     private const DEFAULT_DESIGN_SECTION = 'style';
 
-    private string $pageHook = '';
+    /** @var string[] Die Seiten-Hooks aller vier Bereiche, fuer enqueueAssets(). */
+    private array $pageHooks = [];
 
     public function register(): void
     {
         add_action('admin_menu', [$this, 'addMenuPage']);
-        add_filter('submenu_file', [$this, 'highlightMenuEntry']);
+        add_action('admin_init', [$this, 'redirectLegacyTabUrl']);
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
         add_action('wp_ajax_ctp_test_connection', [$this, 'ajaxTestConnection']);
@@ -82,7 +83,7 @@ final class SettingsPage
 
     public function addMenuPage(): void
     {
-        $this->pageHook = add_menu_page(
+        $this->pageHooks[] = (string) add_menu_page(
             __('ChurchTools Events', 'churchtools-plugin'),
             __('ChurchTools', 'churchtools-plugin'),
             'manage_options',
@@ -92,89 +93,139 @@ final class SettingsPage
             26
         );
 
-        foreach (self::tabs() as $slug => $label) {
-            if (!in_array($slug, self::MENU_TABS, true)) {
-                continue;
-            }
-
-            add_submenu_page(
+        foreach (self::areas() as $area => $label) {
+            $this->pageHooks[] = (string) add_submenu_page(
                 self::PAGE_SLUG,
                 $label,
                 $label,
                 'manage_options',
-                self::submenuSlug($slug),
+                self::areaSlug($area),
                 [$this, 'renderPage']
             );
         }
     }
 
     /**
-     * Die drei Reiter, die zusaetzlich links im WordPress-Menue stehen.
+     * Die vier Bereiche des Backends, zugleich die Eintraege im linken
+     * WordPress-Menue (Nutzerentscheidung 2026-09-14: „links im Menue eine
+     * Uebersicht und Einstiegspunkte fuer Events bzw. Gruppen", Design unter
+     * „Einstellungen").
      *
-     * Bewusst nicht alle Reiter (Nutzerentscheidung 2026-09-08: „im Menue links
-     * sollten maximal die Hauptpunkte rein"). Das linke Menue traegt damit
-     * nicht die Navigation dieses Plugins - das bleibt die Reiterreihe -,
-     * sondern ein paar Abkuerzungen. Aufgenommen ist, was man von *anderswo*
-     * in WordPress aus ansteuern will: der Statusblick, das Aussehen und die
-     * Termine zum Nachschlagen. Verbindung, Kalender, Raeume und
-     * Synchronisation richtet man einmal ein und erreicht sie danach ueber die
-     * Uebersicht; „Einbinden" braucht man im Seiteneditor, wo das Menue nicht
-     * hilft.
+     * Bis dahin gab es eine Reiterreihe mit zehn Knoepfen und links drei
+     * Abkuerzungen, die per `&tab=` in dieselbe Seite fuehrten. Mit den Gruppen
+     * standen dort zwei verschiedene Themen durcheinander. Jetzt ist jeder
+     * Bereich eine eigene Unterseite mit eigenem Slug, auf der nur noch seine
+     * Reiter stehen - WordPress markiert den Menueeintrag damit von selbst.
      *
-     * Die Reihenfolge macht nicht diese Liste, sondern tabs() - hier steht nur,
-     * *ob* ein Reiter dazugehoert. Dass DEFAULT_TAB dort zuerst kommt, ist
-     * Bedingung und keine Zufaelligkeit, siehe submenuSlug().
+     * @return array<string, string>
      */
-    private const MENU_TABS = ['status', 'design', 'events'];
-
-    /**
-     * Der Menue-Slug eines Reiters - fuer alle bis auf einen der Seiten-Slug
-     * mit angehaengtem `&tab=`. WordPress baut daraus
-     * `admin.php?page=churchtools-plugin&tab=design`, ohne das `&` zu
-     * kodieren (`build_query()` ruft `_http_build_query()` mit
-     * `$urlencode = false`), und zur Laufzeit bleibt `page` trotzdem der blanke
-     * Slug - `enqueueAssets()` sieht deshalb weiterhin genau einen Hook.
-     *
-     * Der Standard-Reiter bekommt den blanken Slug, und das ist keine
-     * Schoenheit: Sobald ein Menuepunkt Untereintraege hat, verlinkt er selbst
-     * nicht mehr auf sich, sondern auf den *ersten* davon
-     * (wp-admin/menu-header.php: `admin.php?page={$submenu_items[0][2]}`).
-     * Traege der erste Eintrag `&tab=…`, fuehrte ein Klick auf „ChurchTools"
-     * kuenftig woandershin als bisher.
-     */
-    private static function submenuSlug(string $tab): string
+    private static function areas(): array
     {
-        return $tab === self::DEFAULT_TAB ? self::PAGE_SLUG : self::PAGE_SLUG . '&tab=' . $tab;
+        return [
+            'overview' => __('Übersicht', 'churchtools-plugin'),
+            'events' => __('Events', 'churchtools-plugin'),
+            'groups' => __('Gruppen', 'churchtools-plugin'),
+            'settings' => __('Einstellungen', 'churchtools-plugin'),
+        ];
     }
 
     /**
-     * Sagt WordPress, welcher Untereintrag hervorgehoben wird.
-     *
-     * Ohne das bliebe keiner markiert: Verglichen wird der Menue-Slug mit
-     * `$plugin_page` (wp-admin/menu-header.php), und das ist zur Laufzeit nur
-     * `churchtools-plugin` - das `&tab=` ist ein eigener Query-Parameter und
-     * steht dort nicht drin.
-     *
-     * Auf einem Reiter ohne eigenen Eintrag bleibt es bewusst beim
-     * durchgereichten Wert, also bei keiner Markierung. Ersatzweise
-     * „Uebersicht" zu markieren waere der naheliegende Kurzschluss - er
-     * behauptete, man stuende dort, wo man nicht steht. Der Hauptpunkt
-     * „ChurchTools" ist ohnehin hervorgehoben und aufgeklappt; das haengt an
-     * `$parent_file` und nicht an den Untereintraegen.
-     *
-     * @param string|null $submenuFile
-     * @return string|null
+     * Welche Reiter zu welchem Bereich gehoeren, in der Reihenfolge ihrer
+     * Knoepfe. Die Reiter-Schluessel sind dieselben wie vorher - sie benennen
+     * zugleich die Settings-Seiten (siehe registerSettings()), und
+     * `&tab=calendars` bleibt als Adresse gueltig.
      */
-    public function highlightMenuEntry($submenuFile)
+    private const AREA_TABS = [
+        'overview' => ['status'],
+        'events' => ['calendars', 'rooms', 'sync', 'events', 'embed'],
+        'groups' => ['groups'],
+        'settings' => ['connection', 'design', 'updates'],
+    ];
+
+    /**
+     * Der Seiten-Slug eines Bereichs. Die Uebersicht behaelt den Slug des
+     * Hauptmenuepunkts: Sobald ein Menuepunkt Untereintraege hat, verlinkt er
+     * auf den ersten davon (wp-admin/menu-header.php), und ein Klick auf
+     * „ChurchTools" soll weiter dorthin fuehren, wo er immer hinfuehrte.
+     */
+    private static function areaSlug(string $area): string
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which menu entry to mark), not a state change; same pattern as currentTab().
-        if (sanitize_key((string) ($_GET['page'] ?? '')) !== self::PAGE_SLUG) {
-            return $submenuFile;
+        return $area === 'overview' ? self::PAGE_SLUG : self::PAGE_SLUG . '-' . $area;
+    }
+
+    private static function areaOfTab(string $tab): string
+    {
+        foreach (self::AREA_TABS as $area => $tabs) {
+            if (in_array($tab, $tabs, true)) {
+                return $area;
+            }
         }
 
-        $tab = self::currentTab();
+        return 'overview';
+    }
 
-        return in_array($tab, self::MENU_TABS, true) ? self::submenuSlug($tab) : $submenuFile;
+    private static function currentArea(): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which area to display), not a state change.
+        $page = sanitize_key((string) ($_GET['page'] ?? ''));
+
+        foreach (array_keys(self::areas()) as $area) {
+            if (self::areaSlug($area) === $page) {
+                return $area;
+            }
+        }
+
+        return 'overview';
+    }
+
+    /**
+     * Die Adresse eines Reiters, samt der Unterseite seines Bereichs. Alle
+     * Verweise im Backend gehen hierueber, damit keiner mehr eine Seite und
+     * einen Reiter zusammenbaut, die nicht zueinander gehoeren.
+     *
+     * @param array<string, string|int> $extra
+     */
+    public static function tabUrl(string $tab, array $extra = []): string
+    {
+        return add_query_arg(
+            array_merge(['page' => self::areaSlug(self::areaOfTab($tab)), 'tab' => $tab], $extra),
+            admin_url('admin.php')
+        );
+    }
+
+    /**
+     * Alte Adressen (`page=churchtools-plugin&tab=calendars`) stehen in
+     * Lesezeichen, in der Doku und in Hinweisen, die vor einem Update
+     * erschienen sind. Sie fuehren auf die Unterseite des Bereichs, samt
+     * allem, was sonst in der Adresse stand (`section`, `event_id`, Filter,
+     * `settings-updated`).
+     */
+    public function redirectLegacyTabUrl(): void
+    {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation, the redirect only rewrites where the same page is shown.
+        if (sanitize_key((string) ($_GET['page'] ?? '')) !== self::PAGE_SLUG || !isset($_GET['tab'])) {
+            return;
+        }
+
+        $tab = sanitize_key((string) $_GET['tab']);
+
+        if (!array_key_exists($tab, self::tabs()) || self::areaOfTab($tab) === 'overview') {
+            return;
+        }
+
+        $extra = [];
+
+        foreach (wp_unslash($_GET) as $key => $value) {
+            if (in_array($key, ['page', 'tab'], true) || !is_scalar($value)) {
+                continue;
+            }
+
+            $extra[sanitize_key((string) $key)] = sanitize_text_field((string) $value);
+        }
+        // phpcs:enable
+
+        wp_safe_redirect(self::tabUrl($tab, $extra));
+        exit;
     }
 
     /**
@@ -198,11 +249,18 @@ final class SettingsPage
         ];
     }
 
+    /**
+     * Der Reiter muss zum Bereich der Seite gehoeren; sonst gilt der erste
+     * Reiter des Bereichs. So kann `page=…-groups&tab=design` nicht die
+     * Design-Einstellungen unter „Gruppen" zeigen.
+     */
     private static function currentTab(): string
     {
-        $tab = sanitize_key((string) ($_GET['tab'] ?? self::DEFAULT_TAB));
+        $areaTabs = self::AREA_TABS[self::currentArea()];
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation (which tab to display), not a state change.
+        $tab = sanitize_key((string) ($_GET['tab'] ?? ''));
 
-        return array_key_exists($tab, self::tabs()) ? $tab : self::DEFAULT_TAB;
+        return in_array($tab, $areaTabs, true) ? $tab : $areaTabs[0];
     }
 
     /**
@@ -261,7 +319,7 @@ final class SettingsPage
 
     public function enqueueAssets(string $hook): void
     {
-        if ($hook !== $this->pageHook) {
+        if (!in_array($hook, $this->pageHooks, true)) {
             return;
         }
 
@@ -3301,7 +3359,7 @@ final class SettingsPage
                         printf(
                             /* translators: %s: link to the "Verbindung" tab */
                             esc_html__('Noch keine Instanz/API-Key hinterlegt. Im %s eintragen.', 'churchtools-plugin'),
-                            '<a href="' . esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'connection'], admin_url('admin.php'))) . '">'
+                            '<a href="' . esc_url(self::tabUrl('connection')) . '">'
                                 . esc_html__('Verbindung-Tab', 'churchtools-plugin') . '</a>'
                         );
                         ?>
@@ -3354,11 +3412,11 @@ final class SettingsPage
              */
             ?>
             <p class="ctp-quicklinks">
-                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'calendars'], admin_url('admin.php'))); ?>">
+                <a href="<?php echo esc_url(self::tabUrl('calendars')); ?>">
                     <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
                     <?php esc_html_e('Kalender auswählen', 'churchtools-plugin'); ?>
                 </a>
-                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'sync'], admin_url('admin.php'))); ?>">
+                <a href="<?php echo esc_url(self::tabUrl('sync')); ?>">
                     <span class="dashicons dashicons-update" aria-hidden="true"></span>
                     <?php esc_html_e('Sync-Einstellungen', 'churchtools-plugin'); ?>
                 </a>
@@ -3366,7 +3424,7 @@ final class SettingsPage
                     <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
                     <?php esc_html_e('Gespeicherte Termine ansehen', 'churchtools-plugin'); ?>
                 </a>
-                <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'design'], admin_url('admin.php'))); ?>">
+                <a href="<?php echo esc_url(self::tabUrl('design')); ?>">
                     <span class="dashicons dashicons-admin-appearance" aria-hidden="true"></span>
                     <?php esc_html_e('Darstellung anpassen', 'churchtools-plugin'); ?>
                 </a>
@@ -3409,7 +3467,7 @@ final class SettingsPage
                     <?php endforeach; ?>
                 </ul>
                 <p class="description">
-                    <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'updates'], admin_url('admin.php'))); ?>">
+                    <a href="<?php echo esc_url(self::tabUrl('updates')); ?>">
                         <?php esc_html_e('Alle Änderungen im Tab „Updates“', 'churchtools-plugin'); ?>
                     </a>
                 </p>
@@ -3700,7 +3758,7 @@ final class SettingsPage
         uasort($calendars, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
         ?>
         <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="ctp-events-filters">
-            <input type="hidden" name="page" value="<?php echo esc_attr(self::PAGE_SLUG); ?>" />
+            <input type="hidden" name="page" value="<?php echo esc_attr(self::areaSlug('events')); ?>" />
             <input type="hidden" name="tab" value="events" />
 
             <label class="screen-reader-text" for="ctp-events-scope"><?php esc_html_e('Zeitraum', 'churchtools-plugin'); ?></label>
@@ -3889,10 +3947,7 @@ final class SettingsPage
 
     private static function eventDetailUrl(int $id): string
     {
-        return add_query_arg(
-            ['page' => self::PAGE_SLUG, 'tab' => 'events', 'event_id' => $id],
-            admin_url('admin.php')
-        );
+        return self::tabUrl('events', ['event_id' => $id]);
     }
 
     /**
@@ -3902,7 +3957,7 @@ final class SettingsPage
      */
     private static function eventsOverviewUrl(array $extra = []): string
     {
-        $args = ['page' => self::PAGE_SLUG, 'tab' => 'events'];
+        $args = ['page' => self::areaSlug('events'), 'tab' => 'events'];
 
         foreach ($extra as $key => $value) {
             if ($value !== null && $value !== '') {
@@ -4057,20 +4112,30 @@ final class SettingsPage
              * `aria-current` sagt, welcher Bereich offen ist - vorher stand das
              * nur in einer Farbe, die ein Screenreader nicht sieht. Dieselbe
              * Auszeichnung tragen die Unter-Reiter des Design-Tabs.
+             *
+             * Seit 2026-09-14 nur die Reiter des Bereichs, in dem man steht -
+             * die Bereiche selbst stehen links im WordPress-Menue (siehe
+             * areas()). Ein Bereich mit einem einzigen Reiter bekommt keine
+             * Reihe: ein Knopf, der nur auf die Seite zeigt, auf der man ist,
+             * waere keine Navigation.
              */
+            $areaTabs = self::AREA_TABS[self::currentArea()];
+            $tabLabels = self::tabs();
             ?>
+            <?php if (count($areaTabs) > 1) : ?>
             <nav class="ctp-tabnav" aria-label="<?php esc_attr_e('Bereiche', 'churchtools-plugin'); ?>">
-                <div class="ctp-tabs">
-                    <?php foreach (self::tabs() as $tabSlug => $label) : ?>
-                        <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => $tabSlug], admin_url('admin.php'))); ?>"
+                <div class="ctp-tabs ctp-tabs--area" style="--ctp-tab-count:<?php echo (int) count($areaTabs); ?>">
+                    <?php foreach ($areaTabs as $tabSlug) : ?>
+                        <a href="<?php echo esc_url(self::tabUrl($tabSlug)); ?>"
                             class="button <?php echo $tab === $tabSlug ? 'button-primary' : ''; ?>"
                             <?php echo $tab === $tabSlug ? 'aria-current="page"' : ''; ?>>
                             <span class="dashicons dashicons-<?php echo esc_attr($icons[$tabSlug] ?? 'admin-generic'); ?>" aria-hidden="true"></span>
-                            <?php echo esc_html($label); ?>
+                            <?php echo esc_html($tabLabels[$tabSlug]); ?>
                         </a>
                     <?php endforeach; ?>
                 </div>
             </nav>
+            <?php endif; ?>
 
             <?php
             /*
@@ -4136,7 +4201,7 @@ final class SettingsPage
                 ?>
                 <nav class="ctp-subtabs" aria-label="<?php esc_attr_e('Design-Bereiche', 'churchtools-plugin'); ?>">
                     <?php foreach (self::designSections() as $sectionSlug => $sectionLabel) : ?>
-                        <a href="<?php echo esc_url(add_query_arg(['page' => self::PAGE_SLUG, 'tab' => 'design', 'section' => $sectionSlug], admin_url('admin.php'))); ?>"
+                        <a href="<?php echo esc_url(self::tabUrl('design', ['section' => $sectionSlug])); ?>"
                             class="ctp-subtab <?php echo $section === $sectionSlug ? 'ctp-subtab--active' : ''; ?>"
                             <?php echo $section === $sectionSlug ? 'aria-current="page"' : ''; ?>>
                             <?php echo esc_html($sectionLabel); ?>
