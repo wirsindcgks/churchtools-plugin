@@ -5,6 +5,18 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.28.0] - 2026-09-14
+
+### Added
+
+- **Einzelne Gruppen auswählen.** Statt aller Gruppen einer Homepage lassen sich Gruppen einzeln zeigen, in der gewählten Reihenfolge: im Shortcode mit `groups="514,269"`, im Block „ChurchTools Gruppen" über den Umschalter „Einzelne Gruppen", im WPBakery-Element über Ankreuzfelder. Zur Auswahl stehen die Gruppen der angehakten Homepages – so entscheidet weiter ChurchTools, was öffentlich ist. Die IDs stehen unter „Gruppen → Gruppenliste". Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar".
+- **Hervorgehobene Ansicht für Gruppen.** Mit `layout="featured"` oder der Ansicht „Hervorgehoben" bekommt jede Gruppe eine große Kachel mit Bild neben dem ganzen Text statt eines Auszugs – gedacht für wenige Gruppen, die besonders auffallen sollen.
+- **Button „In ChurchTools ansehen"** unter jeder Gruppe, mit einem Symbol für „führt auf eine andere Seite". Damit ist klar, dass es hier in ein anderes System geht.
+
+### Changed
+
+- **Gruppenkacheln sind nicht mehr als Ganzes klickbar.** Nach ChurchTools führt jetzt allein der Button. Ein Klick auf eine Kachel führt bei den Terminen zu einer Ansicht auf der eigenen Website; bei den Gruppen führte dieselbe Geste unangekündigt aus der Website heraus.
+
 ## [1.27.0] - 2026-09-14
 
 Sicherheit und Datenschutz, nach einem kritischen Durchgang über den ganzen Stand des Plugins.

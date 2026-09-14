@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.27.0
+Stable tag: 1.28.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -265,6 +265,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.28.0 =
+
+Gruppen lassen sich jetzt auch einzeln auswählen und groß hervorheben (Shortcode-Attribute `groups` und `layout`, im Block und im WPBakery-Element als Auswahl). Sichtbar ändert sich an bestehenden Gruppenlisten eines: Unter jeder Gruppe steht der Button „In ChurchTools ansehen“, und die Kachel selbst ist nicht mehr klickbar. Einstellungen und bestehende Einbindungen bleiben unverändert.
+
 = 1.27.0 =
 
 Sicherheit und Datenschutz: Das Plugin fragt ChurchTools nur noch mit API-Key ab – auch die Gruppen. Wer Gruppen bisher ohne Key angezeigt hat, trägt unter „Einstellungen → Verbindung“ einen ein, sonst bleiben die zuletzt geladenen Gruppen stehen und das Backend meldet den fehlenden Key. Der gespeicherte Key wird beim Update neu verschlüsselt, bereits gespeicherte Termine werden von Personenverweisen bereinigt; beides läuft beim nächsten Seitenaufruf von allein. Neu ist die Möglichkeit, den Key als `CTP_API_KEY` in `wp-config.php` zu hinterlegen.
@@ -404,6 +408,14 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.28.0 =
+
+* Neu: Einzelne Gruppen auswählen – Shortcode `groups="…"`, im Block und im WPBakery-Element als Auswahl, in der gewählten Reihenfolge
+* Neu: Hervorgehobene Ansicht `layout="featured"` mit großer Kachel und ganzem Text je Gruppe
+* Neu: Button „In ChurchTools ansehen“ unter jeder Gruppe
+* Neu: Gruppen-IDs in der Gruppenliste im Backend
+* Geändert: Gruppenkacheln sind nicht mehr als Ganzes klickbar, nach ChurchTools führt der Button
 
 = 1.27.0 =
 
