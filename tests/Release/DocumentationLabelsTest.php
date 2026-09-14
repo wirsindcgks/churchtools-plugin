@@ -40,6 +40,9 @@ final class DocumentationLabelsTest extends TestCase
     private const FREMDE_BEGRIFFE = [
         // WordPress selbst
         'Einfach',
+        // Reiter unter Einstellungen → Datenschutz, dort sammelt WordPress die
+        // Textvorschlaege (Admin\PrivacyPolicy)
+        'Richtlinien-Leitfaden',
         // Ausrichtung eines Blocks in der Werkzeugleiste („Weite Breite" nennt
         // der Hilfetext des Plugins selbst, „Volle Breite" nur WordPress)
         'Volle Breite',

@@ -18,10 +18,11 @@ Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress u
 * **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
 * **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
 * **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
-* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in der Optik des Plugins, mit Treffzeit und freien Plätzen – per Shortcode, Block oder WPBakery-Element, mit eigenem Sync-Intervall und ohne API-Key.
+* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in der Optik des Plugins, mit Treffzeit und freien Plätzen – per Shortcode, Block oder WPBakery-Element, mit eigenem Sync-Intervall.
 * **Design** unter „Einstellungen“ mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
 * **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
-* **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain.
+* **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain. Beschreibungen können keine fremden Bilder oder Skripte einbinden, E-Mail-Adressen darin werden gegen Adresssammler verschleiert, und unter Einstellungen → Datenschutz liegt ein Textvorschlag für die Datenschutzerklärung.
+* **Sicher angebunden**: Jeder Abruf geht mit dem API-Key und folgt keiner Weiterleitung; der Key liegt wahlweise als Konstante `CTP_API_KEY` in `wp-config.php` oder verschlüsselt (libsodium) in der Datenbank.
 * **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
 * **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
 * **Theme-überschreibbare Templates** und Anlehnung an die Global Styles des aktiven Themes.
@@ -105,7 +106,7 @@ Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus Chur
 
 Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ steht dieselbe Auswahl als Liste der angehakten Homepages.
 
-Abgefragt wird ohne API-Key, also so, wie ein Besucher die Homepage sieht. ChurchTools entscheidet damit selbst, welche Gruppen erscheinen und ob Bilder dabei sind; eine zweite Auswahl in WordPress gibt es nicht. Leiter werden nicht angezeigt – ChurchTools liefert sie ohne Anmeldung nicht aus.
+Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 
 Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit sowie einen Auszug aus der Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Ein Klick führt zur Gruppe in ChurchTools, wo man sich anmeldet. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
 
@@ -186,7 +187,13 @@ Ungetestet. Technisch legt es seine Tabelle mit dem Tabellenpräfix der jeweilig
 
 = Was passiert bei einem Serverumzug oder einer Änderung der WordPress-Salts? =
 
-Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert. Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es in der Übersicht ausdrücklich; der Key muss dann unter „Einstellungen → Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
+Der ChurchTools-API-Key wird mit einem aus `AUTH_KEY` abgeleiteten Schlüssel verschlüsselt gespeichert (libsodium). Ändert sich `AUTH_KEY` -- etwa beim Umzug auf einen anderen Server, beim Einspielen eines Backups in eine frische Installation oder beim Rotieren der Salts in `wp-config.php` -- lässt sich der gespeicherte Key nicht mehr entschlüsseln. Das Plugin erkennt das und meldet es in der Übersicht ausdrücklich; der Key muss dann unter „Einstellungen → Verbindung“ einmal neu eingegeben werden. Er ist das einzige Geheimnis, das dieses Plugin speichert.
+
+Wer das vermeiden oder den Key gar nicht erst in der Datenbank haben will, trägt ihn in `wp-config.php` ein: `define( 'CTP_API_KEY', '…' );` (eine Umgebungsvariable gleichen Namens geht ebenso). Dann gilt dieser Key, das Feld im Backend ist gesperrt, und ein Datenbank-Backup enthält ihn nicht.
+
+= Welche Rechte braucht der API-Key? =
+
+Nur Leserechte: die Kalender, die übernommen werden sollen, und – falls Räume angezeigt werden – „Ressource sehen“ für diese Räume. Am besten ist ein eigener ChurchTools-Benutzer nur für die Website: Ein Login-Token läuft nicht ab und darf alles, was seine Person darf. Ohne Key fragt das Plugin ChurchTools nicht ab.
 
 = Werden die Termine von Suchmaschinen gefunden? =
 
@@ -237,13 +244,17 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 
 = Welche Daten werden gespeichert? =
 
-Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe Events → Synchronisation).
+Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit, dazu die übrige Antwort von ChurchTools zum Termin als Rohdaten – ohne Verweise auf Personen wie „angelegt von“) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe Events → Synchronisation).
 
-Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Wochentag, Treffzeit, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder.
+Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Wochentag, Treffzeit, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder. Die Bilder sind Kopien: Entfernt die Gemeinde ein Gruppenbild in ChurchTools, verschwindet es auf der Website erst mit dem nächsten Gruppen-Abgleich (je nach Intervall bis zu einer Woche) – und aus bereits erstellten Backups der Website nicht.
 
 = Können Ort/Beschreibung personenbezogene Daten enthalten? =
 
-Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools übernommen und öffentlich im Frontend angezeigt (Liste/Grid/Detailansicht). Freitext-Beschreibungen in ChurchTools können je nach Gemeinde-Praxis Ansprechpartner-Namen, Telefonnummern oder E-Mail-Adressen enthalten – das Plugin filtert das bewusst nicht automatisch heraus, da sich Freitext nicht zuverlässig maschinell von personenbezogenen Daten bereinigen lässt, ohne auch gewollte Angaben (z. B. „Ansprechpartner: Pfarrbüro“) zu zerstören. Verantwortliche sollten die Beschreibungstexte der veröffentlichten Kalender einmalig durchsehen, bevor Termine über das Plugin öffentlich angezeigt werden.
+Die Felder „Ort“ und „Beschreibung“ werden unverändert aus ChurchTools übernommen und öffentlich im Frontend angezeigt (Liste/Grid/Detailansicht). Freitext-Beschreibungen in ChurchTools können je nach Gemeinde-Praxis Ansprechpartner-Namen, Telefonnummern oder E-Mail-Adressen enthalten – das Plugin filtert das bewusst nicht automatisch heraus, da sich Freitext nicht zuverlässig maschinell von personenbezogenen Daten bereinigen lässt, ohne auch gewollte Angaben (z. B. „Ansprechpartner: Pfarrbüro“) zu zerstören. Verantwortliche sollten die Beschreibungstexte der veröffentlichten Kalender einmalig durchsehen, bevor Termine über das Plugin öffentlich angezeigt werden. E-Mail-Adressen bleiben klickbar, stehen aber verschleiert im Quelltext.
+
+= Gibt es einen Text für die Datenschutzerklärung? =
+
+Ja. Unter Einstellungen → Datenschutz → „Richtlinien-Leitfaden“ steht ein Vorschlag des Plugins: welche Daten es von ChurchTools übernimmt, dass Besucher keine Inhalte fremder Server laden und keine Cookies gesetzt werden, und wann Termine und Gruppen wieder verschwinden. Die rechtliche Bewertung bleibt beim Betreiber der Website.
 
 = Auftragsverarbeitung =
 

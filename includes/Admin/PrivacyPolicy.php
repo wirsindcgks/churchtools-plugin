@@ -6,7 +6,7 @@ namespace ChurchToolsPlugin\Admin;
 
 /**
  * Ein Textvorschlag fuer die Datenschutzerklaerung, dort, wo WordPress solche
- * Vorschlaege sammelt (Einstellungen → Datenschutz → Anleitung).
+ * Vorschlaege sammelt (Einstellungen → Datenschutz → Richtlinien-Leitfaden).
  *
  * Aus dem Sicherheits-Review vom 2026-09-14: Was das Plugin speichert und
  * zeigt, stand bisher nur in der readme.txt - also dort, wo die Person, die

@@ -26,10 +26,14 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 
 | Klasse | Aufgabe |
 | --- | --- |
-| `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden); Gruppen (Homepages, Einbinden – gerendert von `Admin\GroupsTab`); Einstellungen (Verbindung, Design, Updates). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der API-Key wird verschlüsselt gespeichert (`Security\Crypto`, Schlüssel aus `AUTH_KEY` abgeleitet). |
-| `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). |
-| `Sync\SyncEngine` | Per WP-Cron (`ctp_run_sync`) getriggerter Sync. Fängt eigene Exceptions ab und persistiert sie, damit ein unbeaufsichtigter Cron-Lauf nie fatalt. |
-| `Groups\GroupSync` / `GroupSettings` | Per WP-Cron (`ctp_run_group_sync`, eigenes Intervall, nur geplant, solange eine Homepage angehakt ist) übernommener Abgleich der Gruppen-Homepages – **ohne API-Key**, damit ChurchTools selbst entscheidet, was öffentlich ist. `GroupSettings` ist eine eigene Option mit eigenem Sanitizer, siehe dort. |
+| `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden); Gruppen (Homepages, Einbinden – gerendert von `Admin\GroupsTab`); Einstellungen (Verbindung, Design, Updates). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der gespeicherte API-Key geht nur an die gespeicherte Instanz (`effectiveConnection()`). |
+| `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). Jeder Aufruf mit Key, ohne Key keiner; Weiterleitungen abgeschaltet (WordPress gäbe den Header sonst an den neuen Host weiter). |
+| `Security\ApiKey` | Woher der Key kommt: Konstante oder Umgebungsvariable `CTP_API_KEY` vor dem verschlüsselten Wert in `ctp_settings`; `isUsable()`, `decryptionFailed()`, `migrate()` für alte Verschlüsselungen. |
+| `Security\Crypto` | libsodium `crypto_secretbox`, Schlüssel per HKDF aus `AUTH_KEY` mit eigenem Kontext; liest die alte AES-CBC-Form (`ctp1:`, ohne Präfix) nur noch. |
+| `Sync\RunLock` | Atomare Sperre über `INSERT IGNORE` auf `wp_options` (nicht `add_option()`, das mit `ON DUPLICATE KEY UPDATE` schreibt), damit Termin- und Gruppen-Abgleich nie doppelt laufen; Übernahme nach 15 Minuten, Freigabe nur mit eigenem Token. |
+| `Sync\SyncEngine` | Per WP-Cron (`ctp_run_sync`) getriggerter Sync unter der Sperre `events`. Fängt eigene Exceptions ab und persistiert sie, damit ein unbeaufsichtigter Cron-Lauf nie fatalt. `raw_data` speichert die Antwort ohne Aliase und ohne Personenverweise (`withoutPersonReferences()`). |
+| `Groups\GroupSync` / `GroupSettings` | Per WP-Cron (`ctp_run_group_sync`, eigenes Intervall, nur geplant, solange eine Homepage angehakt ist) übernommener Abgleich der Gruppen-Homepages, mit API-Key und unter der Sperre `groups`. Welche Gruppen erscheinen, entscheidet die Homepage in ChurchTools; `normalizeGroup()` übernimmt nur benannte Felder, keine Leiter und keine Angaben über den API-Benutzer. `GroupSettings` ist eine eigene Option mit eigenem Sanitizer, siehe dort. |
+| `Admin\PrivacyPolicy` | Textvorschlag für die Datenschutzerklärung über `wp_add_privacy_policy_content()`. |
 | `Admin\GroupsTab` | Reiter „Homepages" und „Einbinden" im Bereich Gruppen sowie das Gruppen-Panel der Übersicht – eigene Klasse statt weiterer Methoden in `SettingsPage`, teilt mit ihr nur Reiterreihe, Statuszeile und Speicherleiste. |
 | `Frontend\GroupListRenderer` | Kachelraster der Gruppen (`[ctp_groups]`, `Blocks\GroupListBlock`, WPBakery), mit denselben Klassen und Design-Einstellungen wie die Terminkacheln (`EventListRenderer::designArgs()`). |
 | `Sync\RetentionCleanup` | Per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist. |
@@ -127,3 +131,9 @@ Danach die Gegenprobe: Steht eine im Plugin sichtbare Beschriftung wörtlich in 
 3. Übersetzungsvorlage neu erzeugen: `php bin/make-pot.php .` (Minimal-Ersatz für `wp i18n make-pot`, deckt genau die fünf hier verwendeten Aufrufformen ab und bricht bei `_n`/`_x` ab – dann `wp i18n make-pot` nehmen)
 4. `composer test && composer lint`; dazu die Doku-Gegenprobe oben – README, `readme.txt` und Screenshots auf dem Stand der Version, die gleich hinausgeht
 5. Tag `vX.Y.Z` pushen – der Release-Workflow baut und veröffentlicht das ZIP.
+
+Der Workflow hat zwei Jobs: `build` mit reinen Leserechten (Composer, npm, ZIP) und `publish` mit Schreibrecht, der kein Paket installiert, sondern das ZIP mit einem signierten Herkunftsnachweis versieht und mit `gh` veröffentlicht. Alle Actions stehen auf Commit-SHAs; Dependabot (`.github/dependabot.yml`) hält sie aktuell. Ein ZIP lässt sich prüfen mit:
+
+```bash
+gh attestation verify churchtools-plugin-vX.Y.Z.zip -R wirsindcgks/churchtools-plugin
+```

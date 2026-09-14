@@ -74,7 +74,7 @@ Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Ak
 
 Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter *ChurchTools*: **Übersicht** (Zustand von Events und Gruppen), **Events** (Terminliste, Kalender, Räume, Synchronisation, Einbinden), **Gruppen** (Gruppenliste, Homepages, Einbinden) und **Einstellungen** (Verbindung, Design, Updates). Innerhalb eines Bereichs wechseln die Reiter oben auf der Seite.
 
-1. **Verbindung herstellen.** *ChurchTools → Einstellungen → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert.
+1. **Verbindung herstellen.** *ChurchTools → Einstellungen → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Am besten ein eigener ChurchTools-Benutzer nur für die Website, der die übernommenen Kalender und Räume sehen darf und sonst nichts – ein Login-Token läuft nicht ab. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert. Ohne Key fragt das Plugin ChurchTools gar nicht.
 2. **Kalender auswählen.** *ChurchTools → Events → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
 3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
 4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
@@ -82,7 +82,7 @@ Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Men�
 
 6. **Wenn Termine eine eigene Seite bekommen sollen.** Im Bereich *Detailansicht* bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
 
-7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Dafür braucht es keinen API-Key. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
+7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Abgefragt wird mit demselben API-Key wie für die Termine. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
 
 Läuft etwas nicht, steht der Grund in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext.
 
@@ -154,7 +154,7 @@ Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in de
 
 Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen", jeweils mit einer Auswahl der angehakten Homepages.
 
-- **ChurchTools entscheidet, was erscheint.** Abgefragt wird ohne API-Key, also genau so, wie ein Besucher die Homepage sieht: nur öffentliche Gruppen, Bilder nur, wo die Homepage Gruppenbilder zeigt.
+- **ChurchTools entscheidet, was erscheint.** Es erscheinen die Gruppen, die die Homepage in ChurchTools öffentlich zeigt, Bilder nur, wo sie Gruppenbilder zeigt. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild – keine Leiter und nichts über Personen, auch wenn ChurchTools dem API-Key mehr mitschickt.
 - **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das Intervall kürzer.
 - **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
 - **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Der volle Text und die Anmeldung liegen in ChurchTools.
@@ -175,7 +175,9 @@ Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools 
 
 **Ein eigenes Layout** ist möglich, aber selten nötig: Die Templates aus `includes/Frontend/templates/` lassen sich nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort anpassen — updatesicher. Details dazu in [readme.txt](readme.txt).
 
-**Grenzen**: eine ChurchTools-Instanz pro WordPress-Installation, Multisite ungetestet, kein Monatskalender-Raster. Der API-Key ist an die WordPress-Salts (`AUTH_KEY`) gebunden — nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin sagt das im Backend.
+**Der API-Key muss nicht in der Datenbank liegen.** Steht in `wp-config.php` die Zeile `define('CTP_API_KEY', '…');` (oder gibt es eine Umgebungsvariable `CTP_API_KEY`), nimmt das Plugin den Key von dort, und das Feld unter *Einstellungen → Verbindung* ist gesperrt. Sonst liegt er verschlüsselt in der Datenbank, mit einem aus den WordPress-Salts (`AUTH_KEY`) abgeleiteten Schlüssel — nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin sagt das im Backend. Beim Deinstallieren wird er in jedem Fall gelöscht, auch wenn die Daten behalten werden.
+
+**Grenzen**: eine ChurchTools-Instanz pro WordPress-Installation, Multisite ungetestet, kein Monatskalender-Raster.
 
 ## Fragen und Antworten
 
