@@ -21,6 +21,9 @@ final class GroupListRendererTest extends TestCase
     {
         $this->assertSame('', GroupListRenderer::placesLabel(['max_members' => null, 'free_places' => null]));
         $this->assertSame('Noch 3 Plätze frei', GroupListRenderer::placesLabel(['max_members' => 12, 'free_places' => 3]));
+        $this->assertSame('Noch 10 Plätze frei', GroupListRenderer::placesLabel(['max_members' => 60, 'free_places' => 10]));
+        $this->assertSame('10+ Plätze frei', GroupListRenderer::placesLabel(['max_members' => 60, 'free_places' => 11]));
+        $this->assertSame('10+ Plätze frei', GroupListRenderer::placesLabel(['max_members' => 60, 'free_places' => 52]));
         $this->assertSame('Noch 1 Platz frei', GroupListRenderer::placesLabel(['max_members' => 12, 'free_places' => 1]));
         $this->assertSame('Ausgebucht', GroupListRenderer::placesLabel(['max_members' => 12, 'free_places' => 0]));
         $this->assertSame(

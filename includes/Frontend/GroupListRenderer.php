@@ -37,6 +37,13 @@ final class GroupListRenderer
     /** Woerter im Auszug - der laengste Text der Referenzinstanz hat 1330 Zeichen. */
     private const EXCERPT_WORDS = 24;
 
+    /**
+     * Ab hier nennt der Platzhinweis keine genaue Zahl mehr: „Noch 52 Plaetze
+     * frei" liest sich eher nach einer leeren Gruppe als nach einem Anlass,
+     * sich anzumelden.
+     */
+    private const PLACES_EXACT_UP_TO = 10;
+
     public const LAYOUTS = ['grid', 'featured'];
 
     /**
@@ -210,7 +217,12 @@ final class GroupListRenderer
             return __('Noch 1 Platz frei', 'churchtools-plugin');
         }
 
-        /* translators: %d: number of free places in a group (2 or more) */
+        if ($free > self::PLACES_EXACT_UP_TO) {
+            /* translators: %d: threshold above which the exact number of free places is not shown (10) */
+            return sprintf(__('%d+ Plätze frei', 'churchtools-plugin'), self::PLACES_EXACT_UP_TO);
+        }
+
+        /* translators: %d: number of free places in a group (2 to 10) */
         return sprintf(__('Noch %d Plätze frei', 'churchtools-plugin'), $free);
     }
 }
