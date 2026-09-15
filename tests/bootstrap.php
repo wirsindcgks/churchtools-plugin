@@ -388,6 +388,32 @@ function esc_html(string $text): string
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Grobe Nachbauten fuer EventFormatter::descriptionHtml(), damit Templates mit
+ * einem Gruppentext im Unit-Test rendern. Sie pruefen *keine* Sicherheit:
+ * wp_kses() laesst hier Attribute stehen. Was die enge Liste wirklich
+ * herausnimmt, prueft tests-integration/RealWordPressTest gegen WordPress.
+ */
+function wp_kses(string $content, array $allowed): string
+{
+    return strip_tags($content, array_keys($allowed));
+}
+
+function make_clickable(string $text): string
+{
+    return $text;
+}
+
+function wpautop(string $text): string
+{
+    $paragraphs = preg_split('/\n\s*\n/', trim($text));
+
+    return implode("\n", array_map(
+        static fn (string $paragraph): string => '<p>' . str_replace("\n", "<br />\n", $paragraph) . '</p>',
+        $paragraphs === false ? [] : $paragraphs
+    )) . "\n";
+}
+
 function esc_attr(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');

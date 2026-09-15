@@ -14,10 +14,13 @@ use ChurchToolsPlugin\Settings;
  *
  * Eine Gruppen*liste*, kein Gruppen*finder* (Grillrunde 2026-09-01): keine
  * Filterleiste, kein Paging, keine eigene Detailseite. Der Weg nach
- * ChurchTools ist ein sichtbarer Button „In ChurchTools ansehen" - die Kachel
- * selbst ist nicht klickbar (plan.md, G4): Bei Terminen verspricht ein Klick
- * auf die Kachel eine Ansicht auf *dieser* Website, bei Gruppen fuehrte
- * dieselbe Geste unangekuendigt in ein anderes System.
+ * ChurchTools ist ein sichtbarer Button „In ChurchTools ansehen".
+ *
+ * Die Rasterkachel oeffnet seit dem Gruppen-Popup (2026-09-15) den ganzen Text
+ * in einem Dialog auf *dieser* Website - genau das, was ein Klick auf eine
+ * Terminkachel auch verspricht. Bis dahin war sie nicht klickbar (plan.md, G4),
+ * weil die einzige moegliche Geste nach ChurchTools gefuehrt haette. Ohne
+ * JavaScript fuehrt der Auslöser weiter dorthin, wie der Button.
  *
  * Zwei Darstellungen: `grid` (Raster mit Auszug) und `featured` (grosse
  * Kachel je Gruppe, Bild neben dem vollen Text) fuer wenige, hervorgehobene
@@ -37,8 +40,20 @@ final class GroupListRenderer
     private const MIN_COLUMNS = 2;
     private const MAX_COLUMNS = 6;
 
-    /** Woerter im Auszug - der laengste Text der Referenzinstanz hat 1330 Zeichen. */
+    /**
+     * Woerter im Auszug als eine Zeile (`excerpt`) - fuer Vorlagen im Theme,
+     * die noch aus der Zeit vor dem formatierten Auszug stammen.
+     */
     private const EXCERPT_WORDS = 24;
+
+    /**
+     * Woerter im formatierten Auszug der Rasterkachel (`excerpt_html`).
+     * Zuerst 40 („die Texte etwas laenger anzeigen"), mit dem Popup wieder
+     * 24 wie die einzeilige Fassung: Den ganzen Text zeigt jetzt ein Klick
+     * auf die Kachel, die Kachel selbst soll nur neugierig machen
+     * (Nutzerwunsch 2026-09-15).
+     */
+    public const GRID_EXCERPT_WORDS = 24;
 
     /**
      * Ab hier nennt der Platzhinweis keine genaue Zahl mehr: „Noch 52 Plaetze
@@ -166,11 +181,21 @@ final class GroupListRenderer
             $group['excerpt'] = in_array('excerpt', $hiddenElements, true) || (string) ($group['note'] ?? '') === ''
                 ? ''
                 : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS);
+            $group['excerpt_html'] = $group['excerpt'] === '' || $withDescription
+                ? ''
+                : self::excerptHtml((string) $group['note']);
             // Der volle Text geht durch dieselbe Aufbereitung wie eine
             // Terminbeschreibung: enge kses-Liste, klickbare Links,
             // verschleierte E-Mail-Adressen (EventFormatter::descriptionHtml()).
-            $group['description_html'] = $withDescription && (string) ($group['note'] ?? '') !== ''
+            // Gebraucht in der hervorgehobenen Ansicht und im Popup des Rasters -
+            // dort auch, wenn der Auszug auf der Kachel ausgeblendet ist.
+            $group['description_html'] = (string) ($group['note'] ?? '') !== ''
                 ? EventFormatter::descriptionHtml((string) $group['note'])
+                : '';
+            // Das Popup zeigt das Bild groesser als die Kachel, also ohne den
+            // Deckel der Kachel-srcset (wie die Detailansicht der Termine).
+            $group['image_srcset_full'] = $imageUrl !== '' && !$withDescription
+                ? CardImage::srcsetFor($attachmentId)
                 : '';
 
             $prepared[] = $group;
@@ -185,6 +210,35 @@ final class GroupListRenderer
         unset($group);
 
         return $prepared;
+    }
+
+    /**
+     * Der Anfang des Textes mit seinen Absaetzen und Zeilenumbruechen, durch
+     * dieselbe Aufbereitung wie der volle Text der hervorgehobenen Ansicht
+     * (enge kses-Liste, klickbare Links, verschleierte Adressen).
+     *
+     * Die Texte kommen aus ChurchTools als Klartext (an der Referenzinstanz
+     * alle 17). Liefert eine Instanz doch HTML, gibt es den Auszug als eine
+     * Zeile wie bisher - ihn an Wortgrenzen zu kuerzen, koennte ein Element
+     * mittendrin abschneiden. Auch diese Zeile geht durch descriptionHtml(),
+     * sonst stuende eine E-Mail-Adresse darin unverschleiert im Quelltext.
+     *
+     * Ob HTML vorliegt, entscheidet der Text *nach* der engen kses-Liste: Ein
+     * eingeschmuggeltes `<img>` in einem Klartext faellt dort ohnehin heraus
+     * und soll dem Rest nicht die Absaetze nehmen (so im Integrationstest
+     * gefunden, 2026-09-15).
+     */
+    public static function excerptHtml(string $note): string
+    {
+        $allowed = wp_kses($note, EventFormatter::DESCRIPTION_TAGS);
+
+        if (EventFormatter::containsHtml($allowed)) {
+            return EventFormatter::descriptionHtml(
+                EventFormatter::excerpt(EventFormatter::plainText($allowed), self::GRID_EXCERPT_WORDS)
+            );
+        }
+
+        return EventFormatter::descriptionHtml(EventFormatter::trimWordsKeepingLines($allowed, self::GRID_EXCERPT_WORDS));
     }
 
     /**

@@ -27,30 +27,15 @@ $GLOBALS['ctp_test_options']['time_format'] = 'H:i';
 $GLOBALS['ctp_test_options']['date_format'] = 'd.m.Y';
 
 /*
- * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon: die
- * Schritte, aus denen EventFormatter::descriptionHtml() besteht. wp_json_encode()
- * und wp_unique_id() standen hier ebenfalls, bis der Bootstrap sie selbst
- * mitbrachte - eine zweite Deklaration bricht PHP hart ab, deshalb kommen sie
- * nicht zurueck.
+ * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon.
+ * wp_json_encode(), wp_unique_id() und seit dem formatierten Gruppenauszug auch
+ * wp_kses(), make_clickable() und wpautop() standen hier ebenfalls, bis der
+ * Bootstrap sie selbst mitbrachte - eine zweite Deklaration bricht PHP hart ab,
+ * deshalb kommen sie nicht zurueck.
  */
-function wp_kses(string $html, array $allowed): string
-{
-    return $html;
-}
-
 function antispambot(string $email): string
 {
     return $email;
-}
-
-function make_clickable(string $text): string
-{
-    return $text;
-}
-
-function wpautop(string $text): string
-{
-    return '<p>' . str_replace("\n\n", '</p><p>', trim($text)) . '</p>';
 }
 
 function _e(string $text, string $domain = ''): void
@@ -179,7 +164,7 @@ $abschnitte = [
  */
 $gruppen = [];
 foreach ([
-    ['Hauskreis Nord', 'Jeder', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', 'Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.'],
+    ['Hauskreis Nord', 'Jeder', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', "Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.\n\nNeu dabei? Einfach vorher kurz melden."],
     ['Seniorenkreis', 'Jeder', 'Mittwoch, 9:30 Uhr', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
     ['Lobpreisband', 'Männer', 'Sonntag', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
 ] as $i => [$name, $zielgruppe, $zeit, $bild, $plaetze, $text]) {
@@ -194,7 +179,10 @@ foreach ([
         'target_group_label' => $zielgruppe,
         'places_label' => $plaetze,
         'excerpt' => $text,
-        'description_html' => '<p>' . $text . '</p>',
+        // Wie GroupListRenderer::excerptHtml(): Absaetze und Zeilen bleiben.
+        'excerpt_html' => '<p>' . str_replace("\n\n", '</p><p>', $text) . '</p>',
+        'image_srcset_full' => '',
+        'description_html' => '<p>' . str_replace("\n\n", '</p><p>', $text) . '</p>',
     ];
 }
 

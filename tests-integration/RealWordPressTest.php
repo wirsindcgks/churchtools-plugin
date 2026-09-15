@@ -226,6 +226,24 @@ final class RealWordPressTest extends TestCase
         $this->assertStringContainsString('href="https://musterkirche.church.tools/publicgroup/269"', $html);
     }
 
+    /**
+     * Der gekuerzte Auszug der Rasterkachel geht durch dieselbe Aufbereitung
+     * wie der volle Text - im echten WordPress, weil die Nachbauten der
+     * Unit-Tests wp_kses() nur andeuten.
+     */
+    public function testAGridExcerptKeepsItsParagraphsSafely(): void
+    {
+        $html = \ChurchToolsPlugin\Frontend\GroupListRenderer::excerptHtml(
+            "Wir lesen gemeinsam.\n\nKontakt:\nhauskreis@example.org<img src=\"https://tracker.example/p.gif\">"
+        );
+
+        $this->assertStringContainsString('<p>Wir lesen gemeinsam.</p>', $html);
+        $this->assertStringContainsString('<br />', $html);
+        $this->assertStringContainsString('href="mailto:', $html);
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('hauskreis@example.org', $html);
+    }
+
     public function testThePrivacyPolicySuggestionReachesWordPress(): void
     {
         global $wp_current_filter;

@@ -45,7 +45,8 @@ final class GroupListBlockTest extends TestCase
 
         $this->assertStringContainsString('Chor', $byHomepage);
         $this->assertStringNotContainsString('Chor', $byGroups);
-        $this->assertSame(1, substr_count($byGroups, 'class="ctp-events__cta ctp-button"'));
+        // Einmal auf der Kachel, einmal im Popup-Template dahinter.
+        $this->assertSame(2, substr_count($byGroups, 'class="ctp-events__cta ctp-button"'));
     }
 
     /** Im WPBakery-Baustein stehen die Namen der gewaehlten Gruppen, nicht ihre IDs. */

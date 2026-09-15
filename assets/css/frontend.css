@@ -888,6 +888,63 @@
     -webkit-line-clamp: 1;
 }
 
+/*
+ * Der Auszug einer Gruppenkachel traegt Absaetze und Zeilenumbrueche aus
+ * ChurchTools und ist schon im Code auf GroupListRenderer::GRID_EXCERPT_WORDS
+ * gekuerzt. Die drei Zeilen oben wuerden ihn ein zweites Mal kappen, und
+ * -webkit-line-clamp zaehlt ueber mehrere Absaetze nicht in jedem Browser
+ * gleich - deshalb hier ein gewoehnlicher Block.
+ */
+.ctp-events__excerpt.ctp-groups__excerpt {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+}
+
+.ctp-groups__excerpt > p {
+    margin: 0 0 0.5em;
+}
+
+.ctp-groups__excerpt > :last-child {
+    margin-block-end: 0;
+}
+
+/*
+ * Gruppenkachel mit Popup: Der Auslöser im Titel liegt mit seinem ::after
+ * ueber der ganzen Kachel. Was darin selbst ein Ziel hat - der Button nach
+ * ChurchTools, Links im Text -, muss darueber liegen, sonst oeffnete jeder
+ * Klick darauf nur das Popup.
+ */
+.ctp-groups__card .ctp-events__cta-row,
+.ctp-groups__card .ctp-groups__excerpt a {
+    position: relative;
+    z-index: 1;
+}
+
+/*
+ * Bild im Gruppen-Popup im Seitenverhaeltnis aus dem Design-Tab, zugeschnitten
+ * wie auf der Kachel. Anders als beim Termin, dessen Flyer ganz zu sehen sein
+ * muss (Hoehendeckel oben): Gruppenbilder sind Fotos, und das Popup soll
+ * aussehen wie die Kachel, aus der es kommt.
+ *
+ * Die Hoehe bleibt beim Deckel des Termin-Popups. Deshalb traegt der Rahmen
+ * die Breite: hoechstens die Spalte, hoechstens Deckel mal Verhaeltnis - bei
+ * „Quadratisch" also 24rem breit statt einer bildschirmhohen Flaeche. Die
+ * Variable enthaelt „16 / 9" und steht in Klammern, damit calc() sie als
+ * Bruch rechnet.
+ */
+.ctp-groups__detail .ctp-events__detail-media-frame {
+    width: min(100%, calc(min(45vh, 24rem) * (var(--ctp-media-aspect-ratio, 16 / 9))));
+}
+
+.ctp-events__modal .ctp-groups__detail .ctp-events__detail-media img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    aspect-ratio: var(--ctp-media-aspect-ratio, 16 / 9);
+    object-fit: cover;
+}
+
 /* Spacer/divider — decorative, admin-inserted elements (see
    CardDesign::renderSeparators()). Not part of the six fixed keys: there can
    be any number of them (or none), each with its visual position baked into

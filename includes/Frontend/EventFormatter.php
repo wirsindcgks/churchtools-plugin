@@ -197,6 +197,52 @@ final class EventFormatter
     }
 
     /**
+     * Kuerzt einen Text auf $wordCount Woerter und laesst dabei Absaetze,
+     * Zeilenumbrueche und Aufzaehlungszeichen stehen - anders als excerpt(),
+     * das alles zu einer Zeile zusammenzieht. Ergebnis ist weiter reiner Text;
+     * zu HTML wird er erst in descriptionHtml(), und zwar ganz wie der volle
+     * Text, damit der Anfang einer Beschreibung dort genauso aussieht.
+     *
+     * Gekuerzt wird nur an Wortgrenzen: Eine Adresse ist ein Wort, also wird
+     * nie ein halber Link klickbar. Mehr als eine Leerzeile am Stueck wird zu
+     * einer - in der Kachel ist fuer Luft kein Platz.
+     *
+     * Nur fuer Klartext. Ein Text, der schon HTML ist, liesse sich so mitten in
+     * einem Element abschneiden; den kuerzen Aufrufer mit excerpt().
+     */
+    public static function trimWordsKeepingLines(string $text, int $wordCount): string
+    {
+        $text = trim(str_replace(["\r\n", "\r"], "\n", $text));
+        $text = (string) preg_replace('/\n[ \t]*\n\s*/u', "\n\n", $text);
+
+        $parts = preg_split('/(\s+)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $result = '';
+        $words = 0;
+
+        foreach ($parts === false ? [] : $parts as $part) {
+            if (trim($part) === '') {
+                $result .= $part;
+                continue;
+            }
+
+            if ($words === $wordCount) {
+                return rtrim($result) . '…';
+            }
+
+            $result .= $part;
+            $words++;
+        }
+
+        return $result;
+    }
+
+    /** Ob ein Text HTML-Elemente enthaelt - dann taugt er nicht fuer trimWordsKeepingLines(). */
+    public static function containsHtml(string $text): bool
+    {
+        return preg_match('#</?[a-z][^>]*>#i', $text) === 1;
+    }
+
+    /**
      * The description as renderable HTML, for the detail view (popup and own
      * page) and the admin's event detail.
      *
@@ -238,7 +284,7 @@ final class EventFormatter
      * Links. Nichts, was eine Datei nachlaedt oder das Layout der Seite
      * uebersteuert.
      */
-    private const DESCRIPTION_TAGS = [
+    public const DESCRIPTION_TAGS = [
         'p' => [],
         'br' => [],
         'strong' => [],

@@ -122,6 +122,50 @@ final class GroupListRendererTest extends TestCase
         $this->assertStringNotContainsString('ctp-events__media', $html);
     }
 
+    /**
+     * Nutzerwunsch 2026-09-15: laengerer Auszug in der Rasterkachel, mit den
+     * Absaetzen und Zeilen aus ChurchTools statt einer zusammengezogenen Zeile.
+     */
+    public function testTheGridExcerptKeepsParagraphsAndLineBreaks(): void
+    {
+        $words = implode(' ', array_fill(0, 60, 'Wort'));
+        $this->homepageWith([array_merge($this->group(269, ''), ['note' => "Wir lesen gemeinsam.\n\nKontakt:\nPfarrbüro\n\n" . $words])]);
+
+        $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen']);
+
+        $this->assertStringContainsString('<div class="ctp-events__excerpt ctp-groups__excerpt">', $html);
+        $this->assertStringContainsString('<p>Wir lesen gemeinsam.</p>', $html);
+        $this->assertStringContainsString("<p>Kontakt:<br />\nPfarrbüro</p>", $html);
+        $this->assertStringNotContainsString('<p class="ctp-events__excerpt">', $html);
+
+        preg_match('#<div class="ctp-events__excerpt ctp-groups__excerpt">(.*?)</div>#s', $html, $excerpt);
+        $this->assertSame(
+            GroupListRenderer::GRID_EXCERPT_WORDS,
+            str_word_count(strip_tags(str_replace('…', '', $excerpt[1])), 0, 'äöüÄÖÜß'),
+            'Gekuerzt wird auf die Wortzahl des Rasters.'
+        );
+        $this->assertStringContainsString('Wort…</p>', $excerpt[1]);
+    }
+
+    /** Liefert eine Instanz HTML, bleibt es bei einer Zeile - kein halbes Element. */
+    public function testAnHtmlNoteFallsBackToOneLine(): void
+    {
+        $html = GroupListRenderer::excerptHtml('<p>Erster Absatz</p><p>Zweiter <strong>Absatz</strong></p>');
+
+        $this->assertSame('<p>Erster Absatz Zweiter Absatz</p>', trim($html));
+    }
+
+    /** Ausgeblendeter Auszug und hervorgehobene Ansicht brauchen keinen. */
+    public function testNoExcerptWhereItIsHiddenOrTheFullTextIsShown(): void
+    {
+        $hidden = GroupListRenderer::prepareGroups([$this->group(44, '')], [], ['excerpt'])[0];
+        $featured = GroupListRenderer::prepareGroups([$this->group(44, '')], [], [], true)[0];
+
+        $this->assertSame('', $hidden['excerpt_html']);
+        $this->assertSame('', $featured['excerpt_html']);
+        $this->assertNotSame('', $featured['description_html']);
+    }
+
     public function testRenderShowsTheEmptyStateForAnUnknownHomepage(): void
     {
         $html = (new GroupListRenderer())->render(['homepage' => 'Gibt es nicht']);
@@ -131,26 +175,63 @@ final class GroupListRendererTest extends TestCase
     }
 
     /**
-     * G4: Die Kachel ist nicht mehr klickbar - kein Stretched Link, keine
-     * Hover-Klasse. Nach ChurchTools fuehrt allein der Button, und der sagt
-     * das, samt Gruppenname fuer Screenreader.
+     * Gruppen-Popup (2026-09-15, loest G4 ab): Die Kachel oeffnet den ganzen
+     * Text in einem Dialog auf dieser Website. Der Auslöser ist ein Verweis
+     * nach ChurchTools - ohne JavaScript fuehrt er dorthin, wie der Button, und
+     * der sagt das weiterhin samt Gruppenname fuer Screenreader.
      */
-    public function testTheCardIsNotClickableAndTheButtonLeadsToChurchTools(): void
+    public function testTheCardOpensThePopupAndTheButtonLeadsToChurchTools(): void
     {
         $this->homepageWith([$this->group(269, ''), $this->group(514, '')]);
 
         $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen']);
+        $cards = (string) preg_replace('#<template class="ctp-events__detail-template">.*?</template>#s', '', $html);
 
-        $this->assertStringNotContainsString('ctp-events__card-trigger', $html);
-        $this->assertStringNotContainsString('ctp-events__card--clickable', $html);
-        $this->assertSame(2, substr_count($html, 'class="ctp-events__cta ctp-button"'));
-        $this->assertStringContainsString('In ChurchTools ansehen', $html);
+        $this->assertSame(2, substr_count($cards, '<a class="ctp-events__card-trigger" data-ctp-modal="1" href="https://musterkirche.church.tools/publicgroup/'));
+        $this->assertSame(2, substr_count($cards, 'ctp-events__card--clickable'));
+        $this->assertSame(2, substr_count($cards, 'class="ctp-events__cta ctp-button"'));
+        $this->assertSame(1, substr_count($html, '<dialog class="ctp-events__modal">'), 'Ein Dialog je Liste, wie bei den Terminen.');
+        $this->assertSame(2, substr_count($html, '<template class="ctp-events__detail-template">'));
 
         preg_match_all('/aria-describedby="([^"]+)"/', $html, $described);
         foreach ($described[1] as $id) {
-            $this->assertStringContainsString('id="' . $id . '"', $html, 'Der Button verweist auf den Titel seiner eigenen Kachel.');
+            $this->assertSame(1, substr_count($html, 'id="' . $id . '"'), 'Jeder Button verweist auf genau einen Titel - Kachel und Popup haben eigene Kennungen.');
         }
-        $this->assertCount(2, array_unique($described[1]));
+        $this->assertCount(4, array_unique($described[1]));
+    }
+
+    /** Das Popup zeigt den ganzen Text samt Treffzeit, Zielgruppe und Button. */
+    public function testThePopupCarriesTheWholeGroup(): void
+    {
+        $words = implode(' ', array_fill(0, 60, 'Wort'));
+        $this->homepageWith([array_merge($this->group(269, ''), ['note' => $words . ' Ende', 'max_members' => 12, 'free_places' => 3])]);
+
+        $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen']);
+        preg_match('#<template class="ctp-events__detail-template">(.*?)</template>#s', $html, $popup);
+
+        $this->assertStringContainsString('<h2 class="ctp-events__detail-title"', $popup[1]);
+        $this->assertStringContainsString('Noch 3 Plätze frei', $popup[1]);
+        $this->assertStringContainsString('Donnerstag, 19:30 Uhr', $popup[1]);
+        $this->assertStringContainsString('meta-item--target-group', $popup[1]);
+        $this->assertStringContainsString('Wort Ende', $popup[1], 'Im Popup steht der ganze Text.');
+        $this->assertStringContainsString('In ChurchTools ansehen', $popup[1]);
+    }
+
+    /**
+     * Kein eigener „Weiterlesen"-Verweis (Nutzerwunsch 2026-09-15): Das Popup
+     * oeffnet die ganze Kachel, ein zweites Ziel darin waere doppelt.
+     */
+    public function testTheCardHasNoSeparateReadMoreLink(): void
+    {
+        $words = implode(' ', array_fill(0, 60, 'Wort'));
+        $this->homepageWith([array_merge($this->group(269, ''), ['note' => $words])]);
+
+        $html = (new GroupListRenderer())->render(['homepage' => 'Kleingruppen']);
+        $cards = (string) preg_replace('#<template class="ctp-events__detail-template">.*?</template>#s', '', $html);
+
+        $this->assertStringNotContainsString('Weiterlesen', $html);
+        $this->assertSame(1, substr_count($cards, 'data-ctp-modal="1"'), 'Nur der Kachel-Auslöser oeffnet das Popup.');
+        $this->assertStringContainsString('Wort…</p>', $cards, 'Der gekuerzte Text endet mit Auslassungszeichen.');
     }
 
     /** G1: einzelne Gruppen nach ID, in der angegebenen Reihenfolge, statt der Homepage. */

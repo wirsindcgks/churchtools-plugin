@@ -7,11 +7,12 @@
  * Dieselben Klassen wie event-grid.php, damit die Einstellungen des Design-Tabs
  * greifen; `ctp-groups` steht zusaetzlich daneben, fuer eigene Regeln eines
  * Themes. Die Zusatzfelder jeder Gruppe (image_src, show_media, schedule,
- * places_label, excerpt, target_group_label) rechnet
+ * places_label, excerpt, excerpt_html, target_group_label) rechnet
  * GroupListRenderer::prepareGroups() vor.
  *
- * Die Kachel ist nicht klickbar; nach ChurchTools fuehrt der Button darunter
- * (partials/group-cta.php, siehe GroupListRenderer).
+ * Ein Klick auf die Kachel oeffnet den ganzen Text im Popup
+ * (partials/group-detail.php, partials/modal.php); nach ChurchTools fuehrt der
+ * Button darunter (partials/group-cta.php, siehe GroupListRenderer).
  *
  * @var array $groups
  * @var array $args
@@ -35,7 +36,7 @@ if (!defined('ABSPATH')) {
             <?php foreach ($groups as $index => $group) : ?>
                 <?php $titleId = $args['instance'] . '-' . (int) $index; ?>
                 <div class="ctp-events__cell" role="listitem">
-                    <article class="ctp-events__card ctp-groups__card">
+                    <article class="ctp-events__card ctp-events__card--clickable ctp-groups__card">
                         <?php if ($group['show_media']) : ?>
                             <div class="ctp-events__media">
                                 <?php if ($group['image_src'] !== '') : ?>
@@ -53,7 +54,14 @@ if (!defined('ABSPATH')) {
                         <?php endif; ?>
                         <div class="ctp-events__content">
                             <span class="ctp-events__title">
-                                <span id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($group['name']); ?></span>
+                                <?php
+                                // Auslöser des Popups ueber die ganze Kachel (wie ClickTrigger bei
+                                // den Terminen). Ein Verweis und kein Knopf: Ohne JavaScript fuehrt er
+                                // nach ChurchTools, wie der Button unten.
+                                ?>
+                                <a class="ctp-events__card-trigger" data-ctp-modal="1" href="<?php echo esc_url($group['url']); ?>">
+                                    <span id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($group['name']); ?></span>
+                                </a>
                                 <?php if ($group['places_label'] !== '') : ?>
                                     <span class="ctp-events__badge"><?php echo esc_html($group['places_label']); ?></span>
                                 <?php endif; ?>
@@ -72,16 +80,21 @@ if (!defined('ABSPATH')) {
                                     <?php echo esc_html($group['target_group_label']); ?>
                                 </span>
                             <?php endif; ?>
-                            <?php if ($group['excerpt'] !== '') : ?>
-                                <p class="ctp-events__excerpt"><?php echo esc_html($group['excerpt']); ?></p>
+                            <?php if ($group['excerpt_html'] !== '') : ?>
+                                <div class="ctp-events__excerpt ctp-groups__excerpt">
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- GroupListRenderer::excerptHtml() runs the note through EventFormatter::descriptionHtml() (wp_kses() with its own allowlist) or esc_html(). ?>
+                                    <?php echo $group['excerpt_html']; ?>
+                                </div>
                             <?php endif; ?>
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup. ?>
                             <?php echo $args['design_separators']; ?>
                             <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-cta.php'; ?>
                         </div>
                     </article>
+                    <template class="ctp-events__detail-template"><?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-detail.php'; ?></template>
                 </div>
             <?php endforeach; ?>
         </div>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/modal.php'; ?>
     <?php endif; ?>
 </div>

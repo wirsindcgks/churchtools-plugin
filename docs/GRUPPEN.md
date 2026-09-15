@@ -8,7 +8,7 @@ Voraussetzung ist eine angehakte Homepage unter *ChurchTools → Gruppen → Hom
 
 ## Zwei Ansichten
 
-**Raster:** alle Gruppen einer Homepage als Kacheln.
+**Raster:** alle Gruppen einer Homepage als Kacheln, mit den ersten 24 Wörtern des Textes samt Absätzen und Zeilenumbrüchen aus ChurchTools.
 
 <img src="screenshots/gruppen.png" width="600" alt="Drei Gruppenkacheln mit dem Button In ChurchTools ansehen, eine davon mit der Zahl der freien Plätze">
 
@@ -36,5 +36,5 @@ Unter *Gruppen → Homepages* steht neben jeder angehakten Homepage der passende
 - **ChurchTools entscheidet, was erscheint.** Es erscheinen die Gruppen, die die Homepage in ChurchTools öffentlich zeigt, Bilder nur, wo sie Gruppenbilder zeigt. Übernommen werden Name, Beschreibung, Treffzeit, Zielgruppe, Plätze und Bild – keine Leiter und nichts über Personen, auch wenn ChurchTools dem API-Key mehr mitschickt.
 - **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das *Sync-Intervall* kürzer.
 - **Aussehen wie die Termine:** Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche. Die Zielgruppe steht mit Personensymbol unter der Treffzeit; wer unter *Kachel* den Kalendernamen ausblendet, blendet auch sie aus.
-- **Absprung mit Ansage:** Die Kachel selbst ist nicht klickbar, nur der Button. Bei den Terminen führt ein Klick auf die Kachel zu einer Ansicht auf der eigenen Website; bei Gruppen hätte dieselbe Geste unangekündigt in ein anderes System geführt.
-- **Bewusst eine Liste, kein Suchwerkzeug:** keine Filterleiste, keine eigene Gruppenseite. Den vollen Text zeigt die hervorgehobene Ansicht, die Anmeldung liegt in ChurchTools.
+- **Ganzer Text im Popup:** Ein Klick auf eine Kachel im Raster öffnet die Gruppe in einem Popup auf der eigenen Website: großes Bild im selben Seitenverhältnis wie auf der Kachel, Treffzeit, Zielgruppe, der ganze Text und der Button nach ChurchTools. Nach ChurchTools geht es nur über den Button.
+- **Bewusst eine Liste, kein Suchwerkzeug:** keine Filterleiste, keine eigene Gruppenseite. Den vollen Text zeigen das Popup und die hervorgehobene Ansicht, die Anmeldung liegt in ChurchTools.
