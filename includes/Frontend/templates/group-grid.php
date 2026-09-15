@@ -10,6 +10,10 @@
  * places_label, excerpt, excerpt_html, target_group_label) rechnet
  * GroupListRenderer::prepareGroups() vor.
  *
+ * Mit `finder` und/oder `search` steht die Werkzeugleiste darueber
+ * (partials/group-finder.php); sie filtert ueber die data-ctp-group-*-Attribute
+ * der Zellen.
+ *
  * Ein Klick auf die Kachel oeffnet den ganzen Text im Popup
  * (partials/group-detail.php, partials/modal.php); nach ChurchTools fuehrt der
  * Button darunter (partials/group-cta.php, siehe GroupListRenderer).
@@ -29,13 +33,25 @@ if (!defined('ABSPATH')) {
     class="ctp-events ctp-events--grid ctp-groups <?php echo esc_attr($args['design_class']); ?>"
     style="--ctp-columns:<?php echo (int) $args['columns']; ?>;<?php echo esc_attr($args['design_style']); ?>"
 >
+    <?php if (!empty($args['show_toolbar'])) : ?>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-finder.php'; ?>
+    <?php endif; ?>
     <?php if (empty($groups)) : ?>
         <p class="ctp-events__empty"><?php esc_html_e('Zurzeit sind keine Gruppen eingetragen.', 'churchtools-plugin'); ?></p>
     <?php else : ?>
         <div class="ctp-events__list" role="list">
             <?php foreach ($groups as $index => $group) : ?>
                 <?php $titleId = $args['instance'] . '-' . (int) $index; ?>
-                <div class="ctp-events__cell" role="listitem">
+                <div
+                    class="ctp-events__cell"
+                    role="listitem"
+                    <?php if (!empty($args['show_toolbar'])) : ?>
+                        data-ctp-group-category="<?php echo esc_attr($group['finder_category']); ?>"
+                        data-ctp-group-weekday="<?php echo esc_attr($group['finder_weekday']); ?>"
+                        data-ctp-group-target="<?php echo esc_attr($group['finder_target']); ?>"
+                        data-ctp-group-search="<?php echo esc_attr($group['finder_search']); ?>"
+                    <?php endif; ?>
+                >
                     <article class="ctp-events__card ctp-events__card--clickable ctp-groups__card">
                         <?php if ($group['show_media']) : ?>
                             <div class="ctp-events__media">

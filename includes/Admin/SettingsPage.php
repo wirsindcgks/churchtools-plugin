@@ -2336,11 +2336,11 @@ final class SettingsPage
                 'code' => '[ctp_events layout="list" filter="1" search="1" month_dividers="1"]',
             ],
             [
-                'label' => __('Grid mit Eventfinder', 'churchtools-plugin'),
-                'code' => '[ctp_events layout="grid" eventfinder="1"]',
+                'label' => __('Raster mit Eventfinder und Suche', 'churchtools-plugin'),
+                'code' => '[ctp_events layout="grid" finder="1" search="1"]',
             ],
             [
-                'label' => __('Grid', 'churchtools-plugin'),
+                'label' => __('Raster', 'churchtools-plugin'),
                 'code' => '[ctp_events layout="grid" columns="3"]',
             ],
             [
@@ -2455,9 +2455,9 @@ final class SettingsPage
                         <td><code>0</code></td>
                     </tr>
                     <tr>
-                        <td><code>eventfinder</code></td>
+                        <td><code>finder</code></td>
                         <td>
-                            <?php esc_html_e('Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden', 'churchtools-plugin'); ?>
+                            <?php esc_html_e('Eventfinder: Knöpfe für Kalender und Zeitraum (nur list/grid); ersetzt filter. Mit search steht das Suchfeld im Eventfinder. Früher eventfinder – der Name gilt weiter.', 'churchtools-plugin'); ?>
                         </td>
                         <td><code>0</code></td>
                     </tr>

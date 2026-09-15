@@ -148,6 +148,7 @@ final class GroupSync
                 }
 
                 $data[$id] = self::nextHomepageData($stored[$id] ?? null, $groups, $now);
+                $data[$id]['filters'] = self::shownFilters($response);
             } catch (Throwable $exception) {
                 $errors[] = sprintf('%s: %s', (string) $homepage['name'], $exception->getMessage());
 
@@ -278,6 +279,9 @@ final class GroupSync
             'weekday' => is_array($information['weekday'] ?? null)
                 ? trim((string) ($information['weekday']['nameTranslated'] ?? ''))
                 : '',
+            // sortKey statt der ID: Sonntag hat die ID 0 und den sortKey 6 - die
+            // Knoepfe des Gruppenfinders stehen damit Montag bis Sonntag.
+            'weekday_sort' => self::sortKey($information['weekday'] ?? null),
             'meeting_time' => trim((string) ($information['meetingTime'] ?? '')),
             // „Jeder" ist eine gewaehlte Zielgruppe wie jede andere, keine
             // Vorgabe: An der Referenzinstanz tragen 7 von 17 Gruppen gar
@@ -286,11 +290,101 @@ final class GroupSync
             'target_group' => is_array($information['targetGroup'] ?? null)
                 ? trim((string) ($information['targetGroup']['nameTranslated'] ?? ''))
                 : '',
+            // Der feste Schluessel („everyone") statt der Beschriftung: Der
+            // Gruppenfinder erkennt „Jeder" daran, auch in einer anderen Sprache.
+            'target_group_key' => is_array($information['targetGroup'] ?? null)
+                ? trim((string) ($information['targetGroup']['name'] ?? ''))
+                : '',
+            'target_group_sort' => self::sortKey($information['targetGroup'] ?? null),
+            // Kategorien tragen laut Spec `name` und kein `nameTranslated` - sie
+            // sind selbst angelegte Stammdaten, keine uebersetzten Vorgaben.
+            'category' => is_array($information['groupCategory'] ?? null)
+                ? trim((string) ($information['groupCategory']['nameTranslated'] ?? $information['groupCategory']['name'] ?? ''))
+                : '',
+            'category_sort' => self::sortKey($information['groupCategory'] ?? null),
             'max_members' => $maxMembers > 0 ? $maxMembers : null,
             'free_places' => $maxMembers > 0 ? max(0, $maxMembers - $taken) : null,
             'waitinglist' => !empty($group['allowWaitinglist']),
             'url' => trailingslashit($baseUrl) . 'publicgroup/' . $id,
         ];
+    }
+
+    /** Der sortKey eines Stammdaten-Objekts, oder null, wenn es keins gibt. */
+    private static function sortKey($value): ?int
+    {
+        return is_array($value) && is_numeric($value['sortKey'] ?? null) ? (int) $value['sortKey'] : null;
+    }
+
+    /**
+     * Die Filter, die eine Homepage in ChurchTools eingeschaltet hat
+     * (`filters[].show`), als Liste ihrer Typen - `weekday`, `targetgroups`,
+     * `groupcategory` und so fort. Der Gruppenfinder bietet nur an, was die
+     * Homepage selbst anbietet: ChurchTools entscheidet, was erscheint.
+     *
+     * @return list<string>
+     */
+    public static function shownFilters(array $response): array
+    {
+        $shown = [];
+
+        foreach ((array) ($response['filters'] ?? []) as $filter) {
+            if (is_array($filter) && !empty($filter['show']) && is_string($filter['type'] ?? null)) {
+                $shown[] = $filter['type'];
+            }
+        }
+
+        return array_values(array_unique($shown));
+    }
+
+    /**
+     * Die eingeschalteten Filter ueber mehrere Homepages: Ein Filter gilt,
+     * sobald *eine* ihn anbietet. null heisst „unbekannt" - Daten aus einem
+     * Abgleich vor 1.31.0 tragen die Angabe noch nicht; bis zum naechsten
+     * Lauf schraenkt der Finder dann nicht ein.
+     *
+     * @param int[] $homepageIds
+     *
+     * @return list<string>|null
+     */
+    public static function filtersFor(array $homepageIds): ?array
+    {
+        $stored = self::storedData();
+        $shown = [];
+
+        foreach ($homepageIds as $homepageId) {
+            $filters = $stored[(int) $homepageId]['filters'] ?? null;
+
+            if (!is_array($filters)) {
+                return null;
+            }
+
+            $shown = array_merge($shown, $filters);
+        }
+
+        return array_values(array_unique($shown));
+    }
+
+    /**
+     * Die angehakten Homepages, auf denen mindestens eine der Gruppen steht.
+     *
+     * @param int[] $groupIds
+     *
+     * @return int[]
+     */
+    public static function homepagesContaining(array $groupIds): array
+    {
+        $homepages = [];
+
+        foreach (array_keys(GroupSettings::enabledHomepages()) as $homepageId) {
+            foreach (self::groupsFor((int) $homepageId) as $group) {
+                if (in_array((int) ($group['id'] ?? 0), $groupIds, true)) {
+                    $homepages[] = (int) $homepageId;
+                    break;
+                }
+            }
+        }
+
+        return $homepages;
     }
 
     /**

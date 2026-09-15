@@ -15,10 +15,10 @@ Termine und Gruppen aus ChurchTools auf der eigenen WordPress-Website – einmal
 Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regelmäßig ab und zeigt sie in fertig gestalteten Ansichten an. Farben, Ecken und Aufbau stellt man im Backend mit Live-Vorschau ein, ganz ohne CSS.
 
 * **Termine automatisch übernehmen**: Serien kommen als einzelne Termine an, abgesagte verschwinden wieder. Vergangene Termine räumen sich samt Bildern selbst weg.
-* **Drei Ansichten**: Liste, Grid und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
+* **Drei Ansichten**: Liste, Raster und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
 * **Schnell finden**: Eventfinder mit Themen- und Zeitraum-Knöpfen, Suche und Monatsüberschriften.
 * **Termindetails** als Popup oder als eigene Seite, auf Wunsch zum Teilen, als Kalenderdatei oder als Kalender-Abo.
-* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage in derselben Optik, mit Treffzeit und freien Plätzen.
+* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage in derselben Optik, mit Treffzeit und freien Plätzen, auf Wunsch mit Gruppenfinder.
 * **Gut für Suchmaschinen**: eigene Adresse je Termin, strukturierte Daten und Sitemap, verträglich mit Yoast SEO und Rank Math.
 * **Datensparsam**: Bilder werden importiert, Besucher laden nichts von der ChurchTools-Domain. Die Teilen-Knöpfe kommen ohne Skript von Drittanbietern und ohne Zählpixel aus. Für die Datenschutzerklärung liegt ein Textvorschlag bereit.
 * **Sicher angebunden**: Der API-Key liegt verschlüsselt in der Datenbank oder als Konstante `CTP_API_KEY` in `wp-config.php`.
@@ -55,7 +55,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 * `filter` – Kalenderfilter-Dropdown anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`, erscheint nur, wenn das Ergebnis mindestens zwei verschiedene Kalender enthält.
 * `search` – Freitext-Suchleiste anzeigen (Titel/Untertitel/Ort): `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`. Die Suche durchsucht den gesamten synchronisierten Zeitraum, nicht nur die gerade angezeigten Monate.
 * `month_dividers` – Termine nach Monat gruppiert darstellen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`.
-* `eventfinder` – Geführte Werkzeugleiste mit Kalender-/Zeitraum-Buttons plus Suche anzeigen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt bei Aktivierung `filter` und `search`, statt zusätzlich dazu angezeigt zu werden.
+* `finder` – Eventfinder anzeigen, eine geführte Werkzeugleiste mit Kalender- und Zeitraum-Knöpfen: `1` oder `0` (Standard). Nur bei `layout="list"`/`"grid"`; ersetzt `filter`. Mit `search="1"` steht das Suchfeld im Eventfinder. Der frühere Name `eventfinder` gilt weiter. Dieselben Schalter `finder` und `search` hat `[ctp_groups]`.
 * `months` – Angezeigter Zeitraum pro Seite in Monaten, 1–24 (Standard: `0` = globale Einstellung unter „Einstellungen → Design“ im Bereich „Listen“, dort standardmäßig 2). Nur bei `layout="list"`/`"grid"`.
 * `paging` – Button „Weitere Termine laden“ anzeigen: `1` (Standard) oder `0`. Nur bei `layout="list"`/`"grid"`.
 
@@ -83,17 +83,17 @@ Die Zeitraumlänge ist global unter „Einstellungen → Design“ im Bereich �
 
 Der Button erscheint nur, wenn hinter dem aktuellen Zeitraum tatsächlich noch Termine liegen, und verschwindet am Ende des synchronisierten Zeitraums (siehe „Sync-Zeitraum“ unter Events → Synchronisation) von selbst. Kalenderfilter, Suche und Eventfinder greifen auch auf nachgeladene Termine. Die „Nächster Termin“-Ansicht kennt kein Nachladen – sie zeigt weiterhin eine feste Anzahl Termine über `limit`.
 
-Alternativ zu Kalenderfilter/Suche steht der **Eventfinder** (`eventfinder="1"`) zur Verfügung: eine geführte Werkzeugleiste unter der Frage „Welche Angebote sprechen dich an?“, mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, plus Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `eventfinder` aktiv, werden `filter`/`search` ignoriert (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
+Alternativ zum Kalenderfilter steht der **Eventfinder** (`finder="1"`) zur Verfügung: eine geführte Werkzeugleiste unter der Frage „Welche Angebote sprechen dich an?“, mit Buttons pro Kalender sowie für die Zeiträume „Diese Woche“, „Dieses Wochenende“ und „Diesen Monat“, mit `search="1"` samt Suchfeld – gedacht für Besucher, die nicht wissen, wonach sie in einem Dropdown suchen sollen. Ist `finder` aktiv, wird `filter` ignoriert und das Suchfeld steht im Eventfinder (keine doppelte Werkzeugleiste); `month_dividers` lässt sich weiterhin unabhängig dazu aktivieren. Findet ein Zeitraum keine Termine mehr – „Diesen Monat" am Monatsende etwa –, bleibt die Liste nicht leer: Darunter stehen bis zu drei der Termine, die *danach* kommen, mit einem Satz davor, der den Grund nennt. Der Zeitraum selbst wird dabei nicht erweitert, und Kalenderauswahl wie Suchbegriff gelten für den Ausblick weiter.
 
 = Gutenberg-Block =
 
-Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Einstellungen“ Kalender (Checkbox-Liste der unter Events → Kalender geladenen Kalender), Ansicht, Spaltenzahl (nur bei Grid), maximale Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung, Nachladen-Button und Zeitraum pro Seite festlegen.
+Block „ChurchTools Events“ einfügen und in der Seitenleiste unter „Auswahl“ die Kalender (Checkbox-Liste der unter Events → Kalender geladenen Kalender), unter „Darstellung“ Ansicht, Spaltenzahl (nur bei Raster), maximale Anzahl der Termine, Klickverhalten sowie (außer bei „Nächster Termin“) Eventfinder, Kalenderfilter, Suchleiste, Monatsgruppierung, Nachladen-Button und Zeitraum pro Seite festlegen.
 
 Beide Blöcke – „ChurchTools Events“ und „ChurchTools Gruppen“ – lassen sich in der Werkzeugleiste auf „Weite Breite“ oder „Volle Breite“ stellen, sofern das Theme das anbietet. Das ist der Weg zu mehr Spalten, wenn der Inhaltsbereich des Themes schmal ist. Ein Shortcode im Shortcode-Block bekommt dieselbe Breite, wenn er in einem Gruppe-Block mit weiter Breite steht.
 
 = WPBakery-Element =
 
-Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Grid“ als Ansicht gewählt ist.
+Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Raster“ als Ansicht gewählt ist.
 
 = Gruppen =
 
@@ -101,18 +101,21 @@ Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus Chur
 
 `[ctp_groups homepage="Kleingruppen" columns="3"]`
 `[ctp_groups groups="514,269" layout="featured"]`
+`[ctp_groups homepage="Kleingruppen" finder="1" search="1"]`
 
 * `homepage` – Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage (bei mehreren angehakten bleibt die Liste leer).
 * `groups` – einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge. Gilt statt `homepage`. Die IDs stehen unter Gruppen → Gruppenliste; wählbar sind nur Gruppen der angehakten Homepages.
 * `source` – `homepage` oder `groups`: welche der beiden Angaben gilt. Leer = `groups`, sobald Gruppen angegeben sind, sonst `homepage`. Das WPBakery-Element setzt es über die Auswahl „Welche Gruppen?“ selbst.
 * `layout` – `grid` (Kachelraster mit Auszug, Standard) oder `featured` (je Gruppe eine große Kachel, Bild neben dem ganzen Text).
 * `columns` – höchstens so viele Spalten, 2–6 (Standard: 3); wie bei den Terminen nur so viele, wie in den Inhaltsbereich passen. Nur bei `grid`.
+* `finder` – Gruppenfinder anzeigen, Knöpfe für Kategorie, Wochentag und Zielgruppe: `1` oder `0` (Standard). Nur bei `grid`. Mit `search="1"` steht das Suchfeld im Gruppenfinder.
+* `search` – Freitext-Suchleiste anzeigen: `1` oder `0` (Standard). Nur bei `grid`. Durchsucht Name, Kategorie, Wochentag, Zielgruppe und Beschreibung.
 
-Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen, danach zeigt das Formular nur das passende Feld – die Homepage oder die Gruppenauswahl mit Reihenfolge und Filter –, dazu die Ansicht. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
+Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen, danach zeigt das Formular nur das passende Feld – die Homepage oder die Gruppenauswahl mit Reihenfolge und Filter –, dazu die Ansicht und die Schalter „Gruppenfinder anzeigen“ und „Suchleiste anzeigen“ – dieselben wie im Block „ChurchTools Events“. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
 
-Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Treffzeit, Zielgruppe, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
+Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Kategorie, Treffzeit, Zielgruppe, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 
-Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit, darunter die Zielgruppe (ausblendbar mit dem Kalendernamen), sowie die ersten 24 Wörter der Beschreibung mit ihren Absätzen und Zeilenumbrüchen (in der hervorgehobenen Ansicht den ganzen Text). Ein Klick auf eine Kachel im Raster öffnet die Gruppe im Popup mit dem ganzen Text; das Bild darin folgt dem Bildformat aus dem Design-Tab. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet; nur dieser Button führt aus der Website hinaus, ein Klick auf die Kachel bleibt im Popup. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
+Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit, darunter die Zielgruppe (ausblendbar mit dem Kalendernamen), sowie die ersten 24 Wörter der Beschreibung mit ihren Absätzen und Zeilenumbrüchen (in der hervorgehobenen Ansicht den ganzen Text). Ein Klick auf eine Kachel im Raster öffnet die Gruppe im Popup mit dem ganzen Text; das Bild darin folgt dem Bildformat aus dem Design-Tab. Der Gruppenfinder filtert im Browser, ohne die Seite neu zu laden. Welche Knöpfe er zeigt, entscheiden die Gruppen-Homepage – nur dort eingeschaltete Filter – und die Gruppen selbst: Ein Knopf erscheint nur, wenn er die Liste eingrenzt, eine Reihe ohne solchen Knopf fällt weg. Die Zielgruppe „Jeder“ ist kein eigener Knopf, sondern passt zu jeder Auswahl, ebenso eine Gruppe ohne Zielgruppe; bei Kategorie und Wochentag erscheinen nur Gruppen mit genau diesem Wert. Die Suche findet Name, Kategorie, Wochentag, Zielgruppe und Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet; nur dieser Button führt aus der Website hinaus, ein Klick auf die Kachel bleibt im Popup. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
 
 Die Gruppen haben ein eigenes „Sync-Intervall“ unter Gruppen → Homepages: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich, unabhängig vom Termin-Sync. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Gruppen jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Abwählen einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
 
@@ -246,7 +249,7 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 * Mehrere ChurchTools-Instanzen (siehe oben)
 * WordPress-Multisite (ungetestet, siehe oben)
 * Eine Monatskalender-/Rasteransicht – es gibt Liste, Grid und „Nächster Termin“
-* Ein Gruppenfinder mit Filtern oder eine Anmeldung zu Gruppen in WordPress – die Gruppenliste führt zur Anmeldung in ChurchTools
+* Eine Anmeldung zu Gruppen in WordPress – die Gruppenliste führt zur Anmeldung in ChurchTools
 * Eine REST-API bzw. headless-Nutzung der synchronisierten Termine
 * Termine aus WordPress heraus bearbeiten: die Daten sind eine Kopie aus ChurchTools und werden bei jedem Sync überschrieben
 * Die Drag-and-drop-Sortierung unter „Einstellungen → Design“ funktioniert mit Maus oder Trackpad, nicht per Touch
@@ -258,7 +261,7 @@ Bilder brauchen nichts weiter: Das Bild im Popup trägt bereits `skip-lazy` und 
 
 Das Plugin dupliziert Termindaten der ausgewählten ChurchTools-Kalender lokal in eine eigene Datenbanktabelle auf dem WordPress-Server (Titel, Untertitel, Zeitraum, Ort, Beschreibung, Kalenderzugehörigkeit, dazu die übrige Antwort von ChurchTools zum Termin als Rohdaten – ohne Verweise auf Personen wie „angelegt von“) und importiert verknüpfte Bilder in die WordPress-Medienbibliothek, statt sie von ChurchTools aus einzubinden (Hotlinking) – Website-Besucher laden Bilder dadurch ausschließlich vom eigenen Server, nicht von ChurchTools. Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist automatisch wieder gelöscht (siehe Events → Synchronisation).
 
-Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Wochentag, Treffzeit, Zielgruppe, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder. Die Bilder sind Kopien: Entfernt die Gemeinde ein Gruppenbild in ChurchTools, verschwindet es auf der Website erst mit dem nächsten Gruppen-Abgleich (je nach Intervall bis zu einer Woche) – und aus bereits erstellten Backups der Website nicht.
+Für die Gruppenliste speichert das Plugin je angehakter Gruppen-Homepage Name, Beschreibung, Kategorie, Wochentag, Treffzeit, Zielgruppe, Höchst- und Mitgliederzahl der dort öffentlich gezeigten Gruppen und importiert deren Bilder in die Medienbibliothek. Namen von Mitgliedern oder Leitern werden nicht übernommen. Wird eine Homepage abgewählt, entfernt der nächste Abgleich ihre Gruppen und Bilder wieder. Die Bilder sind Kopien: Entfernt die Gemeinde ein Gruppenbild in ChurchTools, verschwindet es auf der Website erst mit dem nächsten Gruppen-Abgleich (je nach Intervall bis zu einer Woche) – und aus bereits erstellten Backups der Website nicht.
 
 = Können Ort/Beschreibung personenbezogene Daten enthalten? =
 

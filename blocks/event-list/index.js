@@ -53,7 +53,7 @@ registerBlockType(metadata.name, {
 		return (
 			<div {...blockProps}>
 				<InspectorControls>
-					<PanelBody title={__('Einstellungen', 'churchtools-plugin')}>
+					<PanelBody title={__('Auswahl', 'churchtools-plugin')}>
 						<p>{__('Kalender (leer = alle aktiven Kalender)', 'churchtools-plugin')}</p>
 						{calendarOptions.length === 0 ? (
 							<p>
@@ -72,12 +72,14 @@ registerBlockType(metadata.name, {
 								/>
 							))
 						)}
+					</PanelBody>
+					<PanelBody title={__('Darstellung', 'churchtools-plugin')}>
 						<SelectControl
 							label={__('Ansicht', 'churchtools-plugin')}
 							value={layout}
 							options={[
 								{ label: __('Liste', 'churchtools-plugin'), value: 'list' },
-								{ label: __('Grid', 'churchtools-plugin'), value: 'grid' },
+								{ label: __('Raster', 'churchtools-plugin'), value: 'grid' },
 								{ label: __('Nächster Termin', 'churchtools-plugin'), value: 'upcoming' },
 							]}
 							onChange={(value) => setAttributes({ layout: value })}
@@ -98,7 +100,7 @@ registerBlockType(metadata.name, {
 						<TextControl
 							type="number"
 							min={0}
-							label={__('Maximale Anzahl Events (0 = unbegrenzt)', 'churchtools-plugin')}
+							label={__('Maximale Anzahl Termine (0 = unbegrenzt)', 'churchtools-plugin')}
 							help={
 								layout === 'upcoming'
 									? __('Anzahl der Termine inklusive Hero-Kachel.', 'churchtools-plugin')
@@ -126,26 +128,26 @@ registerBlockType(metadata.name, {
 								<ToggleControl
 									label={__('Eventfinder anzeigen', 'churchtools-plugin')}
 									help={__(
-										'„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten.',
+										'Knöpfe für Kalender und Zeitraum – ersetzt den Kalenderfilter. Mit „Suchleiste anzeigen“ steht das Suchfeld im Eventfinder.',
 										'churchtools-plugin'
 									)}
 									checked={eventfinder}
 									onChange={(value) => setAttributes({ eventfinder: value })}
 								/>
 								{!eventfinder && (
-									<Fragment>
-										<ToggleControl
-											label={__('Kalenderfilter anzeigen', 'churchtools-plugin')}
-											checked={filter}
-											onChange={(value) => setAttributes({ filter: value })}
-										/>
-										<ToggleControl
-											label={__('Suchleiste anzeigen', 'churchtools-plugin')}
-											checked={search}
-											onChange={(value) => setAttributes({ search: value })}
-										/>
-									</Fragment>
+									<ToggleControl
+										label={__('Kalenderfilter anzeigen', 'churchtools-plugin')}
+										checked={filter}
+										onChange={(value) => setAttributes({ filter: value })}
+									/>
 								)}
+								{/* Die Suche ist ein eigener Schalter, auch mit Eventfinder - dort steht
+								    das Suchfeld in dessen Leiste (siehe EventListRenderer::render()). */}
+								<ToggleControl
+									label={__('Suchleiste anzeigen', 'churchtools-plugin')}
+									checked={search}
+									onChange={(value) => setAttributes({ search: value })}
+								/>
 								<ToggleControl
 									label={__('Termine nach Monat gruppieren', 'churchtools-plugin')}
 									checked={monthDividers}

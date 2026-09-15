@@ -21,7 +21,7 @@ const repo = path.resolve(__dirname, '..');
 const build = path.join(repo, 'docs', '.demo');
 const out = path.join(repo, 'docs', 'screenshots');
 
-const abschnitte = ['liste', 'grid', 'naechster-termin', 'eventfinder', 'gruppen', 'gruppen-hervorgehoben'];
+const abschnitte = ['liste', 'grid', 'naechster-termin', 'eventfinder', 'gruppen', 'gruppenfinder', 'gruppen-hervorgehoben'];
 
 /*
  * 1.3 statt 2: Die Bilder liegen im Repo und stehen im README, brauchen dort

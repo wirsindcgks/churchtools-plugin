@@ -89,8 +89,13 @@ final class GroupSyncTest extends TestCase
             'note' => 'Treff am Mittwoch',
             'image_url' => 'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
             'weekday' => 'Mittwoch',
+            'weekday_sort' => 2,
             'meeting_time' => '9:30',
             'target_group' => 'Jeder',
+            'target_group_key' => 'everyone',
+            'target_group_sort' => 1,
+            'category' => '',
+            'category_sort' => null,
             'max_members' => 60,
             'free_places' => 52,
             'waitinglist' => false,
@@ -198,11 +203,40 @@ final class GroupSyncTest extends TestCase
         $group = GroupSync::normalizeGroup($raw, self::BASE);
 
         $this->assertSame(
-            ['id', 'name', 'note', 'image_url', 'weekday', 'meeting_time', 'target_group', 'max_members', 'free_places', 'waitinglist', 'url'],
+            ['id', 'name', 'note', 'image_url', 'weekday', 'weekday_sort', 'meeting_time', 'target_group', 'target_group_key', 'target_group_sort', 'category', 'category_sort', 'max_members', 'free_places', 'waitinglist', 'url'],
             array_keys($group)
         );
         $this->assertStringNotContainsString('Erika', (string) wp_json_encode($group));
         $this->assertStringNotContainsString('4711', (string) wp_json_encode($group));
+    }
+
+    /**
+     * Gruppenfinder: Kategorien tragen `name` statt `nameTranslated` (selbst
+     * angelegte Stammdaten), Sonntag hat die ID 0 und den sortKey 6.
+     */
+    public function testNormalizeGroupTakesCategoryAndSortKeysForTheFinder(): void
+    {
+        $raw = $this->group(44, 'Lobpreis');
+        $raw['information']['groupCategory'] = ['id' => 2, 'name' => 'Musik', 'color' => 'blue', 'sortKey' => 5];
+        $raw['information']['weekday'] = ['id' => 0, 'name' => 'sunday', 'nameTranslated' => 'Sonntag', 'sortKey' => 6];
+
+        $group = GroupSync::normalizeGroup($raw, self::BASE);
+
+        $this->assertSame('Musik', $group['category']);
+        $this->assertSame(5, $group['category_sort']);
+        $this->assertSame(6, $group['weekday_sort']);
+    }
+
+    /** Nur Filter, die die Homepage in ChurchTools einschaltet. */
+    public function testShownFiltersFollowTheHomepage(): void
+    {
+        $this->assertSame(['weekday', 'groupcategory'], GroupSync::shownFilters(['filters' => [
+            ['type' => 'weekday', 'show' => true, 'options' => []],
+            ['type' => 'targetgroups', 'show' => false, 'options' => []],
+            ['type' => 'groupcategory', 'show' => true, 'options' => []],
+            ['show' => true],
+        ]]));
+        $this->assertSame([], GroupSync::shownFilters([]));
     }
 
     public function testNormalizeGroupSkipsGroupsWithoutIdOrName(): void

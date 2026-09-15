@@ -207,6 +207,59 @@
 		});
 	}
 
+	/**
+	 * Gruppenfinder (partials/group-finder.php): Alle Gruppen stehen schon in
+	 * der Seite, gefiltert wird also nur hier und ohne Anfrage. Die Reihen
+	 * greifen zusammen - eine Gruppe bleibt, wenn sie zu jeder gewaehlten
+	 * Reihe und zur Suche passt.
+	 */
+	function isGroupList(container) {
+		return container.classList.contains('ctp-groups');
+	}
+
+	/**
+	 * Dieselbe Regel wie GroupListRenderer::finderMatches(): Die Zielgruppe
+	 * „Jeder" steht an der Zelle als leerer Wert und passt zu jeder Auswahl,
+	 * Kategorie und Wochentag muessen genau passen.
+	 */
+	function groupMatches(cell, key, value) {
+		if (value === '') {
+			return true;
+		}
+
+		var groupValue = cell.getAttribute('data-ctp-group-' + key) || '';
+
+		return groupValue === value || (key === 'target' && groupValue === '');
+	}
+
+	function applyGroupFinder(container) {
+		var active = {};
+		container.querySelectorAll('[data-ctp-group-filter].ctp-events__finder-btn--active').forEach(function (button) {
+			active[button.getAttribute('data-ctp-group-filter')] = button.getAttribute('data-ctp-group-value') || '';
+		});
+
+		var searchInput = container.querySelector('.ctp-events__search-input');
+		var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+		var visibleCount = 0;
+
+		container.querySelectorAll('.ctp-events__cell[data-ctp-group-search]').forEach(function (cell) {
+			var visible = (query === '' || (cell.getAttribute('data-ctp-group-search') || '').indexOf(query) !== -1)
+				&& Object.keys(active).every(function (key) {
+					return groupMatches(cell, key, active[key]);
+				});
+
+			cell.hidden = !visible;
+			if (visible) {
+				visibleCount += 1;
+			}
+		});
+
+		var message = container.querySelector('.ctp-events__toolbar-empty');
+		if (message) {
+			message.hidden = visibleCount !== 0;
+		}
+	}
+
 	document.addEventListener('change', function (event) {
 		var select = event.target;
 
@@ -259,6 +312,12 @@
 
 		var container = input.closest('.ctp-events');
 		if (!container) {
+			return;
+		}
+
+		if (isGroupList(container)) {
+			applyGroupFinder(container);
+
 			return;
 		}
 
@@ -550,6 +609,12 @@
 		});
 		button.classList.add('ctp-events__finder-btn--active');
 		button.setAttribute('aria-pressed', 'true');
+
+		if (isGroupList(container)) {
+			applyGroupFinder(container);
+
+			return;
+		}
 
 		applyToolbarState(container);
 		refreshFromServer(container);

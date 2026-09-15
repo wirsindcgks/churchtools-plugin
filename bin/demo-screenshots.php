@@ -160,14 +160,15 @@ $abschnitte = [
  * Die Gruppenliste bekommt ihre Felder so, wie GroupListRenderer::prepareGroups()
  * sie ans Template reicht - ausgedachte Gruppen, eine davon ohne Bild, damit
  * die Farbflaeche zu sehen ist, die dann an die Stelle des Bildes tritt. Die
- * Zielgruppen sind Werte, die ChurchTools zur Auswahl anbietet.
+ * Zielgruppen sind Werte, die ChurchTools zur Auswahl anbietet; Kategorien
+ * legt jede Gemeinde selbst an.
  */
 $gruppen = [];
 foreach ([
-    ['Hauskreis Nord', 'Jeder', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', "Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.\n\nNeu dabei? Einfach vorher kurz melden."],
-    ['Seniorenkreis', 'Jeder', 'Mittwoch, 9:30 Uhr', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
-    ['Lobpreisband', 'Männer', 'Sonntag', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
-] as $i => [$name, $zielgruppe, $zeit, $bild, $plaetze, $text]) {
+    ['Hauskreis Nord', 'Familien', 'Donnerstag', '19:30 Uhr', 'Hauskreise', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', "Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.\n\nNeu dabei? Einfach vorher kurz melden."],
+    ['Seniorenkreis', 'Jeder', 'Mittwoch', '9:30 Uhr', 'Begegnung', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
+    ['Lobpreisband', 'Männer', 'Sonntag', '', 'Musik', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
+] as $i => [$name, $zielgruppe, $tag, $uhrzeit, $kategorie, $bild, $plaetze, $text]) {
     $gruppen[] = [
         'id' => $i + 1,
         'name' => $name,
@@ -175,7 +176,7 @@ foreach ([
         'image_src' => $bild !== '' ? $assets . '/' . $bild : '',
         'image_srcset' => '',
         'show_media' => true,
-        'schedule' => $zeit,
+        'schedule' => $uhrzeit !== '' ? $tag . ', ' . $uhrzeit : $tag,
         'target_group_label' => $zielgruppe,
         'places_label' => $plaetze,
         'excerpt' => $text,
@@ -183,6 +184,14 @@ foreach ([
         'excerpt_html' => '<p>' . str_replace("\n\n", '</p><p>', $text) . '</p>',
         'image_srcset_full' => '',
         'description_html' => '<p>' . str_replace("\n\n", '</p><p>', $text) . '</p>',
+        // Fuer den Gruppenfinder, wie in prepareGroups(): „Jeder" steht leer.
+        'finder_category' => $kategorie,
+        'finder_weekday' => $tag,
+        'finder_target' => $zielgruppe === 'Jeder' ? '' : $zielgruppe,
+        'finder_search' => mb_strtolower($name . ' ' . $text),
+        'category_sort' => $i,
+        'weekday_sort' => ['Montag' => 0, 'Mittwoch' => 2, 'Donnerstag' => 3, 'Sonntag' => 6][$tag],
+        'target_group_sort' => null,
     ];
 }
 
@@ -193,6 +202,19 @@ $abschnitte['gruppen'] = (static function (array $groups): string {
 
     // Der Abschnitt liegt unten auf der Sammelseite, ausserhalb des Bildes,
     // das Playwright zuerst sieht - mit loading="lazy" kaeme das Bild nie an.
+    return str_replace('loading="lazy"', 'loading="eager"', (string) ob_get_clean());
+})($gruppen);
+
+// Gruppenfinder ueber dem Raster (finder="1"), Knoepfe wie im Plugin berechnet.
+$abschnitte['gruppenfinder'] = (static function (array $groups): string {
+    $args = ctp_demo_args(['columns' => 3]);
+    $args['finder'] = true;
+    $args['search'] = true;
+    $args['show_toolbar'] = true;
+    $args['finder_rows'] = \ChurchToolsPlugin\Frontend\GroupListRenderer::finderRows($groups, null);
+    ob_start();
+    require CTP_PLUGIN_DIR . 'includes/Frontend/templates/group-grid.php';
+
     return str_replace('loading="lazy"', 'loading="eager"', (string) ob_get_clean());
 })($gruppen);
 

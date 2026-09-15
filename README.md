@@ -17,7 +17,7 @@ Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regel
 - **Drei Ansichten:** Liste, Kachelraster und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
 - **Schnell finden:** Eventfinder mit Themen- und Zeitraum-Knöpfen, Suche und Monatsüberschriften.
 - **Termindetails** als Popup oder als eigene Seite, auf Wunsch zum Teilen, als Kalenderdatei oder als Kalender-Abo.
-- **Gruppen statt iframe:** die Gruppen einer Gruppen-Homepage in derselben Optik, mit freien Plätzen.
+- **Gruppen statt iframe:** die Gruppen einer Gruppen-Homepage in derselben Optik, mit freien Plätzen und Gruppenfinder.
 - **Gut für Suchmaschinen:** eigene Adresse je Termin, strukturierte Daten und Sitemap, verträglich mit Yoast SEO und Rank Math.
 - **Datensparsam:** Bilder werden importiert, Besucher laden nichts von der ChurchTools-Domain. Die Teilen-Knöpfe kommen ohne Skript von Drittanbietern und ohne Zählpixel aus.
 - **Updates** wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
@@ -75,7 +75,7 @@ Voraussetzungen: WordPress ab 6.4, PHP ab 8.1, eine ChurchTools-Instanz und ein 
 4. **Einbauen:** auf einer Seite den Block „ChurchTools Events“ einfügen, oder als Shortcode:
 
    ```
-   [ctp_events layout="list" eventfinder="1" month_dividers="1"]
+   [ctp_events layout="list" finder="1" search="1" month_dividers="1"]
    ```
 
 Die ausführliche Anleitung mit Design, eigenen Terminseiten und Gruppen steht unter [Einrichtung](docs/EINRICHTUNG.md).
@@ -86,7 +86,7 @@ Die ausführliche Anleitung mit Design, eigenen Terminseiten und Gruppen steht u
 | --- | --- |
 | [Einrichtung](docs/EINRICHTUNG.md) | Verbindung, Kalender, Design, Terminseiten, API-Key |
 | [Termine anzeigen](docs/TERMINE.md) | Ansichten, Beispiele, Optionen, Teilen, Importieren und Abonnieren |
-| [Gruppen anzeigen](docs/GRUPPEN.md) | Gruppen-Homepages, einzelne Gruppen hervorheben |
+| [Gruppen anzeigen](docs/GRUPPEN.md) | Gruppen-Homepages, Gruppenfinder, einzelne Gruppen hervorheben |
 | [Gut zu wissen](docs/GUT-ZU-WISSEN.md) | Caching-Plugins, Spaltenzahl, Grenzen, häufige Fragen |
 | [readme.txt](readme.txt) | Vollständige Referenz aller Optionen und FAQ, im Backend unter *Plugins → ChurchTools Events → Details* |
 | [Changelog](CHANGELOG.md) | Was sich mit jeder Version geändert hat |

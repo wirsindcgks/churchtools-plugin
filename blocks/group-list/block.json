@@ -27,6 +27,14 @@
         "columns": {
             "type": "number",
             "default": 3
+        },
+        "finder": {
+            "type": "boolean",
+            "default": false
+        },
+        "search": {
+            "type": "boolean",
+            "default": false
         }
     },
     "supports": {

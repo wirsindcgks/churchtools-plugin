@@ -1,6 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl, RangeControl, RadioControl, CheckboxControl, Notice } from '@wordpress/components';
+import { PanelBody, SelectControl, RangeControl, RadioControl, CheckboxControl, Notice, ToggleControl } from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 import { __, sprintf } from '@wordpress/i18n';
 import metadata from './block.json';
@@ -18,7 +18,7 @@ const parseIds = (value) =>
 
 registerBlockType(metadata.name, {
 	edit: ({ attributes, setAttributes }) => {
-		const { source, homepage, groups, layout, columns } = attributes;
+		const { source, homepage, groups, layout, columns, finder, search } = attributes;
 		const blockProps = useBlockProps();
 		const selectedIds = parseIds(groups);
 		const groupsById = new Map(knownGroups.map((group) => [group.id, group]));
@@ -140,6 +140,24 @@ registerBlockType(metadata.name, {
 								onChange={(value) => setAttributes({ columns: value })}
 								min={2}
 								max={6}
+							/>
+						)}
+						{layout === 'grid' && (
+							<ToggleControl
+								label={__('Gruppenfinder anzeigen', 'churchtools-plugin')}
+								help={__(
+									'Knöpfe für Kategorie, Wochentag und Zielgruppe – nur, wo sie in ChurchTools gepflegt sind. Mit „Suchleiste anzeigen“ steht das Suchfeld im Gruppenfinder.',
+									'churchtools-plugin'
+								)}
+								checked={!!finder}
+								onChange={(value) => setAttributes({ finder: value })}
+							/>
+						)}
+						{layout === 'grid' && (
+							<ToggleControl
+								label={__('Suchleiste anzeigen', 'churchtools-plugin')}
+								checked={!!search}
+								onChange={(value) => setAttributes({ search: value })}
 							/>
 						)}
 					</PanelBody>

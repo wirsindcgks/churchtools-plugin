@@ -489,6 +489,10 @@ final class GroupsTab
                 'label' => __('Zwei Spalten, etwa neben einem Text', 'churchtools-plugin'),
                 'code' => sprintf('[ctp_groups homepage="%s" columns="2"]', $firstRef),
             ];
+            $examples[] = [
+                'label' => __('Raster mit Gruppenfinder und Suche', 'churchtools-plugin'),
+                'code' => sprintf('[ctp_groups homepage="%s" finder="1" search="1"]', $firstRef),
+            ];
         }
 
         // Mit echten IDs dieser Instanz, damit das Beispiel ohne Anpassen etwas
@@ -582,6 +586,16 @@ final class GroupsTab
                         <td><code>columns</code></td>
                         <td><?php esc_html_e('Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Nur bei grid.', 'churchtools-plugin'); ?></td>
                         <td><code>3</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>search</code></td>
+                        <td><?php esc_html_e('Freitext-Suchleiste anzeigen (nur grid, durchsucht Name, Kategorie, Wochentag, Zielgruppe und Beschreibung)', 'churchtools-plugin'); ?></td>
+                        <td><code>0</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>finder</code></td>
+                        <td><?php esc_html_e('Gruppenfinder: Knöpfe für Kategorie, Wochentag und Zielgruppe (nur grid). Mit search steht das Suchfeld im Gruppenfinder.', 'churchtools-plugin'); ?></td>
+                        <td><code>0</code></td>
                     </tr>
                 </tbody>
             </table>

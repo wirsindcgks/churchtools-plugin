@@ -20,9 +20,9 @@ Die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/): E
 
 ### Shortcodes
 
-`[ctp_events]` mit den Attributen `calendar`, `layout` (`list`, `grid`, `upcoming`), `limit`, `columns`, `click` (`default`, `popup`, `page`, `none`), `filter`, `search`, `month_dividers`, `eventfinder`, `months`, `paging`.
+`[ctp_events]` mit den Attributen `calendar`, `layout` (`list`, `grid`, `upcoming`), `limit`, `columns`, `click` (`default`, `popup`, `page`, `none`), `filter`, `search`, `month_dividers`, `finder` (früher `eventfinder`, beide gelten), `months`, `paging`.
 
-`[ctp_groups]` mit den Attributen `source` (`homepage`, `groups`), `homepage`, `groups`, `layout` (`grid`, `featured`), `columns`.
+`[ctp_groups]` mit den Attributen `source` (`homepage`, `groups`), `homepage`, `groups`, `layout` (`grid`, `featured`), `columns`, `finder`, `search`.
 
 Zugesagt sind Name, erlaubte Werte und Bedeutung. Neue Attribute und neue Werte können in jeder Minor-Version dazukommen; Standardwerte ändern sich nur, wenn sich dadurch auf bestehenden Seiten nichts ändert. Die Beschreibung jedes Attributs steht in der [readme.txt](../readme.txt) und im Backend unter *Einbinden*.
 

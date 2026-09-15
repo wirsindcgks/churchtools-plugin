@@ -58,7 +58,7 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 Shortcode, Gutenberg-Block und WPBakery-Element rufen alle `EventListRenderer::render()` mit demselben Argument-Array auf – neue Optionen müssen deshalb an drei Stellen durchgereicht werden (`Frontend\Shortcode`, `Blocks\EventListBlock`, `Integrations\WpBakeryIntegration`) und in `readme.txt` dokumentiert werden.
 
 ```
-[ctp_events calendar="1,Gottesdienste" layout="grid" columns="3" eventfinder="1"]
+[ctp_events calendar="1,Gottesdienste" layout="grid" columns="3" finder="1" search="1"]
 ```
 
 ## Theme-Overrides

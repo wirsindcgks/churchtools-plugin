@@ -268,13 +268,13 @@ final class WpBakeryIntegration
                     'admin_label' => true,
                     'value' => [
                         __('Liste', 'churchtools-plugin') => 'list',
-                        __('Grid', 'churchtools-plugin') => 'grid',
+                        __('Raster', 'churchtools-plugin') => 'grid',
                         __('Nächster Termin', 'churchtools-plugin') => 'upcoming',
                     ],
                 ],
                 [
                     'type' => 'textfield',
-                    'heading' => __('Spalten (nur Grid)', 'churchtools-plugin'),
+                    'heading' => __('Spalten', 'churchtools-plugin'),
                     'description' => __('Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px.', 'churchtools-plugin'),
                     'param_name' => 'columns',
                     'value' => '3',
@@ -282,7 +282,7 @@ final class WpBakeryIntegration
                 ],
                 [
                     'type' => 'textfield',
-                    'heading' => __('Maximale Anzahl Events (0 = unbegrenzt)', 'churchtools-plugin'),
+                    'heading' => __('Maximale Anzahl Termine (0 = unbegrenzt)', 'churchtools-plugin'),
                     'description' => __('Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin“ die Gesamtzahl inkl. Hero-Kachel.', 'churchtools-plugin'),
                     'param_name' => 'limit',
                     'value' => '0',
@@ -302,7 +302,7 @@ final class WpBakeryIntegration
                     'type' => 'checkbox',
                     'heading' => __('Eventfinder anzeigen', 'churchtools-plugin'),
                     'description' => __(
-                        'Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten, falls dort ebenfalls angehakt.',
+                        'Knöpfe für Kalender und Zeitraum – ersetzt den Kalenderfilter. Mit „Suchleiste anzeigen“ steht das Suchfeld im Eventfinder.',
                         'churchtools-plugin'
                     ),
                     'param_name' => 'eventfinder',
@@ -429,6 +429,23 @@ final class WpBakeryIntegration
                     'description' => __('Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px.', 'churchtools-plugin'),
                     'param_name' => 'columns',
                     'value' => '3',
+                    'dependency' => ['element' => 'layout', 'value' => 'grid'],
+                ],
+                [
+                    'type' => 'checkbox',
+                    'heading' => __('Gruppenfinder anzeigen', 'churchtools-plugin'),
+                    'description' => __('Knöpfe für Kategorie, Wochentag und Zielgruppe – nur, wo sie in ChurchTools gepflegt sind. Mit „Suchleiste anzeigen“ steht das Suchfeld im Gruppenfinder.', 'churchtools-plugin'),
+                    'param_name' => 'finder',
+                    'admin_label' => true,
+                    'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
+                    'dependency' => ['element' => 'layout', 'value' => 'grid'],
+                ],
+                [
+                    'type' => 'checkbox',
+                    'heading' => __('Suchleiste anzeigen', 'churchtools-plugin'),
+                    'param_name' => 'search',
+                    'admin_label' => true,
+                    'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
                     'dependency' => ['element' => 'layout', 'value' => 'grid'],
                 ],
             ],

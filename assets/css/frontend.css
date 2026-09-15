@@ -268,7 +268,9 @@
  * gefallen (2026-09-02): Das Wort genuegt, und ohne den Strich liest sich der
  * Eventfinder als eine Leiste statt als zwei gestapelte Kaesten.
  */
-.ctp-events__finder-row--timeframe {
+.ctp-events__finder-row--timeframe,
+.ctp-groups__finder-row--weekday,
+.ctp-groups__finder-row--target {
     padding-block-start: 0.35rem;
 }
 

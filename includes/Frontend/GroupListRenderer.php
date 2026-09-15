@@ -12,9 +12,18 @@ use ChurchToolsPlugin\Settings;
  * Gruppen als Kacheln, fuer [ctp_groups], den Block und das WPBakery-Element -
  * entweder alle Gruppen einer Homepage oder einzeln ausgewaehlte.
  *
- * Eine Gruppen*liste*, kein Gruppen*finder* (Grillrunde 2026-09-01): keine
- * Filterleiste, kein Paging, keine eigene Detailseite. Der Weg nach
- * ChurchTools ist ein sichtbarer Button „In ChurchTools ansehen".
+ * Kein Paging und keine eigene Detailseite. Der Weg nach ChurchTools ist ein
+ * sichtbarer Button „In ChurchTools ansehen".
+ *
+ * Seit 1.31.0 auf Wunsch mit Gruppenfinder (`finder`: Knoepfe fuer
+ * Kategorie, Wochentag und Zielgruppe) und Suchleiste (`search`), gefiltert
+ * im Browser - alle Gruppen stehen ohnehin in der Seite. Beide Schalter
+ * heissen und wirken wie beim Eventfinder: `search` ist ein eigener Schalter,
+ * mit oder ohne Finder, und steht mit Finder in dessen Leiste. Welche Knoepfe erscheinen, entscheiden
+ * die Homepage in ChurchTools (dort eingeschaltete Filter) und die Gruppen
+ * selbst (finderRows()). Bis dahin war die Liste bewusst kein Suchwerkzeug
+ * (Grillrunde 2026-09-01); geaendert hat das der Wunsch, die Gruppen auf der
+ * Produktivseite einzubauen (plan.md, Gruppenfinder).
  *
  * Die Rasterkachel oeffnet seit dem Gruppen-Popup (2026-09-15) den ganzen Text
  * in einem Dialog auf *dieser* Website - genau das, was ein Klick auf eine
@@ -65,11 +74,26 @@ final class GroupListRenderer
     public const LAYOUTS = ['grid', 'featured'];
 
     /**
-     * @param array{source?: string, homepage?: string, groups?: string, layout?: string, columns?: int|string} $args
+     * Die Reihen des Gruppenfinders in ihrer Reihenfolge, je mit dem Filtertyp
+     * der Homepage in ChurchTools, der sie freigibt. Die Kategorie steht oben
+     * und ohne eigene Ueberschrift - sie ist das Thema, wie die Kalender im
+     * Eventfinder, und die Frage darueber benennt sie.
+     */
+    public const FINDER_FILTERS = [
+        'category' => 'groupcategory',
+        'weekday' => 'weekday',
+        'target' => 'targetgroups',
+    ];
+
+    /** Schluessel der Zielgruppe „Jeder" in ChurchTools, siehe GroupSync::normalizeGroup(). */
+    private const TARGET_EVERYONE = 'everyone';
+
+    /**
+     * @param array{source?: string, homepage?: string, groups?: string, layout?: string, columns?: int|string, finder?: bool|int|string, search?: bool|int|string} $args
      */
     public function render(array $args): string
     {
-        $args = wp_parse_args($args, ['source' => '', 'homepage' => '', 'groups' => '', 'layout' => 'grid', 'columns' => self::DEFAULT_COLUMNS]);
+        $args = wp_parse_args($args, ['source' => '', 'homepage' => '', 'groups' => '', 'layout' => 'grid', 'columns' => self::DEFAULT_COLUMNS, 'finder' => false, 'search' => false]);
 
         // `source` sagt ausdruecklich, welche Angabe gilt - die andere kann in
         // Block und WPBakery noch gespeichert sein, nachdem umgeschaltet wurde.
@@ -85,12 +109,22 @@ final class GroupListRenderer
         $args['instance'] = wp_unique_id('ctp-groups-');
         $args = array_merge($args, EventListRenderer::designArgs(Settings::get()));
 
+        $selected = self::selectGroups((string) $args['homepage'], (string) $args['groups']);
         $groups = self::prepareGroups(
-            self::selectGroups((string) $args['homepage'], (string) $args['groups']),
+            $selected,
             GroupSync::imageMap(),
             $args['hidden_elements'],
             $args['layout'] === 'featured'
         );
+
+        // Nur im Raster: Die hervorgehobene Ansicht ist fuer wenige Gruppen
+        // gedacht, dort gibt es nichts zu suchen.
+        $args['finder'] = $args['layout'] === 'grid' && filter_var($args['finder'], FILTER_VALIDATE_BOOLEAN) && $groups !== [];
+        $args['search'] = $args['layout'] === 'grid' && filter_var($args['search'], FILTER_VALIDATE_BOOLEAN) && $groups !== [];
+        $args['show_toolbar'] = $args['finder'] || $args['search'];
+        $args['finder_rows'] = $args['finder']
+            ? self::finderRows($groups, GroupSync::filtersFor(self::sourceHomepages((string) $args['homepage'], (string) $args['groups'], $selected)))
+            : [];
 
         $file = $args['layout'] === 'featured' ? 'group-featured.php' : 'group-grid.php';
         $template = locate_template('churchtools-plugin/' . $file);
@@ -127,6 +161,96 @@ final class GroupListRenderer
         $homepageId = GroupSettings::resolveHomepageId($homepage);
 
         return $homepageId !== null ? GroupSync::groupsFor($homepageId) : [];
+    }
+
+    /**
+     * Die Homepages, deren Filter-Freigaben fuer diese Liste gelten: die eine
+     * gewaehlte Homepage, oder bei einzelnen Gruppen alle angehakten, auf denen
+     * eine davon steht - dieselbe Unterscheidung wie selectGroups().
+     *
+     * @param list<array> $selected
+     *
+     * @return int[]
+     */
+    private static function sourceHomepages(string $homepage, string $groupIds, array $selected): array
+    {
+        if (GroupSync::parseIds($groupIds) !== []) {
+            return GroupSync::homepagesContaining(array_map(static fn (array $group): int => (int) ($group['id'] ?? 0), $selected));
+        }
+
+        $homepageId = GroupSettings::resolveHomepageId($homepage);
+
+        return $homepageId !== null ? [$homepageId] : [];
+    }
+
+    /**
+     * Die Knopfreihen des Gruppenfinders.
+     *
+     * Ein Knopf erscheint nur, wenn er etwas bewirkt: Seine Auswahl muss
+     * mindestens eine Gruppe ausblenden. Eine Reihe ohne solchen Knopf faellt
+     * weg - an der Referenzinstanz (1 von 19 Gruppen fuer „Frauen", der Rest
+     * „Jeder" oder ohne Angabe) zeigte „Frauen" sonst alle Gruppen und saehe
+     * kaputt aus. Werden die Daten in ChurchTools gepflegt, erscheinen die
+     * Reihen von selbst.
+     *
+     * Die Zielgruppe „Jeder" ist kein eigener Knopf, sondern passt zu jeder
+     * Auswahl; eine Gruppe ohne Zielgruppe ebenso - sie schliesst niemanden
+     * aus. Kategorie und Wochentag dagegen muessen passen: Wer „Donnerstag"
+     * waehlt, will keine Gruppe ohne Tag sehen.
+     *
+     * Sortiert nach dem sortKey aus ChurchTools (Montag bis Sonntag, die
+     * Reihenfolge der Stammdaten), bei Gleichstand nach Namen.
+     *
+     * @param list<array>       $groups       aus prepareGroups()
+     * @param list<string>|null $shownFilters GroupSync::filtersFor(); null = unbekannt, alles erlaubt
+     *
+     * @return list<array{key: string, options: list<string>}>
+     */
+    public static function finderRows(array $groups, ?array $shownFilters): array
+    {
+        $rows = [];
+
+        foreach (self::FINDER_FILTERS as $key => $filterType) {
+            if ($shownFilters !== null && !in_array($filterType, $shownFilters, true)) {
+                continue;
+            }
+
+            $sorts = [];
+            foreach ($groups as $group) {
+                $value = (string) $group['finder_' . $key];
+
+                if ($value !== '' && !isset($sorts[$value])) {
+                    $sort = $group[['category' => 'category_sort', 'weekday' => 'weekday_sort', 'target' => 'target_group_sort'][$key]] ?? null;
+                    $sorts[$value] = is_int($sort) ? $sort : PHP_INT_MAX;
+                }
+            }
+
+            $options = [];
+            foreach (array_keys($sorts) as $value) {
+                $value = (string) $value;
+                $matching = array_filter($groups, static fn (array $group): bool => self::finderMatches($group, $key, $value));
+
+                if (count($matching) < count($groups)) {
+                    $options[] = $value;
+                }
+            }
+
+            usort($options, static fn (string $a, string $b): int => [$sorts[$a], $a] <=> [$sorts[$b], $b]);
+
+            if ($options !== []) {
+                $rows[] = ['key' => $key, 'options' => $options];
+            }
+        }
+
+        return $rows;
+    }
+
+    /** Dieselbe Regel wie groupMatches() in assets/js/frontend.js. */
+    private static function finderMatches(array $group, string $key, string $value): bool
+    {
+        $groupValue = (string) $group['finder_' . $key];
+
+        return $groupValue === $value || ($key === 'target' && $groupValue === '');
     }
 
     /** Die Beschriftung des Absprungs - ein Wort fuer alle Gruppen, siehe plan.md G3. */
@@ -197,6 +321,22 @@ final class GroupListRenderer
             $group['image_srcset_full'] = $imageUrl !== '' && !$withDescription
                 ? CardImage::srcsetFor($attachmentId)
                 : '';
+
+            // Werte fuer den Gruppenfinder, als Attribute an der Zelle. Sie
+            // haengen nicht an den ausblendbaren Feldern: Wer die Treffzeit auf
+            // der Kachel ausblendet, kann trotzdem nach dem Wochentag suchen.
+            $group['finder_category'] = trim((string) ($group['category'] ?? ''));
+            $group['finder_weekday'] = trim((string) ($group['weekday'] ?? ''));
+            $group['finder_target'] = ($group['target_group_key'] ?? '') === self::TARGET_EVERYONE
+                ? ''
+                : trim((string) ($group['target_group'] ?? ''));
+            $group['finder_search'] = mb_strtolower(implode(' ', array_filter([
+                (string) $group['name'],
+                $group['finder_category'],
+                $group['finder_weekday'],
+                trim((string) ($group['target_group'] ?? '')),
+                EventFormatter::plainText((string) ($group['note'] ?? '')),
+            ])));
 
             $prepared[] = $group;
         }

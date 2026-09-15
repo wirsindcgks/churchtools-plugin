@@ -15,10 +15,10 @@ Alle drei benutzen denselben Unterbau und können dasselbe:
 | Ansicht | `layout` | Beschreibung |
 | --- | --- | --- |
 | **Liste** | `list` | Kompakte Zeilen mit Datums-Chip, Kategorie, Titel, Zeit und Ort; mit `month_dividers="1"` nach Monaten gruppiert. |
-| **Kachelraster** | `grid` | Bild, Datums-Badge und ein kurzer Auszug, Spaltenzahl einstellbar. Termine ohne eigenes Bild bekommen eine Fläche in der Farbe ihres Kalenders. |
+| **Raster** | `grid` | Bild, Datums-Badge und ein kurzer Auszug, Spaltenzahl einstellbar. Termine ohne eigenes Bild bekommen eine Fläche in der Farbe ihres Kalenders. |
 | **Nächster Termin** | `upcoming` | Eine große Kachel für den nächsten Termin, darunter die folgenden in Kurzform. |
 
-Dazu kommt der **Eventfinder** (`eventfinder="1"`): ein geführter Einstieg statt Dropdown, mit einem Button je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche. Geht ein Zeitraum leer aus („Diesen Monat“ am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
+Dazu kommt der **Eventfinder** (`finder="1"`): ein geführter Einstieg statt Dropdown, mit einem Button je Thema in der Farbe des Kalenders und Knöpfen für den Zeitraum; mit `search="1"` steht das Suchfeld darin. Geht ein Zeitraum leer aus („Diesen Monat“ am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
 
 Bilder der Ansichten zeigt die [Übersicht](../README.md#so-sieht-das-aus).
 
@@ -33,10 +33,10 @@ Bilder der Ansichten zeigt die [Übersicht](../README.md#so-sieht-das-aus).
 **Terminseite: alle Kalender mit geführter Suche und Monatsüberschriften**
 
 ```
-[ctp_events layout="list" eventfinder="1" month_dividers="1"]
+[ctp_events layout="list" finder="1" search="1" month_dividers="1"]
 ```
 
-**Nur die Gottesdienste als Kachelraster, drei Spalten**
+**Nur die Gottesdienste als Raster, drei Spalten**
 
 ```
 [ctp_events calendar="Gottesdienste" layout="grid" columns="3"]
@@ -64,8 +64,9 @@ Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt *Events → Kalender
 | `layout` | `list` (Standard), `grid` oder `upcoming` |
 | `columns` | Spalten bei `grid`, 2–6 (Standard 3) – höchstens so viele, wie in den Inhaltsbereich passen, je Kachel mindestens 240px |
 | `limit` | Obergrenze; bei `upcoming` die Gesamtzahl inklusive der großen Kachel |
-| `eventfinder` | Geführte Leiste mit Themen- und Zeitraum-Knöpfen |
-| `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
+| `finder` | Eventfinder: geführte Leiste mit Themen- und Zeitraum-Knöpfen (früher `eventfinder`, gilt weiter) |
+| `filter` | Kalender-Dropdown, die einfache Variante des Eventfinders |
+| `search` | Suchfeld – allein oder im Eventfinder |
 | `month_dividers` | Termine nach Monaten gruppieren |
 | `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden“-Button |
 | `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |

@@ -100,6 +100,8 @@ final class GroupListBlock
             'groups' => (string) ($attributes['groups'] ?? ''),
             'layout' => (string) ($attributes['layout'] ?? 'grid'),
             'columns' => (int) ($attributes['columns'] ?? 3),
+            'finder' => !empty($attributes['finder']),
+            'search' => !empty($attributes['search']),
         ]));
     }
 }

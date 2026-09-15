@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ChurchTools Events 1.30.0\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-09-15 11:45:39+0000\n"
+"POT-Creation-Date: 2026-09-15 12:58:22+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -18,8 +18,8 @@ msgstr ""
 msgid "#%d (unbekannt)"
 msgstr ""
 
-#: blocks/event-list/index.js:56 includes/Admin/SettingsPage.php:108
-msgid "Einstellungen"
+#: blocks/event-list/index.js:56 blocks/group-list/index.js:51
+msgid "Auswahl"
 msgstr ""
 
 #: blocks/event-list/index.js:57
@@ -30,108 +30,108 @@ msgstr ""
 msgid "Keine Kalender geladen. Unter „ChurchTools → Events → Kalender“ zuerst Kalender laden."
 msgstr ""
 
-#: blocks/event-list/index.js:76 blocks/group-list/index.js:123 includes/Admin/SettingsPage.php:3567 includes/Integrations/WpBakeryIntegration.php:266 includes/Integrations/WpBakeryIntegration.php:418
+#: blocks/event-list/index.js:76 blocks/group-list/index.js:121
+msgid "Darstellung"
+msgstr ""
+
+#: blocks/event-list/index.js:78 blocks/group-list/index.js:123 includes/Admin/SettingsPage.php:3567 includes/Integrations/WpBakeryIntegration.php:266 includes/Integrations/WpBakeryIntegration.php:418
 msgid "Ansicht"
 msgstr ""
 
-#: blocks/event-list/index.js:79 includes/Admin/SettingsPage.php:2329 includes/Integrations/WpBakeryIntegration.php:270
+#: blocks/event-list/index.js:81 includes/Admin/SettingsPage.php:2329 includes/Integrations/WpBakeryIntegration.php:270
 msgid "Liste"
 msgstr ""
 
-#: blocks/event-list/index.js:80 includes/Admin/SettingsPage.php:2343 includes/Integrations/WpBakeryIntegration.php:271
-msgid "Grid"
+#: blocks/event-list/index.js:82 blocks/group-list/index.js:126 includes/Admin/SettingsPage.php:2343 includes/Integrations/WpBakeryIntegration.php:271 includes/Integrations/WpBakeryIntegration.php:422
+msgid "Raster"
 msgstr ""
 
-#: blocks/event-list/index.js:81 includes/Admin/SettingsPage.php:2351 includes/Frontend/templates/event-upcoming.php:108 includes/Integrations/WpBakeryIntegration.php:272
+#: blocks/event-list/index.js:83 includes/Admin/SettingsPage.php:2351 includes/Frontend/templates/event-upcoming.php:108 includes/Integrations/WpBakeryIntegration.php:272
 msgid "Nächster Termin"
 msgstr ""
 
-#: blocks/event-list/index.js:87 blocks/group-list/index.js:134 includes/Integrations/WpBakeryIntegration.php:428
+#: blocks/event-list/index.js:89 blocks/group-list/index.js:134 includes/Integrations/WpBakeryIntegration.php:277 includes/Integrations/WpBakeryIntegration.php:428
 msgid "Spalten"
 msgstr ""
 
-#: blocks/event-list/index.js:89 blocks/group-list/index.js:136
+#: blocks/event-list/index.js:91 blocks/group-list/index.js:136
 msgid "Höchstens so viele, wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Für mehr Spalten den Block auf „Weite Breite“ stellen."
 msgstr ""
 
-#: blocks/event-list/index.js:101 includes/Integrations/WpBakeryIntegration.php:285
-msgid "Maximale Anzahl Events (0 = unbegrenzt)"
-msgstr ""
-
-#: blocks/event-list/index.js:104
-msgid "Anzahl der Termine inklusive Hero-Kachel."
+#: blocks/event-list/index.js:103 includes/Integrations/WpBakeryIntegration.php:285
+msgid "Maximale Anzahl Termine (0 = unbegrenzt)"
 msgstr ""
 
 #: blocks/event-list/index.js:106
+msgid "Anzahl der Termine inklusive Hero-Kachel."
+msgstr ""
+
+#: blocks/event-list/index.js:108
 msgid "Nur als Obergrenze pro Nachlade-Schritt. Wie viel angezeigt wird, bestimmt der Zeitraum."
 msgstr ""
 
-#: blocks/event-list/index.js:114 includes/Admin/SettingsPage.php:2817 includes/Integrations/WpBakeryIntegration.php:292
+#: blocks/event-list/index.js:116 includes/Admin/SettingsPage.php:2817 includes/Integrations/WpBakeryIntegration.php:292
 msgid "Klickverhalten"
 msgstr ""
 
-#: blocks/event-list/index.js:117 includes/Integrations/WpBakeryIntegration.php:295
+#: blocks/event-list/index.js:119 includes/Integrations/WpBakeryIntegration.php:295
 msgid "Standard (Design-Einstellung)"
 msgstr ""
 
-#: blocks/event-list/index.js:118 includes/Admin/SettingsPage.php:2797 includes/Integrations/WpBakeryIntegration.php:296
+#: blocks/event-list/index.js:120 includes/Admin/SettingsPage.php:2797 includes/Integrations/WpBakeryIntegration.php:296
 msgid "Keine"
 msgstr ""
 
-#: blocks/event-list/index.js:119 includes/Admin/SettingsPage.php:2798 includes/Integrations/WpBakeryIntegration.php:297
+#: blocks/event-list/index.js:121 includes/Admin/SettingsPage.php:2798 includes/Integrations/WpBakeryIntegration.php:297
 msgid "Popup"
 msgstr ""
 
-#: blocks/event-list/index.js:120 includes/Admin/SettingsPage.php:2799 includes/Integrations/WpBakeryIntegration.php:298
+#: blocks/event-list/index.js:122 includes/Admin/SettingsPage.php:2799 includes/Integrations/WpBakeryIntegration.php:298
 msgid "Eigene Seite"
 msgstr ""
 
-#: blocks/event-list/index.js:127 includes/Integrations/WpBakeryIntegration.php:303
+#: blocks/event-list/index.js:129 includes/Integrations/WpBakeryIntegration.php:303
 msgid "Eventfinder anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:129
-msgid "„Du suchst …“-Buttons für Kalender/Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten."
+#: blocks/event-list/index.js:131 includes/Integrations/WpBakeryIntegration.php:304
+msgid "Knöpfe für Kalender und Zeitraum – ersetzt den Kalenderfilter. Mit „Suchleiste anzeigen“ steht das Suchfeld im Eventfinder."
 msgstr ""
 
-#: blocks/event-list/index.js:138 includes/Integrations/WpBakeryIntegration.php:315
+#: blocks/event-list/index.js:139 includes/Integrations/WpBakeryIntegration.php:315
 msgid "Kalenderfilter anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:143 includes/Integrations/WpBakeryIntegration.php:323
+#: blocks/event-list/index.js:147 blocks/group-list/index.js:158 includes/Integrations/WpBakeryIntegration.php:323 includes/Integrations/WpBakeryIntegration.php:445
 msgid "Suchleiste anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:150 includes/Integrations/WpBakeryIntegration.php:331
+#: blocks/event-list/index.js:152 includes/Integrations/WpBakeryIntegration.php:331
 msgid "Termine nach Monat gruppieren"
 msgstr ""
 
-#: blocks/event-list/index.js:155 includes/Integrations/WpBakeryIntegration.php:349
+#: blocks/event-list/index.js:157 includes/Integrations/WpBakeryIntegration.php:349
 msgid "Nachladen-Button anzeigen"
 msgstr ""
 
-#: blocks/event-list/index.js:157 includes/Integrations/WpBakeryIntegration.php:346
+#: blocks/event-list/index.js:159 includes/Integrations/WpBakeryIntegration.php:346
 msgid "Lädt jeweils den nächsten Zeitraum nach, ohne die Seite neu zu laden."
 msgstr ""
 
-#: blocks/event-list/index.js:167 includes/Integrations/WpBakeryIntegration.php:356
+#: blocks/event-list/index.js:169 includes/Integrations/WpBakeryIntegration.php:356
 msgid "Zeitraum pro Seite in Monaten (0 = Standard)"
 msgstr ""
 
-#: blocks/event-list/index.js:169
+#: blocks/event-list/index.js:171
 msgid "Überschreibt die globale Einstellung unter „Einstellungen → Design“ nur für diesen Block."
 msgstr ""
 
-#: blocks/group-list/index.js:29 includes/Integrations/WpBakeryIntegration.php:449
+#: blocks/group-list/index.js:29 includes/Integrations/WpBakeryIntegration.php:466
 msgid "— Homepage wählen —"
 msgstr ""
 
 #: blocks/group-list/index.js:33
 msgid "%s (nicht aktiv)"
-msgstr ""
-
-#: blocks/group-list/index.js:51
-msgid "Auswahl"
 msgstr ""
 
 #: blocks/group-list/index.js:53 includes/Integrations/WpBakeryIntegration.php:384
@@ -167,16 +167,8 @@ msgid "Noch keine Gruppen abgeglichen."
 msgstr ""
 
 #. translators: %d: ID of a selected group that is no longer available
-#: blocks/group-list/index.js:113 includes/Integrations/WpBakeryIntegration.php:555
+#: blocks/group-list/index.js:113 includes/Integrations/WpBakeryIntegration.php:572
 msgid "#%d (nicht mehr verfügbar)"
-msgstr ""
-
-#: blocks/group-list/index.js:121
-msgid "Darstellung"
-msgstr ""
-
-#: blocks/group-list/index.js:126 includes/Integrations/WpBakeryIntegration.php:422
-msgid "Raster"
 msgstr ""
 
 #: blocks/group-list/index.js:127 includes/Integrations/WpBakeryIntegration.php:423
@@ -185,6 +177,14 @@ msgstr ""
 
 #: blocks/group-list/index.js:129
 msgid "„Hervorgehoben“ zeigt je Gruppe eine große Kachel mit dem ganzen Text – gedacht für wenige Gruppen."
+msgstr ""
+
+#: blocks/group-list/index.js:147 includes/Integrations/WpBakeryIntegration.php:436
+msgid "Gruppenfinder anzeigen"
+msgstr ""
+
+#: blocks/group-list/index.js:149 includes/Integrations/WpBakeryIntegration.php:437
+msgid "Knöpfe für Kategorie, Wochentag und Zielgruppe – nur, wo sie in ChurchTools gepflegt sind. Mit „Suchleiste anzeigen“ steht das Suchfeld im Gruppenfinder."
 msgstr ""
 
 #: includes/Admin/GroupsTab.php:50 includes/Admin/SettingsPage.php:1379
@@ -276,7 +276,7 @@ msgstr ""
 msgid "Shortcode"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:208 includes/Admin/GroupsTab.php:542 includes/Admin/SettingsPage.php:1364 includes/Admin/SettingsPage.php:2370
+#: includes/Admin/GroupsTab.php:208 includes/Admin/GroupsTab.php:546 includes/Admin/SettingsPage.php:1364 includes/Admin/SettingsPage.php:2370
 msgid "Kopieren"
 msgstr ""
 
@@ -380,84 +380,96 @@ msgstr ""
 msgid "Zwei Spalten, etwa neben einem Text"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:500
+#: includes/Admin/GroupsTab.php:493
+msgid "Raster mit Gruppenfinder und Suche"
+msgstr ""
+
+#: includes/Admin/GroupsTab.php:504
 msgid "Einzelne Gruppen hervorheben"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:506 includes/Admin/SettingsPage.php:2305
+#: includes/Admin/GroupsTab.php:510 includes/Admin/SettingsPage.php:2305
 msgid "Drei Wege, dieselbe Darstellung"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:508
+#: includes/Admin/GroupsTab.php:512
 msgid "Gruppen lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Gruppen“ oder über das WPBakery-Element „ChurchTools Gruppen“ einbinden. Alle drei zeigen dieselben Kacheln; Vorlage, Farben und Ecken kommen aus „Einstellungen → Design“."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:511
+#: includes/Admin/GroupsTab.php:515
 msgid "Block und WPBakery-Element bieten die angehakten Homepages und ihre Gruppen als Auswahl an. Unter jeder Gruppe steht der Button „In ChurchTools ansehen“; er führt zur Gruppe in ChurchTools, wo man sich anmeldet. Die Kachel selbst ist nicht klickbar."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:514
+#: includes/Admin/GroupsTab.php:518
 msgid "Einzeln wählbar sind die Gruppen der angehakten Homepages – eine Gruppe, die auf keiner steht, entscheidet ChurchTools nicht als öffentlich und erscheint deshalb auch hier nicht."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:519 includes/Admin/SettingsPage.php:2360
+#: includes/Admin/GroupsTab.php:523 includes/Admin/SettingsPage.php:2360
 msgid "Beispiele zum Kopieren"
 msgstr ""
 
 #. translators: %s: link to the "Homepages" tab
-#: includes/Admin/GroupsTab.php:526
+#: includes/Admin/GroupsTab.php:530
 msgid "Noch keine Gruppen-Homepage angehakt. Unter %s laden und anhaken, dann stehen hier fertige Shortcodes."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:527 includes/Admin/SettingsPage.php:259
+#: includes/Admin/GroupsTab.php:531 includes/Admin/SettingsPage.php:259
 msgid "Homepages"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:534
+#: includes/Admin/GroupsTab.php:538
 msgid "Fertige Shortcodes mit den angehakten Homepages dieser Instanz."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:551 includes/Admin/SettingsPage.php:2378
+#: includes/Admin/GroupsTab.php:555 includes/Admin/SettingsPage.php:2378
 msgid "Alle Attribute"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:555 includes/Admin/SettingsPage.php:2386
+#: includes/Admin/GroupsTab.php:559 includes/Admin/SettingsPage.php:2386
 msgid "Attribut"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:556 includes/Admin/SettingsPage.php:2016 includes/Admin/SettingsPage.php:2387 includes/Admin/SettingsPage.php:3841
+#: includes/Admin/GroupsTab.php:560 includes/Admin/SettingsPage.php:2016 includes/Admin/SettingsPage.php:2387 includes/Admin/SettingsPage.php:3841
 msgid "Beschreibung"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:557 includes/Admin/SettingsPage.php:1613 includes/Admin/SettingsPage.php:2388 includes/Admin/SettingsPage.php:2845
+#: includes/Admin/GroupsTab.php:561 includes/Admin/SettingsPage.php:1613 includes/Admin/SettingsPage.php:2388 includes/Admin/SettingsPage.php:2845
 msgid "Standard"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:563
+#: includes/Admin/GroupsTab.php:567
 msgid "Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:568
+#: includes/Admin/GroupsTab.php:572
 msgid "Einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge (IDs stehen unter „Gruppen → Gruppenliste“). Gilt statt homepage. Nur Gruppen der angehakten Homepages."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:573
+#: includes/Admin/GroupsTab.php:577
 msgid "homepage oder groups: welche der beiden Angaben gilt. Leer = groups, sobald Gruppen angegeben sind, sonst homepage. Das WPBakery-Element setzt es selbst."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:578
+#: includes/Admin/GroupsTab.php:582
 msgid "grid: Kachelraster mit Auszug. featured: je Gruppe eine große Kachel mit dem ganzen Text, Bild daneben."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:583
+#: includes/Admin/GroupsTab.php:587
 msgid "Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Nur bei grid."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:597 includes/Admin/GroupsTab.php:628 includes/Admin/SettingsPage.php:4561 includes/Admin/SettingsPage.php:4591 includes/Admin/SettingsPage.php:4622 includes/Admin/SettingsPage.php:4660 includes/Admin/SettingsPage.php:4687
+#: includes/Admin/GroupsTab.php:592
+msgid "Freitext-Suchleiste anzeigen (nur grid, durchsucht Name, Kategorie, Wochentag, Zielgruppe und Beschreibung)"
+msgstr ""
+
+#: includes/Admin/GroupsTab.php:597
+msgid "Gruppenfinder: Knöpfe für Kategorie, Wochentag und Zielgruppe (nur grid). Mit search steht das Suchfeld im Gruppenfinder."
+msgstr ""
+
+#: includes/Admin/GroupsTab.php:611 includes/Admin/GroupsTab.php:642 includes/Admin/SettingsPage.php:4561 includes/Admin/SettingsPage.php:4591 includes/Admin/SettingsPage.php:4622 includes/Admin/SettingsPage.php:4660 includes/Admin/SettingsPage.php:4687
 msgid "Keine Berechtigung."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:603 includes/Groups/GroupSync.php:579
+#: includes/Admin/GroupsTab.php:617 includes/Groups/GroupSync.php:673
 msgid "Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen."
 msgstr ""
 
@@ -503,7 +515,7 @@ msgid "ChurchTools Events"
 msgstr ""
 
 #: includes/Admin/PrivacyPolicy.php:38
-msgid "Termine und Gruppen auf dieser Website stammen aus der Gemeindeverwaltung ChurchTools. Das Plugin „ChurchTools Events“ ruft sie mit einem Zugang der Gemeinde ab und speichert eine Kopie auf dem Server dieser Website: Titel, Untertitel, Zeitraum, Ort mit Anschrift, Beschreibung und Kalender eines Termins; Name, Beschreibung, Treffzeit und freie Plätze einer Gruppe. Bilder werden in die Mediathek dieser Website übernommen. Namen von Mitgliedern oder Leitern einer Gruppe werden nicht übernommen."
+msgid "Termine und Gruppen auf dieser Website stammen aus der Gemeindeverwaltung ChurchTools. Das Plugin „ChurchTools Events“ ruft sie mit einem Zugang der Gemeinde ab und speichert eine Kopie auf dem Server dieser Website: Titel, Untertitel, Zeitraum, Ort mit Anschrift, Beschreibung und Kalender eines Termins; Name, Beschreibung, Kategorie, Zielgruppe, Treffzeit und freie Plätze einer Gruppe. Bilder werden in die Mediathek dieser Website übernommen. Namen von Mitgliedern oder Leitern einer Gruppe werden nicht übernommen."
 msgstr ""
 
 #: includes/Admin/PrivacyPolicy.php:39
@@ -528,6 +540,10 @@ msgstr ""
 
 #: includes/Admin/SettingsPage.php:106 includes/Admin/SettingsPage.php:3094
 msgid "Events"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:108
+msgid "Einstellungen"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:147
@@ -598,7 +614,7 @@ msgstr ""
 msgid "Listen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:374 includes/Admin/SettingsPage.php:1352 includes/Admin/SettingsPage.php:1527 includes/Integrations/WpBakeryIntegration.php:575 includes/Integrations/WpBakeryIntegration.php:606
+#: includes/Admin/SettingsPage.php:374 includes/Admin/SettingsPage.php:1352 includes/Admin/SettingsPage.php:1527 includes/Integrations/WpBakeryIntegration.php:592 includes/Integrations/WpBakeryIntegration.php:623
 msgid "Entfernen"
 msgstr ""
 
@@ -1283,7 +1299,7 @@ msgid "Liste mit Filter, Suche & Monatstrennern"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:2339
-msgid "Grid mit Eventfinder"
+msgid "Raster mit Eventfinder und Suche"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:2347
@@ -1336,7 +1352,7 @@ msgid "Termine nach Monat gruppiert darstellen (nur list/grid)"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:2460
-msgid "Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche (nur list/grid); ersetzt filter/search statt zusätzlich dazu angezeigt zu werden"
+msgid "Eventfinder: Knöpfe für Kalender und Zeitraum (nur list/grid); ersetzt filter. Mit search steht das Suchfeld im Eventfinder. Früher eventfinder – der Name gilt weiter."
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:2631
@@ -1603,7 +1619,7 @@ msgstr ""
 msgid "Vergangene"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3531 includes/Frontend/templates/partials/eventfinder.php:67
+#: includes/Admin/SettingsPage.php:3531 includes/Frontend/templates/partials/eventfinder.php:67 includes/Frontend/templates/partials/group-finder.php:72
 msgid "Alle"
 msgstr ""
 
@@ -1878,29 +1894,29 @@ msgstr ""
 msgid "%s Uhr"
 msgstr ""
 
-#: includes/Frontend/GroupListRenderer.php:135
+#: includes/Frontend/GroupListRenderer.php:259
 msgid "In ChurchTools ansehen"
 msgstr ""
 
-#: includes/Frontend/GroupListRenderer.php:274
+#: includes/Frontend/GroupListRenderer.php:414
 msgid "Ausgebucht – Warteliste"
 msgstr ""
 
-#: includes/Frontend/GroupListRenderer.php:275
+#: includes/Frontend/GroupListRenderer.php:415
 msgid "Ausgebucht"
 msgstr ""
 
-#: includes/Frontend/GroupListRenderer.php:279
+#: includes/Frontend/GroupListRenderer.php:419
 msgid "Noch 1 Platz frei"
 msgstr ""
 
 #. translators: %d: threshold above which the exact number of free places is not shown (10)
-#: includes/Frontend/GroupListRenderer.php:284
+#: includes/Frontend/GroupListRenderer.php:424
 msgid "%d+ Plätze frei"
 msgstr ""
 
 #. translators: %d: number of free places in a group (2 to 10)
-#: includes/Frontend/GroupListRenderer.php:288
+#: includes/Frontend/GroupListRenderer.php:428
 msgid "Noch %d Plätze frei"
 msgstr ""
 
@@ -1916,7 +1932,7 @@ msgstr ""
 msgid "Weitere Termine"
 msgstr ""
 
-#: includes/Frontend/templates/group-featured.php:28 includes/Frontend/templates/group-grid.php:33
+#: includes/Frontend/templates/group-featured.php:28 includes/Frontend/templates/group-grid.php:40
 msgid "Zurzeit sind keine Gruppen eingetragen."
 msgstr ""
 
@@ -1959,11 +1975,11 @@ msgstr ""
 msgid "Welche Angebote sprechen dich an?"
 msgstr ""
 
-#: includes/Frontend/templates/partials/eventfinder.php:92
+#: includes/Frontend/templates/partials/eventfinder.php:92 includes/Frontend/templates/partials/group-finder.php:31
 msgid "Vorherige Themen anzeigen"
 msgstr ""
 
-#: includes/Frontend/templates/partials/eventfinder.php:100
+#: includes/Frontend/templates/partials/eventfinder.php:100 includes/Frontend/templates/partials/group-finder.php:32
 msgid "Weitere Themen anzeigen"
 msgstr ""
 
@@ -1997,6 +2013,46 @@ msgstr ""
 
 #: includes/Frontend/templates/partials/eventfinder.php:202 includes/Frontend/templates/partials/toolbar.php:44
 msgid "Keine Termine gefunden."
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:35
+msgid "Wochentag"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:36
+msgid "Vorherige Wochentage anzeigen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:37
+msgid "Weitere Wochentage anzeigen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:40
+msgid "Für wen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:41
+msgid "Vorherige Zielgruppen anzeigen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:42
+msgid "Weitere Zielgruppen anzeigen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:49
+msgid "Welche Gruppe passt zu dir?"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:99
+msgid "Gruppen durchsuchen …"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:100
+msgid "Gruppen durchsuchen"
+msgstr ""
+
+#: includes/Frontend/templates/partials/group-finder.php:104
+msgid "Keine Gruppen gefunden."
 msgstr ""
 
 #: includes/Frontend/templates/partials/load-more.php:28
@@ -2047,7 +2103,7 @@ msgstr ""
 msgid "Nach Kalender filtern"
 msgstr ""
 
-#: includes/Groups/GroupSync.php:199
+#: includes/Groups/GroupSync.php:200
 msgid "ChurchTools hat keine Gruppen-Homepages zurückgeliefert. Die gespeicherte Auswahl bleibt deshalb unverändert."
 msgstr ""
 
@@ -2059,10 +2115,6 @@ msgstr ""
 msgid "Kalender-IDs (kommagetrennt)"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:277
-msgid "Spalten (nur Grid)"
-msgstr ""
-
 #: includes/Integrations/WpBakeryIntegration.php:278 includes/Integrations/WpBakeryIntegration.php:429
 msgid "Höchstens so viele, wie in die Zeile passen – je Kachel mindestens 240px."
 msgstr ""
@@ -2071,11 +2123,7 @@ msgstr ""
 msgid "Bei Liste/Grid nur eine Obergrenze pro Nachlade-Schritt – wie viel angezeigt wird, bestimmt der Zeitraum. Bei „Nächster Termin“ die Gesamtzahl inkl. Hero-Kachel."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:304
-msgid "Geführte Auswahl: Knöpfe für Thema und Zeitraum plus Suche — ersetzt Kalenderfilter und Suchleiste unten, falls dort ebenfalls angehakt."
-msgstr ""
-
-#: includes/Integrations/WpBakeryIntegration.php:310 includes/Integrations/WpBakeryIntegration.php:318 includes/Integrations/WpBakeryIntegration.php:326
+#: includes/Integrations/WpBakeryIntegration.php:310 includes/Integrations/WpBakeryIntegration.php:318 includes/Integrations/WpBakeryIntegration.php:326 includes/Integrations/WpBakeryIntegration.php:440 includes/Integrations/WpBakeryIntegration.php:448
 msgid "Anzeigen"
 msgstr ""
 
@@ -2103,27 +2151,27 @@ msgstr ""
 msgid "Zur Auswahl stehen die Gruppen der angehakten Homepages, in der Reihenfolge der Liste „Ausgewählt“."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:573 includes/Integrations/WpBakeryIntegration.php:604
+#: includes/Integrations/WpBakeryIntegration.php:590 includes/Integrations/WpBakeryIntegration.php:621
 msgid "Nach oben"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:574 includes/Integrations/WpBakeryIntegration.php:605
+#: includes/Integrations/WpBakeryIntegration.php:591 includes/Integrations/WpBakeryIntegration.php:622
 msgid "Nach unten"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:579
+#: includes/Integrations/WpBakeryIntegration.php:596
 msgid "Ausgewählt – in dieser Reihenfolge auf der Seite"
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:582
+#: includes/Integrations/WpBakeryIntegration.php:599
 msgid "Keine einzelnen Gruppen gewählt – es gilt die Gruppen-Homepage."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:584
+#: includes/Integrations/WpBakeryIntegration.php:601
 msgid "Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage anhaken."
 msgstr ""
 
-#: includes/Integrations/WpBakeryIntegration.php:587
+#: includes/Integrations/WpBakeryIntegration.php:604
 msgid "Gruppen filtern …"
 msgstr ""
 

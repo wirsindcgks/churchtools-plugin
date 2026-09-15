@@ -24,6 +24,10 @@ final class Shortcode
      * keine Namen: Gruppennamen sind nicht eindeutig und werden oefter
      * umbenannt als Homepages. Steht beides da, gilt `groups` - ausser
      * `source="homepage"` sagt es anders (so schreibt es das WPBakery-Element).
+     *
+     * [ctp_groups homepage="Kleingruppen" finder="1" search="1"] - mit
+     * Gruppenfinder (Kategorie, Wochentag, Zielgruppe) und Suchleiste ueber
+     * dem Raster; zwei Schalter wie `eventfinder` und `search` bei den Terminen.
      */
     public function renderGroups($atts): string
     {
@@ -33,6 +37,8 @@ final class Shortcode
             'groups' => '',
             'layout' => 'grid',
             'columns' => 3,
+            'finder' => '0',
+            'search' => '0',
         ], $atts, 'ctp_groups');
 
         return (new GroupListRenderer())->render([
@@ -41,7 +47,21 @@ final class Shortcode
             'groups' => (string) $atts['groups'],
             'layout' => (string) $atts['layout'],
             'columns' => (int) $atts['columns'],
+            // Gelesen wie bei [ctp_events], damit dieselbe Schreibweise dasselbe tut.
+            'finder' => (bool) $atts['finder'],
+            'search' => (bool) $atts['search'],
         ]);
+    }
+
+    /**
+     * Der Eventfinder ist an, wenn `finder` oder der aeltere Name `eventfinder`
+     * ihn einschaltet - `finder` heisst der Schalter wie bei [ctp_groups].
+     *
+     * @param array<string, mixed> $atts nach shortcode_atts()
+     */
+    public static function finderEnabled(array $atts): bool
+    {
+        return (bool) ($atts['finder'] ?? false) || (bool) ($atts['eventfinder'] ?? false);
     }
 
     public function render($atts): string
@@ -59,6 +79,9 @@ final class Shortcode
             'filter' => '0',
             'search' => '0',
             'month_dividers' => '0',
+            // `finder` heisst der Schalter wie bei [ctp_groups]; `eventfinder`
+            // ist der aeltere Name und gilt weiter (Kompatibilitaetszusage).
+            'finder' => '0',
             'eventfinder' => '0',
             // 0 = fall back to the Design tab's global "Zeitraum pro Seite".
             'months' => 0,
@@ -77,7 +100,7 @@ final class Shortcode
             'filter' => (bool) $atts['filter'],
             'search' => (bool) $atts['search'],
             'month_dividers' => (bool) $atts['month_dividers'],
-            'eventfinder' => (bool) $atts['eventfinder'],
+            'eventfinder' => self::finderEnabled($atts),
             'months' => (int) $atts['months'],
             'paging' => (bool) $atts['paging'],
         ]);
