@@ -833,7 +833,7 @@ Frage des Nutzers: „Wann sollten wir auf eine stabile V2 gehen?“ Antwort: **
 
 **Kandidaten für 2.0.0**
 
-- [ ] **Mindestversionen anheben.** Heute PHP 8.1 und WordPress 6.4. PHP 8.1 bekommt seit Ende 2025 keine Sicherheitsupdates mehr, 8.2 nur noch bis Ende 2026, 8.3 bis Ende 2027. Vorschlag: **PHP 8.3, WordPress 6.6**. *Offen*: welche PHP-Version die Live-Seite fährt (WordPress → Werkzeuge → Website-Zustand → Bericht → Server). Dazu CI (`php-version`), `composer.json` (`require.php`, PHPCS `testVersion`, PHPStan `phpVersion`), Plugin-Header, readme.txt.
+- [ ] **Mindestversionen anheben.** Heute PHP 8.1 und WordPress 6.4. PHP 8.1 bekommt seit Ende 2025 keine Sicherheitsupdates mehr, 8.2 nur noch bis Ende 2026, 8.3 bis Ende 2027. Vorschlag: **PHP 8.3, WordPress 6.6**. *Geklärt 2026-09-15*: Die Live-Seite läuft auf PHP 8.3 und WordPress 7.1 (MariaDB 10.11, GD mit WebP, W3 Total Cache, Uncode mit WPBakery 8.7) – PHP 8.3 als Mindestversion trifft sie also nicht. WordPress 6.6 bleibt bewusst unter dem Stand der Live-Seite, weil das Plugin nichts aus neueren Versionen braucht und andere Gemeinden nicht zum Update gezwungen werden sollen. Dazu CI (`php-version`), `composer.json` (`require.php`, PHPCS `testVersion`, PHPStan `phpVersion`), Plugin-Header, readme.txt.
 - [ ] **Kompatibilitäts-Ballast entfernen**, sobald jede Installation die Migrationen durchlaufen hat:
   - Weiterleitung der Backend-Adressen aus der Zeit vor 1.26 (`SettingsPage::redirectLegacyTabUrl()`)
   - Lesen der alten Key-Verschlüsselung (`ctp1:` und ohne Präfix, samt Auspacken der doppelt verschlüsselten Werte aus der Zeit vor 0.12.4) in `Security\Crypto`/`ApiKey` – umgeschrieben wird seit 1.27.0 bei jedem Update
@@ -849,7 +849,7 @@ Frage des Nutzers: „Wann sollten wir auf eine stabile V2 gehen?“ Antwort: **
 
 **Voraussetzungen, bevor 2.0.0 erscheint**
 
-- [ ] 1.28.0 läuft einige Wochen auf der Live-Seite ohne Patch-Release; Block-Editor und WPBakery-Element für die Gruppenauswahl sind dort durchgeklickt.
+- [ ] 1.28.0 läuft einige Wochen auf der Live-Seite ohne Patch-Release – **Stand 2026-09-15: dort ist noch 1.26.0 installiert**, die Migrationen aus 1.27.0 (Key auf `ctp2:`, Rohdaten bereinigt, DB 1.8.0) sind also noch nicht gelaufen; die Übergangszeit beginnt erst mit diesem Update; Block-Editor und WPBakery-Element für die Gruppenauswahl sind dort durchgeklickt.
 - [ ] Phase 0 des Review-Plans ist erledigt (Rulesets für `main` und Tags, unveränderliche Releases, Secret Scanning) – wichtig, sobald andere Gemeinden automatisch aktualisieren.
 - [ ] `SettingsPage` ist fertig aufgeteilt (5.1: Reiter einzeln, Inline-Skript nach `assets/js/admin.js`). Kein Nutzerthema, aber ein Umbau, der vor dem festgeschriebenen Vertrag passieren soll und nicht danach.
 
