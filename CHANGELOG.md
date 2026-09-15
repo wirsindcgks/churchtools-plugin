@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.28.1] - 2026-09-15
+
+### Changed
+
+- **Übersichtlichere Auswahl einzelner Gruppen im WPBakery-Element.** Statt einer Reihe Ankreuzfelder, in der Namen mitten im Eintrag umbrachen, steht oben die Liste „Ausgewählt“ mit Nummern – jede Gruppe lässt sich dort nach oben oder unten verschieben und entfernen –, darunter ein Filterfeld und die Gruppen nach Homepage in Spalten. Eine gewählte Gruppe, die es nicht mehr gibt, bleibt als „nicht mehr verfügbar“ sichtbar. Die Reihenfolge der Liste ist jetzt auch in WPBakery die Reihenfolge auf der Seite.
+- Das Element „ChurchTools Gruppen“ hat ein eigenes Symbol statt des Kalenders.
+
+### Fixed
+
+- **Der Button „In ChurchTools ansehen“ übernahm die Gestaltung des Themes** statt der Buttonfarbe und Ecken aus den Design-Einstellungen. Farben, Rand, Form und Schrift gelten jetzt in jedem Zustand so, wie sie im Design eingestellt sind.
+
 ## [1.28.0] - 2026-09-14
 
 ### Added
