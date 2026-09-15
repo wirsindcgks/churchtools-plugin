@@ -313,7 +313,7 @@ final class CardDesignTest extends TestCase
 
         foreach (['', ':visited', ':hover', ':focus', ':active'] as $zustand) {
             $this->assertMatchesRegularExpression(
-                '/\.ctp-events \.ctp-events__card-trigger' . preg_quote($zustand, '/') . '\s*[,{][^}]*color:\s*inherit\s*!important/',
+                '/\.ctp-events \.ctp-events__card-trigger:is\(\.ctp-events__card-trigger, #ctp-theme-shield\)' . preg_quote($zustand, '/') . '\s*[,{][^}]*color:\s*inherit\s*!important/',
                 $css,
                 "Der Kacheltitel erbt im Zustand \"{$zustand}\" seine Farbe nicht verlaesslich."
             );
@@ -321,27 +321,56 @@ final class CardDesignTest extends TestCase
     }
 
     /**
-     * Der Button nach ChurchTools steht als Link mitten im Seiteninhalt, wo
-     * Themes Links gestalten - auf der Live-Seite ueberschrieb Uncode ihn
-     * (Nutzerbefund 2026-09-15). Farben und Rand muessen deshalb in jedem
-     * Link-Zustand gegen das Theme gewinnen und aus den Design-Variablen kommen.
+     * Alle Buttons teilen ein Farb- und Zustandssystem mit einem Schutz gegen
+     * Theme-Regeln fuer Links (Nutzerbefund 2026-09-15: Hover im Gruppenbereich
+     * wurde zur Akzentfarbe des Themes, im Termin-Bereich nicht). Der Schutz
+     * muss in jedem Zustand mit ID-Spezifitaet und !important aus den
+     * Design-Variablen kommen - Uncode setzt die Akzentfarbe selbst mit
+     * !important und bis (0,8,3).
      */
-    public function testTheChurchToolsButtonKeepsTheDesignColoursInEveryLinkState(): void
+    public function testButtonsShareOneShieldAgainstThemeLinkRules(): void
     {
         $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+        $schild = '\\.ctp-events \\.ctp-button:is\\(\\.ctp-button, #ctp-theme-shield\\)';
 
         $erwartet = [
-            ':visited' => ['color: var(--ctp-color-button-text) !important', 'background: var(--ctp-color-button) !important', 'border: 1px solid var(--ctp-color-button-border) !important'],
-            ':hover' => ['color: var(--ctp-color-button-strong-text) !important', 'background: var(--ctp-color-button-strong) !important'],
-            ':focus' => ['color: var(--ctp-color-button-strong-text) !important'],
+            ':visited' => ['color: var(--ctp-btn-fg) !important', 'background-color: var(--ctp-btn-bg) !important', 'border-color: var(--ctp-btn-border) !important'],
+            ':hover' => ['color: var(--ctp-btn-fg-hover) !important', 'background-color: var(--ctp-btn-bg-hover) !important', 'border-color: var(--ctp-btn-border-hover) !important'],
+            ':focus-visible' => ['color: var(--ctp-btn-fg-hover) !important'],
         ];
 
         foreach ($erwartet as $zustand => $regeln) {
-            $this->assertSame(1, preg_match('/\.ctp-events \.ctp-events__cta' . preg_quote($zustand, '/') . '\s*[,{][^}]*\}/', $css, $block), "Kein Regelblock fuer \"{$zustand}\".");
+            $this->assertSame(1, preg_match('/' . $schild . preg_quote($zustand, '/') . '\\s*[,{][^}]*\\}/', $css, $block), "Kein Schutz fuer \"{$zustand}\".");
 
             foreach ($regeln as $regel) {
                 $this->assertStringContainsString($regel, $block[0], "Im Zustand \"{$zustand}\" fehlt: {$regel}");
             }
         }
+
+        $this->assertStringContainsString('--ctp-btn-bg-hover: var(--ctp-color-button-strong);', $css, 'Die betonte Variante fuellt beim Ueberfahren mit der Buttonfarbe.');
+    }
+
+    /**
+     * Keine Buttons mit eigenen Zustaenden mehr: Jede Button-Klasse im Markup
+     * traegt ctp-button, und im Stylesheet hat keine davon noch einen eigenen
+     * Hover mit Farben.
+     */
+    public function testEveryButtonInTheMarkupUsesTheSharedSystem(): void
+    {
+        $markup = '';
+        foreach (glob(CTP_PLUGIN_DIR . 'includes/Frontend/templates/{,partials/}*.php', GLOB_BRACE) ?: [] as $file) {
+            $markup .= (string) file_get_contents($file);
+        }
+
+        foreach (['ctp-events__back', 'ctp-events__load-more', 'ctp-events__share-btn', 'ctp-events__import-choice', 'ctp-events__cta'] as $klasse) {
+            $this->assertSame(1, preg_match_all('/class="[^"]*\\b' . preg_quote($klasse, '/') . '\\b(?!-)[^"]*"/', $markup, $treffer) > 0 ? 1 : 0, "{$klasse} kommt im Markup nicht vor.");
+
+            foreach ($treffer[0] as $attribut) {
+                $this->assertStringContainsString('ctp-button', $attribut, "{$klasse} ohne ctp-button: {$attribut}");
+            }
+        }
+
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css'));
+        $this->assertSame(0, preg_match('/\\.ctp-events__(back|load-more|share-btn|import-choice|cta):hover[^{]*\\{[^}]*color/', $css), 'Ein Button hat noch einen eigenen Hover mit Farben.');
     }
 }

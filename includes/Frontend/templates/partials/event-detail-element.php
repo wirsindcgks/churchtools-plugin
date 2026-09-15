@@ -204,7 +204,7 @@ if (!defined('ABSPATH')) {
             <div class="ctp-events__share">
                 <button
                     type="button"
-                    class="ctp-events__share-btn"
+                    class="ctp-events__share-btn ctp-button ctp-button--quiet"
                     data-ctp-share-url="<?php echo esc_url($event['detail_url']); ?>"
                     data-ctp-share-title="<?php echo esc_attr($event['title']); ?>"
                     data-ctp-share-done="<?php esc_attr_e('Link kopiert', 'churchtools-plugin'); ?>"
@@ -313,7 +313,7 @@ if (!defined('ABSPATH')) {
             <div class="ctp-events__share ctp-events__share--ics">
                 <?php if ($ctpSerie > 1) : ?>
                     <details class="ctp-events__import">
-                        <summary class="ctp-events__share-btn ctp-events__import-summary">
+                        <summary class="ctp-events__share-btn ctp-events__import-summary ctp-button ctp-button--quiet">
                             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
                             <?php echo Icons::calendarPlus(); ?>
                             <?php esc_html_e('Importieren', 'churchtools-plugin'); ?>
@@ -328,7 +328,7 @@ if (!defined('ABSPATH')) {
                         ?>
                         <div class="ctp-events__import-choices">
                             <a
-                                class="ctp-events__import-choice"
+                                class="ctp-events__import-choice ctp-button ctp-button--quiet"
                                 href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
                                 aria-label="<?php esc_attr_e('Nur dieser Termin — in den Kalender importieren', 'churchtools-plugin'); ?>"
                                 download
@@ -336,7 +336,7 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Nur dieser Termin', 'churchtools-plugin'); ?>
                             </a>
                             <a
-                                class="ctp-events__import-choice"
+                                class="ctp-events__import-choice ctp-button ctp-button--quiet"
                                 href="<?php echo esc_url(EventIcs::urlForSeries($event)); ?>"
                                 aria-label="<?php echo esc_attr($ctpSerieBeschreibung); ?>"
                                 download
@@ -347,7 +347,7 @@ if (!defined('ABSPATH')) {
                     </details>
                 <?php else : ?>
                     <a
-                        class="ctp-events__share-btn"
+                        class="ctp-events__share-btn ctp-button ctp-button--quiet"
                         href="<?php echo esc_url(EventIcs::urlForEvent($event)); ?>"
                         aria-label="<?php esc_attr_e('Termin in den Kalender importieren', 'churchtools-plugin'); ?>"
                         download
@@ -391,7 +391,7 @@ if (!defined('ABSPATH')) {
         ?>
         <div class="ctp-events__share">
             <a
-                class="ctp-events__share-btn"
+                class="ctp-events__share-btn ctp-button ctp-button--quiet"
                 href="<?php echo esc_url(EventFeed::webcalUrl($ctpKalender), ['webcal', 'http', 'https']); ?>"
                 title="<?php echo esc_attr(EventFeed::url($ctpKalender)); ?>"
                 aria-label="<?php echo esc_attr($ctpAboBeschreibung); ?>"

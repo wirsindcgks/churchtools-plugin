@@ -125,7 +125,7 @@ final class GroupListRendererTest extends TestCase
 
         $this->assertStringNotContainsString('ctp-events__card-trigger', $html);
         $this->assertStringNotContainsString('ctp-events__card--clickable', $html);
-        $this->assertSame(2, substr_count($html, 'class="ctp-events__cta"'));
+        $this->assertSame(2, substr_count($html, 'class="ctp-events__cta ctp-button"'));
         $this->assertStringContainsString('In ChurchTools ansehen', $html);
 
         preg_match_all('/aria-describedby="([^"]+)"/', $html, $described);
@@ -182,7 +182,7 @@ final class GroupListRendererTest extends TestCase
         $this->assertStringContainsString('ctp-groups--featured', $html);
         $this->assertStringContainsString('ctp-groups__feature ', $html);
         $this->assertStringNotContainsString('--ctp-columns', $html);
-        $this->assertStringContainsString('class="ctp-events__cta"', $html);
+        $this->assertStringContainsString('class="ctp-events__cta ctp-button"', $html);
     }
 
     public function testAnUnknownLayoutFallsBackToTheGrid(): void

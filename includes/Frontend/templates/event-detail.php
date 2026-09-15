@@ -20,6 +20,6 @@ if (!defined('ABSPATH')) {
 <div class="ctp-events ctp-events--detail <?php echo esc_attr($designClass); ?>" style="<?php echo esc_attr($designStyle); ?>">
     <?php // Ohne <p> darum herum: Der Link ist inline-block und bringt seinen
     // eigenen Abstand mit; die Absatzmargen des Themes kamen sonst obendrauf. ?>
-    <a class="ctp-events__back" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></a>
+    <a class="ctp-events__back ctp-button" href="<?php echo esc_url($backUrl); ?>">&larr; <?php esc_html_e('Zurück', 'churchtools-plugin'); ?></a>
     <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php'; ?>
 </div>

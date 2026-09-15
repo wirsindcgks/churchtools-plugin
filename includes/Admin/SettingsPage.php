@@ -2174,11 +2174,11 @@ final class SettingsPage
             // partials/event-detail-element.php), damit die Vorschau denselben
             // Regeln folgt statt einer nachgebauten Annäherung — ohne die
             // data-Attribute, denn hier wird nichts geteilt.
-            'share' => '<div class="ctp-events__share"><button type="button" class="ctp-events__share-btn">'
+            'share' => '<div class="ctp-events__share"><button type="button" class="ctp-events__share-btn ctp-button ctp-button--quiet">'
                 . Icons::share() . esc_html__('Teilen', 'churchtools-plugin') . '</button></div>',
-            'ics' => '<div class="ctp-events__share"><span class="ctp-events__share-btn">'
+            'ics' => '<div class="ctp-events__share"><span class="ctp-events__share-btn ctp-button ctp-button--quiet">'
                 . Icons::calendarPlus() . esc_html__('Importieren', 'churchtools-plugin') . '</span></div>',
-            'subscribe' => '<div class="ctp-events__share"><span class="ctp-events__share-btn">'
+            'subscribe' => '<div class="ctp-events__share"><span class="ctp-events__share-btn ctp-button ctp-button--quiet">'
                 . Icons::calendarPlus() . esc_html__('Abonnieren', 'churchtools-plugin') . '</span></div>',
         ];
         // Der einzige Schlüssel, dessen Sichtbarkeit nicht an seiner Position
@@ -2220,7 +2220,7 @@ final class SettingsPage
                         <?php echo $clickBehavior === 'popup' ? '' : 'hidden'; ?>
                     >&times;</span>
                     <span
-                        class="ctp-events__back ctp-design-preview-chrome"
+                        class="ctp-events__back ctp-button ctp-design-preview-chrome"
                         id="ctp-design-preview-back"
                         aria-hidden="true"
                         <?php echo $clickBehavior === 'page' ? '' : 'hidden'; ?>

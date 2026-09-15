@@ -53,6 +53,7 @@ Die Partials unter `partials/` sind **nicht** einzeln überschreibbar und nicht 
 
 - **Container-Klassen**: `ctp-events`, `ctp-events--list`, `ctp-events--grid`, `ctp-events--upcoming`, `ctp-events--detail`, `ctp-groups`, `ctp-groups--featured`.
 - **Klassen in den überschreibbaren Vorlagen** (`ctp-events__…`, `ctp-groups__…`) bleiben erhalten; neue können dazukommen.
+- **Buttons**: `ctp-button` (betont: Rand, beim Überfahren gefüllt) und `ctp-button ctp-button--quiet` (zurückhaltend). Farben und Zustände aller Buttons kommen von diesen Klassen, samt Schutz gegen Link-Regeln des Themes; eine Vorlage im Theme, die einen Button mitbringt, gibt ihm diese Klassen. Die Variablen `--ctp-btn-*` darin sind nicht zugesagt.
 - **Custom Properties**, über die ein Theme das Aussehen anpassen kann: `--ctp-accent`, `--ctp-color-surface`, `--ctp-color-text`, `--ctp-color-muted`, `--ctp-color-border`, `--ctp-color-button`, `--ctp-color-button-text`, `--ctp-color-button-border`, `--ctp-color-button-strong`, `--ctp-color-button-strong-text`, `--ctp-radius`, `--ctp-radius-pill`, `--ctp-shadow`, `--ctp-gap`, `--ctp-font-base`, `--ctp-card-min`.
 
 Nicht zugesagt: konkrete Abstände, Größen und Farbwerte, die `--ctp-order-*`-Variablen (setzt das Design im Backend) und die abgeleiteten Schriftgrößen (`--ctp-font-xs` bis `--ctp-font-xl` folgen `--ctp-font-base`).

@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 ?>
 <?php if ((string) ($group['url'] ?? '') !== '') : ?>
     <p class="ctp-events__cta-row">
-        <a class="ctp-events__cta" href="<?php echo esc_url($group['url']); ?>" aria-describedby="<?php echo esc_attr($titleId); ?>">
+        <a class="ctp-events__cta ctp-button" href="<?php echo esc_url($group['url']); ?>" aria-describedby="<?php echo esc_attr($titleId); ?>">
             <?php echo esc_html(GroupListRenderer::ctaLabel()); ?>
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
             <?php echo Icons::external(); ?>

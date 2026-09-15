@@ -570,6 +570,101 @@
     color: var(--ctp-color-surface);
 }
 
+/* ---------- Buttons: ein Farb- und Zustandssystem fuer alle Bedienelemente ---------- */
+
+/*
+ * Jeder Button des Plugins traegt `ctp-button`: „Zurueck", „Weitere Termine
+ * laden", die Chips der Detailansicht (Teilen, Importieren, Abonnieren) und
+ * „In ChurchTools ansehen". Groesse und Form bleiben an der jeweiligen Klasse
+ * (.ctp-events__back, .ctp-events__share-btn, ...); *wie er in welchem Zustand
+ * aussieht*, steht nur hier.
+ *
+ * Zwei Varianten, beide aus den Design-Einstellungen (--ctp-color-button*):
+ * - `ctp-button`: Rand in der Buttonfarbe, beim Ueberfahren gefuellt. Fuer
+ *   Handlungen - zurueck, nachladen, nach ChurchTools.
+ * - `ctp-button ctp-button--quiet`: grau, beim Ueberfahren Rand und Schrift in
+ *   der Buttonfarbe mit einer Ahnung davon als Flaeche. Fuer Angebote am Rand.
+ *
+ * Anlass (Nutzerbefund 2026-09-15): „Der Button Hover im Gruppenbereich passt
+ * noch nicht zum Events Bereich. Hover wird Akzentfarbe vom Theme. Kannst du
+ * das Verhalten vielleicht generalisieren und nicht je Bereich bauen?" Bis
+ * dahin hatte jeder Button seine eigenen Zustaende und seine eigene
+ * Absicherung gegen das Theme - und jede reichte gerade fuer die Regel, die
+ * zuletzt aufgefallen war.
+ */
+.ctp-events .ctp-button {
+    --ctp-btn-fg: var(--ctp-color-button-text);
+    --ctp-btn-bg: var(--ctp-color-button);
+    --ctp-btn-border: var(--ctp-color-button-border);
+    --ctp-btn-fg-hover: var(--ctp-color-button-strong-text);
+    --ctp-btn-bg-hover: var(--ctp-color-button-strong);
+    --ctp-btn-border-hover: var(--ctp-color-button-strong);
+}
+
+.ctp-events .ctp-button--quiet {
+    --ctp-btn-fg: var(--ctp-color-muted);
+    --ctp-btn-bg: transparent;
+    --ctp-btn-border: var(--ctp-color-border);
+    --ctp-btn-fg-hover: var(--ctp-color-button-strong);
+    --ctp-btn-bg-hover: color-mix(in srgb, var(--ctp-color-button-strong) 7%, transparent);
+    --ctp-btn-border-hover: var(--ctp-color-button-strong);
+}
+
+/*
+ * Der Schutz gegen Theme-Regeln fuer Links - einmal, fuer alle Buttons.
+ *
+ * Uncode (core/inc/style-skins.css.php, in einer oeffentlichen Kopie
+ * nachgelesen) faerbt Links beim Ueberfahren so ein:
+ *
+ *     .style-light a:not(.btn-text-skin):hover,
+ *     .style-dark .style-light a:not(.btn-text-skin):hover { color: <Akzent> !important }
+ *
+ * und fuer Links in Absaetzen mit Regeln bis (0,8,3), ebenfalls mit
+ * `!important`. Gegen `!important` entscheidet die Spezifitaet, und die
+ * bisherigen Regeln des Plugins lagen bei (0,2,0) bis (0,3,0) - beim
+ * Gruppen-Button, einem <a>, gewann deshalb das Theme. Die Buttons im
+ * Termin-Bereich sind meist <button> und von Link-Regeln gar nicht erfasst;
+ * daher der sichtbare Unterschied.
+ *
+ * `:is(.ctp-button, #ctp-theme-shield)` zaehlt mit der Spezifitaet seines
+ * spezifischsten Arguments, einer ID - ob es die ID im Dokument gibt, spielt
+ * dafuer keine Rolle. Damit liegt der Schutz bei (1,2,0) und schlaegt jede
+ * Theme-Regel, die nur aus Klassen, Elementen und Pseudoklassen besteht, egal
+ * wie viele es sind. Nur eine Theme-Regel mit eigener ID und `!important`
+ * kaeme noch darueber. Ein Browser ohne `:is()` (vor 2021) verwirft diese
+ * Regeln und behaelt die Farben aus den Klassen der einzelnen Buttons.
+ *
+ * Abgesichert sind nur Farben, Flaeche und Unterstreichung - das, was ein
+ * Theme an Links aendert. Die Form bleibt an den einzelnen Klassen.
+ */
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield),
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield):link,
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield):visited {
+    border-color: var(--ctp-btn-border) !important;
+    background-color: var(--ctp-btn-bg) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: var(--ctp-btn-fg) !important;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* `:focus-visible` statt `:focus`: Nach einem Mausklick bleibt ein <button>
+   fokussiert und stuende sonst gefuellt da, bis man woanders hinklickt. */
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield):hover,
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield):focus-visible,
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield):active {
+    border-color: var(--ctp-btn-border-hover) !important;
+    background-color: var(--ctp-btn-bg-hover) !important;
+    color: var(--ctp-btn-fg-hover) !important;
+    text-decoration: none !important;
+}
+
+.ctp-events .ctp-button:is(.ctp-button, #ctp-theme-shield) .ctp-events__icon {
+    color: inherit !important;
+    stroke: currentColor !important;
+}
+
 /* ---------- "load more" paging (list/grid layouts, see partials/load-more.php) ---------- */
 
 .ctp-events__more {
@@ -581,9 +676,8 @@
 }
 
 /* Outlined rather than filled: the button sits directly under the last card and
-   a solid block there would out-shout the content it belongs to. Inverts to the
-   filled "strong" pair on hover, same two-state behavior as the eventfinder
-   buttons and the popup's close button. */
+   a solid block there would out-shout the content it belongs to. The hover
+   state comes from .ctp-button (see "Buttons" above). */
 .ctp-events__load-more {
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -598,12 +692,6 @@
     line-height: 1.2;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.ctp-events__load-more:hover {
-    border-color: var(--ctp-color-button-strong);
-    background-color: var(--ctp-color-button-strong);
-    color: var(--ctp-color-button-strong-text);
 }
 
 .ctp-events__load-more:focus-visible {
@@ -1422,24 +1510,25 @@
  *     .style-dark .style-light a:not(.btn-text-skin):hover { color: #00a19a }
  *
  * - dieselbe Regel, die schon den Zurueck-Button einfaerbte (siehe
- * .ctp-events__back:hover weiter unten). Nachgestellt auf der Demo-Seite mit
+ * den Theme-Schutz unter „Buttons" oben). Nachgestellt auf der Demo-Seite mit
  * genau dieser Regel: Zeiger auf der Ortszeile, Titel tuerkis. Nutzerbefund
  * 2026-09-11: „Beim Hover der Kachel wechselt der Titel von Schwarz auf die
  * Akzentfarbe ... Andere Kacheln auf unserer Seite bleiben schwarz."
  *
  * `inherit` in jedem Zustand, auch :visited - ein besuchter Termin soll nicht
- * anders aussehen als ein unbesuchter. `!important` aus demselben Grund wie
- * beim Zurueck-Button: Die Theme-Regel kommt auf (0,4,1), mehr ist mit den
- * Klassen, die hier verlaesslich zur Verfuegung stehen, nicht zu erreichen.
+ * anders aussehen als ein unbesuchter. `!important` und `:is(..., #id)` aus
+ * demselben Grund wie beim Theme-Schutz der Buttons (siehe „Buttons"): Uncode
+ * setzt die Akzentfarbe mit `!important`, und nur die Spezifitaet einer ID
+ * schlaegt jede reine Klassen-Regel.
  * Die Rueckmeldung beim Ueberfahren bleibt trotzdem - sie steckt im Anheben
  * und im Schatten der Kachel, und die Tastatur bekommt ihren Fokusrahmen
  * (:focus-visible oben).
  */
-.ctp-events .ctp-events__card-trigger,
-.ctp-events .ctp-events__card-trigger:visited,
-.ctp-events .ctp-events__card-trigger:hover,
-.ctp-events .ctp-events__card-trigger:focus,
-.ctp-events .ctp-events__card-trigger:active {
+.ctp-events .ctp-events__card-trigger:is(.ctp-events__card-trigger, #ctp-theme-shield),
+.ctp-events .ctp-events__card-trigger:is(.ctp-events__card-trigger, #ctp-theme-shield):visited,
+.ctp-events .ctp-events__card-trigger:is(.ctp-events__card-trigger, #ctp-theme-shield):hover,
+.ctp-events .ctp-events__card-trigger:is(.ctp-events__card-trigger, #ctp-theme-shield):focus,
+.ctp-events .ctp-events__card-trigger:is(.ctp-events__card-trigger, #ctp-theme-shield):active {
     color: inherit !important;
     text-decoration: none !important;
 }
@@ -1912,36 +2001,7 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/*
- * Dieselbe Umkehr in den gefuellten Zustand wie .ctp-events__load-more:hover.
- * `:focus` ist mit dabei, weil dieser Knopf per Tastatur erreichbar ist und
- * ein Link ohne sichtbare Rueckmeldung beim Fokussieren schlechter zu bedienen
- * waere als ein Button.
- *
- * Und hier stehen die einzigen `!important` dieses Stylesheets. Grund ist eine
- * Regel des Themes der Live-Seite (Uncode, style-custom.css):
- *
- *     .style-dark .style-light a:not(.btn-text-skin):hover { color: #00a19a }
- *
- * Die faerbt *jeden* Link beim Ueberfahren in die Akzentfarbe des Themes - der
- * Knopf wurde also schwarz, seine Schrift aber tuerkis statt weiss (der
- * Hintergrund bleibt unbehelligt, weil Themes Links keine Flaeche geben).
- * Dagegen hilft Spezifitaet nicht: Mit `:hover` und dem `:not()` kommt diese
- * Regel auf (0,4,1), und mehr laesst sich mit den Klassen, die hier
- * verlaesslich zur Verfuegung stehen, nicht erreichen - ein Gleichstand haengt
- * dann an der Ladereihenfolge der Stylesheets, und die ist nicht zugesichert.
- *
- * Alle drei Eigenschaften zusammen sind *ein* Zustand; sie einzeln abzusichern
- * hiesse, auf halbem Weg einen Knopf zu bekommen, den es so nicht geben soll.
- */
-.ctp-events .ctp-events__back:hover,
-.ctp-events .ctp-events__back:focus {
-    border-color: var(--ctp-color-button-strong) !important;
-    background-color: var(--ctp-color-button-strong) !important;
-    color: var(--ctp-color-button-strong-text) !important;
-    text-decoration: none;
-}
-
+/* Zustaende und Theme-Schutz: .ctp-button (siehe „Buttons" weiter oben). */
 .ctp-events .ctp-events__back:focus-visible {
     outline: 2px solid var(--ctp-accent);
     outline-offset: 2px;
@@ -2034,9 +2094,9 @@
  * angeheftet - sonst schwebten zwei Kaesten uebereinander, die nichts
  * miteinander zu tun zu haben scheinen.
  */
-.ctp-events__import[open] .ctp-events__import-summary {
-    border-color: var(--ctp-color-text);
-    color: var(--ctp-color-text);
+.ctp-events .ctp-events__import[open] .ctp-events__import-summary {
+    --ctp-btn-border: var(--ctp-color-text);
+    --ctp-btn-fg: var(--ctp-color-text);
 }
 
 /*
@@ -2167,12 +2227,6 @@
     justify-content: center;
 }
 
-.ctp-events .ctp-events__import-choice:hover,
-.ctp-events .ctp-events__import-choice:focus {
-    border-color: var(--ctp-color-text);
-    color: var(--ctp-color-text);
-}
-
 .ctp-events .ctp-events__import-choice:focus-visible {
     outline: 2px solid var(--ctp-color-button);
     outline-offset: 2px;
@@ -2208,23 +2262,7 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/*
- * Im Zugriff wird er deutlich, aber nicht laut: Rand und Schrift gehen auf die
- * eingestellte Buttonfarbe, die Flaeche bekommt nur eine Ahnung davon. Die
- * volle Umkehr in eine gefuellte Pille (wie bei „Zurueck" oder „Weitere
- * Termine laden") waere fuer ein Angebot am Rand zu viel Gewicht.
- *
- * `!important` aus demselben Grund wie bei `.ctp-events__back:hover` oben:
- * Themes faerben `button:hover` regelmaessig pauschal ein.
- */
-.ctp-events .ctp-events__share-btn:hover,
-.ctp-events .ctp-events__share-btn:focus {
-    text-decoration: none;
-    border-color: var(--ctp-color-button-strong) !important;
-    background-color: color-mix(in srgb, var(--ctp-color-button-strong) 7%, transparent) !important;
-    color: var(--ctp-color-button-strong) !important;
-}
-
+/* Im Zugriff deutlich, aber nicht laut: .ctp-button--quiet (siehe „Buttons"). */
 .ctp-events .ctp-events__share-btn:focus-visible {
     outline: 2px solid var(--ctp-accent);
     outline-offset: 2px;
@@ -2683,8 +2721,8 @@
 }
 
 /*
- * Farben wie der Zurueck-Button (.ctp-events__back), die Groesse aber vom
- * Teilen-Chip (.ctp-events__share-btn): In der Schriftgroesse des
+ * Die Groesse vom Teilen-Chip (.ctp-events__share-btn), Farben und Zustaende
+ * von `ctp-button` (siehe „Buttons"): In der Schriftgroesse des
  * Zurueck-Buttons brach „In ChurchTools ansehen" in Versalien schon in einer
  * 300px-Kachel auf zwei Zeilen um (gemessen 2026-09-14, Inhaltsbreite 267px,
  * Button 55px hoch); in Chip-Groesse ist er dort einzeilig (230px). Erst in der
@@ -2693,53 +2731,26 @@
  * `overflow: hidden` ihn abschnitt. Zwei Zeilen sind besser als ein halber
  * Button.
  *
- * `!important` in *jedem* Zustand, nicht nur beim Ueberfahren (Nutzerbefund
- * 2026-09-15 auf einer Testseite der Live-Seite: „Der Button ist wieder vom
- * Theme ueberschrieben und orientiert sich nicht an den Design-Einstellungen").
- * Der Button ist ein <a> mitten im Seiteninhalt, und Uncode gestaltet Links
- * dort mit Regeln bis (0,4,1) und bei Listen bis sieben Klassen - mehr, als
- * mit den verlaesslich vorhandenen Klassen zu erreichen ist. Beim Zurueck-
- * Button reichte die Absicherung des Hovers, weil er ausserhalb des
- * Seiteninhalts steht; dieser hier steht mittendrin. Abgesichert ist, was den
- * Button als Bedienelement des Plugins erkennbar macht: Farben, Rand, Form,
- * Schrift. Die Farben kommen aus den Design-Einstellungen (--ctp-color-button*).
+ * Die Form mit `!important`: Der Button steht als <a> mitten im Seiteninhalt,
+ * und Themes geben Links dort auch Abstaende und Schrift mit (Nutzerbefund
+ * 2026-09-15 auf der Live-Seite).
  */
-.ctp-events .ctp-events__cta,
-.ctp-events .ctp-events__cta:link,
-.ctp-events .ctp-events__cta:visited {
+.ctp-events .ctp-events__cta {
     display: inline-flex !important;
     align-items: center;
     gap: 0.4rem;
     max-width: 100%;
     margin: 0 !important;
     padding: 0.35rem 0.8rem !important;
-    border: 1px solid var(--ctp-color-button-border) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
     border-radius: var(--ctp-radius-pill) !important;
-    background: var(--ctp-color-button) !important;
-    box-shadow: none !important;
-    color: var(--ctp-color-button-text) !important;
     font-family: inherit !important;
     font-size: var(--ctp-font-xs) !important;
     font-weight: 700 !important;
     line-height: 1.35 !important;
     letter-spacing: 0.05em !important;
     text-transform: uppercase !important;
-    text-decoration: none !important;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.ctp-events .ctp-events__cta:hover,
-.ctp-events .ctp-events__cta:focus,
-.ctp-events .ctp-events__cta:active {
-    border-color: var(--ctp-color-button-strong) !important;
-    background: var(--ctp-color-button-strong) !important;
-    color: var(--ctp-color-button-strong-text) !important;
-    text-decoration: none !important;
-}
-
-.ctp-events .ctp-events__cta .ctp-events__icon {
-    color: inherit !important;
-    stroke: currentColor !important;
 }
 
 .ctp-events .ctp-events__cta:focus-visible {

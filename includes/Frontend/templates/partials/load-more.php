@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 <div class="ctp-events__more">
     <button
         type="button"
-        class="ctp-events__load-more"
+        class="ctp-events__load-more ctp-button"
         data-ctp-paging="<?php echo esc_attr((string) wp_json_encode($args['paging_config'])); ?>"
     >
         <?php esc_html_e('Weitere Termine laden', 'churchtools-plugin'); ?>
