@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.0] - 2026-09-15
+
+Die Ankündigung von 2.0. Auf der Website ändert sich mit diesem Update nichts.
+
+### Added
+
+- **Hinweis auf Version 2.0 im Backend.** Auf dem Dashboard, in der Plugin-Liste und in den Bereichen des Plugins steht, was mit 2.0 kommt: Das Plugin heißt dann „Connect ChurchTools“, braucht PHP 8.3 und WordPress 6.6, und Übergangswege für Einstellungen aus älteren Versionen entfallen. Jeder Administrator kann den Hinweis für sich ausblenden.
+- **Vorbereitung auf 2.0 in der Übersicht.** Das Plugin prüft auf der eigenen Website, ob PHP- und WordPress-Version passen, der API-Key schon in der aktuellen Verschlüsselung gespeichert ist, die Räume-Einstellung im aktuellen Format vorliegt und das Theme eigene Vorlagen mitbringt – und nennt zu jedem offenen Punkt den nötigen Schritt.
+- **Kompatibilitätszusage** in `docs/COMPATIBILITY.md`: Ab 2.0 ändern sich Shortcode-Attribute, Blöcke und WPBakery-Elemente, die überschreibbaren Vorlagen samt ihrer Variablen, die dort verwendeten CSS-Klassen, die CSS-Variablen für eigene Farben und die öffentlichen Adressen nur noch mit einer neuen Hauptversion. Dazu die Regel, wie etwas abgekündigt wird.
+
 ## [1.28.2] - 2026-09-15
 
 ### Changed

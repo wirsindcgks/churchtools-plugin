@@ -2,9 +2,9 @@
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
 msgstr ""
-"Project-Id-Version: ChurchTools Events 1.28.2\n"
+"Project-Id-Version: ChurchTools Events 1.29.0\n"
 "Report-Msgid-Bugs-To: https://github.com/wirsindcgks/churchtools-plugin/issues\n"
-"POT-Creation-Date: 2026-09-15 06:47:48+0000\n"
+"POT-Creation-Date: 2026-09-15 07:32:17+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -30,7 +30,7 @@ msgstr ""
 msgid "Keine Kalender geladen. Unter „ChurchTools → Events → Kalender“ zuerst Kalender laden."
 msgstr ""
 
-#: blocks/event-list/index.js:76 blocks/group-list/index.js:123 includes/Admin/SettingsPage.php:3565 includes/Integrations/WpBakeryIntegration.php:266 includes/Integrations/WpBakeryIntegration.php:418
+#: blocks/event-list/index.js:76 blocks/group-list/index.js:123 includes/Admin/SettingsPage.php:3567 includes/Integrations/WpBakeryIntegration.php:266 includes/Integrations/WpBakeryIntegration.php:418
 msgid "Ansicht"
 msgstr ""
 
@@ -342,7 +342,7 @@ msgstr ""
 msgid "Plätze"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:348 includes/Admin/SettingsPage.php:3641 includes/Admin/SettingsPage.php:3686
+#: includes/Admin/GroupsTab.php:348 includes/Admin/SettingsPage.php:3643 includes/Admin/SettingsPage.php:3688
 msgid "Bild importiert"
 msgstr ""
 
@@ -425,7 +425,7 @@ msgstr ""
 msgid "Attribut"
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:556 includes/Admin/SettingsPage.php:2016 includes/Admin/SettingsPage.php:2387 includes/Admin/SettingsPage.php:3839
+#: includes/Admin/GroupsTab.php:556 includes/Admin/SettingsPage.php:2016 includes/Admin/SettingsPage.php:2387 includes/Admin/SettingsPage.php:3841
 msgid "Beschreibung"
 msgstr ""
 
@@ -453,12 +453,48 @@ msgstr ""
 msgid "Höchstens so viele Spalten (2–6), wie in den Inhaltsbereich passen – je Kachel mindestens 240px. Nur bei grid."
 msgstr ""
 
-#: includes/Admin/GroupsTab.php:597 includes/Admin/GroupsTab.php:628 includes/Admin/SettingsPage.php:4559 includes/Admin/SettingsPage.php:4589 includes/Admin/SettingsPage.php:4620 includes/Admin/SettingsPage.php:4658 includes/Admin/SettingsPage.php:4685
+#: includes/Admin/GroupsTab.php:597 includes/Admin/GroupsTab.php:628 includes/Admin/SettingsPage.php:4561 includes/Admin/SettingsPage.php:4591 includes/Admin/SettingsPage.php:4622 includes/Admin/SettingsPage.php:4660 includes/Admin/SettingsPage.php:4687
 msgid "Keine Berechtigung."
 msgstr ""
 
 #: includes/Admin/GroupsTab.php:603 includes/Groups/GroupSync.php:531
 msgid "Bitte zuerst unter „Einstellungen → Verbindung“ die ChurchTools-Instanz eintragen."
+msgstr ""
+
+#: includes/Admin/MajorVersionNotice.php:61 includes/Admin/SyncHealthNotice.php:132
+msgid "ChurchTools Events:"
+msgstr ""
+
+#. translators: %d: number of open items before the update
+#: includes/Admin/MajorVersionNotice.php:66
+msgid "Auf dieser Website sind vorher noch Punkte zu erledigen: %d."
+msgstr ""
+
+#: includes/Admin/MajorVersionNotice.php:69
+msgid "Diese Website ist dafür bereit."
+msgstr ""
+
+#: includes/Admin/MajorVersionNotice.php:71
+msgid "Details in der Übersicht"
+msgstr ""
+
+#: includes/Admin/MajorVersionNotice.php:73
+msgid "Ausblenden"
+msgstr ""
+
+#. translators: 1: next major version, 2: new plugin name, 3: minimum PHP version, 4: minimum WordPress version
+#: includes/Admin/MajorVersionNotice.php:82
+msgid "Version %1$s kommt: Das Plugin heißt dann „%2$s“, braucht PHP %3$s und WordPress %4$s, und Übergangswege für Einstellungen aus älteren Versionen entfallen."
+msgstr ""
+
+#. translators: %s: next major version
+#: includes/Admin/MajorVersionNotice.php:104
+msgid "Vorbereitung auf %s"
+msgstr ""
+
+#. translators: %s: new plugin name
+#: includes/Admin/MajorVersionNotice.php:112
+msgid "„%s“ ist ein unabhängiges Projekt und steht in keiner Verbindung zur ChurchTools Innovations GmbH. Shortcodes, Blöcke, Einstellungen und Adressen bleiben beim Update erhalten."
 msgstr ""
 
 #. Plugin Name of the plugin
@@ -514,7 +550,7 @@ msgstr ""
 msgid "Verbindung"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:256 includes/Admin/SettingsPage.php:1672 includes/Admin/SettingsPage.php:3485 includes/Admin/SettingsPage.php:3546 includes/Admin/SettingsPage.php:3823
+#: includes/Admin/SettingsPage.php:256 includes/Admin/SettingsPage.php:1672 includes/Admin/SettingsPage.php:3487 includes/Admin/SettingsPage.php:3548 includes/Admin/SettingsPage.php:3825
 msgid "Kalender"
 msgstr ""
 
@@ -850,7 +886,7 @@ msgstr ""
 msgid "Auf die Farbe zurücksetzen, die dieser Kalender in ChurchTools hat"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:1340 includes/Admin/SettingsPage.php:1802 includes/Admin/SettingsPage.php:1838 includes/Admin/SettingsPage.php:3578
+#: includes/Admin/SettingsPage.php:1340 includes/Admin/SettingsPage.php:1802 includes/Admin/SettingsPage.php:1838 includes/Admin/SettingsPage.php:3580
 msgid "Zurücksetzen"
 msgstr ""
 
@@ -858,11 +894,11 @@ msgstr ""
 msgid "Standardbild"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:1349 includes/Admin/SettingsPage.php:4418
+#: includes/Admin/SettingsPage.php:1349 includes/Admin/SettingsPage.php:4420
 msgid "Ersetzen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:1349 includes/Admin/SettingsPage.php:4438
+#: includes/Admin/SettingsPage.php:1349 includes/Admin/SettingsPage.php:4440
 msgid "Bild wählen"
 msgstr ""
 
@@ -922,7 +958,7 @@ msgstr ""
 msgid "Kalendername"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:1485 includes/Admin/SettingsPage.php:2011 includes/Admin/SettingsPage.php:3477
+#: includes/Admin/SettingsPage.php:1485 includes/Admin/SettingsPage.php:2011 includes/Admin/SettingsPage.php:3479
 msgid "Titel"
 msgstr ""
 
@@ -942,7 +978,7 @@ msgstr ""
 msgid "Uhrzeit"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:1490 includes/Admin/SettingsPage.php:2015 includes/Admin/SettingsPage.php:3833
+#: includes/Admin/SettingsPage.php:1490 includes/Admin/SettingsPage.php:2015 includes/Admin/SettingsPage.php:3835
 msgid "Ort"
 msgstr ""
 
@@ -1218,7 +1254,7 @@ msgstr ""
 msgid "Gilt für Popup und eigene Seite gleichermaßen – nur der Rahmen darum unterscheidet sie."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:2227 includes/Admin/SettingsPage.php:3617 includes/Frontend/templates/event-detail.php:23
+#: includes/Admin/SettingsPage.php:2227 includes/Admin/SettingsPage.php:3619 includes/Frontend/templates/event-detail.php:23
 msgid "Zurück"
 msgstr ""
 
@@ -1344,7 +1380,7 @@ msgstr ""
 msgid "Nächste Synchronisation (%s)"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:2721 includes/Admin/SettingsPage.php:2895 includes/Admin/SettingsPage.php:3462
+#: includes/Admin/SettingsPage.php:2721 includes/Admin/SettingsPage.php:2895 includes/Admin/SettingsPage.php:3464
 msgid "Gespeicherte Termine"
 msgstr ""
 
@@ -1364,7 +1400,7 @@ msgstr ""
 msgid "Installierte Version"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:2750 includes/Admin/SettingsPage.php:3227
+#: includes/Admin/SettingsPage.php:2750 includes/Admin/SettingsPage.php:3229
 msgid "aktuell"
 msgstr ""
 
@@ -1502,241 +1538,241 @@ msgstr ""
 msgid "Darstellung anpassen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3208
+#: includes/Admin/SettingsPage.php:3210
 msgid "Version"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3212
+#: includes/Admin/SettingsPage.php:3214
 msgid "Installiert"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3216
+#: includes/Admin/SettingsPage.php:3218
 msgid "Verfügbar"
 msgstr ""
 
 #. translators: %s: newer version number available via GitHub
-#: includes/Admin/SettingsPage.php:3222
+#: includes/Admin/SettingsPage.php:3224
 msgid "%s (Update über die Plugins-Übersicht einspielen)"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3235
+#: includes/Admin/SettingsPage.php:3237
 msgid "Letzte Änderungen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3244
+#: includes/Admin/SettingsPage.php:3246
 msgid "Alle Änderungen unter „Einstellungen → Updates“"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3442
+#: includes/Admin/SettingsPage.php:3444
 msgid "Gesamt"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3447
+#: includes/Admin/SettingsPage.php:3449
 msgid "Kommend"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3452
+#: includes/Admin/SettingsPage.php:3454
 msgid "Vergangen (in Aufbewahrung)"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3457
+#: includes/Admin/SettingsPage.php:3459
 msgid "Mit importiertem Bild"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3468
+#: includes/Admin/SettingsPage.php:3470
 msgid "Noch keine Termine synchronisiert."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3470
+#: includes/Admin/SettingsPage.php:3472
 msgid "Keine Termine passen zu diesem Filter."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3481
+#: includes/Admin/SettingsPage.php:3483
 msgid "Termine der Serie"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3482 includes/Admin/SettingsPage.php:3537 includes/Admin/SettingsPage.php:3807 includes/Frontend/templates/partials/eventfinder.php:128
+#: includes/Admin/SettingsPage.php:3484 includes/Admin/SettingsPage.php:3539 includes/Admin/SettingsPage.php:3809 includes/Frontend/templates/partials/eventfinder.php:128
 msgid "Zeitraum"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3527
+#: includes/Admin/SettingsPage.php:3529
 msgid "Kommende"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3528
+#: includes/Admin/SettingsPage.php:3530
 msgid "Vergangene"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3529 includes/Frontend/templates/partials/eventfinder.php:67
+#: includes/Admin/SettingsPage.php:3531 includes/Frontend/templates/partials/eventfinder.php:67
 msgid "Alle"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3548 includes/Frontend/templates/partials/toolbar.php:36
+#: includes/Admin/SettingsPage.php:3550 includes/Frontend/templates/partials/toolbar.php:36
 msgid "Alle Kalender"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3556 includes/Frontend/templates/partials/eventfinder.php:198 includes/Frontend/templates/partials/toolbar.php:30
+#: includes/Admin/SettingsPage.php:3558 includes/Frontend/templates/partials/eventfinder.php:198 includes/Frontend/templates/partials/toolbar.php:30
 msgid "Termine durchsuchen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3562
+#: includes/Admin/SettingsPage.php:3564
 msgid "Titel, Untertitel oder Ort …"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3568
+#: includes/Admin/SettingsPage.php:3570
 msgid "Serien zusammengefasst"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3571
+#: includes/Admin/SettingsPage.php:3573
 msgid "Einzeltermine"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3575
+#: includes/Admin/SettingsPage.php:3577
 msgid "Filtern"
 msgstr ""
 
 #. translators: 1: current page number, 2: total number of pages, 3: number of matching rows, 4: what those rows are ("Serien" or "Termine")
-#: includes/Admin/SettingsPage.php:3604
+#: includes/Admin/SettingsPage.php:3606
 msgid "Seite %1$d von %2$d – %3$d %4$s"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3609
+#: includes/Admin/SettingsPage.php:3611
 msgid "Serien"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3610 includes/Frontend/EventFeed.php:220
+#: includes/Admin/SettingsPage.php:3612 includes/Frontend/EventFeed.php:220
 msgid "Termine"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3620
+#: includes/Admin/SettingsPage.php:3622
 msgid "Weiter"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3650 includes/Admin/SettingsPage.php:3811
+#: includes/Admin/SettingsPage.php:3652 includes/Admin/SettingsPage.php:3813
 msgid "ganztägig"
 msgstr ""
 
 #. translators: 1: number of occurrences, 2: first date, 3: last date
-#: includes/Admin/SettingsPage.php:3699
+#: includes/Admin/SettingsPage.php:3701
 msgid "%1$d Termine, %2$s bis %3$s"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3707
+#: includes/Admin/SettingsPage.php:3709
 msgid "Einzeltermine anzeigen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3756
+#: includes/Admin/SettingsPage.php:3758
 msgid "Termin nicht gefunden."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3760 includes/Admin/SettingsPage.php:3781
+#: includes/Admin/SettingsPage.php:3762 includes/Admin/SettingsPage.php:3783
 msgid "Zurück zur Übersicht"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3845
+#: includes/Admin/SettingsPage.php:3847
 msgid "ChurchTools-ID"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3903
+#: includes/Admin/SettingsPage.php:3905
 msgid "Bereiche"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:3983
+#: includes/Admin/SettingsPage.php:3985
 msgid "Design-Bereiche"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4093 includes/Admin/SettingsPage.php:4447
+#: includes/Admin/SettingsPage.php:4095 includes/Admin/SettingsPage.php:4449
 msgid "Prüfe…"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4109 includes/Admin/SettingsPage.php:4577
+#: includes/Admin/SettingsPage.php:4111 includes/Admin/SettingsPage.php:4579
 msgid "Verbindung erfolgreich"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4110
+#: includes/Admin/SettingsPage.php:4112
 msgid "Verbindung fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4124 includes/Admin/SettingsPage.php:4154 includes/Admin/SettingsPage.php:4247
+#: includes/Admin/SettingsPage.php:4126 includes/Admin/SettingsPage.php:4156 includes/Admin/SettingsPage.php:4249
 msgid "Lade…"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4146 includes/Admin/SettingsPage.php:4174
+#: includes/Admin/SettingsPage.php:4148 includes/Admin/SettingsPage.php:4176
 msgid "Laden fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4198
+#: includes/Admin/SettingsPage.php:4200
 msgid "Übernehme…"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4214
+#: includes/Admin/SettingsPage.php:4216
 msgid "Übernommen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4225 includes/Admin/SettingsPage.php:4229
+#: includes/Admin/SettingsPage.php:4227 includes/Admin/SettingsPage.php:4231
 msgid "Übernehmen fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4248 includes/Admin/SettingsPage.php:4284
+#: includes/Admin/SettingsPage.php:4250 includes/Admin/SettingsPage.php:4286
 msgid "Synchronisiere…"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4271 includes/Admin/SettingsPage.php:4275
+#: includes/Admin/SettingsPage.php:4273 includes/Admin/SettingsPage.php:4277
 msgid "Fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4304
+#: includes/Admin/SettingsPage.php:4306
 msgid "Synchronisation fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4408
+#: includes/Admin/SettingsPage.php:4410
 msgid "Standardbild wählen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4466
+#: includes/Admin/SettingsPage.php:4468
 msgid "Prüfung fehlgeschlagen"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4543
+#: includes/Admin/SettingsPage.php:4545
 msgid "Kopiert!"
 msgstr ""
 
 #. translators: %s: full name of the authenticated ChurchTools person
-#: includes/Admin/SettingsPage.php:4576
+#: includes/Admin/SettingsPage.php:4578
 msgid "Verbunden als %s"
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4664
+#: includes/Admin/SettingsPage.php:4666
 msgid "Die Update-Prüfung steht auf dieser Installation nicht zur Verfügung."
 msgstr ""
 
 #. translators: %s: newer version number available via GitHub
-#: includes/Admin/SettingsPage.php:4671
+#: includes/Admin/SettingsPage.php:4673
 msgid "Version %s steht bereit."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4677
+#: includes/Admin/SettingsPage.php:4679
 msgid "Das Plugin ist auf dem aktuellen Stand."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4692
+#: includes/Admin/SettingsPage.php:4694
 msgid "Bitte zuerst die Verbindung zu ChurchTools einrichten."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4727
+#: includes/Admin/SettingsPage.php:4729
 msgid "Kein Kalender ist aktiv – die gespeicherten Termine wurden entfernt."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4749
+#: includes/Admin/SettingsPage.php:4751
 msgid "Synchronisation abgeschlossen."
 msgstr ""
 
-#: includes/Admin/SettingsPage.php:4767
+#: includes/Admin/SettingsPage.php:4769
 msgid "Es sind noch keine Termine gespeichert."
 msgstr ""
 
 #. translators: 1: number of events with a location, 2: total number of stored events
-#: includes/Admin/SettingsPage.php:4772
+#: includes/Admin/SettingsPage.php:4774
 msgid "Ortsangabe vorhanden: %1$d von %2$d gespeicherten Terminen."
 msgstr ""
 
@@ -1751,10 +1787,6 @@ msgstr ""
 #. translators: %s: error message from the last failed group sync
 #: includes/Admin/SyncHealthNotice.php:118
 msgid "Die letzte Synchronisation der Gruppen ist fehlgeschlagen: %s"
-msgstr ""
-
-#: includes/Admin/SyncHealthNotice.php:132
-msgid "ChurchTools Events:"
 msgstr ""
 
 #. translators: %s: error message from the last failed sync
@@ -1773,6 +1805,49 @@ msgstr ""
 #. translators: %s: human-readable time difference, e.g. "3 days"
 #: includes/Admin/SyncHealthNotice.php:179
 msgid "Die letzte erfolgreiche Synchronisation liegt %s zurück – die angezeigten Termine könnten veraltet sein."
+msgstr ""
+
+#. translators: 1: required PHP version, 2: PHP version of this site
+#: includes/Admin/UpgradeReadiness.php:61
+msgid "PHP %1$s oder neuer (hier: %2$s)"
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:62
+msgid "Beim Hoster die PHP-Version anheben. Ohne das lässt sich 2.0 nicht aktivieren."
+msgstr ""
+
+#. translators: 1: required WordPress version, 2: WordPress version of this site
+#: includes/Admin/UpgradeReadiness.php:70
+msgid "WordPress %1$s oder neuer (hier: %2$s)"
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:71
+msgid "WordPress aktualisieren."
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:81
+msgid "API-Key in der aktuellen Verschlüsselung gespeichert"
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:82
+msgid "Den API-Key unter „Einstellungen → Verbindung“ neu eintragen und speichern."
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:95
+msgid "Räume-Einstellung im aktuellen Format"
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:96
+msgid "Unter „Events → Räume“ einmal speichern – die Auswahl bleibt, sie wird nur im neuen Format abgelegt."
+msgstr ""
+
+#: includes/Admin/UpgradeReadiness.php:102
+msgid "Eigene Vorlagen im Theme"
+msgstr ""
+
+#. translators: %s: comma-separated list of template file names
+#: includes/Admin/UpgradeReadiness.php:107
+msgid "Das Theme überschreibt %s. Nach dem Update auf 2.0 mit den mitgelieferten Vorlagen vergleichen – ab 2.0 gilt für sie die Kompatibilitätszusage."
 msgstr ""
 
 #. translators: %s: shortened beginning of the unexpected response body

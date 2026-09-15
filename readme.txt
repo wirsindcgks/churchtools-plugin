@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.28.2
+Stable tag: 1.29.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -274,6 +274,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.29.0 =
+
+Kündigt Version 2.0 an: neuer Name „Connect ChurchTools“, Mindestversionen PHP 8.3 und WordPress 6.6, Übergangswege für alte Einstellungen entfallen. Die Übersicht im Backend zeigt, ob auf dieser Website vorher etwas zu tun ist. Auf der Website selbst ändert sich mit diesem Update nichts.
+
 = 1.28.2 =
 
 Das WPBakery-Element „ChurchTools Gruppen“ fragt zuerst, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen sollen. Wer mit 1.28.0 oder 1.28.1 einzelne Gruppen gewählt hat: das Element einmal öffnen, „Einzelne Gruppen“ wählen und speichern – sonst übernimmt WPBakery beim nächsten Speichern die Homepage. Auf der Website ändert sich bis dahin nichts.
@@ -425,6 +429,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.29.0 =
+
+* Neu: Hinweis auf Version 2.0 im Backend (neuer Name, PHP 8.3, WordPress 6.6, entfallende Übergangswege), je Administrator ausblendbar
+* Neu: Vorbereitung auf 2.0 in der Übersicht – prüft PHP- und WordPress-Version, Format des API-Keys, Räume-Einstellung und eigene Vorlagen im Theme
+* Neu: Kompatibilitätszusage für 2.0 (`docs/COMPATIBILITY.md`)
 
 = 1.28.2 =
 
