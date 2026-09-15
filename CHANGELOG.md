@@ -5,6 +5,19 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.34.0] - 2026-09-15
+
+### Added
+
+- **Gruppen haben einen eigenen Reiter „Synchronisation“.** Knopf, Befund, Bild-Warnung und Intervall standen bisher als zweites Panel unten im Reiter „Homepages“ und wurden dort nicht gefunden. Der Bereich Gruppen hat jetzt dieselbe Reihe wie Events: Liste, Auswahl, Synchronisation, Einbinden.
+
+### Changed
+
+- **Termine und Gruppen sind im Backend gleich aufgebaut.** Jeder Gruppen-Reiter zeigt dieselben Kacheln wie sein Gegenstück bei den Terminen, beide Sync-Reiter teilen Kopf und Intervallfeld, und die Panels „Events“ und „Gruppen“ der Übersicht haben dieselbe Tabelle und dieselben Links. Die Kacheln oben auf der Übersicht gelten jetzt für das ganze Plugin: Instanz, API-Key, gespeicherte Termine und Gruppen. Homepages heißen „aktiv“ wie Kalender statt „angehakt“.
+- **Dieselben Sync-Intervalle für Termine und Gruppen.** Termine lassen sich jetzt auch wöchentlich abgleichen.
+- **Ein stehengebliebener Gruppen-Abgleich wird gemeldet.** Bisher meldete das Backend bei den Gruppen nur einen Fehler, bei den Terminen dazu einen fehlenden Zeitplan und einen überfälligen Lauf. Jetzt gilt für beide dieselbe Regel (mehr als das Dreifache des Intervalls, mindestens 24 Stunden). Beide Hinweise verlinken auf ihren Reiter „Synchronisation“, und der zeigt den Befund auch bei den Terminen selbst.
+- **„Daten beim Deinstallieren behalten“ steht unter Einstellungen → Updates.** Der Schalter gilt für Termine und Gruppen und stand trotzdem unter Events → Synchronisation.
+
 ## [1.33.0] - 2026-09-15
 
 ### Added

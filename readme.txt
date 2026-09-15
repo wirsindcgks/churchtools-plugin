@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.33.0
+Stable tag: 1.34.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -279,6 +279,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.34.0 =
+
+Termine und Gruppen bedienen sich im Backend jetzt gleich: Die Synchronisation der Gruppen hat einen eigenen Reiter unter Gruppen → Synchronisation, und der Schalter „Daten beim Deinstallieren behalten“ steht unter Einstellungen → Updates. Beide Bereiche bieten dieselben Intervalle, Termine also neu auch „Wöchentlich“. Ein stehengebliebener Gruppen-Abgleich wird jetzt wie bei den Terminen gemeldet. Einstellungen bleiben unverändert, auf der Website ändert sich nichts.
+
 = 1.33.0 =
 
 Lässt sich ein Termin- oder Gruppenbild nicht aus ChurchTools übernehmen, zeigt das Backend jetzt einen gelben Hinweis mit dem Grund, etwa „HTTP 401 Unauthorized (3×)“ – bisher blieb das still. Der Abgleich selbst läuft weiter, jeder Lauf versucht die Bilder erneut. Auf der Website ändert sich nichts.
@@ -474,6 +478,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.34.0 =
+
+* Neu: Reiter „Synchronisation“ im Bereich Gruppen, mit Knopf, Befund, Bild-Warnung und Intervall – bisher unten im Reiter „Homepages“
+* Geändert: Termine und Gruppen sind im Backend gleich aufgebaut – dieselben Reiter in derselben Reihenfolge, dieselben Kacheln in der Statuszeile, dieselben Panels auf der Übersicht
+* Geändert: Dieselben Sync-Intervalle für Termine und Gruppen, Termine also neu auch „Wöchentlich“
+* Geändert: Der Hinweis im Backend meldet für Gruppen wie für Termine auch einen fehlenden Zeitplan und einen überfälligen Lauf; beide verlinken auf ihren Reiter „Synchronisation“, der den Befund jetzt auch selbst zeigt
+* Geändert: „Daten beim Deinstallieren behalten“ steht unter Einstellungen → Updates und gilt ausdrücklich für Termine und Gruppen
+* Geändert: Gruppen-Homepages heißen „aktiv“ wie Kalender statt „angehakt“
 
 = 1.33.0 =
 
