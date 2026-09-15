@@ -42,7 +42,7 @@ Ein Theme kann diese Dateien unter `wp-content/themes/<theme>/churchtools-plugin
 | `event-grid.php` | `$events`, `$args`, `$filterCalendars` | `partials/event-grid-items.php` (sonst `paging="0"`) |
 | `event-upcoming.php` | `$events`, `$args` | – |
 | `event-detail.php` | `$event`, `$order`, `$backUrl`, `$designClass`, `$designStyle`, `$detailContext` | `partials/event-detail-content.php` |
-| `group-grid.php` | `$groups`, `$args` | `partials/group-cta.php` für den Button nach ChurchTools |
+| `group-grid.php` | `$groups`, `$args` | `partials/group-cta.php` für den Button nach ChurchTools; für das Popup je Kachel `partials/group-detail.php` in einem `<template class="ctp-events__detail-template">` und einmal `partials/modal.php` |
 | `group-featured.php` | `$groups`, `$args` | `partials/group-cta.php` |
 
 Zugesagt sind die Dateinamen, die Variablen und die Schlüssel, die in den mitgelieferten Vorlagen gelesen werden. Neue Schlüssel können dazukommen. Die mitgelieferten Vorlagen selbst können sich in jeder Version ändern – eine Kopie im Theme bekommt solche Änderungen nicht und sollte nach Updates mit dem Original verglichen werden. Die Übersicht im Backend nennt die Vorlagen, die ein Theme überschreibt.

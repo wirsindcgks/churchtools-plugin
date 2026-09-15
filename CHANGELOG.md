@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.30.0] - 2026-09-15
+
+### Added
+
+- **Gruppen-Popup im Raster.** Ein Klick auf eine Gruppenkachel öffnet die Gruppe in einem Popup auf der eigenen Website: Bild, Name mit freien Plätzen, Treffzeit, Zielgruppe, der ganze Text und der Button „In ChurchTools ansehen“. Das Bild folgt dem Bildformat aus dem Design-Tab und ist zugeschnitten wie auf der Kachel. Die hervorgehobene Ansicht bleibt ohne Popup, sie zeigt den ganzen Text schon.
+
+### Changed
+
+- **Die Gruppenkachel im Raster ist jetzt klickbar.** Bisher führte nur der Button weiter; jetzt öffnet ein Klick auf die Kachel das Popup. Nach ChurchTools führt weiterhin nur der Button – ohne JavaScript führt auch der Klick auf die Kachel dorthin. Eigene Kopien von `group-grid.php` im Theme bekommen das Popup erst, wenn sie aus der neuen Vorlage übernommen werden.
+- **Auszug mit Absätzen.** Der Text auf der Gruppenkachel behält Absätze und Zeilenumbrüche aus ChurchTools, statt zu einer Zeile zusammengezogen und nach drei Zeilen abgeschnitten zu werden (24 Wörter). Texte mit HTML bleiben bei einer Zeile.
+
 ## [1.29.4] - 2026-09-15
 
 ### Added
