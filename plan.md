@@ -825,6 +825,40 @@ Auftrag: „Wir brauchen noch die Option einzelne Gruppen prominent visualisiere
 - *Doku*: README und readme.txt (Shortcode-Attribute, Abschnitt Gruppen), Shortcode-Referenz im Design-Tab, Screenshot der Gruppenliste neu. Release-Vorschlag: eigenes Minor nach dem Sicherheits-Release.
 - **Veröffentlicht als 1.28.0 (2026-09-14)**: Branch `gruppen-auswahl`, Draft-PR #2 mit grüner CI, ohne Merge-Commit übernommen; ZIP und Herkunftsnachweis geprüft. Screenshots `gruppen.png` neu, `gruppen-hervorgehoben.png` hinzu. **Nicht getestet**: Block-Editor per Klick (lokal kein Login) und WPBakery-Element (lokal nicht installiert) – nach dem Update auf der Live-Seite einmal durchklicken, besonders die Auswahl einzelner Gruppen.
 
+### Weg zu 2.0.0 (Beratung vom 2026-09-15)
+
+Frage des Nutzers: „Wann sollten wir auf eine stabile V2 gehen?“ Antwort: **noch nicht.** 2.0 ist nach Semantic Versioning (so steht es im CHANGELOG) kein Reifezeugnis, sondern die Ansage „bestehende Installationen müssen etwas anpassen“. Stabil ist das Plugin seit 1.0.0. Eine Hauptversion lohnt sich, wenn mehrere bewusste Brüche gebündelt werden – und nicht, solange einzelne Brüche nebenbei in Minor-Versionen gehen.
+
+**Nachträglich eingeordnet:** 1.27.0 (Gruppen nur noch mit Key) und 1.28.0 (Gruppenkacheln nicht mehr klickbar; ein Theme mit eigener Kopie von `group-grid.php` bekommt den Button nicht) waren streng genommen schon Brüche. Vertretbar als Minor, solange es genau eine Installation mit bekanntem Key gibt. Sobald andere Gemeinden das Plugin nutzen, gilt das nicht mehr – das ist der eigentliche Anlass, einen Vertrag festzuschreiben.
+
+**Kandidaten für 2.0.0**
+
+- [ ] **Mindestversionen anheben.** Heute PHP 8.1 und WordPress 6.4. PHP 8.1 bekommt seit Ende 2025 keine Sicherheitsupdates mehr, 8.2 nur noch bis Ende 2026, 8.3 bis Ende 2027. Vorschlag: **PHP 8.3, WordPress 6.6**. *Offen*: welche PHP-Version die Live-Seite fährt (WordPress → Werkzeuge → Website-Zustand → Bericht → Server). Dazu CI (`php-version`), `composer.json` (`require.php`, PHPCS `testVersion`, PHPStan `phpVersion`), Plugin-Header, readme.txt.
+- [ ] **Kompatibilitäts-Ballast entfernen**, sobald jede Installation die Migrationen durchlaufen hat:
+  - Weiterleitung der Backend-Adressen aus der Zeit vor 1.26 (`SettingsPage::redirectLegacyTabUrl()`)
+  - Lesen der alten Key-Verschlüsselung (`ctp1:` und ohne Präfix, samt Auspacken der doppelt verschlüsselten Werte aus der Zeit vor 0.12.4) in `Security\Crypto`/`ApiKey` – umgeschrieben wird seit 1.27.0 bei jedem Update
+  - die Brücke `rooms_exclusive` aus 1.12 (`Sync\ResourceList::resolveMode()`)
+  - `Installer::dropRetiredSettings()` (`github_token`, seit 1.5.0 entfallen)
+  - *Vor dem Entfernen prüfen*, ob die Live-Seite die jeweilige Migration tatsächlich hinter sich hat (Key-Präfix `ctp2:`, `ctp_db_version` 1.8.0).
+- [ ] **Öffentlichen Vertrag festschreiben** – eigener Abschnitt in README/readme.txt und `docs/ARCHITECTURE.md`:
+  - Shortcode-Attribute von `[ctp_events]` und `[ctp_groups]` samt Standardwerten
+  - überschreibbare Templates: Dateinamen, übergebene Variablen (`$args`, `$events`, `$groups`) und welche Partials eingebunden werden müssen
+  - CSS-Klassen und Custom Properties, auf die sich Themes stützen dürfen (`ctp-events__*`, `--ctp-*`)
+  - Regel für Abkündigungen: mindestens eine Minor-Version mit Hinweis im Backend und in der Upgrade Notice, entfernt erst in der nächsten Hauptversion
+- [ ] **Template-Versionen erkennen** (Vorschlag): Eine Versionsangabe im Kopf jedes überschreibbaren Templates und ein Hinweis im Backend, wenn ein Theme eine ältere Kopie benutzt – der Fall aus 1.28.0 wäre dann aufgefallen.
+
+**Voraussetzungen, bevor 2.0.0 erscheint**
+
+- [ ] 1.28.0 läuft einige Wochen auf der Live-Seite ohne Patch-Release; Block-Editor und WPBakery-Element für die Gruppenauswahl sind dort durchgeklickt.
+- [ ] Phase 0 des Review-Plans ist erledigt (Rulesets für `main` und Tags, unveränderliche Releases, Secret Scanning) – wichtig, sobald andere Gemeinden automatisch aktualisieren.
+- [ ] `SettingsPage` ist fertig aufgeteilt (5.1: Reiter einzeln, Inline-Skript nach `assets/js/admin.js`). Kein Nutzerthema, aber ein Umbau, der vor dem festgeschriebenen Vertrag passieren soll und nicht danach.
+
+**Ablauf**
+
+1. **1.29.0 – Ankündigung**: Hinweis im Backend (für Administratoren) und Upgrade Notice zu den neuen Mindestversionen und den entfallenden Altwegen; die Vertragsseite in die Doku; ein Hinweis, falls die Seite auf einer PHP-Version unter der künftigen Mindestversion läuft.
+2. **Übergangszeit** von etwa vier bis sechs Wochen, damit jede Installation die Migrationen durchlaufen hat und Betreiber ihre PHP-Version anheben können.
+3. **2.0.0**: Mindestversionen gelten, Ballast entfernt, Vertrag gilt. Danach Minor- und Patch-Releases, bis wieder gebündelt gebrochen wird.
+
 ### Offene Kleinigkeiten im Frontend
 
 - [x] **Der „Ganztägig"-Chip steht in der Detailansicht schief** (Nutzerbefund 2026-09-12, am Bild eines mehrtägigen Termins auf der Live-Seite). Er sitzt rechts neben der Überschrift und hängt dort an deren Grundlinie, während links daneben der Datums-Chip mit eigener Höhe steht — die drei Elemente fluchten nicht. **Gewünscht ist eine von zwei Ausrichtungen**: entweder senkrecht mittig zur Überschrift oder bündig mit der **Oberkante des Datums-Chips**. Beides ist eine reine CSS-Frage in der Detailansicht (`.ctp-events__detail-lead`/der Titelzeile); vor der Entscheidung an einem ein- *und* einem mehrzeiligen Titel ansehen, denn genau dort unterscheiden sich die beiden Varianten: Bei einem Umbruch wandert „mittig" mit nach unten, „Oberkante" bleibt oben stehen.
