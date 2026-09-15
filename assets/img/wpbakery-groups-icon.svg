@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <!--
+        Das Symbol des Elements „ChurchTools Gruppen": drei Personen statt des
+        Kalenders der Termine. Gezeichnet wie wpbakery-element-icon.svg - weiss,
+        randfuellend, gleiche Strichstaerke -, damit beide nebeneinander wie
+        ein Paar aussehen. Siehe WpBakeryIntegration::enqueueElementIcon().
+    -->
+    <g stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="7.5" r="3.5" />
+        <path d="M5 22v-1.5A5.5 5.5 0 0 1 10.5 15h3A5.5 5.5 0 0 1 19 20.5V22" />
+        <circle cx="4.5" cy="9.5" r="2.5" />
+        <path d="M1 18.5v-.5a3.5 3.5 0 0 1 3.5-3.5" />
+        <circle cx="19.5" cy="9.5" r="2.5" />
+        <path d="M23 18.5v-.5a3.5 3.5 0 0 0-3.5-3.5" />
+    </g>
+</svg>

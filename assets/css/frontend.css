@@ -2691,35 +2691,55 @@
  * kleinsten Kachel (240px, 202px Inhalt) bricht er um - `white-space: nowrap`
  * stand kurz hier und schob ihn dort 27px ueber den Kachelrand, wo
  * `overflow: hidden` ihn abschnitt. Zwei Zeilen sind besser als ein halber
- * Button. Die Spezifitaet mit .ctp-events davor und `!important` im
- * Hover aus demselben Grund wie beim Zurueck-Button: Themes faerben Links, die
- * Live-Seite mit einer Regel auf (0,4,1).
+ * Button.
+ *
+ * `!important` in *jedem* Zustand, nicht nur beim Ueberfahren (Nutzerbefund
+ * 2026-09-15 auf einer Testseite der Live-Seite: „Der Button ist wieder vom
+ * Theme ueberschrieben und orientiert sich nicht an den Design-Einstellungen").
+ * Der Button ist ein <a> mitten im Seiteninhalt, und Uncode gestaltet Links
+ * dort mit Regeln bis (0,4,1) und bei Listen bis sieben Klassen - mehr, als
+ * mit den verlaesslich vorhandenen Klassen zu erreichen ist. Beim Zurueck-
+ * Button reichte die Absicherung des Hovers, weil er ausserhalb des
+ * Seiteninhalts steht; dieser hier steht mittendrin. Abgesichert ist, was den
+ * Button als Bedienelement des Plugins erkennbar macht: Farben, Rand, Form,
+ * Schrift. Die Farben kommen aus den Design-Einstellungen (--ctp-color-button*).
  */
-.ctp-events .ctp-events__cta {
-    display: inline-flex;
+.ctp-events .ctp-events__cta,
+.ctp-events .ctp-events__cta:link,
+.ctp-events .ctp-events__cta:visited {
+    display: inline-flex !important;
     align-items: center;
     gap: 0.4rem;
     max-width: 100%;
-    padding: 0.35rem 0.8rem;
-    border: 1px solid var(--ctp-color-button-border);
-    border-radius: var(--ctp-radius-pill);
-    background-color: var(--ctp-color-button);
-    color: var(--ctp-color-button-text);
-    font-size: var(--ctp-font-xs);
-    font-weight: 700;
-    line-height: 1.35;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    text-decoration: none;
+    margin: 0 !important;
+    padding: 0.35rem 0.8rem !important;
+    border: 1px solid var(--ctp-color-button-border) !important;
+    border-radius: var(--ctp-radius-pill) !important;
+    background: var(--ctp-color-button) !important;
+    box-shadow: none !important;
+    color: var(--ctp-color-button-text) !important;
+    font-family: inherit !important;
+    font-size: var(--ctp-font-xs) !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .ctp-events .ctp-events__cta:hover,
-.ctp-events .ctp-events__cta:focus {
+.ctp-events .ctp-events__cta:focus,
+.ctp-events .ctp-events__cta:active {
     border-color: var(--ctp-color-button-strong) !important;
-    background-color: var(--ctp-color-button-strong) !important;
+    background: var(--ctp-color-button-strong) !important;
     color: var(--ctp-color-button-strong-text) !important;
-    text-decoration: none;
+    text-decoration: none !important;
+}
+
+.ctp-events .ctp-events__cta .ctp-events__icon {
+    color: inherit !important;
+    stroke: currentColor !important;
 }
 
 .ctp-events .ctp-events__cta:focus-visible {

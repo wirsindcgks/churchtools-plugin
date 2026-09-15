@@ -6,6 +6,7 @@ namespace ChurchToolsPlugin\Integrations;
 
 use ChurchToolsPlugin\Blocks\GroupListBlock;
 use ChurchToolsPlugin\Groups\GroupSettings;
+use ChurchToolsPlugin\Groups\GroupSync;
 
 final class WpBakeryIntegration
 {
@@ -16,8 +17,14 @@ final class WpBakeryIntegration
      */
     private const BASE = 'ctp_events';
 
-    /** Das zweite Element, die Gruppenliste - dasselbe Symbol, siehe enqueueElementIcon(). */
+    /** Das zweite Element, die Gruppenliste - mit eigenem Symbol, siehe enqueueElementIcon(). */
     private const GROUPS_BASE = 'ctp_groups';
+
+    /** Klasse des Gruppen-Symbols (drei Personen statt des Kalenders). */
+    private const GROUPS_ICON_CLASS = 'ctp-vc-icon-groups';
+
+    /** Der eigene Feldtyp fuer die Auswahl einzelner Gruppen, siehe renderGroupPicker(). */
+    public const GROUP_PICKER_TYPE = 'ctp_group_picker';
 
     /**
      * Klasse, unter der das Symbol des Elements haengt. Der "icon"-Wert von
@@ -80,15 +87,11 @@ final class WpBakeryIntegration
             return $value;
         }
 
-        if (!is_scalar($value) || !is_array($param['value'] ?? null)) {
-            return $value;
-        }
-
-        // Die Gruppen-Auswahl ist das eine Ankreuzfeld mit vielen Werten:
-        // WPBakery speichert sie kommagetrennt ("514,269"). Im Baustein sollen
-        // die Namen stehen, in der gewaehlten Reihenfolge.
-        if (($param['param_name'] ?? '') === 'groups') {
-            $labels = array_flip(array_map('strval', $param['value']));
+        // Die Gruppen-Auswahl speichert kommagetrennte IDs ("514,269"). Im
+        // Baustein sollen die Namen stehen, in der gewaehlten Reihenfolge; die
+        // Beschriftungen traegt der eigene Feldtyp unter `ctp_choices`.
+        if (($param['param_name'] ?? '') === 'groups' && is_scalar($value) && is_array($param['ctp_choices'] ?? $param['value'] ?? null)) {
+            $labels = array_flip(array_map('strval', $param['ctp_choices'] ?? $param['value']));
             $names = [];
 
             foreach (explode(',', (string) $value) as $id) {
@@ -96,6 +99,10 @@ final class WpBakeryIntegration
             }
 
             return implode(', ', $names);
+        }
+
+        if (!is_scalar($value) || !is_array($param['value'] ?? null)) {
+            return $value;
         }
 
         // Bei Ankreuzfeldern waere die Beschriftung des Wertes eine Dopplung
@@ -184,7 +191,7 @@ final class WpBakeryIntegration
             $base
         );
 
-        wp_add_inline_style($handle, sprintf(
+        $iconRule = static fn (string $class, string $selectors, string $file): string => sprintf(
             '#wpbakery_content .vc_element-icon.%1$s,'
                 . '%2$s'
                 . '.vc_ui-panel-content-container .vc_element-icon.%1$s,'
@@ -194,11 +201,18 @@ final class WpBakeryIntegration
                 . 'background-position:center !important;'
                 . 'background-repeat:no-repeat !important;'
                 . 'background-size:48%% !important;}',
-            self::ICON_CLASS,
-            $perBase(self::BASE) . $perBase(self::GROUPS_BASE),
-            esc_url(add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/img/wpbakery-element-icon.svg')),
+            $class,
+            $selectors,
+            esc_url(add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/img/' . $file)),
             self::ICON_BACKDROP
-        ));
+        );
+
+        wp_add_inline_style(
+            $handle,
+            $iconRule(self::ICON_CLASS, $perBase(self::BASE), 'wpbakery-element-icon.svg')
+                . $iconRule(self::GROUPS_ICON_CLASS, $perBase(self::GROUPS_BASE), 'wpbakery-groups-icon.svg')
+                . self::groupPickerCss()
+        );
 
         $this->iconStyleAdded = true;
     }
@@ -211,6 +225,20 @@ final class WpBakeryIntegration
     {
         if (!function_exists('vc_map')) {
             return;
+        }
+
+        // Vor vc_map(), das den Typ benutzt. Die Schnittstelle so, wie
+        // WPBakerys eigenes Beispiel sie zeigt (github.com/wpbakery/dev-example,
+        // elements/with-custom-param): Das Feld liefert beliebiges Markup, und
+        // gespeichert wird der Wert des Eingabefelds mit der Klasse
+        // `wpb_vc_param_value` und dem Parameternamen als `name`. Das Skript
+        // (dritter Parameter) laedt WPBakery zum Bearbeitungsfenster.
+        if (function_exists('vc_add_shortcode_param')) {
+            vc_add_shortcode_param(
+                self::GROUP_PICKER_TYPE,
+                [self::class, 'renderGroupPicker'],
+                add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/js/wpbakery-group-picker.js')
+            );
         }
 
         vc_map([
@@ -332,7 +360,7 @@ final class WpBakeryIntegration
             'name' => __('ChurchTools Gruppen', 'churchtools-plugin'),
             'base' => self::GROUPS_BASE,
             'category' => __('ChurchTools', 'churchtools-plugin'),
-            'icon' => self::ICON_CLASS,
+            'icon' => self::GROUPS_ICON_CLASS,
             'params' => [
                 [
                     'type' => 'dropdown',
@@ -343,17 +371,17 @@ final class WpBakeryIntegration
                     'value' => self::homepageOptions(),
                 ],
                 [
-                    // Ankreuzfelder statt eines Suchfelds (autocomplete): Das
-                    // braucht zwei eigene AJAX-Rueckrufe und laesst sich ohne
-                    // WPBakery nicht pruefen; ein Ankreuzfeld mit mehreren
-                    // Werten speichert WPBakery von sich aus kommagetrennt -
-                    // dieselbe Form, die `groups` im Shortcode erwartet.
-                    'type' => 'checkbox',
+                    // Eigener Feldtyp statt WPBakerys Ankreuzfeldern: Die
+                    // setzte WPBakery als Fliesstext nebeneinander, Namen
+                    // brachen mitten im Eintrag um, und bei 19 Gruppen suchte
+                    // man lange (Nutzerbefund 2026-09-15 mit Screenshot aus
+                    // WPBakery 8.7). Siehe renderGroupPicker().
+                    'type' => self::GROUP_PICKER_TYPE,
                     'heading' => __('Einzelne Gruppen', 'churchtools-plugin'),
-                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages. Angehakte Gruppen erscheinen statt der Homepage, in der Reihenfolge dieser Liste.', 'churchtools-plugin'),
+                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages. Gewählte Gruppen erscheinen statt der Homepage, in der Reihenfolge der Liste „Ausgewählt“.', 'churchtools-plugin'),
                     'param_name' => 'groups',
                     'admin_label' => true,
-                    'value' => self::groupOptions(),
+                    'ctp_choices' => self::groupOptions(),
                 ],
                 [
                     'type' => 'dropdown',
@@ -424,5 +452,143 @@ final class WpBakeryIntegration
         }
 
         return $options;
+    }
+
+    /**
+     * Das Feld „Einzelne Gruppen": oben die gewaehlten Gruppen in ihrer
+     * Reihenfolge (verschiebbar, entfernbar), darunter ein Filter und alle
+     * waehlbaren Gruppen nach Homepage gegliedert.
+     *
+     * Die Ausgangslage rendert PHP vollstaendig - das Skript
+     * (assets/js/wpbakery-group-picker.js) haelt danach nur noch Liste, Haken
+     * und das versteckte Feld im Gleichschritt. Eine gewaehlte ID, die es nicht
+     * mehr gibt, bleibt als „nicht mehr verfuegbar" in der Liste stehen, statt
+     * beim naechsten Speichern still zu verschwinden.
+     *
+     * @param array<string, mixed> $settings
+     * @param mixed                $value
+     */
+    public static function renderGroupPicker($settings, $value): string
+    {
+        $paramName = (string) ($settings['param_name'] ?? 'groups');
+        $selected = GroupSync::parseIds(is_scalar($value) ? (string) $value : '');
+        $names = [];
+        $sections = '';
+
+        foreach (GroupSettings::enabledHomepages() as $homepageId => $homepage) {
+            $items = '';
+
+            foreach (GroupSync::groupsFor((int) $homepageId) as $group) {
+                $id = (int) ($group['id'] ?? 0);
+                $name = (string) ($group['name'] ?? '');
+
+                if ($id <= 0) {
+                    continue;
+                }
+
+                $names[$id] = $name;
+                $items .= sprintf(
+                    '<label class="ctp-wpb-picker__option"><input type="checkbox" value="%1$d" data-name="%2$s"%3$s /> <span>%4$s</span></label>',
+                    $id,
+                    esc_attr($name),
+                    in_array($id, $selected, true) ? ' checked="checked"' : '',
+                    esc_html($name)
+                );
+            }
+
+            if ($items === '') {
+                continue;
+            }
+
+            $sections .= sprintf(
+                '<fieldset class="ctp-wpb-picker__homepage"><legend>%1$s</legend><div class="ctp-wpb-picker__options">%2$s</div></fieldset>',
+                esc_html($homepage['name'] !== '' ? $homepage['name'] : sprintf('#%d', (int) $homepageId)),
+                $items
+            );
+        }
+
+        /* translators: %d: ID of a selected group that is no longer available */
+        $missingLabel = __('#%d (nicht mehr verfügbar)', 'churchtools-plugin');
+        $order = '';
+
+        foreach ($selected as $id) {
+            $order .= self::pickerOrderItem($id, $names[$id] ?? sprintf($missingLabel, $id), !isset($names[$id]));
+        }
+
+        return sprintf(
+            '<div class="ctp-wpb-picker" data-missing-label="%1$s" data-up-label="%2$s" data-down-label="%3$s" data-remove-label="%4$s">'
+                . '<input type="hidden" name="%5$s" class="wpb_vc_param_value %5$s %6$s_field" value="%7$s" />'
+                . '<div class="ctp-wpb-picker__selected">'
+                . '<p class="ctp-wpb-picker__heading">%8$s</p>'
+                . '<ol class="ctp-wpb-picker__order">%9$s</ol>'
+                . '<p class="ctp-wpb-picker__empty"%10$s>%11$s</p>'
+                . '</div>'
+                . '%12$s'
+                . '</div>',
+            esc_attr($missingLabel),
+            esc_attr__('Nach oben', 'churchtools-plugin'),
+            esc_attr__('Nach unten', 'churchtools-plugin'),
+            esc_attr__('Entfernen', 'churchtools-plugin'),
+            esc_attr($paramName),
+            esc_attr(self::GROUP_PICKER_TYPE),
+            esc_attr(implode(',', $selected)),
+            esc_html__('Ausgewählt – in dieser Reihenfolge auf der Seite', 'churchtools-plugin'),
+            $order,
+            $selected === [] ? '' : ' hidden',
+            esc_html__('Keine einzelnen Gruppen gewählt – es gilt die Gruppen-Homepage.', 'churchtools-plugin'),
+            $sections === ''
+                ? '<p class="ctp-wpb-picker__none">' . esc_html__('Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage anhaken.', 'churchtools-plugin') . '</p>'
+                : sprintf(
+                    '<input type="search" class="ctp-wpb-picker__filter" placeholder="%1$s" aria-label="%1$s" /><div class="ctp-wpb-picker__homepages">%2$s</div>',
+                    esc_attr__('Gruppen filtern …', 'churchtools-plugin'),
+                    $sections
+                )
+        );
+    }
+
+    /** Ein Eintrag der Liste „Ausgewaehlt" - das Skript baut dieselbe Form nach. */
+    private static function pickerOrderItem(int $id, string $name, bool $missing): string
+    {
+        return sprintf(
+            '<li class="ctp-wpb-picker__item%1$s" data-id="%2$d"><span class="ctp-wpb-picker__name">%3$s</span>'
+                . '<button type="button" class="button-link" data-action="up" aria-label="%4$s">&uarr;</button>'
+                . '<button type="button" class="button-link" data-action="down" aria-label="%5$s">&darr;</button>'
+                . '<button type="button" class="button-link" data-action="remove" aria-label="%6$s">&times;</button></li>',
+            $missing ? ' ctp-wpb-picker__item--missing' : '',
+            $id,
+            esc_html($name),
+            esc_attr__('Nach oben', 'churchtools-plugin'),
+            esc_attr__('Nach unten', 'churchtools-plugin'),
+            esc_attr__('Entfernen', 'churchtools-plugin')
+        );
+    }
+
+    /**
+     * Die Gestaltung der Auswahl, im selben Inline-Stylesheet wie die Symbole.
+     * Mehrspaltig ab genuegend Breite, damit 20 Gruppen nicht eine lange
+     * Spalte werden; jede Option einzeilig bis zur Spaltenbreite, dann mit
+     * sauberem Umbruch innerhalb ihrer Zelle statt mitten im Fliesstext.
+     */
+    private static function groupPickerCss(): string
+    {
+        return '.ctp-wpb-picker{display:grid;gap:12px;}'
+            . '.ctp-wpb-picker__selected{padding:10px 12px;border:1px solid #dcdcde;border-radius:4px;background:#f6f7f7;}'
+            . '.ctp-wpb-picker__heading{margin:0 0 6px;font-weight:600;}'
+            // Eigener Zaehler: display:flex am Eintrag nimmt der <ol> ihre Nummern.
+            . '.ctp-wpb-picker__order{margin:0;padding:0;list-style:none;counter-reset:ctp-pick;}'
+            . '.ctp-wpb-picker__item{display:flex;align-items:center;gap:6px;margin:2px 0;counter-increment:ctp-pick;}'
+            . '.ctp-wpb-picker__item::before{content:counter(ctp-pick) ".";min-width:1.6em;color:#646970;}'
+            . '.ctp-wpb-picker__item .ctp-wpb-picker__name{flex:1;}'
+            . '.ctp-wpb-picker__item--missing .ctp-wpb-picker__name{color:#b32d2e;}'
+            . '.ctp-wpb-picker__item .button-link{min-width:24px;text-align:center;text-decoration:none;font-size:15px;}'
+            . '.ctp-wpb-picker__empty{margin:0;color:#646970;}'
+            . '.ctp-wpb-picker__filter{width:100%;max-width:320px;}'
+            . '.ctp-wpb-picker__homepages{display:grid;gap:10px;}'
+            . '.ctp-wpb-picker__homepage{margin:0;padding:8px 12px;border:1px solid #dcdcde;border-radius:4px;}'
+            . '.ctp-wpb-picker__homepage legend{padding:0 4px;font-weight:600;}'
+            . '.ctp-wpb-picker__options{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 16px;}'
+            . '.ctp-wpb-picker__option{display:flex;align-items:flex-start;gap:6px;margin:0;line-height:1.4;}'
+            . '.ctp-wpb-picker__option input{margin-top:2px;flex-shrink:0;}'
+            . '.ctp-wpb-picker [hidden]{display:none !important;}';
     }
 }

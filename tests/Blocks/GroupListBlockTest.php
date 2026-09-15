@@ -51,11 +51,47 @@ final class GroupListBlockTest extends TestCase
     /** Im WPBakery-Baustein stehen die Namen der gewaehlten Gruppen, nicht ihre IDs. */
     public function testWpBakeryShowsGroupNamesInTheElement(): void
     {
-        $param = ['type' => 'checkbox', 'param_name' => 'groups', 'value' => ['Chor (Kleingruppen, Mitarbeit)' => '514', 'Hauskreis (Kleingruppen)' => '269']];
+        $param = ['type' => WpBakeryIntegration::GROUP_PICKER_TYPE, 'param_name' => 'groups', 'ctp_choices' => ['Chor (Kleingruppen, Mitarbeit)' => '514', 'Hauskreis (Kleingruppen)' => '269']];
 
         $label = (new WpBakeryIntegration())->adminLabelValue('269,514,999', $param, ['base' => 'ctp_groups']);
 
         $this->assertSame('Hauskreis (Kleingruppen), Chor (Kleingruppen, Mitarbeit), #999', $label);
+    }
+
+    /**
+     * Das Feld „Einzelne Gruppen": Gespeichert wird allein das versteckte Feld
+     * mit der Klasse wpb_vc_param_value (WPBakerys Vertrag fuer eigene
+     * Feldtypen); die Liste „Ausgewaehlt" steht in der gespeicherten
+     * Reihenfolge, gliedert nach Homepage und behaelt eine verschwundene ID.
+     */
+    public function testTheGroupPickerRendersTheSavedSelection(): void
+    {
+        $html = WpBakeryIntegration::renderGroupPicker(['param_name' => 'groups', 'type' => WpBakeryIntegration::GROUP_PICKER_TYPE], '514,999,269');
+
+        $this->assertMatchesRegularExpression('/<input type="hidden" name="groups" class="wpb_vc_param_value groups ctp_group_picker_field" value="514,999,269" \/>/', $html);
+
+        preg_match_all('/<li class="ctp-wpb-picker__item[^"]*" data-id="(\d+)"/', $html, $order);
+        $this->assertSame(['514', '999', '269'], $order[1]);
+        $this->assertStringContainsString('ctp-wpb-picker__item--missing" data-id="999"', $html);
+        $this->assertStringContainsString('#999 (nicht mehr verfügbar)', $html);
+
+        $this->assertStringContainsString('<legend>Kleingruppen</legend>', $html);
+        $this->assertStringContainsString('<legend>Mitarbeit</legend>', $html);
+        $this->assertSame(2, substr_count($html, 'value="514" data-name="Chor" checked="checked"'), 'Chor steht auf beiden Homepages, beide Haken sind gesetzt.');
+        $this->assertStringContainsString('value="830" data-name="Hauskreis" />', $html, 'Nicht gewaehlte Gruppen ohne Haken.');
+        $this->assertStringContainsString('class="ctp-wpb-picker__empty" hidden', $html);
+    }
+
+    public function testThePickerEscapesNamesAndStartsEmpty(): void
+    {
+        ctp_test_set_option(GroupSync::DATA_OPTION, [9 => ['groups' => [$this->group(1, 'Wine <b>&</b> "Dine"')]]]);
+
+        $html = WpBakeryIntegration::renderGroupPicker(['param_name' => 'groups'], '');
+
+        $this->assertStringNotContainsString('<b>', $html);
+        $this->assertStringContainsString('data-name="Wine &lt;b&gt;&amp;&lt;/b&gt; &quot;Dine&quot;"', $html);
+        $this->assertStringContainsString('value="" />', $html);
+        $this->assertStringNotContainsString('ctp-wpb-picker__empty" hidden', $html);
     }
 
     private function group(int $id, string $name): array

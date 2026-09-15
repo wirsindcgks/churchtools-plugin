@@ -319,4 +319,29 @@ final class CardDesignTest extends TestCase
             );
         }
     }
+
+    /**
+     * Der Button nach ChurchTools steht als Link mitten im Seiteninhalt, wo
+     * Themes Links gestalten - auf der Live-Seite ueberschrieb Uncode ihn
+     * (Nutzerbefund 2026-09-15). Farben und Rand muessen deshalb in jedem
+     * Link-Zustand gegen das Theme gewinnen und aus den Design-Variablen kommen.
+     */
+    public function testTheChurchToolsButtonKeepsTheDesignColoursInEveryLinkState(): void
+    {
+        $css = (string) file_get_contents(CTP_PLUGIN_DIR . 'assets/css/frontend.css');
+
+        $erwartet = [
+            ':visited' => ['color: var(--ctp-color-button-text) !important', 'background: var(--ctp-color-button) !important', 'border: 1px solid var(--ctp-color-button-border) !important'],
+            ':hover' => ['color: var(--ctp-color-button-strong-text) !important', 'background: var(--ctp-color-button-strong) !important'],
+            ':focus' => ['color: var(--ctp-color-button-strong-text) !important'],
+        ];
+
+        foreach ($erwartet as $zustand => $regeln) {
+            $this->assertSame(1, preg_match('/\.ctp-events \.ctp-events__cta' . preg_quote($zustand, '/') . '\s*[,{][^}]*\}/', $css, $block), "Kein Regelblock fuer \"{$zustand}\".");
+
+            foreach ($regeln as $regel) {
+                $this->assertStringContainsString($regel, $block[0], "Im Zustand \"{$zustand}\" fehlt: {$regel}");
+            }
+        }
+    }
 }
