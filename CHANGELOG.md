@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.2] - 2026-09-15
+
+### Fixed
+
+- **Beim Überfahren übernahm der Button „In ChurchTools ansehen“ die Akzentfarbe des Themes** statt der Buttonfarbe aus dem Design. Betroffen waren alle Buttons des Plugins, die technisch Links sind – auch „Zurück“, „Importieren“ und „Abonnieren“ in der Detailansicht; Themes wie Uncode färben Links mit `!important` ein. Alle Buttons folgen jetzt in jedem Zustand den Design-Einstellungen, und zwar nach denselben Regeln: „Zurück“, „Weitere Termine laden“ und „In ChurchTools ansehen“ füllen sich beim Überfahren, die kleinen Buttons der Detailansicht bekommen eine leichte Tönung.
+
+### Changed
+
+- Die Auswahl „Nur dieser Termin“ / „Alle Termine“ unter „Importieren“ verhält sich beim Überfahren wie die übrigen kleinen Buttons.
+- Gefüllt erscheint ein Button nur noch beim Überfahren und bei Tastaturfokus, nicht mehr nach einem Mausklick, bis woanders hingeklickt wird.
+
 ## [1.29.1] - 2026-09-15
 
 ### Changed

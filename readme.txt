@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.29.1
+Stable tag: 1.29.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -274,6 +274,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.29.2 =
+
+Behebt, dass Buttons des Plugins beim Überfahren die Akzentfarbe des Themes übernahmen – sichtbar vor allem am Button „In ChurchTools ansehen“. Alle Buttons folgen jetzt einheitlich den Design-Einstellungen. Nach dem Update den Seiten-Cache leeren.
+
 = 1.29.1 =
 
 Gruppen mit mehr als 10 freien Plätzen zeigen „10+ Plätze frei“ statt der genauen Zahl.
@@ -433,6 +437,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.29.2 =
+
+* Behoben: Buttons, die technisch Links sind („In ChurchTools ansehen“, „Zurück“, „Importieren“, „Abonnieren“), übernahmen beim Überfahren die Akzentfarbe des Themes
+* Geändert: Alle Buttons folgen einem gemeinsamen Verhalten beim Überfahren; die Auswahl unter „Importieren“ wie die übrigen kleinen Buttons
+* Geändert: Gefüllt nur beim Überfahren und bei Tastaturfokus, nicht mehr nach einem Mausklick
 
 = 1.29.1 =
 
