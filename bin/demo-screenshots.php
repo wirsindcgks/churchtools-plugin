@@ -260,8 +260,16 @@ file_put_contents(
 $shareTermin = $termine[0];
 $shareTermin['detail_url'] = 'https://musterkirche.de/termine/gottesdienst-06-09-2026/';
 
+/*
+ * Neben „Teilen" gibt es seit 1.18.0 „Importieren" und seit 1.25.0
+ * „Abonnieren". Im Popup stehen zwei davon - drei werden dort eng, und die
+ * Doku raet genau davon ab -, auf der eigenen Seite alle drei, damit jeder
+ * Knopf einmal im Bild ist.
+ */
 $shareEnabled = true;
-$order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share'];
+$icsEnabled = true;
+$subscribeEnabled = false;
+$order = ['media', 'calendar', 'title', 'subtitle', 'date', 'time', 'location', 'description', 'share', 'ics', 'subscribe'];
 
 $event = $shareTermin;
 $detailContext = 'popup';
@@ -269,6 +277,7 @@ ob_start();
 require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detail-content.php';
 $sharePopupHtml = (string) ob_get_clean();
 
+$subscribeEnabled = true;
 $event = $shareTermin;
 $detailContext = 'page';
 ob_start();

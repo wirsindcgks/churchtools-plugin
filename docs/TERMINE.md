@@ -86,11 +86,13 @@ Ein Klick auf einen Termin öffnet seine Details – als **Popup** auf derselben
 
 Der „Teilen“-Button steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert“.
 
-<img src="screenshots/teilen-popup.png" width="440" alt="Popup mit dem Teilen-Button unter der Beschreibung">
+Im Bild zusammen mit dem Importieren-Button:
 
-Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante – hier mit der Rückmeldung nach einem Klick am Rechner:
+<img src="screenshots/teilen-popup.png" width="440" alt="Popup mit Teilen- und Importieren-Button unter der Beschreibung">
 
-<img src="screenshots/teilen-seite.png" width="600" alt="Eigene Terminseite mit Teilen-Button und der Meldung Link kopiert">
+Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante – hier mit der Rückmeldung nach einem Klick am Rechner, daneben Importieren und Abonnieren:
+
+<img src="screenshots/teilen-seite.png" width="600" alt="Eigene Terminseite mit Teilen-, Importieren- und Abonnieren-Button, dazu die Meldung Link kopiert">
 
 ### Importieren
 
