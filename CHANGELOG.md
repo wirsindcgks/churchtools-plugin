@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.3] - 2026-09-15
+
+### Fixed
+
+- **Gruppenbilder in voller Auflösung.** ChurchTools lieferte unter der Bildadresse einer Gruppe ohne weitere Angaben nur ein Vorschaubild mit 150 × 150 Pixeln, das auf einer Kachel unscharf wirkte. Das Plugin fragt jetzt bis zu 1600 Pixel an, im Seitenverhältnis des Originals und mit dem in ChurchTools gewählten Bildausschnitt; kleinere Originale werden nicht vergrößert. Der nächste Gruppen-Abgleich lädt alle Gruppenbilder einmal neu und entfernt die alten.
+
+### Changed
+
+- **Beschreibung und Installation in den Plugin-Details gekürzt.** Die Installation beschreibt jetzt den Weg über die Release-ZIP statt des Hochladens eines Plugin-Ordners. Die ausführliche Anleitung mit Bildern steht im Repository unter `docs/`.
+
 ## [1.29.2] - 2026-09-15
 
 ### Fixed

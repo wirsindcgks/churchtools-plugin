@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.29.2
+Stable tag: 1.29.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -274,6 +274,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.29.3 =
+
+Gruppenbilder erscheinen in voller Auflösung statt als unscharfe Vorschau. Der nächste Gruppen-Abgleich lädt dafür alle Gruppenbilder einmal neu; wer nicht warten will, klickt „Gruppen jetzt synchronisieren“. Danach den Seiten-Cache leeren.
+
 = 1.29.2 =
 
 Behebt, dass Buttons des Plugins beim Überfahren die Akzentfarbe des Themes übernahmen – sichtbar vor allem am Button „In ChurchTools ansehen“. Alle Buttons folgen jetzt einheitlich den Design-Einstellungen. Nach dem Update den Seiten-Cache leeren.
@@ -437,6 +441,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.29.3 =
+
+* Behoben: Gruppenbilder kamen nur als Vorschaubild mit 150 Pixeln an und wirkten auf der Kachel unscharf; jetzt bis 1600 Pixel, im Seitenverhältnis des Originals
+* Geändert: Beschreibung und Installation in den Plugin-Details gekürzt, die Installation beschreibt den Weg über die Release-ZIP
 
 = 1.29.2 =
 
