@@ -151,6 +151,14 @@ Jede Ansicht liegt als eigenständige Template-Datei vor (`event-list.php`, `eve
 
 == Frequently Asked Questions ==
 
+= Was ändert sich mit Version 2.0? =
+
+Das Plugin heißt dann „Connect ChurchTools“, braucht PHP 8.3 und WordPress 6.6, und Übergangswege für Einstellungen aus älteren Versionen entfallen: der API-Key in der Verschlüsselung vor 1.27.0, die Räume-Einstellung aus 1.12 und die Weiterleitung alter Backend-Adressen. Einstellungen, Kalender- und Gruppenauswahl, Design, Shortcodes, Blöcke, WPBakery-Elemente und die Adressen der Terminseiten und Abos bleiben erhalten; Updates kommen weiter auf dem gewohnten Weg. Die Übersicht im Backend prüft, was auf der eigenen Website vorher noch zu tun ist.
+
+Ab 2.0 gilt eine Kompatibilitätszusage: Shortcode-Attribute, die überschreibbaren Vorlagen samt ihrer Variablen, die dort verwendeten CSS-Klassen, die CSS-Variablen für eigene Farben und die öffentlichen Adressen ändern sich nur noch mit einer neuen Hauptversion. Die Einzelheiten stehen in `docs/COMPATIBILITY.md` im Repository.
+
+Connect ChurchTools ist ein unabhängiges Projekt und steht in keiner Verbindung zur ChurchTools Innovations GmbH, der Herstellerin von ChurchTools. ChurchTools ist eine Marke der ChurchTools Innovations GmbH.
+
 = Wie weit im Voraus werden Termine synchronisiert? =
 
 Standardmäßig 365 Tage, einstellbar unter Events → Synchronisation. Der Wert bestimmt zugleich, wie weit „Weitere Termine laden“ im Frontend reicht. Wird er verkleinert, entfernt der nächste Sync die Termine jenseits des neuen Zeitraums wieder aus der Datenbank – sie kommen zurück, sobald der Zeitraum wieder vergrößert wird.

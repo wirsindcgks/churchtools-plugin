@@ -1622,3 +1622,21 @@ ul.ctp-hint-list li::before {
     width: 16px;
     height: 16px;
 }
+
+/* Vorbereitung auf 2.0 (Admin\MajorVersionNotice::renderOverviewPanel()):
+ * Symbol vorn in der Farbe des Befunds, Text daneben. */
+.ctp-admin .ctp-readiness__icon {
+    width: 28px;
+}
+
+.ctp-admin .ctp-readiness__row--ok .dashicons {
+    color: #00a32a;
+}
+
+.ctp-admin .ctp-readiness__row--action .dashicons {
+    color: #d63638;
+}
+
+.ctp-admin .ctp-readiness__row--hint .dashicons {
+    color: #2271b1;
+}

@@ -3204,6 +3204,8 @@ final class SettingsPage
 
         <?php GroupsTab::renderOverviewPanel(); ?>
 
+        <?php MajorVersionNotice::renderOverviewPanel(); ?>
+
         <div class="ctp-panel">
             <h2><?php esc_html_e('Version', 'churchtools-plugin'); ?></h2>
             <table class="widefat striped ctp-borderless ctp-keyvalue-table">

@@ -187,6 +187,12 @@ Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools 
 
 **Grenzen**: eine ChurchTools-Instanz pro WordPress-Installation, Multisite ungetestet, kein Monatskalender-Raster.
 
+## Version 2.0 kommt
+
+Mit 2.0 heißt das Plugin **Connect ChurchTools**, braucht PHP 8.3 und WordPress 6.6, und Übergangswege für Einstellungen aus älteren Versionen entfallen. Einstellungen, Shortcodes, Blöcke und Adressen bleiben erhalten. Was auf der eigenen Website vorher noch zu tun ist, zeigt die **Übersicht** im Backend. Was ab 2.0 nur noch mit einer neuen Hauptversion geändert wird, steht in der [Kompatibilitätszusage](docs/COMPATIBILITY.md).
+
+Connect ChurchTools ist ein unabhängiges Projekt und steht in keiner Verbindung zur ChurchTools Innovations GmbH, der Herstellerin von ChurchTools.
+
 ## Fragen und Antworten
 
 Antworten zu Sync-Intervall und WP-Cron, deaktivierten Kalendern, Serverumzügen und Datenschutz stehen im FAQ-Teil der [readme.txt](readme.txt) — im Backend bequemer zu lesen unter *Plugins → ChurchTools Events → Details*.
@@ -195,7 +201,7 @@ Ein Problem gefunden oder etwas vermisst? [Issues](https://github.com/wirsindcgk
 
 ## Für Entwickler
 
-Aufbau, Klassen, Theme-Overrides, lokale Entwicklung und der Release-Ablauf: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Alle nennenswerten Änderungen stehen im [Changelog](CHANGELOG.md).
+Aufbau, Klassen, Theme-Overrides, lokale Entwicklung und der Release-Ablauf: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Was stabil bleibt und was nicht: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Alle nennenswerten Änderungen stehen im [Changelog](CHANGELOG.md).
 
 ## Lizenz
 

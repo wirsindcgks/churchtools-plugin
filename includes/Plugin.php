@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin;
 
 use ChurchToolsPlugin\Admin\GroupsTab;
+use ChurchToolsPlugin\Admin\MajorVersionNotice;
 use ChurchToolsPlugin\Admin\PrivacyPolicy;
 use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Admin\SyncHealthNotice;
@@ -55,6 +56,7 @@ final class Plugin
             (new GroupsTab())->register();
             (new SyncHealthNotice())->register();
             (new PrivacyPolicy())->register();
+            (new MajorVersionNotice())->register();
         }
 
         (new Shortcode())->register();
