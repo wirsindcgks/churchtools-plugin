@@ -1585,6 +1585,8 @@ final class SettingsPage
             __('Jetzt synchronisieren', 'churchtools-plugin'),
             __('Läuft sofort, unabhängig vom Intervall. Änderungen unten vorher speichern.', 'churchtools-plugin')
         );
+
+        self::renderImageWarning(SyncEngine::getImageWarning(), 'events');
     }
 
     /**
@@ -2961,6 +2963,48 @@ final class SettingsPage
     }
 
     /**
+     * Der Hinweis auf Bilder, die der letzte Lauf nicht uebernehmen konnte -
+     * fuer Termine und Gruppen dieselbe Form, gezeigt auf der Uebersicht und
+     * dort, wo der jeweilige Knopf „synchronisieren" steht.
+     *
+     * Gelb und nicht rot, und neben dem Sync-Fehler statt an seiner Stelle:
+     * Der Lauf selbst ist gelungen (siehe Sync\ImageImportFailures). Bis
+     * 1.32.1 blieb ein gescheiterter Import ganz still, und ein 401 beim
+     * Bilddownload fiel zwei Wochen lang niemandem auf.
+     *
+     * Zahl-neutral formuliert, weil bin/make-pot.php keine Plurale kann.
+     *
+     * @param array{time: string, count: int, reasons: string}|null $warning
+     * @param 'events'|'groups'                                    $subject
+     */
+    public static function renderImageWarning(?array $warning, string $subject): void
+    {
+        if ($warning === null) {
+            return;
+        }
+
+        $format = $subject === 'groups'
+            /* translators: 1: date/time of the group sync, 2: number of groups whose image failed, 3: reasons with counts */
+            ? __('Beim letzten Gruppen-Sync (%1$s) ließen sich nicht alle Gruppenbilder übernehmen – betroffene Gruppen: %2$d. Grund: %3$s. Die Gruppen selbst sind aktuell; jeder weitere Sync versucht es erneut.', 'churchtools-plugin')
+            /* translators: 1: date/time of the sync, 2: number of series whose image failed, 3: reasons with counts */
+            : __('Beim letzten Sync (%1$s) ließen sich nicht alle Terminbilder übernehmen – betroffene Serien: %2$d. Grund: %3$s. Die Termine selbst sind aktuell; jeder weitere Sync versucht es erneut.', 'churchtools-plugin');
+        ?>
+        <div class="notice notice-warning inline">
+            <p>
+                <?php
+                echo esc_html(sprintf(
+                    $format,
+                    mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $warning['time']),
+                    $warning['count'],
+                    wp_html_excerpt($warning['reasons'], 600, '…')
+                ));
+                ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
      * Der Tab „Updates“ - seit dem Wegfall des GitHub-Tokens ohne eine einzige
      * Einstellung, dafuer mit der Auskunft, fuer die man ihn tatsaechlich
      * aufsucht: Steht ein Update an, wann wurde zuletzt nachgesehen, und was
@@ -3168,6 +3212,7 @@ final class SettingsPage
                     </p>
                 </div>
             <?php endif; ?>
+            <?php self::renderImageWarning(SyncEngine::getImageWarning(), 'events'); ?>
             <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) : ?>
                 <div class="notice notice-info inline">
                     <p>

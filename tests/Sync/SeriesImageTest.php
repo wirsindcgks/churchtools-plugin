@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Tests\Sync;
 
 use ChurchToolsPlugin\Db\EventRepository;
+use ChurchToolsPlugin\Sync\ImageImportFailures;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use WP_Error;
 
 /**
  * Regression coverage for the "recurring series loses its image" bug found on
@@ -32,6 +34,7 @@ final class SeriesImageTest extends TestCase
     {
         ctp_test_reset_post_meta();
         ctp_test_reset_deleted_attachments();
+        ctp_test_reset_media();
     }
 
     public function testUnchangedImageStillStampsOccurrencesAddedSinceTheImport(): void
@@ -77,9 +80,77 @@ final class SeriesImageTest extends TestCase
         $this->syncSeriesImage($repository, 5687, '');
     }
 
-    private function syncSeriesImage(EventRepository $repository, int $ctEventId, string $imageUrl): void
+    /**
+     * Der Befund vom 2026-09-15: ChurchTools beantwortete den Bilddownload mit
+     * 401, der Import gab still null zurueck, und die Serie blieb ohne Bild,
+     * ohne dass es irgendwo stand. Der Lauf geht weiter - aber der Grund
+     * landet samt Status im Sammler.
+     */
+    public function testAFailedDownloadIsRecordedWithItsHttpStatus(): void
+    {
+        $url = 'https://musterkirche.church.tools/?q=public/filedownload&id=7281';
+        ctp_test_queue_download(new WP_Error('http_404', 'Unauthorized', ['code' => 401, 'body' => '{"message":"Die Berechtigung appointment_image ist notwendig"}']));
+
+        $repository = $this->createMock(EventRepository::class);
+        $repository->method('getSeriesAttachmentId')->willReturn(null);
+        $repository->expects($this->never())->method('setSeriesAttachment');
+
+        $failures = new ImageImportFailures();
+        $this->syncSeriesImage($repository, 5687, $url, $failures);
+
+        $this->assertSame([$url], ctp_test_download_calls());
+        $this->assertSame(['HTTP 401 Unauthorized' => 1], $failures->reasons());
+    }
+
+    /** Eine Anmeldeseite mit Status 200 ist auch ein gescheiterter Import. */
+    public function testADownloadThatIsNoImageIsRecorded(): void
+    {
+        ctp_test_queue_download('<!DOCTYPE html><title>Anmelden</title>');
+
+        $failures = new ImageImportFailures();
+
+        $this->assertNull(SyncEngine::importImage('https://musterkirche.church.tools/images/7281/abc', '_ctp_source_image_url', 'churchtools-event-', $failures));
+        $this->assertSame(['Die Antwort ist kein Bild' => 1], $failures->reasons());
+    }
+
+    public function testAFailedSideloadIsRecorded(): void
+    {
+        ctp_test_queue_download(self::png());
+        ctp_test_queue_sideload(new WP_Error('upload_error', 'Sorry, you are not allowed to upload this file type.'));
+
+        $failures = new ImageImportFailures();
+
+        $this->assertNull(SyncEngine::importImage('https://musterkirche.church.tools/images/7281/abc', '_ctp_source_image_url', 'churchtools-event-', $failures));
+        $this->assertSame(['Sorry, you are not allowed to upload this file type.' => 1], $failures->reasons());
+    }
+
+    /** Das Gegenstueck: Ein gelungener Import meldet nichts. */
+    public function testASuccessfulImportRecordsNothing(): void
+    {
+        $url = 'https://musterkirche.church.tools/images/7281/abc';
+        ctp_test_queue_download(self::png());
+        ctp_test_queue_sideload(77);
+
+        $repository = $this->createMock(EventRepository::class);
+        $repository->method('getSeriesAttachmentId')->willReturn(null);
+        $repository->expects($this->once())->method('setSeriesAttachment')->with(5687, 77);
+
+        $failures = new ImageImportFailures();
+        $this->syncSeriesImage($repository, 5687, $url, $failures);
+
+        $this->assertSame(0, $failures->count());
+        $this->assertSame($url, get_post_meta(77, '_ctp_source_image_url', true));
+    }
+
+    /** Ein Pixel, genug fuer getimagesize(). */
+    private static function png(): string
+    {
+        return (string) base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==');
+    }
+
+    private function syncSeriesImage(EventRepository $repository, int $ctEventId, string $imageUrl, ?ImageImportFailures $failures = null): void
     {
         $method = new ReflectionMethod(SyncEngine::class, 'syncSeriesImage');
-        $method->invoke(null, $repository, $ctEventId, $imageUrl);
+        $method->invoke(null, $repository, $ctEventId, $imageUrl, $failures);
     }
 }

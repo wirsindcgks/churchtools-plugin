@@ -798,21 +798,137 @@ function wp_remote_request(string $url, array $args = [])
 }
 
 /**
- * Nur als Typ gebraucht: is_wp_error() unterscheidet daran den Netzfehler von
- * einer Antwort. Die Testreihe stellt keinen her — sie prüft den Netzfehler
- * über den Statuscode, den Client::request() ohnehin in dieselbe Ausnahme
- * überführt.
+ * is_wp_error() unterscheidet daran den Netzfehler von einer Antwort. Mit der
+ * Signatur von WordPress (Code, Meldung, Daten), weil der Bild-Import den
+ * HTTP-Status aus den Daten liest — download_url() schreibt ihn nicht in die
+ * Meldung (siehe ImageImportFailures::reasonFor()).
  */
 class WP_Error
 {
-    public function __construct(private readonly string $message = '')
+    public function __construct(
+        private readonly string $code = '',
+        private readonly string $message = '',
+        private readonly mixed $data = ''
+    ) {
+    }
+
+    public function get_error_code(): string
     {
+        return $this->code;
     }
 
     public function get_error_message(): string
     {
         return $this->message;
     }
+
+    public function get_error_data(): mixed
+    {
+        return $this->data;
+    }
+}
+
+/**
+ * Der Ersatz für die Mediathek-Funktionen, die SyncEngine::importImage()
+ * braucht. download_url() und media_handle_sideload() nehmen ihr Ergebnis aus
+ * einer Warteschlange wie wp_remote_request(); eine leere Schlange ist ein
+ * Fehler, damit ein unerwarteter Download auffällt.
+ *
+ * Ein String aus der Schlange von download_url() ist der Inhalt der
+ * „heruntergeladenen" Datei — sie wird in eine echte Temp-Datei geschrieben,
+ * weil importImage() sie mit getimagesize() prüft.
+ */
+$GLOBALS['ctp_test_downloads'] = [];
+$GLOBALS['ctp_test_sideloads'] = [];
+$GLOBALS['ctp_test_download_calls'] = [];
+
+function ctp_test_queue_download($result): void
+{
+    $GLOBALS['ctp_test_downloads'][] = $result;
+}
+
+function ctp_test_queue_sideload($result): void
+{
+    $GLOBALS['ctp_test_sideloads'][] = $result;
+}
+
+function ctp_test_reset_media(): void
+{
+    $GLOBALS['ctp_test_downloads'] = [];
+    $GLOBALS['ctp_test_sideloads'] = [];
+    $GLOBALS['ctp_test_download_calls'] = [];
+}
+
+/** @return string[] */
+function ctp_test_download_calls(): array
+{
+    return $GLOBALS['ctp_test_download_calls'];
+}
+
+function download_url(string $url, int $timeout = 300, bool $signatureVerification = false)
+{
+    $GLOBALS['ctp_test_download_calls'][] = $url;
+
+    if ($GLOBALS['ctp_test_downloads'] === []) {
+        throw new RuntimeException('Unerwarteter Download: ' . $url);
+    }
+
+    $result = array_shift($GLOBALS['ctp_test_downloads']);
+
+    if ($result instanceof WP_Error) {
+        return $result;
+    }
+
+    $file = (string) tempnam(sys_get_temp_dir(), 'ctp-test-');
+    file_put_contents($file, (string) $result);
+
+    return $file;
+}
+
+/** Ohne Bildbearbeitung — importImage() fällt dann auf das Originalformat zurück. */
+function wp_get_image_editor(string $path, array $args = [])
+{
+    return new WP_Error('image_no_editor', 'No editor could be selected.');
+}
+
+function wp_delete_file(string $file): void
+{
+    if (is_file($file)) {
+        unlink($file);
+    }
+}
+
+function media_handle_sideload(array $fileArray, int $postId = 0, ?string $desc = null, array $postData = [])
+{
+    if ($GLOBALS['ctp_test_sideloads'] === []) {
+        throw new RuntimeException('Unerwarteter Sideload: ' . $fileArray['name']);
+    }
+
+    $result = array_shift($GLOBALS['ctp_test_sideloads']);
+
+    // Wie WordPress: Gelingt der Import, ist die Datei in die Mediathek
+    // verschoben; scheitert er, raeumt der Aufrufer sie ab.
+    if (!$result instanceof WP_Error) {
+        wp_delete_file($fileArray['tmp_name']);
+    }
+
+    return $result;
+}
+
+/**
+ * Nur da, damit importImage() wp-admin/includes/image.php nicht nachlädt —
+ * media_handle_sideload() oben braucht die Funktion selbst nicht.
+ */
+function wp_generate_attachment_metadata(int $attachmentId, string $file): array
+{
+    return [];
+}
+
+function update_post_meta(int $postId, string $key, $value): bool
+{
+    ctp_test_set_post_meta($postId, $key, $value);
+
+    return true;
 }
 
 function is_wp_error($thing): bool

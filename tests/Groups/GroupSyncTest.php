@@ -9,6 +9,7 @@ use ChurchToolsPlugin\Groups\GroupSync;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Sync\RunLock;
 use PHPUnit\Framework\TestCase;
+use WP_Error;
 
 /**
  * Die Antwortformen hier sind an der echten Instanz abgelesen (2026-09-14,
@@ -25,6 +26,7 @@ final class GroupSyncTest extends TestCase
         ctp_test_reset_http();
         ctp_test_reset_deleted_attachments();
         ctp_test_reset_post_meta();
+        ctp_test_reset_media();
         ctp_test_set_current_time('2026-09-14 12:00:00');
         ctp_test_install_wpdb();
     }
@@ -360,6 +362,42 @@ final class GroupSyncTest extends TestCase
 
         $this->assertSame([44 => 301], GroupSync::imageMap());
         $this->assertSame([], ctp_test_deleted_attachments());
+    }
+
+    /**
+     * Ein gescheitertes Bild haelt den Abgleich nicht an und ist kein
+     * Sync-Fehler - die Gruppen sind aktuell. Still bleibt es aber nicht mehr:
+     * Grund und Anzahl stehen als Warnung, bis ein Lauf ohne Fehlschlag sie
+     * abraeumt (wie bei den Terminen, Befund vom 2026-09-15).
+     */
+    public function testAFailedImageIsAWarningUntilARunImportsIt(): void
+    {
+        $this->configure([9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]]);
+        ctp_test_queue_http([$this->listEntry('9', 'Kleingruppen', 'AbC123')]);
+        ctp_test_queue_http(['groups' => [$this->group(44, 'Seniorenarbeit')]]);
+        ctp_test_queue_download(new WP_Error('http_404', 'Unauthorized', ['code' => 401]));
+
+        GroupSync::run();
+
+        $this->assertNull(GroupSync::getLastError());
+        $this->assertSame('2026-09-14 12:00:00', get_option(GroupSync::LAST_SYNC_OPTION));
+        $this->assertSame('Seniorenarbeit', GroupSync::groupsFor(9)[0]['name']);
+        $this->assertSame([], GroupSync::imageMap());
+        $this->assertSame([
+            'time' => '2026-09-14 12:00:00',
+            'count' => 1,
+            'reasons' => 'HTTP 401 Unauthorized (1×)',
+        ], GroupSync::getImageWarning());
+
+        ctp_test_queue_http([$this->listEntry('9', 'Kleingruppen', 'AbC123')]);
+        ctp_test_queue_http(['groups' => [$this->group(44, 'Seniorenarbeit')]]);
+        ctp_test_queue_download((string) base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=='));
+        ctp_test_queue_sideload(301);
+
+        GroupSync::run();
+
+        $this->assertSame([44 => 301], GroupSync::imageMap());
+        $this->assertNull(GroupSync::getImageWarning());
     }
 
     /**

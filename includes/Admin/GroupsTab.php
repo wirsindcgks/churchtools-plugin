@@ -228,6 +228,7 @@ final class GroupsTab
                     __('Gruppen jetzt synchronisieren', 'churchtools-plugin'),
                     __('Unabhängig vom Termin-Sync, mit eigenem Intervall.', 'churchtools-plugin')
                 );
+                SettingsPage::renderImageWarning(GroupSync::getImageWarning(), 'groups');
                 ?>
 
                 <table class="form-table" role="presentation">
@@ -413,6 +414,7 @@ final class GroupsTab
                         </p>
                     </div>
                 <?php endif; ?>
+                <?php SettingsPage::renderImageWarning(GroupSync::getImageWarning(), 'groups'); ?>
                 <?php $next = wp_next_scheduled(GroupSync::HOOK); ?>
                 <table class="widefat striped ctp-borderless ctp-keyvalue-table">
                     <tbody>

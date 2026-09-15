@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Groups;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
+use ChurchToolsPlugin\Sync\ImageImportFailures;
 use ChurchToolsPlugin\Sync\RunLock;
 use ChurchToolsPlugin\Sync\SyncEngine;
 use RuntimeException;
@@ -45,6 +46,12 @@ final class GroupSync
     public const IMAGES_OPTION = 'ctp_group_images';
 
     public const ERROR_OPTION = 'ctp_group_sync_error';
+
+    /**
+     * Welche Gruppenbilder der letzte Lauf nicht uebernehmen konnte - wie bei
+     * den Terminen eine Warnung neben dem Fehler (siehe ImageImportFailures).
+     */
+    public const IMAGE_WARNING_OPTION = 'ctp_group_image_warning';
 
     public const LAST_SYNC_OPTION = 'ctp_group_last_sync';
 
@@ -160,7 +167,10 @@ final class GroupSync
         // angehakten traegt - samt ihren Bildern, sofern keine andere Homepage
         // dieselbe Gruppe zeigt.
         update_option(self::DATA_OPTION, $data, false);
-        self::syncImages($data);
+
+        $imageFailures = new ImageImportFailures();
+        self::syncImages($data, $imageFailures);
+        $imageFailures->store(self::IMAGE_WARNING_OPTION, $now);
 
         if ($errors === []) {
             delete_option(self::ERROR_OPTION);
@@ -552,7 +562,7 @@ final class GroupSync
      * Anhangs selbst erkannt, nicht an der gespeicherten Adresse - ein
      * gescheiterter Download soll beim naechsten Lauf erneut versucht werden.
      */
-    private static function syncImages(array $data): void
+    private static function syncImages(array $data, ?ImageImportFailures $failures = null): void
     {
         $map = self::imageMap();
         $wanted = self::wantedImages($data);
@@ -566,7 +576,7 @@ final class GroupSync
                 continue;
             }
 
-            $imported = SyncEngine::importImage($url, self::IMAGE_META_KEY, 'churchtools-group-');
+            $imported = SyncEngine::importImage($url, self::IMAGE_META_KEY, 'churchtools-group-', $failures);
 
             if ($imported === null) {
                 // Das alte Bild bleibt stehen, bis ein neues da ist.
@@ -607,6 +617,14 @@ final class GroupSync
     }
 
     /**
+     * @return array{time: string, count: int, reasons: string}|null
+     */
+    public static function getImageWarning(): ?array
+    {
+        return ImageImportFailures::read(self::IMAGE_WARNING_OPTION);
+    }
+
+    /**
      * Raeumt alles ab, was die Gruppen angelegt haben - fuer uninstall.php,
      * das die Klasse nicht laden kann, steht dieselbe Liste dort noch einmal.
      */
@@ -617,6 +635,7 @@ final class GroupSync
             self::DATA_OPTION,
             self::IMAGES_OPTION,
             self::ERROR_OPTION,
+            self::IMAGE_WARNING_OPTION,
             self::LAST_SYNC_OPTION,
             self::HOMEPAGES_FETCHED_OPTION,
         ];

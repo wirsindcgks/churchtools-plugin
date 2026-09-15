@@ -39,6 +39,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     delete_option('ctp_calendars_fetched');
     delete_option('ctp_last_sync_error');
     delete_option('ctp_calendars_sync_error');
+    delete_option('ctp_image_import_warning');
     delete_option('ctp_empty_sync_runs');
     delete_option('ctp_db_version');
     delete_option('ctp_events_cache_version');
@@ -59,6 +60,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     delete_option('ctp_groups');
     delete_option('ctp_group_images');
     delete_option('ctp_group_sync_error');
+    delete_option('ctp_group_image_warning');
     delete_option('ctp_group_last_sync');
     delete_option('ctp_group_homepages_fetched');
 

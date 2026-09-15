@@ -65,7 +65,7 @@ Mehr zu den Adressen: [Termine anzeigen → Adressen der Terminseiten](TERMINE.m
 
 ## Wenn etwas nicht läuft
 
-Der Grund steht in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext. Weitere Antworten: [Gut zu wissen](GUT-ZU-WISSEN.md).
+Der Grund steht in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext. Fehlt ein Bild, das in ChurchTools hinterlegt ist, steht dort ein gelber Hinweis mit dem Grund, etwa „HTTP 401 Unauthorized (3×)“ – der Abgleich der Termine und Gruppen läuft trotzdem, und jeder weitere Lauf versucht die Bilder erneut. Gelingt das, verschwindet der Hinweis von selbst. Weitere Antworten: [Gut zu wissen](GUT-ZU-WISSEN.md).
 
 ## Den API-Key außerhalb der Datenbank ablegen
 

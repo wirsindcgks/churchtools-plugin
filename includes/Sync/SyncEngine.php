@@ -34,6 +34,13 @@ final class SyncEngine
     private const OPTION_EMPTY_RUNS = 'ctp_empty_sync_runs';
 
     /**
+     * Welche Terminbilder der letzte Lauf nicht uebernehmen konnte - eine
+     * Warnung neben dem Sync-Fehler, kein Sync-Fehler (siehe
+     * ImageImportFailures).
+     */
+    private const OPTION_IMAGE_WARNING = 'ctp_image_import_warning';
+
+    /**
      * Nach wie vielen leeren Antworten in Folge eine leere Antwort als richtig
      * gilt und geloescht werden darf - zusammen mit einer Mindestdauer, ueber
      * die sie sich erstrecken muessen. Siehe looksLikeApiFailure().
@@ -105,6 +112,9 @@ final class SyncEngine
             try {
                 self::cleanUpAfterLastCalendar();
                 delete_option(self::OPTION_LAST_SYNC_ERROR);
+                // Aus demselben Grund: Ohne Termine gibt es keine Bilder, die
+                // noch fehlen koennten.
+                delete_option(self::OPTION_IMAGE_WARNING);
             } catch (Throwable $exception) {
                 self::rememberError($exception);
             }
@@ -209,6 +219,17 @@ final class SyncEngine
             'time' => (string) $error['time'],
             'message' => (string) $error['message'],
         ];
+    }
+
+    /**
+     * Die Bilder, die der letzte Lauf nicht uebernehmen konnte - fuer die
+     * Uebersicht und den Tab „Synchronisation".
+     *
+     * @return array{time: string, count: int, reasons: string}|null
+     */
+    public static function getImageWarning(): ?array
+    {
+        return ImageImportFailures::read(self::OPTION_IMAGE_WARNING);
     }
 
     private static function rememberError(Throwable $exception): void
@@ -389,9 +410,16 @@ final class SyncEngine
             $keepOccurrenceKeys[] = $ctEventId . ':' . $row['start_date'];
         }
 
+        // Ein gescheiterter Import haelt den Lauf nicht an - die Termine sind
+        // das Wichtigere -, bleibt aber auch nicht mehr still (siehe
+        // ImageImportFailures).
+        $imageFailures = new ImageImportFailures();
+
         foreach ($seriesImageUrls as $ctEventId => $imageUrl) {
-            self::syncSeriesImage($repository, $ctEventId, $imageUrl);
+            self::syncSeriesImage($repository, $ctEventId, $imageUrl, $imageFailures);
         }
+
+        $imageFailures->store(self::OPTION_IMAGE_WARNING, current_time('mysql'));
 
         $repository->deleteOrphans($calendarIds, $from, $keepOccurrenceKeys);
 
@@ -733,8 +761,12 @@ final class SyncEngine
      * forever. Comparing against the attachment's own postmeta instead means we only
      * ever consider an import successful once it actually is.
      */
-    private static function syncSeriesImage(EventRepository $repository, int $ctEventId, string $newImageUrl): void
-    {
+    private static function syncSeriesImage(
+        EventRepository $repository,
+        int $ctEventId,
+        string $newImageUrl,
+        ?ImageImportFailures $failures = null
+    ): void {
         $previousAttachmentId = $repository->getSeriesAttachmentId($ctEventId);
 
         if ($newImageUrl === '') {
@@ -763,7 +795,7 @@ final class SyncEngine
             return;
         }
 
-        $newAttachmentId = self::importImage($newImageUrl);
+        $newAttachmentId = self::importImage($newImageUrl, '_ctp_source_image_url', 'churchtools-event-', $failures);
 
         if ($newAttachmentId === null) {
             return;
@@ -804,15 +836,31 @@ final class SyncEngine
     public static function importImage(
         string $url,
         string $sourceMetaKey = '_ctp_source_image_url',
-        string $filePrefix = 'churchtools-event-'
+        string $filePrefix = 'churchtools-event-',
+        ?ImageImportFailures $failures = null
     ): ?int {
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
+        // Nur laden, was noch fehlt - im Admin sind die Dateien schon da, und
+        // die Testreihe stellt die Funktionen ohne sie bereit.
+        if (!function_exists('media_handle_sideload')) {
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+        }
+
+        if (!function_exists('download_url')) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        if (!function_exists('wp_generate_attachment_metadata')) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+        }
 
         $downloadedFile = download_url($url);
 
         if (is_wp_error($downloadedFile)) {
+            $failures?->record(ImageImportFailures::reasonFor(
+                $downloadedFile->get_error_message(),
+                $downloadedFile->get_error_data()
+            ));
+
             return null;
         }
 
@@ -823,6 +871,9 @@ final class SyncEngine
         }
 
         if ($sideloadFile === null) {
+            // Typisch fuer eine Anmeldeseite, die mit 200 statt mit 401 kommt.
+            $failures?->record(__('Die Antwort ist kein Bild', 'churchtools-plugin'));
+
             return null;
         }
 
@@ -833,6 +884,10 @@ final class SyncEngine
 
         if (is_wp_error($attachmentId)) {
             wp_delete_file($sideloadFile);
+            $failures?->record(ImageImportFailures::reasonFor(
+                $attachmentId->get_error_message(),
+                $attachmentId->get_error_data()
+            ));
 
             return null;
         }
