@@ -22,11 +22,13 @@ final class Shortcode
      * [ctp_groups groups="514,269" layout="featured"] - einzelne Gruppen nach
      * ID, in dieser Reihenfolge, statt einer Homepage (plan.md, G1/G2). IDs und
      * keine Namen: Gruppennamen sind nicht eindeutig und werden oefter
-     * umbenannt als Homepages. Steht beides da, gilt `groups`.
+     * umbenannt als Homepages. Steht beides da, gilt `groups` - ausser
+     * `source="homepage"` sagt es anders (so schreibt es das WPBakery-Element).
      */
     public function renderGroups($atts): string
     {
         $atts = shortcode_atts([
+            'source' => '',
             'homepage' => '',
             'groups' => '',
             'layout' => 'grid',
@@ -34,6 +36,7 @@ final class Shortcode
         ], $atts, 'ctp_groups');
 
         return (new GroupListRenderer())->render([
+            'source' => (string) $atts['source'],
             'homepage' => (string) $atts['homepage'],
             'groups' => (string) $atts['groups'],
             'layout' => (string) $atts['layout'],

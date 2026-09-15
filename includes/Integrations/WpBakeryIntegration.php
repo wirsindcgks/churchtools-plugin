@@ -58,6 +58,12 @@ final class WpBakeryIntegration
         add_action('vc_frontend_editor_enqueue_js_css', [$this, 'enqueueElementIcon']);
 
         add_filter('vc_wpbakeryshortcode_single_param_html_holder_value', [$this, 'adminLabelValue'], 10, 3);
+
+        // Die Beschriftung im Baustein entsteht im Backend-Editor im Browser
+        // (vc.atts[typ].render), und das Skript des Feldtyps laedt WPBakery
+        // erst mit dem Bearbeitungsfenster - beim Laden der Seite stuenden
+        // sonst IDs statt Namen im Baustein (so im echten WPBakery 8.7 gesehen).
+        add_action('vc_backend_editor_enqueue_js_css', [$this, 'enqueueGroupPickerScript']);
     }
 
     /**
@@ -363,12 +369,35 @@ final class WpBakeryIntegration
             'icon' => self::GROUPS_ICON_CLASS,
             'params' => [
                 [
+                    // Erst die Frage, dann nur das passende Feld (Nutzerwunsch
+                    // 2026-09-15: „Sonst ist der Startscreen gleich ueberladen").
+                    //
+                    // WPBakery laesst beim Speichern jedes Feld weg, dessen
+                    // Abhaengigkeit nicht erfuellt ist, und ein Feld mit dem
+                    // Standardwert nur ohne `save_always` (vc.getMergedParams()
+                    // in backend.min.js, 7.9 nachgelesen). Die jeweils andere
+                    // Angabe faellt damit von selbst heraus; `save_always`
+                    // schreibt `source` trotzdem immer mit, damit der Shortcode
+                    // fuer sich lesbar bleibt und nicht von einem Standardwert
+                    // abhaengt, den man ihm nicht ansieht.
+                    'type' => 'dropdown',
+                    'heading' => __('Welche Gruppen?', 'churchtools-plugin'),
+                    'param_name' => 'source',
+                    'admin_label' => true,
+                    'std' => 'homepage',
+                    'save_always' => true,
+                    'value' => [
+                        __('Alle Gruppen einer Homepage', 'churchtools-plugin') => 'homepage',
+                        __('Einzelne Gruppen', 'churchtools-plugin') => 'groups',
+                    ],
+                ],
+                [
                     'type' => 'dropdown',
                     'heading' => __('Gruppen-Homepage', 'churchtools-plugin'),
-                    'description' => __('Alle Gruppen dieser Homepage. Sind unten einzelne Gruppen angehakt, gelten diese.', 'churchtools-plugin'),
                     'param_name' => 'homepage',
                     'admin_label' => true,
                     'value' => self::homepageOptions(),
+                    'dependency' => ['element' => 'source', 'value' => 'homepage'],
                 ],
                 [
                     // Eigener Feldtyp statt WPBakerys Ankreuzfeldern: Die
@@ -378,10 +407,11 @@ final class WpBakeryIntegration
                     // WPBakery 8.7). Siehe renderGroupPicker().
                     'type' => self::GROUP_PICKER_TYPE,
                     'heading' => __('Einzelne Gruppen', 'churchtools-plugin'),
-                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages. Gewählte Gruppen erscheinen statt der Homepage, in der Reihenfolge der Liste „Ausgewählt“.', 'churchtools-plugin'),
+                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages, in der Reihenfolge der Liste „Ausgewählt“.', 'churchtools-plugin'),
                     'param_name' => 'groups',
                     'admin_label' => true,
                     'ctp_choices' => self::groupOptions(),
+                    'dependency' => ['element' => 'source', 'value' => 'groups'],
                 ],
                 [
                     'type' => 'dropdown',
@@ -452,6 +482,20 @@ final class WpBakeryIntegration
         }
 
         return $options;
+    }
+
+    /**
+     * Laedt das Skript des Feldtyps schon mit dem Backend-Editor, siehe
+     * register(). Mit WPBakerys eigenem Skript als Abhaengigkeit, wo es
+     * registriert ist (in 7.9 `vc-backend-min-js`), damit `vc.atts` schon
+     * steht; das Skript faengt den anderen Fall selbst ab.
+     */
+    public function enqueueGroupPickerScript(): void
+    {
+        $handle = 'ctp-wpbakery-group-picker';
+        $dependencies = wp_script_is('vc-backend-min-js', 'registered') ? ['vc-backend-min-js'] : [];
+
+        wp_enqueue_script($handle, CTP_PLUGIN_URL . 'assets/js/wpbakery-group-picker.js', $dependencies, CTP_VERSION, true);
     }
 
     /**

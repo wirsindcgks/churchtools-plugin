@@ -13,6 +13,63 @@
 (function () {
 	'use strict';
 
+	// WPBakery haengt das Skript eines Feldtyps bei jedem Oeffnen des
+	// Bearbeitungsfensters erneut ein (Vc_Edit_Form_Fields::enqueueScripts()),
+	// und dieses Plugin laedt es zusaetzlich mit dem Backend-Editor. Ohne diese
+	// Sperre hingen die Ereignisse doppelt am Dokument - „nach oben" tauschte
+	// dann zweimal und damit gar nicht.
+	if (window.ctpGroupPickerLoaded) {
+		return;
+	}
+	window.ctpGroupPickerLoaded = true;
+
+	function escapeHtml(text) {
+		return String(text).replace(/[&<>"']/g, function (char) {
+			return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+		});
+	}
+
+	/*
+	 * Die Beschriftung im Baustein („Einzelne Gruppen: …"). WPBakery ruft dafuer
+	 * vc.atts[typ].render(param, wert) und setzt das Ergebnis als HTML ein -
+	 * ohne das stuenden dort die IDs. Die Namen kommen aus `ctp_choices` der
+	 * vc_map()-Definition (Beschriftung => ID); `vc.atts` legt WPBakerys
+	 * backend.min.js an, bis dahin wird nachgefasst.
+	 */
+	function registerAdminLabel() {
+		if (!window.vc || !window.vc.atts) {
+			return false;
+		}
+
+		window.vc.atts.ctp_group_picker = window.vc.atts.ctp_group_picker || {
+			render: function (param, value) {
+				var labels = {};
+
+				Object.keys((param && param.ctp_choices) || {}).forEach(function (label) {
+					labels[String(param.ctp_choices[label])] = label;
+				});
+
+				return String(value || '')
+					.split(',')
+					.filter(function (id) {
+						return id.trim() !== '';
+					})
+					.map(function (id) {
+						id = id.trim();
+						return escapeHtml(labels[id] || '#' + id);
+					})
+					.join(', ');
+			},
+		};
+
+		return true;
+	}
+
+	if (!registerAdminLabel()) {
+		document.addEventListener('DOMContentLoaded', registerAdminLabel);
+		window.addEventListener('load', registerAdminLabel);
+	}
+
 	function pickerOf(node) {
 		return node && node.closest ? node.closest('.ctp-wpb-picker') : null;
 	}

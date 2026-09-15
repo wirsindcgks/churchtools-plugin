@@ -40,11 +40,21 @@ final class GroupListRenderer
     public const LAYOUTS = ['grid', 'featured'];
 
     /**
-     * @param array{homepage?: string, groups?: string, layout?: string, columns?: int|string} $args
+     * @param array{source?: string, homepage?: string, groups?: string, layout?: string, columns?: int|string} $args
      */
     public function render(array $args): string
     {
-        $args = wp_parse_args($args, ['homepage' => '', 'groups' => '', 'layout' => 'grid', 'columns' => self::DEFAULT_COLUMNS]);
+        $args = wp_parse_args($args, ['source' => '', 'homepage' => '', 'groups' => '', 'layout' => 'grid', 'columns' => self::DEFAULT_COLUMNS]);
+
+        // `source` sagt ausdruecklich, welche Angabe gilt - die andere kann in
+        // Block und WPBakery noch gespeichert sein, nachdem umgeschaltet wurde.
+        // Ohne `source` (Shortcode von Hand, Einbindungen aus 1.28) gilt wie
+        // bisher: einzelne Gruppen vor der Homepage.
+        if ($args['source'] === 'homepage') {
+            $args['groups'] = '';
+        } elseif ($args['source'] === 'groups') {
+            $args['homepage'] = '';
+        }
         $args['columns'] = min(self::MAX_COLUMNS, max(self::MIN_COLUMNS, (int) $args['columns']));
         $args['layout'] = in_array($args['layout'], self::LAYOUTS, true) ? $args['layout'] : 'grid';
         $args['instance'] = wp_unique_id('ctp-groups-');

@@ -569,6 +569,11 @@ final class GroupsTab
                         <td>&ndash;</td>
                     </tr>
                     <tr>
+                        <td><code>source</code></td>
+                        <td><?php esc_html_e('homepage oder groups: welche der beiden Angaben gilt. Leer = groups, sobald Gruppen angegeben sind, sonst homepage. Das WPBakery-Element setzt es selbst.', 'churchtools-plugin'); ?></td>
+                        <td>&ndash;</td>
+                    </tr>
+                    <tr>
                         <td><code>layout</code></td>
                         <td><?php esc_html_e('grid: Kachelraster mit Auszug. featured: je Gruppe eine große Kachel mit dem ganzen Text, Bild daneben.', 'churchtools-plugin'); ?></td>
                         <td><code>grid</code></td>

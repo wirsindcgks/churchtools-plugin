@@ -94,11 +94,10 @@ final class GroupListBlock
     /** Im Block-Wrapper, siehe EventListBlock::render(). */
     public function render(array $attributes): string
     {
-        $bySelection = ($attributes['source'] ?? 'homepage') === 'groups';
-
         return EventListBlock::wrap((new GroupListRenderer())->render([
-            'homepage' => $bySelection ? '' : (string) ($attributes['homepage'] ?? ''),
-            'groups' => $bySelection ? (string) ($attributes['groups'] ?? '') : '',
+            'source' => ($attributes['source'] ?? 'homepage') === 'groups' ? 'groups' : 'homepage',
+            'homepage' => (string) ($attributes['homepage'] ?? ''),
+            'groups' => (string) ($attributes['groups'] ?? ''),
             'layout' => (string) ($attributes['layout'] ?? 'grid'),
             'columns' => (int) ($attributes['columns'] ?? 3),
         ]));

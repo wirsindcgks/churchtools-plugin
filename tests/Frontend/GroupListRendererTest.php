@@ -143,6 +143,23 @@ final class GroupListRendererTest extends TestCase
         $this->assertLessThan(strpos($html, 'Gruppe 269'), strpos($html, 'Gruppe 514'));
     }
 
+    /**
+     * `source` entscheidet, welche Angabe gilt - im WPBakery-Element bleibt die
+     * jeweils andere nach dem Umschalten gespeichert und darf nicht mitspielen.
+     */
+    public function testSourceDecidesWhichStoredSelectionApplies(): void
+    {
+        $this->homepageWith([$this->group(269, ''), $this->group(514, '')]);
+        $renderer = new GroupListRenderer();
+
+        $homepage = $renderer->render(['source' => 'homepage', 'homepage' => 'Kleingruppen', 'groups' => '514']);
+        $groups = $renderer->render(['source' => 'groups', 'homepage' => 'Kleingruppen', 'groups' => '514']);
+
+        $this->assertStringContainsString('Gruppe 269', $homepage, 'Homepage gewaehlt: alle ihre Gruppen, gespeicherte Einzelauswahl ignoriert.');
+        $this->assertStringNotContainsString('Gruppe 269', $groups);
+        $this->assertStringContainsString('Gruppe 514', $groups);
+    }
+
     /** Eine Angabe ohne einzige gueltige ID ist eine misslungene Auswahl, nicht „alle der Homepage". */
     public function testAnUnusableSelectionShowsNothingRatherThanTheWholeHomepage(): void
     {

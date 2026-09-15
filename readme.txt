@@ -104,10 +104,11 @@ Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus Chur
 
 * `homepage` – Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage (bei mehreren angehakten bleibt die Liste leer).
 * `groups` – einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge. Gilt statt `homepage`. Die IDs stehen unter Gruppen → Gruppenliste; wählbar sind nur Gruppen der angehakten Homepages.
+* `source` – `homepage` oder `groups`: welche der beiden Angaben gilt. Leer = `groups`, sobald Gruppen angegeben sind, sonst `homepage`. Das WPBakery-Element setzt es über die Auswahl „Welche Gruppen?“ selbst.
 * `layout` – `grid` (Kachelraster mit Auszug, Standard) oder `featured` (je Gruppe eine große Kachel, Bild neben dem ganzen Text).
 * `columns` – höchstens so viele Spalten, 2–6 (Standard: 3); wie bei den Terminen nur so viele, wie in den Inhaltsbereich passen. Nur bei `grid`.
 
-Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: eine angehakte Homepage oder einzelne Gruppen zum Anhaken, dazu die Ansicht. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
+Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen, danach zeigt das Formular nur das passende Feld – die Homepage oder die Gruppenauswahl mit Reihenfolge und Filter –, dazu die Ansicht. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
 
 Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 

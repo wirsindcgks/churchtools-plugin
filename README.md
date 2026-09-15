@@ -157,7 +157,7 @@ Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in de
 [ctp_groups groups="514,269" layout="featured"]
 ```
 
-Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen": Dort lässt sich eine angehakte Homepage wählen oder einzelne Gruppen anhaken, dazu die Ansicht „Raster" oder „Hervorgehoben".
+Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen": Dort wird zuerst gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen; danach steht nur das passende Feld da, dazu die Ansicht „Raster" oder „Hervorgehoben".
 
 - **Einzelne Gruppen** stehen mit `groups="…"` in der angegebenen Reihenfolge da; die IDs stehen unter *Gruppen → Gruppenliste*. Wählbar sind nur Gruppen der angehakten Homepages – so bleibt ChurchTools die Stelle, die entscheidet, was öffentlich ist. Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar".
 - **Absprung mit Ansage**: Unter jeder Gruppe steht der Button „In ChurchTools ansehen". Die Kachel selbst ist nicht klickbar – ein Klick auf eine Kachel führt bei den Terminen zu einer Ansicht auf der eigenen Website, bei Gruppen hätte dieselbe Geste unangekündigt in ein anderes System geführt.
