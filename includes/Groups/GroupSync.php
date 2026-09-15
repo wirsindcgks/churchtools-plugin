@@ -56,6 +56,9 @@ final class GroupSync
      */
     public const IMAGE_META_KEY = '_ctp_group_source_image_url';
 
+    /** Groesse, in der die Gruppenbilder abgerufen werden - siehe sizedImageUrl(). */
+    public const IMAGE_QUERY = 'w=1600&h=1600&fit=max';
+
     /**
      * Wie viele leere Antworten in Folge eine Homepage leeren duerfen. Eine
      * leere Gruppenliste ist fuer sich ein gueltiger Fall (fuenf der elf
@@ -271,7 +274,7 @@ final class GroupSync
             'id' => $id,
             'name' => $name,
             'note' => trim((string) ($information['note'] ?? '')),
-            'image_url' => is_string($information['imageUrl'] ?? null) ? $information['imageUrl'] : '',
+            'image_url' => is_string($information['imageUrl'] ?? null) ? self::sizedImageUrl($information['imageUrl']) : '',
             'weekday' => is_array($information['weekday'] ?? null)
                 ? trim((string) ($information['weekday']['nameTranslated'] ?? ''))
                 : '',
@@ -281,6 +284,44 @@ final class GroupSync
             'waitinglist' => !empty($group['allowWaitinglist']),
             'url' => trailingslashit($baseUrl) . 'publicgroup/' . $id,
         ];
+    }
+
+    /**
+     * Die Bildadresse in einer Groesse, die fuer eine Kachel reicht.
+     *
+     * Ohne Parameter liefert `/images/{id}/{hash}` ein Vorschaubild mit
+     * 150x150 Pixeln (gemessen 2026-09-15) - auf einer Kachel von 400px
+     * Breite pixelig. Die Adresse geht an den Bilddienst Glide (siehe
+     * OpenAPI-Spec, `get-images-fileId-hash`), und der kennt `w`, `h` und
+     * `fit`:
+     *
+     * - `w` allein reicht nicht: `?w=1600` ergab 1600x150, die Hoehe blieb
+     *   beim Vorgabewert.
+     * - `w` und `h` allein schneiden auf genau dieses Format zu. Die Kachel
+     *   kennt aber drei Seitenverhaeltnisse (CardDesign::MEDIA_ASPECT_RATIOS),
+     *   und die hervorgehobene Ansicht zeigt das Bild ganz.
+     * - `fit=max` haelt das Seitenverhaeltnis und vergroessert nicht:
+     *   `w=5000&h=5000&fit=max` lieferte das Original mit 1620x1080. Den in
+     *   ChurchTools gespeicherten Bildausschnitt beachtet Glide dabei weiter.
+     *
+     * 1600 statt mehr: Die groesste Zusatzgroesse, die WordPress aus dem
+     * Import erzeugt, ist `large` (1024), und die `srcset`-Liste einer Kachel
+     * endet bei CardImage::CARD_MAX_SRCSET_WIDTH. Mehr Pixel kaemen nie an.
+     *
+     * Angehaengt statt ersetzt: Traegt die Adresse eines Tages selbst eine
+     * Abfrage, bleibt die erhalten, und die spaeteren gleichnamigen Parameter
+     * gewinnen. Weil sich die Adresse damit aendert, holt syncImages() jedes
+     * vorhandene Bild einmal neu - genau das, was ein Update braucht.
+     */
+    public static function sizedImageUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return '';
+        }
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . self::IMAGE_QUERY;
     }
 
     /**

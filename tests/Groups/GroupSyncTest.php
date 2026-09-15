@@ -87,7 +87,7 @@ final class GroupSyncTest extends TestCase
             'id' => 44,
             'name' => 'Seniorenarbeit',
             'note' => 'Treff am Mittwoch',
-            'image_url' => 'https://musterkirche.church.tools/images/5123/abc',
+            'image_url' => 'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
             'weekday' => 'Mittwoch',
             'meeting_time' => '9:30',
             'max_members' => 60,
@@ -95,6 +95,42 @@ final class GroupSyncTest extends TestCase
             'waitinglist' => false,
             'url' => 'https://musterkirche.church.tools/publicgroup/44',
         ], $group);
+    }
+
+    /**
+     * Ohne Parameter liefert ChurchTools ein Vorschaubild mit 150x150 Pixeln.
+     * `fit=max` haelt das Seitenverhaeltnis und vergroessert nicht.
+     */
+    public function testImagesAreRequestedLargeInTheirOwnAspectRatio(): void
+    {
+        $this->assertSame(
+            'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
+            GroupSync::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc')
+        );
+        $this->assertSame('', GroupSync::sizedImageUrl(''));
+        $this->assertSame('', GroupSync::sizedImageUrl('  '));
+    }
+
+    /** Eine vorhandene Abfrage bleibt stehen; die spaeteren Parameter gewinnen. */
+    public function testAnExistingQueryIsKept(): void
+    {
+        $this->assertSame(
+            'https://musterkirche.church.tools/images/5123/abc?v=2&w=1600&h=1600&fit=max',
+            GroupSync::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc?v=2')
+        );
+    }
+
+    /**
+     * Bilder aus der Zeit vor der Umstellung stehen mit der Adresse des
+     * Vorschaubilds in der Mediathek. Die neue Adresse weicht davon ab, und
+     * genau das laesst syncImages() sie einmal neu holen.
+     */
+    public function testImagesImportedAsThumbnailsAreFetchedAgain(): void
+    {
+        $group = GroupSync::normalizeGroup($this->group(44, 'Seniorenarbeit'), self::BASE);
+        $wanted = GroupSync::wantedImages([9 => ['groups' => [$group]]]);
+
+        $this->assertNotSame('https://musterkirche.church.tools/images/5123/abc', $wanted[44]);
     }
 
     /** Offene Anfragen belegen einen Platz - eine Annahme, die zur vorsichtigen Seite irrt. */
@@ -303,7 +339,7 @@ final class GroupSyncTest extends TestCase
     {
         $this->configure([9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]]);
         ctp_test_set_option(GroupSync::IMAGES_OPTION, [44 => 301]);
-        ctp_test_set_post_meta(301, GroupSync::IMAGE_META_KEY, 'https://musterkirche.church.tools/images/5123/abc');
+        ctp_test_set_post_meta(301, GroupSync::IMAGE_META_KEY, 'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max');
         ctp_test_queue_http([$this->listEntry('9', 'Kleingruppen', 'AbC123')]);
         ctp_test_queue_http(['groups' => [$this->group(44, 'Seniorenarbeit')]]);
 
