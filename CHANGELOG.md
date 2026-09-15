@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.32.1] - 2026-09-15
+
+### Fixed
+
+- **Auswahl im WPBakery-Element ging verloren.** Mit den Reitern „Auswahl“ und „Darstellung“ aus 1.32.0 verschwand im WPBakery der Live-Seite eine noch nicht gespeicherte Auswahl, sobald man den Reiter wechselte; erst Speichern, dann Wechseln behielt sie. WPBakerys eigener Reiter-Code setzt keine Werte zurück, und die Doku des Herstellers nennt nichts dazu – die Ursache liegt vermutlich im WPBakery des Themes. Beide Elemente zeigen ihre Optionen wieder in einem Formular wie bis 1.31.0; die einheitliche Kalender- und Gruppenauswahl bleibt.
+
 ## [1.32.0] - 2026-09-15
 
 ### Changed
