@@ -1,6 +1,8 @@
 /**
- * Das Feld „Einzelne Gruppen" im WPBakery-Element „ChurchTools Gruppen"
- * (WpBakeryIntegration::renderGroupPicker()).
+ * Die Auswahlfelder der WPBakery-Elemente: „Einzelne Gruppen" im Element
+ * „ChurchTools Gruppen" (WpBakeryIntegration::renderGroupPicker()) und
+ * „Kalender" im Element „ChurchTools Events" (renderCalendarPicker()) -
+ * dasselbe Feld, bei den Kalendern ohne Reihenfolge.
  *
  * WPBakery fuegt das Bearbeitungsfenster erst beim Oeffnen ins Dokument ein,
  * und womoeglich mehrmals - die Ereignisse haengen deshalb am Dokument und
@@ -41,7 +43,7 @@
 			return false;
 		}
 
-		window.vc.atts.ctp_group_picker = window.vc.atts.ctp_group_picker || {
+		var adminLabel = {
 			render: function (param, value) {
 				var labels = {};
 
@@ -56,11 +58,15 @@
 					})
 					.map(function (id) {
 						id = id.trim();
-						return escapeHtml(labels[id] || '#' + id);
+						// Ein Kalendername aus dem Shortcode ist selbst die Beschriftung.
+						return escapeHtml(labels[id] || (/^\d+$/.test(id) ? '#' + id : id));
 					})
 					.join(', ');
 			},
 		};
+
+		window.vc.atts.ctp_group_picker = window.vc.atts.ctp_group_picker || adminLabel;
+		window.vc.atts.ctp_calendar_picker = window.vc.atts.ctp_calendar_picker || adminLabel;
 
 		return true;
 	}
@@ -79,6 +85,9 @@
 
 		return (input.value || '')
 			.split(',')
+			.filter(function (part) {
+				return /^\s*\d+\s*$/.test(part);
+			})
 			.map(function (part) {
 				return parseInt(part, 10);
 			})
@@ -108,12 +117,24 @@
 		return el;
 	}
 
+	/*
+	 * Kalendernamen aus dem Shortcode, die zu keinem geladenen Kalender passen
+	 * (renderCalendarPicker()). Sie haben keine ID und keinen Haken, werden aber
+	 * mitgeschrieben, damit ein Speichern sie nicht still loescht.
+	 */
+	function extras(picker) {
+		return (picker.getAttribute('data-extra') || '').split(',').filter(function (ref) {
+			return ref.trim() !== '';
+		});
+	}
+
 	function write(picker, ids) {
 		var input = picker.querySelector('input.wpb_vc_param_value');
 		var list = picker.querySelector('.ctp-wpb-picker__order');
 		var empty = picker.querySelector('.ctp-wpb-picker__empty');
+		var kept = extras(picker);
 
-		input.value = ids.join(',');
+		input.value = ids.map(String).concat(kept).join(',');
 
 		list.textContent = '';
 		ids.forEach(function (id) {
@@ -132,8 +153,19 @@
 			list.appendChild(item);
 		});
 
+		kept.forEach(function (ref) {
+			var item = document.createElement('li');
+			var name = document.createElement('span');
+
+			item.className = 'ctp-wpb-picker__item ctp-wpb-picker__item--missing ctp-wpb-picker__item--extra';
+			name.className = 'ctp-wpb-picker__name';
+			name.textContent = (picker.getAttribute('data-extra-label') || '%s').replace('%s', ref);
+			item.appendChild(name);
+			list.appendChild(item);
+		});
+
 		if (empty) {
-			empty.hidden = ids.length > 0;
+			empty.hidden = ids.length + kept.length > 0;
 		}
 
 		// Eine Gruppe kann auf zwei Homepages stehen - beide Haken folgen der Liste.

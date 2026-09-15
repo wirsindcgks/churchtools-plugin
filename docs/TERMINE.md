@@ -7,7 +7,7 @@ Zurück zur [Übersicht](../README.md).
 Alle drei benutzen denselben Unterbau und können dasselbe:
 
 - **Gutenberg-Block:** Block „ChurchTools Events“ einfügen, alles Weitere in der Seitenleiste rechts.
-- **WPBakery:** Element „ChurchTools Events“ aus der Kategorie „ChurchTools“.
+- **WPBakery:** Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ – auf dem Reiter „Auswahl“ die Kalender zum Anhaken, auf „Darstellung“ der Rest, aufgebaut wie das Element „ChurchTools Gruppen“.
 - **Shortcode** `[ctp_events]`: für Theme-Dateien, Widgets und alles andere.
 
 ## Die Ansichten

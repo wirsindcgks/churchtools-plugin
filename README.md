@@ -14,7 +14,7 @@ Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regel
 ## Was es kann
 
 - **Termine automatisch übernehmen:** Serien kommen als einzelne Termine an, abgesagte verschwinden wieder.
-- **Drei Ansichten:** Liste, Kachelraster und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
+- **Drei Ansichten:** Liste, Raster und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
 - **Schnell finden:** Eventfinder mit Themen- und Zeitraum-Knöpfen, Suche und Monatsüberschriften.
 - **Termindetails** als Popup oder als eigene Seite, auf Wunsch zum Teilen, als Kalenderdatei oder als Kalender-Abo.
 - **Gruppen statt iframe:** die Gruppen einer Gruppen-Homepage in derselben Optik, mit freien Plätzen und Gruppenfinder.

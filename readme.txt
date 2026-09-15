@@ -93,7 +93,7 @@ Beide Blöcke – „ChurchTools Events“ und „ChurchTools Gruppen“ – las
 
 = WPBakery-Element =
 
-Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen; im Element-Editor stehen dieselben Optionen wie im Shortcode zur Verfügung, die Spalten-Option erscheint automatisch, sobald „Raster“ als Ansicht gewählt ist.
+Element „ChurchTools Events“ aus der Kategorie „ChurchTools“ einfügen. Wie im Element „ChurchTools Gruppen“ stehen die Optionen auf zwei Reitern: „Auswahl“ mit den Kalendern als Liste zum Anhaken (leer = alle aktiven Kalender, mit Filter) und „Darstellung“ mit allen übrigen Optionen des Shortcodes; die Spalten-Option erscheint, sobald „Raster“ als Ansicht gewählt ist. Ein Shortcode, der Kalender beim Namen nennt, wird beim Öffnen erkannt und beim Speichern mit den IDs geschrieben; ein Name ohne passenden Kalender bleibt als „nicht gefunden“ stehen.
 
 = Gruppen =
 
@@ -111,7 +111,7 @@ Der Bereich „Gruppen“ übernimmt die Gruppen einer Gruppen-Homepage aus Chur
 * `finder` – Gruppenfinder anzeigen, Knöpfe für Kategorie, Wochentag und Zielgruppe: `1` oder `0` (Standard). Nur bei `grid`. Mit `search="1"` steht das Suchfeld im Gruppenfinder.
 * `search` – Freitext-Suchleiste anzeigen: `1` oder `0` (Standard). Nur bei `grid`. Durchsucht Name, Kategorie, Wochentag, Zielgruppe und Beschreibung.
 
-Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl: Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen, danach zeigt das Formular nur das passende Feld – die Homepage oder die Gruppenauswahl mit Reihenfolge und Filter –, dazu die Ansicht und die Schalter „Gruppenfinder anzeigen“ und „Suchleiste anzeigen“ – dieselben wie im Block „ChurchTools Events“. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
+Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppen“ stehen dieselben Möglichkeiten zur Auswahl, im Element auf den Reitern „Auswahl“ und „Darstellung“ wie bei den Terminen: Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen, danach zeigt das Formular nur das passende Feld – die Homepage oder die Gruppenauswahl mit Reihenfolge und Filter –, dazu die Ansicht und die Schalter „Gruppenfinder anzeigen“ und „Suchleiste anzeigen“ – dieselben wie im Block „ChurchTools Events“. Eine gewählte Gruppe, die auf keiner angehakten Homepage mehr steht, verschwindet von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
 
 Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Kategorie, Treffzeit, Zielgruppe, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 

@@ -7,6 +7,7 @@ namespace ChurchToolsPlugin\Integrations;
 use ChurchToolsPlugin\Blocks\GroupListBlock;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Settings;
 
 final class WpBakeryIntegration
 {
@@ -25,6 +26,13 @@ final class WpBakeryIntegration
 
     /** Der eigene Feldtyp fuer die Auswahl einzelner Gruppen, siehe renderGroupPicker(). */
     public const GROUP_PICKER_TYPE = 'ctp_group_picker';
+
+    /**
+     * Dieselbe Auswahl fuer die Kalender des Termin-Elements, siehe
+     * renderCalendarPicker() - ein eigener Typ, weil WPBakery je Typ genau
+     * eine Ausgabe kennt, aber mit demselben Skript und derselben Gestaltung.
+     */
+    public const CALENDAR_PICKER_TYPE = 'ctp_calendar_picker';
 
     /**
      * Klasse, unter der das Symbol des Elements haengt. Der "icon"-Wert von
@@ -96,12 +104,14 @@ final class WpBakeryIntegration
         // Die Gruppen-Auswahl speichert kommagetrennte IDs ("514,269"). Im
         // Baustein sollen die Namen stehen, in der gewaehlten Reihenfolge; die
         // Beschriftungen traegt der eigene Feldtyp unter `ctp_choices`.
-        if (($param['param_name'] ?? '') === 'groups' && is_scalar($value) && is_array($param['ctp_choices'] ?? $param['value'] ?? null)) {
+        // Die Kalenderauswahl ebenso; dort kann auch ein Name stehen, der dann
+        // selbst die Beschriftung ist.
+        if (in_array($param['param_name'] ?? '', ['groups', 'calendar'], true) && is_scalar($value) && is_array($param['ctp_choices'] ?? $param['value'] ?? null)) {
             $labels = array_flip(array_map('strval', $param['ctp_choices'] ?? $param['value']));
             $names = [];
 
             foreach (explode(',', (string) $value) as $id) {
-                $names[] = $labels[trim($id)] ?? sprintf('#%s', trim($id));
+                $names[] = $labels[trim($id)] ?? (ctype_digit(trim($id)) ? sprintf('#%s', trim($id)) : trim($id));
             }
 
             return implode(', ', $names);
@@ -240,11 +250,9 @@ final class WpBakeryIntegration
         // `wpb_vc_param_value` und dem Parameternamen als `name`. Das Skript
         // (dritter Parameter) laedt WPBakery zum Bearbeitungsfenster.
         if (function_exists('vc_add_shortcode_param')) {
-            vc_add_shortcode_param(
-                self::GROUP_PICKER_TYPE,
-                [self::class, 'renderGroupPicker'],
-                add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/js/wpbakery-group-picker.js')
-            );
+            $pickerScript = add_query_arg('ver', CTP_VERSION, CTP_PLUGIN_URL . 'assets/js/wpbakery-group-picker.js');
+            vc_add_shortcode_param(self::GROUP_PICKER_TYPE, [self::class, 'renderGroupPicker'], $pickerScript);
+            vc_add_shortcode_param(self::CALENDAR_PICKER_TYPE, [self::class, 'renderCalendarPicker'], $pickerScript);
         }
 
         vc_map([
@@ -254,12 +262,18 @@ final class WpBakeryIntegration
             // Klassenname, keine Bildadresse - warum, steht in
             // enqueueElementIcon().
             'icon' => self::ICON_CLASS,
-            'params' => [
+            'params' => self::inTabs(['calendar'], [
                 [
-                    'type' => 'textfield',
-                    'heading' => __('Kalender-IDs (kommagetrennt)', 'churchtools-plugin'),
+                    // Dieselbe Auswahlliste wie „Einzelne Gruppen" im
+                    // Gruppen-Element (Nutzerwunsch 2026-09-15: einheitliche
+                    // Bedienung) statt eines Textfelds fuer IDs. Ohne Reihenfolge -
+                    // Termine stehen nach Datum, nicht nach Kalender.
+                    'type' => self::CALENDAR_PICKER_TYPE,
+                    'heading' => __('Kalender', 'churchtools-plugin'),
+                    'description' => __('Leer = alle aktiven Kalender.', 'churchtools-plugin'),
                     'param_name' => 'calendar',
                     'admin_label' => true,
+                    'ctp_choices' => self::calendarOptions(),
                 ],
                 [
                     'type' => 'dropdown',
@@ -359,7 +373,7 @@ final class WpBakeryIntegration
                     'value' => '0',
                     'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
                 ],
-            ],
+            ]),
         ]);
 
         vc_map([
@@ -367,7 +381,7 @@ final class WpBakeryIntegration
             'base' => self::GROUPS_BASE,
             'category' => __('ChurchTools', 'churchtools-plugin'),
             'icon' => self::GROUPS_ICON_CLASS,
-            'params' => [
+            'params' => self::inTabs(['source', 'homepage', 'groups'], [
                 [
                     // Erst die Frage, dann nur das passende Feld (Nutzerwunsch
                     // 2026-09-15: „Sonst ist der Startscreen gleich ueberladen").
@@ -448,8 +462,55 @@ final class WpBakeryIntegration
                     'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
                     'dependency' => ['element' => 'layout', 'value' => 'grid'],
                 ],
-            ],
+            ]),
         ]);
+    }
+
+    /**
+     * Verteilt die Felder auf die Reiter „Auswahl" und „Darstellung" - dieselbe
+     * Aufteilung wie die Bereiche der Bloecke, in beiden Elementen gleich.
+     * WPBakery zeigt Felder mit `group` als eigenen Reiter; die Abhaengigkeiten
+     * wirken ueber Reiter hinweg.
+     *
+     * @param list<string>              $selection param_name der Felder im Reiter „Auswahl"
+     * @param list<array<string, mixed>> $params
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function inTabs(array $selection, array $params): array
+    {
+        foreach ($params as &$param) {
+            $param['group'] = in_array($param['param_name'] ?? '', $selection, true)
+                ? __('Auswahl', 'churchtools-plugin')
+                : __('Darstellung', 'churchtools-plugin');
+        }
+        unset($param);
+
+        return $params;
+    }
+
+    /**
+     * Die geladenen Kalender als Beschriftung => ID, wie groupOptions() - fuer
+     * die Beschriftung im Baustein. Dieselbe Liste wie im Block
+     * (EventListBlock::localizeCalendars()).
+     *
+     * @return array<string, string>
+     */
+    private static function calendarOptions(): array
+    {
+        $options = [];
+
+        foreach (Settings::get()['calendars'] as $id => $calendar) {
+            $label = (string) ($calendar['name'] ?? '') !== '' ? (string) $calendar['name'] : sprintf('#%d', (int) $id);
+
+            if (isset($options[$label])) {
+                $label .= sprintf(' #%d', (int) $id);
+            }
+
+            $options[$label] = (string) $id;
+        }
+
+        return $options;
     }
 
     /**
@@ -548,13 +609,7 @@ final class WpBakeryIntegration
                 }
 
                 $names[$id] = $name;
-                $items .= sprintf(
-                    '<label class="ctp-wpb-picker__option"><input type="checkbox" value="%1$d" data-name="%2$s"%3$s /> <span>%4$s</span></label>',
-                    $id,
-                    esc_attr($name),
-                    in_array($id, $selected, true) ? ' checked="checked"' : '',
-                    esc_html($name)
-                );
+                $items .= self::pickerOption($id, $name, in_array($id, $selected, true));
             }
 
             if ($items === '') {
@@ -568,7 +623,96 @@ final class WpBakeryIntegration
             );
         }
 
-        /* translators: %d: ID of a selected group that is no longer available */
+        return self::renderPicker($paramName, self::GROUP_PICKER_TYPE, $selected, $names, [], $sections, [
+            'heading' => __('Ausgewählt – in dieser Reihenfolge auf der Seite', 'churchtools-plugin'),
+            'empty' => __('Keine einzelnen Gruppen gewählt – es gilt die Gruppen-Homepage.', 'churchtools-plugin'),
+            'filter' => __('Gruppen filtern …', 'churchtools-plugin'),
+            'none' => __('Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage anhaken.', 'churchtools-plugin'),
+        ], true);
+    }
+
+    /**
+     * Das Feld „Kalender" des Termin-Elements: dieselbe Auswahl wie bei den
+     * Gruppen, ohne Reihenfolge und in einem Abschnitt.
+     *
+     * Der Shortcode nimmt Kalender auch beim Namen (`calendar="Gottesdienste"`,
+     * so steht es in Beispielen und von Hand geschriebenen Einbindungen). Ein
+     * bekannter Name erscheint hier als sein Kalender und wird beim Speichern
+     * zur ID - dieselbe Auswahl, eindeutiger geschrieben. Ein Name, den es
+     * unter den geladenen Kalendern nicht gibt, bleibt als „nicht gefunden"
+     * stehen und wird mitgespeichert, statt beim ersten Speichern still zu
+     * verschwinden (etwa, solange die Kalenderliste noch nicht geladen ist).
+     *
+     * @param array<string, mixed> $settings
+     * @param mixed                $value
+     */
+    public static function renderCalendarPicker($settings, $value): string
+    {
+        $paramName = (string) ($settings['param_name'] ?? 'calendar');
+        $selected = [];
+        $unresolved = [];
+
+        foreach (array_filter(array_map('trim', explode(',', is_scalar($value) ? (string) $value : ''))) as $ref) {
+            $ids = Settings::resolveCalendarIds([$ref]);
+
+            if ($ids === []) {
+                $unresolved[] = $ref;
+                continue;
+            }
+
+            $selected[] = $ids[0];
+        }
+
+        $selected = array_values(array_unique($selected));
+        $names = [];
+        $items = '';
+
+        foreach (Settings::get()['calendars'] as $id => $calendar) {
+            $id = (int) $id;
+            $name = (string) ($calendar['name'] ?? '') !== '' ? (string) $calendar['name'] : sprintf('#%d', $id);
+            $names[$id] = $name;
+            $items .= self::pickerOption($id, $name, in_array($id, $selected, true));
+        }
+
+        $sections = $items === ''
+            ? ''
+            : sprintf('<fieldset class="ctp-wpb-picker__homepage"><legend>%1$s</legend><div class="ctp-wpb-picker__options">%2$s</div></fieldset>', esc_html__('Kalender', 'churchtools-plugin'), $items);
+
+        return self::renderPicker($paramName, self::CALENDAR_PICKER_TYPE, $selected, $names, $unresolved, $sections, [
+            'heading' => __('Ausgewählt', 'churchtools-plugin'),
+            'empty' => __('Keine Kalender gewählt – es gelten alle aktiven Kalender.', 'churchtools-plugin'),
+            'filter' => __('Kalender filtern …', 'churchtools-plugin'),
+            'none' => __('Noch keine Kalender geladen. Unter „ChurchTools → Events → Kalender“ zuerst Kalender laden.', 'churchtools-plugin'),
+        ], false);
+    }
+
+    /** Ein Haken der Auswahl, fuer Gruppen und Kalender gleich. */
+    private static function pickerOption(int $id, string $name, bool $checked): string
+    {
+        return sprintf(
+            '<label class="ctp-wpb-picker__option"><input type="checkbox" value="%1$d" data-name="%2$s"%3$s /> <span>%4$s</span></label>',
+            $id,
+            esc_attr($name),
+            $checked ? ' checked="checked"' : '',
+            esc_html($name)
+        );
+    }
+
+    /**
+     * Das gemeinsame Geruest der Auswahl: oben die Liste „Ausgewaehlt", darunter
+     * Filter und Haken. `$ordered` zeigt Nummern und Pfeile - bei Gruppen
+     * bestimmt die Liste die Reihenfolge auf der Seite, bei Kalendern nicht.
+     * `$extra` sind Angaben ohne ID (nicht gefundene Kalendernamen); das
+     * Skript haengt sie beim Schreiben wieder an.
+     *
+     * @param list<int>             $selected
+     * @param array<int, string>    $names
+     * @param list<string>          $extra
+     * @param array<string, string> $texts heading, empty, filter, none
+     */
+    private static function renderPicker(string $paramName, string $type, array $selected, array $names, array $extra, string $sections, array $texts, bool $ordered): string
+    {
+        /* translators: %d: ID of a selected group or calendar that is no longer available */
         $missingLabel = __('#%d (nicht mehr verfügbar)', 'churchtools-plugin');
         $order = '';
 
@@ -576,8 +720,15 @@ final class WpBakeryIntegration
             $order .= self::pickerOrderItem($id, $names[$id] ?? sprintf($missingLabel, $id), !isset($names[$id]));
         }
 
+        foreach ($extra as $ref) {
+            /* translators: %s: calendar name from a shortcode that matches no loaded calendar */
+            $order .= sprintf('<li class="ctp-wpb-picker__item ctp-wpb-picker__item--missing ctp-wpb-picker__item--extra"><span class="ctp-wpb-picker__name">%s</span></li>', esc_html(sprintf(__('%s (nicht gefunden)', 'churchtools-plugin'), $ref)));
+        }
+
+        $value = implode(',', array_merge(array_map('strval', $selected), $extra));
+
         return sprintf(
-            '<div class="ctp-wpb-picker" data-missing-label="%1$s" data-up-label="%2$s" data-down-label="%3$s" data-remove-label="%4$s">'
+            '<div class="ctp-wpb-picker%13$s" data-missing-label="%1$s" data-up-label="%2$s" data-down-label="%3$s" data-remove-label="%4$s" data-extra="%14$s" data-extra-label="%15$s">'
                 . '<input type="hidden" name="%5$s" class="wpb_vc_param_value %5$s %6$s_field" value="%7$s" />'
                 . '<div class="ctp-wpb-picker__selected">'
                 . '<p class="ctp-wpb-picker__heading">%8$s</p>'
@@ -591,19 +742,23 @@ final class WpBakeryIntegration
             esc_attr__('Nach unten', 'churchtools-plugin'),
             esc_attr__('Entfernen', 'churchtools-plugin'),
             esc_attr($paramName),
-            esc_attr(self::GROUP_PICKER_TYPE),
-            esc_attr(implode(',', $selected)),
-            esc_html__('Ausgewählt – in dieser Reihenfolge auf der Seite', 'churchtools-plugin'),
+            esc_attr($type),
+            esc_attr($value),
+            esc_html($texts['heading']),
             $order,
-            $selected === [] ? '' : ' hidden',
-            esc_html__('Keine einzelnen Gruppen gewählt – es gilt die Gruppen-Homepage.', 'churchtools-plugin'),
+            $value === '' ? '' : ' hidden',
+            esc_html($texts['empty']),
             $sections === ''
-                ? '<p class="ctp-wpb-picker__none">' . esc_html__('Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage anhaken.', 'churchtools-plugin') . '</p>'
+                ? '<p class="ctp-wpb-picker__none">' . esc_html($texts['none']) . '</p>'
                 : sprintf(
                     '<input type="search" class="ctp-wpb-picker__filter" placeholder="%1$s" aria-label="%1$s" /><div class="ctp-wpb-picker__homepages">%2$s</div>',
-                    esc_attr__('Gruppen filtern …', 'churchtools-plugin'),
+                    esc_attr($texts['filter']),
                     $sections
-                )
+                ),
+            $ordered ? '' : ' ctp-wpb-picker--unordered',
+            esc_attr(implode(',', $extra)),
+            /* translators: %s: calendar name from a shortcode that matches no loaded calendar */
+            esc_attr__('%s (nicht gefunden)', 'churchtools-plugin')
         );
     }
 
@@ -650,6 +805,9 @@ final class WpBakeryIntegration
             . '.ctp-wpb-picker__options{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 16px;}'
             . '.ctp-wpb-picker__option{display:flex;align-items:flex-start;gap:6px;margin:0;line-height:1.4;}'
             . '.ctp-wpb-picker__option input{margin-top:2px;flex-shrink:0;}'
-            . '.ctp-wpb-picker [hidden]{display:none !important;}';
+            . '.ctp-wpb-picker [hidden]{display:none !important;}'
+            // Kalender: keine Reihenfolge, also weder Nummern noch Pfeile.
+            . '.ctp-wpb-picker--unordered .ctp-wpb-picker__item::before{content:none;}'
+            . '.ctp-wpb-picker--unordered .ctp-wpb-picker__item [data-action="up"],.ctp-wpb-picker--unordered .ctp-wpb-picker__item [data-action="down"]{display:none;}';
     }
 }
