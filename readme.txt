@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.30.0
+Stable tag: 1.31.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -277,6 +277,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.31.0 =
+
+Neu: Gruppenfinder mit Knöpfen für Kategorie, Wochentag und Zielgruppe (`finder="1"`) und Suchleiste für Gruppen (`search="1"`) – dieselben Schalter wie bei den Terminen, wo `finder` jetzt ebenfalls gilt und `eventfinder` weiter funktioniert. Kategorie und Filter der Homepage kommen mit dem nächsten Gruppen-Abgleich; wer nicht warten will, klickt „Gruppen jetzt synchronisieren“. Wer den Eventfinder im Block nutzt und ein Suchfeld möchte: „Suchleiste anzeigen“ steht jetzt auch bei eingeschaltetem Eventfinder. Danach den Seiten-Cache leeren.
+
 = 1.30.0 =
 
 Gruppenkacheln im Raster sind jetzt klickbar: Ein Klick öffnet die Gruppe im Popup mit dem ganzen Text, nach ChurchTools führt nur noch der Button. Der Text auf der Kachel ist kürzer und behält seine Absätze. Danach den Seiten-Cache leeren.
@@ -452,6 +456,15 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.31.0 =
+
+* Neu: Gruppenfinder über dem Gruppenraster – Knöpfe für Kategorie, Wochentag und Zielgruppe, gefiltert im Browser; es erscheinen nur Filter, die die Gruppen-Homepage einschaltet, und nur Knöpfe, die etwas eingrenzen
+* Neu: Suchleiste für Gruppen (`search`), mit oder ohne Gruppenfinder
+* Neu: `[ctp_events]` versteht `finder` wie `[ctp_groups]`; `eventfinder` gilt weiter
+* Behoben: Im Block „ChurchTools Events“ verschwand „Suchleiste anzeigen“ bei eingeschaltetem Eventfinder – ein Eventfinder aus dem Block bekam so nie ein Suchfeld
+* Geändert: Einheitliche Beschriftungen in Block und WPBakery – „Raster“ statt „Grid“, „Spalten“, „Maximale Anzahl Termine“; der Termin-Block ist wie der Gruppen-Block in „Auswahl“ und „Darstellung“ geteilt
+* Geändert: Der Gruppen-Abgleich übernimmt die Kategorie einer Gruppe und die eingeschalteten Filter der Homepage
 
 = 1.30.0 =
 

@@ -5,6 +5,23 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.31.0] - 2026-09-15
+
+### Added
+
+- **Gruppenfinder.** `[ctp_groups finder="1"]` – im Block und in WPBakery „Gruppenfinder anzeigen“ – zeigt über dem Raster Knöpfe für Kategorie, Wochentag und Zielgruppe. Gefiltert wird im Browser, mehrere Knöpfe greifen zusammen. Es erscheinen nur Filter, die die Gruppen-Homepage in ChurchTools einschaltet, und nur Knöpfe, die die Liste eingrenzen; eine Reihe ohne solchen Knopf fällt weg. Die Zielgruppe „Jeder“ ist kein eigener Knopf und passt zu jeder Auswahl, ebenso eine Gruppe ohne Zielgruppe. Welche Felder in ChurchTools dafür gepflegt sein sollten, steht in `docs/GRUPPEN.md`.
+- **Suchleiste für Gruppen.** `search="1"` („Suchleiste anzeigen“) durchsucht Name, Kategorie, Wochentag, Zielgruppe und Beschreibung – allein oder im Gruppenfinder.
+- **Finder-Schalter auch für Termine.** `[ctp_events finder="1"]` schaltet den Eventfinder ein, wie bei den Gruppen. `eventfinder` gilt weiter.
+
+### Changed
+
+- **Einheitliche Bedienung von Terminen und Gruppen.** Die Suche ist bei beiden ein eigener Schalter und steht bei eingeschaltetem Finder in dessen Leiste. In Block und WPBakery heißt die Ansicht „Raster“ statt „Grid“, dazu „Spalten“ und „Maximale Anzahl Termine“; der Termin-Block ist wie der Gruppen-Block in die Bereiche „Auswahl“ und „Darstellung“ geteilt. Gespeicherte Blöcke und Shortcodes bleiben unverändert.
+- **Gruppen-Abgleich.** Übernimmt zusätzlich die Kategorie einer Gruppe, die Sortierung von Wochentag und Zielgruppe und die eingeschalteten Filter der Homepage. Bis zum ersten Abgleich nach dem Update schränkt der Finder nicht nach der Homepage ein.
+
+### Fixed
+
+- **Eventfinder aus dem Block ohne Suchfeld.** Im Block „ChurchTools Events“ verschwand „Suchleiste anzeigen“, sobald der Eventfinder an war – das Suchfeld hängt aber seit 0.12.4 an genau diesem Schalter. Hilfetexte in Block, WPBakery, Backend und Doku versprachen „plus Suche“.
+
 ## [1.30.0] - 2026-09-15
 
 ### Added
