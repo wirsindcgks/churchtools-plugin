@@ -279,6 +279,13 @@ final class GroupSync
                 ? trim((string) ($information['weekday']['nameTranslated'] ?? ''))
                 : '',
             'meeting_time' => trim((string) ($information['meetingTime'] ?? '')),
+            // „Jeder" ist eine gewaehlte Zielgruppe wie jede andere, keine
+            // Vorgabe: An der Referenzinstanz tragen 7 von 17 Gruppen gar
+            // keine (`null`, gelesen 2026-09-15). Die Zeile bleibt dann leer,
+            // statt „Jeder" zu unterstellen.
+            'target_group' => is_array($information['targetGroup'] ?? null)
+                ? trim((string) ($information['targetGroup']['nameTranslated'] ?? ''))
+                : '',
             'max_members' => $maxMembers > 0 ? $maxMembers : null,
             'free_places' => $maxMembers > 0 ? max(0, $maxMembers - $taken) : null,
             'waitinglist' => !empty($group['allowWaitinglist']),

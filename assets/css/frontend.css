@@ -1044,6 +1044,15 @@
     order: var(--ctp-order-location);
 }
 
+/*
+ * Zielgruppe einer Gruppenkachel: keine eigene Position im Design-Tab, sie
+ * haengt an der Uhrzeit. Gleiche Ordnungszahl, und im Markup steht sie danach -
+ * so bleibt sie direkt unter der Treffzeit, wohin diese auch gezogen wird.
+ */
+.ctp-events__meta-item--target-group {
+    order: var(--ctp-order-time);
+}
+
 @media (max-width: 480px) {
     .ctp-events__item {
         align-items: flex-start;

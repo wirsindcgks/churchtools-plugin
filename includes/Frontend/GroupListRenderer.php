@@ -26,7 +26,10 @@ use ChurchToolsPlugin\Settings;
  * Die Kacheln tragen dieselben Klassen wie die der Termine, damit Vorlage,
  * Farben, Ecken, Bildformat und Reihenfolge aus dem Design-Tab ohne eigene
  * Einstellungen greifen. Von den ausblendbaren Feldern gelten die, die es an
- * einer Gruppe gibt: Bild, Uhrzeit (Wochentag und Treffzeit) und Auszug.
+ * einer Gruppe gibt: Bild, Uhrzeit (Wochentag und Treffzeit), Auszug - und
+ * „Kalendername" fuer die Zielgruppe. Die steht als Angabezeile mit
+ * Personensymbol unter der Treffzeit; ausgeblendet wird sie mit dem
+ * Kalendernamen, weil beide dasselbe sagen: in welche Sparte etwas gehoert.
  */
 final class GroupListRenderer
 {
@@ -154,6 +157,11 @@ final class GroupListRenderer
                 ? CardImage::srcsetFor($attachmentId, CardImage::CARD_MAX_SRCSET_WIDTH, CardImage::CARD_REFERENCE_SIZE)
                 : '';
             $group['schedule'] = in_array('time', $hiddenElements, true) ? '' : self::schedule($group);
+            // Gruppen aus einem Abgleich vor dieser Aenderung tragen das Feld noch
+            // nicht; bis zum naechsten Lauf bleibt die Zeile dann leer.
+            $group['target_group_label'] = in_array('calendar', $hiddenElements, true)
+                ? ''
+                : trim((string) ($group['target_group'] ?? ''));
             $group['places_label'] = self::placesLabel($group);
             $group['excerpt'] = in_array('excerpt', $hiddenElements, true) || (string) ($group['note'] ?? '') === ''
                 ? ''

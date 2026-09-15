@@ -90,6 +90,7 @@ final class GroupSyncTest extends TestCase
             'image_url' => 'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
             'weekday' => 'Mittwoch',
             'meeting_time' => '9:30',
+            'target_group' => 'Jeder',
             'max_members' => 60,
             'free_places' => 52,
             'waitinglist' => false,
@@ -175,6 +176,7 @@ final class GroupSyncTest extends TestCase
         $this->assertSame('', $group['weekday']);
         $this->assertSame('', $group['meeting_time']);
         $this->assertSame('', $group['note']);
+        $this->assertSame('', $group['target_group']);
     }
 
     /**
@@ -196,7 +198,7 @@ final class GroupSyncTest extends TestCase
         $group = GroupSync::normalizeGroup($raw, self::BASE);
 
         $this->assertSame(
-            ['id', 'name', 'note', 'image_url', 'weekday', 'meeting_time', 'max_members', 'free_places', 'waitinglist', 'url'],
+            ['id', 'name', 'note', 'image_url', 'weekday', 'meeting_time', 'target_group', 'max_members', 'free_places', 'waitinglist', 'url'],
             array_keys($group)
         );
         $this->assertStringNotContainsString('Erika', (string) wp_json_encode($group));
@@ -453,6 +455,7 @@ final class GroupSyncTest extends TestCase
             'meetingTime' => '9:30',
             'weekday' => ['id' => 3, 'name' => 'wednesday', 'nameTranslated' => 'Mittwoch', 'sortKey' => 2],
             'note' => 'Treff am Mittwoch',
+            'targetGroup' => ['id' => 1, 'name' => 'everyone', 'nameTranslated' => 'Jeder', 'sortKey' => 1],
             'groupPlaces' => [],
         ];
 

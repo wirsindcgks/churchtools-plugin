@@ -7,7 +7,8 @@
  * Dieselben Klassen wie event-grid.php, damit die Einstellungen des Design-Tabs
  * greifen; `ctp-groups` steht zusaetzlich daneben, fuer eigene Regeln eines
  * Themes. Die Zusatzfelder jeder Gruppe (image_src, show_media, schedule,
- * places_label, excerpt) rechnet GroupListRenderer::prepareGroups() vor.
+ * places_label, excerpt, target_group_label) rechnet
+ * GroupListRenderer::prepareGroups() vor.
  *
  * Die Kachel ist nicht klickbar; nach ChurchTools fuehrt der Button darunter
  * (partials/group-cta.php, siehe GroupListRenderer).
@@ -62,6 +63,13 @@ if (!defined('ABSPATH')) {
                                     <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icons:: returns fixed, hard-coded SVG markup with no request input (see Icons.php docblock). ?>
                                     <?php echo Icons::clock(); ?>
                                     <?php echo esc_html($group['schedule']); ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php if ($group['target_group_label'] !== '') : ?>
+                                <span class="ctp-events__meta-item ctp-events__meta-item--target-group">
+                                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                                    <?php echo Icons::person(); ?>
+                                    <?php echo esc_html($group['target_group_label']); ?>
                                 </span>
                             <?php endif; ?>
                             <?php if ($group['excerpt'] !== '') : ?>

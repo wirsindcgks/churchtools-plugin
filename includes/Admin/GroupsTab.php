@@ -129,7 +129,7 @@ final class GroupsTab
                 SettingsPage::renderActionBar(
                     'ctp-fetch-group-homepages',
                     __('Homepages von ChurchTools laden', 'churchtools-plugin'),
-                    __('Nutzt den API-Key aus „Einstellungen → Verbindung“. Übernommen werden nur Name, Beschreibung, Treffzeit, Plätze und Bild – keine Leiter und keine Angaben über Personen.', 'churchtools-plugin')
+                    __('Nutzt den API-Key aus „Einstellungen → Verbindung“. Übernommen werden nur Name, Beschreibung, Treffzeit, Zielgruppe, Plätze und Bild – keine Leiter und keine Angaben über Personen.', 'churchtools-plugin')
                 );
                 ?>
 

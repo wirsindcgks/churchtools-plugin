@@ -174,14 +174,15 @@ $abschnitte = [
 /*
  * Die Gruppenliste bekommt ihre Felder so, wie GroupListRenderer::prepareGroups()
  * sie ans Template reicht - ausgedachte Gruppen, eine davon ohne Bild, damit
- * die Farbflaeche zu sehen ist, die dann an die Stelle des Bildes tritt.
+ * die Farbflaeche zu sehen ist, die dann an die Stelle des Bildes tritt. Die
+ * Zielgruppen sind Werte, die ChurchTools zur Auswahl anbietet.
  */
 $gruppen = [];
 foreach ([
-    ['Hauskreis Nord', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', 'Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.'],
-    ['Seniorenkreis', 'Mittwoch, 9:30 Uhr', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
-    ['Lobpreisband', 'Sonntag', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
-] as $i => [$name, $zeit, $bild, $plaetze, $text]) {
+    ['Hauskreis Nord', 'Jeder', 'Donnerstag, 19:30 Uhr', 'bild-fruehstueck.jpg', 'Noch 3 Plätze frei', 'Wir treffen uns reihum in unseren Wohnzimmern, lesen einen Bibeltext und reden darüber, was uns gerade beschäftigt.'],
+    ['Seniorenkreis', 'Jeder', 'Mittwoch, 9:30 Uhr', 'bild-fest.jpg', '', 'Frühstück, ein kurzer Impuls und viel Zeit zum Erzählen. Neue Gesichter sind jederzeit willkommen.'],
+    ['Lobpreisband', 'Männer', 'Sonntag', '', '', 'Wir spielen im Gottesdienst und proben alle zwei Wochen. Gesucht werden gerade Bass und Schlagzeug.'],
+] as $i => [$name, $zielgruppe, $zeit, $bild, $plaetze, $text]) {
     $gruppen[] = [
         'id' => $i + 1,
         'name' => $name,
@@ -190,6 +191,7 @@ foreach ([
         'image_srcset' => '',
         'show_media' => true,
         'schedule' => $zeit,
+        'target_group_label' => $zielgruppe,
         'places_label' => $plaetze,
         'excerpt' => $text,
         'description_html' => '<p>' . $text . '</p>',

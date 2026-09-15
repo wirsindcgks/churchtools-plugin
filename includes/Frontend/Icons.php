@@ -38,6 +38,19 @@ final class Icons
             . '<circle cx="12" cy="10" r="2.75"></circle></svg>';
     }
 
+    /**
+     * Kopf und Schultern - fuer die Zielgruppe einer Gruppe („Jeder",
+     * „Familien"). Eine Person statt einer Gruppe von Personen: Die Zeile sagt,
+     * *fuer wen* die Gruppe ist, nicht, wie viele schon dabei sind.
+     */
+    public static function person(): string
+    {
+        return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+            . '<circle cx="12" cy="7.5" r="4"></circle>'
+            . '<path d="M4.5 21v-1.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"></path></svg>';
+    }
+
     public static function search(): string
     {
         return '<svg class="ctp-events__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" '

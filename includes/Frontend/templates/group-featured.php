@@ -58,6 +58,13 @@ if (!defined('ABSPATH')) {
                                 <?php echo esc_html($group['schedule']); ?>
                             </span>
                         <?php endif; ?>
+                        <?php if ($group['target_group_label'] !== '') : ?>
+                            <span class="ctp-events__meta-item ctp-events__meta-item--target-group">
+                                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
+                                <?php echo Icons::person(); ?>
+                                <?php echo esc_html($group['target_group_label']); ?>
+                            </span>
+                        <?php endif; ?>
                         <?php if ($group['description_html'] !== '') : ?>
                             <div class="ctp-groups__feature-text">
                                 <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses() with its own allowlist before adding any markup of its own (see its docblock). ?>

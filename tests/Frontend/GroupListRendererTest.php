@@ -75,10 +75,26 @@ final class GroupListRendererTest extends TestCase
 
     public function testHiddenElementsOfTheDesignTabApply(): void
     {
-        $group = GroupListRenderer::prepareGroups([$this->group(44, '')], [], ['time', 'excerpt'])[0];
+        $group = GroupListRenderer::prepareGroups([$this->group(44, '')], [], ['time', 'excerpt', 'calendar'])[0];
 
         $this->assertSame('', $group['schedule']);
         $this->assertSame('', $group['excerpt']);
+        $this->assertSame('', $group['target_group_label']);
+    }
+
+    /**
+     * Die Zielgruppe steht als Angabezeile unter der Treffzeit - auch
+     * „Jeder". Gruppen ohne Zielgruppe in ChurchTools und
+     * Gruppen aus einem aelteren Abgleich bekommen keine Zeile.
+     */
+    public function testTheTargetGroupIsShownWhereChurchToolsHasOne(): void
+    {
+        $older = $this->group(514, '');
+        unset($older['target_group']);
+
+        $prepared = GroupListRenderer::prepareGroups([$this->group(44, ''), $older], []);
+
+        $this->assertSame(['Jeder', ''], array_column($prepared, 'target_group_label'));
     }
 
     public function testRenderLinksEachCardToThePublicGroupAndEscapes(): void
@@ -100,6 +116,8 @@ final class GroupListRendererTest extends TestCase
         $this->assertStringContainsString('Wine &lt;b&gt;&amp;&lt;/b&gt; Dine', $html);
         $this->assertStringContainsString('Noch 3 Plätze frei', $html);
         $this->assertStringContainsString('Donnerstag, 19:30 Uhr', $html);
+        $this->assertMatchesRegularExpression('#meta-item--time">.*?Donnerstag, 19:30 Uhr\s*</span>\s*<span class="ctp-events__meta-item ctp-events__meta-item--target-group">\s*<svg [^>]*>.*?</svg>\s*Jeder\s*</span>#s', $html);
+        $this->assertStringNotContainsString('ctp-events__eyebrow', $html);
         $this->assertStringContainsString('--ctp-columns:6;', $html, 'Spalten wie bei den Terminen auf 2 bis 6 begrenzt.');
         $this->assertStringNotContainsString('ctp-events__media', $html);
     }
@@ -183,6 +201,7 @@ final class GroupListRendererTest extends TestCase
         $this->assertStringContainsString('ctp-groups__feature ', $html);
         $this->assertStringNotContainsString('--ctp-columns', $html);
         $this->assertStringContainsString('class="ctp-events__cta ctp-button"', $html);
+        $this->assertMatchesRegularExpression('#meta-item--target-group">\s*<svg [^>]*>.*?</svg>\s*Jeder\s*</span>#s', $html);
     }
 
     public function testAnUnknownLayoutFallsBackToTheGrid(): void
@@ -209,6 +228,7 @@ final class GroupListRendererTest extends TestCase
             'image_url' => $imageUrl,
             'weekday' => 'Donnerstag',
             'meeting_time' => '19:30 Uhr',
+            'target_group' => 'Jeder',
             'max_members' => null,
             'free_places' => null,
             'waitinglist' => false,
