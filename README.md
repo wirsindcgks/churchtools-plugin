@@ -27,32 +27,32 @@ Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regel
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/grid.png" width="100%" alt="Kachelraster mit drei Spalten"><br>
-      <b>Kachelraster</b>: Bild, Datum und kurzer Auszug
+      <b>Kachelraster</b>: Bild, Datum und kurzer Auszug<br>
+      <img src="docs/screenshots/grid.png" width="100%" alt="Kachelraster mit drei Spalten">
     </td>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/gruppen.png" width="100%" alt="Drei Gruppenkacheln mit Treffzeit und freien Plätzen"><br>
-      <b>Gruppen</b>: die Gruppen einer Homepage als Kacheln
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <img src="docs/screenshots/naechster-termin.png" width="100%" alt="Große Kachel für den nächsten Termin, darunter die folgenden"><br>
-      <b>Nächster Termin</b>: groß, die folgenden darunter
-    </td>
-    <td width="50%" valign="top">
-      <img src="docs/screenshots/eventfinder.png" width="100%" alt="Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste"><br>
-      <b>Eventfinder</b>: nach Thema und Zeitraum filtern
+      <b>Gruppen</b>: die Gruppen einer Homepage als Kacheln<br>
+      <img src="docs/screenshots/gruppen.png" width="100%" alt="Drei Gruppenkacheln mit Treffzeit und freien Plätzen">
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/liste.png" width="100%" alt="Terminliste mit Monatsüberschriften"><br>
-      <b>Liste</b>: kompakt, nach Monaten gruppiert
+      <b>Nächster Termin</b>: groß, die folgenden darunter<br>
+      <img src="docs/screenshots/naechster-termin.png" width="100%" alt="Große Kachel für den nächsten Termin, darunter die folgenden">
     </td>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/popup.png" width="100%" alt="Popup mit Bild, Datum, Titel, Zeit, Ort und Beschreibung"><br>
-      <b>Termindetails</b>: als Popup oder eigene Seite
+      <b>Eventfinder</b>: nach Thema und Zeitraum filtern<br>
+      <img src="docs/screenshots/eventfinder.png" width="100%" alt="Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <b>Liste</b>: kompakt, nach Monaten gruppiert<br>
+      <img src="docs/screenshots/liste.png" width="100%" alt="Terminliste mit Monatsüberschriften">
+    </td>
+    <td width="50%" valign="top">
+      <b>Termindetails</b>: als Popup oder eigene Seite<br>
+      <img src="docs/screenshots/popup.png" width="100%" alt="Popup mit Bild, Datum, Titel, Zeit, Ort und Beschreibung">
     </td>
   </tr>
 </table>

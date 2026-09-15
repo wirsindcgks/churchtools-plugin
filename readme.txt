@@ -8,36 +8,36 @@ Stable tag: 1.29.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Synchronisiert Kalender-Events aus der ChurchTools API, speichert sie lokal und zeigt sie per Shortcode, Gutenberg-Block oder WPBakery-Element an.
+Termine und Gruppen aus ChurchTools auf der eigenen WordPress-Website – einmal in ChurchTools gepflegt, auf der Website von selbst aktuell.
 
 == Description ==
 
-Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an – ohne dass jemand Termine doppelt pflegen muss.
+Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regelmäßig ab und zeigt sie in fertig gestalteten Ansichten an. Farben, Ecken und Aufbau stellt man im Backend mit Live-Vorschau ein, ganz ohne CSS.
 
-* **Automatischer Sync** ausgewählter ChurchTools-Kalender per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag“) werden korrekt als einzelne Termine übernommen, abgesagte Einzeltermine wieder entfernt.
-* **Drei Ansichten**: Liste, Grid und „Nächster Termin“ – alle drei per Shortcode, Gutenberg-Block oder WPBakery-Element einbindbar, auf gemeinsamer Rendering-Basis.
-* **Finden statt scrollen**: Kalenderfilter, Freitext-Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?“), alle clientseitig und damit Full-Page-Cache-tauglich.
-* **Termindetails** wahlweise als Popup auf derselben Seite oder als eigene Termin-URL, auf Wunsch mit „Teilen“-Button – auf dem Telefon das Teilen-Menü des Geräts, am Rechner der Link in der Zwischenablage, ohne Drittanbieter-Skript und ohne Zählpixel. Dazu ein „Importieren“-Button, der den Termin als Kalenderdatei ablegt – bei einer Terminserie auf Wunsch gleich alle Termine.
-* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in der Optik des Plugins, mit Treffzeit und freien Plätzen – per Shortcode, Block oder WPBakery-Element, mit eigenem Sync-Intervall.
-* **Design** unter „Einstellungen“ mit Live-Vorschau, aufgeteilt in vier Bereiche: *Stil* (vier Vorlagen — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), *Kachel* (Reihenfolge und Sichtbarkeit der Kartenelemente per Drag&Drop, Bild-Seitenverhältnis), *Detailansicht* (Klickverhalten, Adresse, „Teilen“- und „Importieren“-Button, Reihenfolge) und *Listen* (Zeitraum pro Seite).
-* **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierte Daten (schema.org/Event), eine eigene Termin-Sitemap und ein eigener Seitenkopf je Termin – verträglich mit Yoast SEO und Rank Math.
-* **Datenschutzfreundlich**: Event-Bilder werden in die Medienbibliothek importiert statt von ChurchTools gehotlinkt – Besucher laden nichts von der ChurchTools-Domain. Beschreibungen können keine fremden Bilder oder Skripte einbinden, E-Mail-Adressen darin werden gegen Adresssammler verschleiert, und unter Einstellungen → Datenschutz liegt ein Textvorschlag für die Datenschutzerklärung.
-* **Sicher angebunden**: Jeder Abruf geht mit dem API-Key und folgt keiner Weiterleitung; der Key liegt wahlweise als Konstante `CTP_API_KEY` in `wp-config.php` oder verschlüsselt (libsodium) in der Datenbank.
-* **Schlanke Auslieferung**: Liste und Grid rendern zunächst nur den laufenden plus den nächsten Monat und laden weitere Zeiträume per Klick nach.
-* **Aufräumen inklusive**: vergangene Termine (und ihre importierten Bilder) verschwinden nach einer einstellbaren Aufbewahrungsfrist automatisch wieder.
-* **Theme-überschreibbare Templates** und Anlehnung an die Global Styles des aktiven Themes.
-* **Automatische Updates** über GitHub Releases, direkt aus der WordPress-Plugin-Übersicht – ohne Zugangstoken, das Repository ist öffentlich.
+* **Termine automatisch übernehmen**: Serien kommen als einzelne Termine an, abgesagte verschwinden wieder. Vergangene Termine räumen sich samt Bildern selbst weg.
+* **Drei Ansichten**: Liste, Grid und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
+* **Schnell finden**: Eventfinder mit Themen- und Zeitraum-Knöpfen, Suche und Monatsüberschriften.
+* **Termindetails** als Popup oder als eigene Seite, auf Wunsch zum Teilen, als Kalenderdatei oder als Kalender-Abo.
+* **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage in derselben Optik, mit Treffzeit und freien Plätzen.
+* **Gut für Suchmaschinen**: eigene Adresse je Termin, strukturierte Daten und Sitemap, verträglich mit Yoast SEO und Rank Math.
+* **Datensparsam**: Bilder werden importiert, Besucher laden nichts von der ChurchTools-Domain. Die Teilen-Knöpfe kommen ohne Skript von Drittanbietern und ohne Zählpixel aus. Für die Datenschutzerklärung liegt ein Textvorschlag bereit.
+* **Sicher angebunden**: Der API-Key liegt verschlüsselt in der Datenbank oder als Konstante `CTP_API_KEY` in `wp-config.php`.
+* **Updates** wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
+
+Die Reiter dieses Fensters sind die Referenz: *Verwendung* beschreibt jede Option, *FAQ* und *Datenschutz* beantworten die häufigen Fragen. Eine Anleitung mit Bildern steht im Repository: https://github.com/wirsindcgks/churchtools-plugin
 
 == Installation ==
 
-1. Plugin-Ordner nach `wp-content/plugins/churchtools-plugin` hochladen.
-2. Plugin aktivieren.
-3. Unter ChurchTools → Einstellungen → Verbindung den Instanz-Namen (z. B. „musterkirche“ für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
-4. Unter ChurchTools → Events → Kalender auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender aktivieren (optional Farbe und Standardbild je Kalender setzen). Spätere Änderungen in ChurchTools zieht jede Synchronisation automatisch nach.
-5. In der Übersicht einmal „Jetzt synchronisieren“ auslösen – danach übernimmt WP-Cron.
-6. Shortcode, Block oder WPBakery-Element auf einer Seite einfügen (Beispiele unter Events → Einbinden, für Gruppen unter Gruppen → Einbinden).
+1. Unter https://github.com/wirsindcgks/churchtools-plugin/releases/latest die Datei `churchtools-plugin-vX.Y.Z.zip` herunterladen – nicht „Source code (zip)“, darin fehlen die gebauten Bestandteile.
+2. In WordPress unter Plugins → Installieren → Plugin hochladen die ZIP-Datei installieren und aktivieren. Im linken Menü erscheint „ChurchTools“.
+3. Unter ChurchTools → Einstellungen → Verbindung den Instanz-Namen (z. B. `musterkirche` für https://musterkirche.church.tools) und den API-Key hinterlegen, dann „Verbindung testen“.
+4. Unter ChurchTools → Events → Kalender auf „Kalender von ChurchTools laden“ klicken und die gewünschten Kalender anhaken, optional mit Farbe und Standardbild.
+5. In der Übersicht einmal „Jetzt synchronisieren“ – danach übernimmt WP-Cron.
+6. Den Block „ChurchTools Events“ auf einer Seite einfügen, oder das WPBakery-Element bzw. einen Shortcode. Fertige Beispiele stehen unter Events → Einbinden, für Gruppen unter Gruppen → Einbinden.
 
-Das Backend hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Gruppenliste, Homepages, Einbinden) und Einstellungen (Verbindung, Design, Updates).
+Das Backend hat vier Bereiche im linken Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen, Fehler im Klartext), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Gruppenliste, Homepages, Einbinden) und Einstellungen (Verbindung, Design, Updates).
+
+Neue Versionen meldet das Plugin selbst.
 
 == Verwendung ==
 
