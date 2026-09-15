@@ -847,7 +847,7 @@ Frage des Nutzers: „Wann sollten wir auf eine stabile V2 gehen?“ Antwort: **
   - Regel für Abkündigungen: mindestens eine Minor-Version mit Hinweis im Backend und in der Upgrade Notice, entfernt erst in der nächsten Hauptversion
 - [ ] **Template-Versionen erkennen** (Vorschlag): Eine Versionsangabe im Kopf jedes überschreibbaren Templates und ein Hinweis im Backend, wenn ein Theme eine ältere Kopie benutzt – der Fall aus 1.28.0 wäre dann aufgefallen.
 
-- [ ] **Umbenennung in „Connect ChurchTools“** (Nutzerentscheidung 2026-09-15) – mit **1.29.0**, nicht erst mit 2.0: Der sichtbare Name ist kein Bruch.
+- [ ] **Umbenennung in „Connect ChurchTools“** (Nutzerentscheidung 2026-09-15) – mit **2.0.0** (Nutzerentscheidung, zuerst war 1.29.0 vorgeschlagen). Technisch ist der sichtbare Name kein Bruch; gebündelt mit dem Versionssprung kommen neuer Name und 2.0 aber zusammen an, und die Ankündigung in 1.29.0 kann ihn schon nennen.
   - *Bleibt unverändert*: Ordner und Plugin-Kennung `churchtools-plugin`, Textdomain, Präfixe `ctp_`, Shortcodes `[ctp_events]`/`[ctp_groups]`, Block-Namen `churchtools-plugin/*`, Repo-Name. WordPress erkennt ein Plugin am Ordner; eine neue Kennung hieße: kein Update mehr, sondern ein zweites Plugin – ohne jeden Nutzen.
   - *Wird umbenannt*: `Plugin Name` und Beschreibung im Kopf (heute nur „Kalender-Events“), Titel der readme.txt, `name` in `update.json` (über `bin/make-update-json.php`), Präfix „ChurchTools Events:“ im Backend-Hinweis (`SyncHealthNotice`), Name des Datenschutz-Vorschlags (`PrivacyPolicy` – WordPress meldet danach einmalig den alten als entfernt), `PRODID` der Kalenderdateien, Titel von Blöcken und WPBakery-Elementen (Vorschlag „Termine (ChurchTools)“ und „Gruppen (ChurchTools)“), README und Doku, Bildunterschriften. Der Menüpunkt „ChurchTools“ im Backend bleibt. `DocumentationLabelsTest` und `VersionConsistencyTest` prüfen mit.
   - *Hinweis auf Unabhängigkeit* (Nutzerwunsch: „dass es eine Custom-Lösung ist, die nichts mit dem Hersteller zu tun hat“). Vorschlag für den Wortlaut: „Connect ChurchTools ist ein unabhängiges Projekt und steht in keiner Verbindung zur ChurchTools Innovations GmbH, der Herstellerin von ChurchTools. ChurchTools ist eine Marke der ChurchTools Innovations GmbH.“ Firmenname laut Impressum von church.tools (Karlsruhe, HRB 724299), nachgesehen 2026-09-15. Stellen: Beschreibung in der Plugin-Übersicht (kurz: „Unabhängiges Projekt, nicht von ChurchTools Innovations GmbH.“), oben in README und readme.txt, eigene FAQ in der readme.txt, Fußzeile des Reiters „Einstellungen → Updates“ im Backend.
@@ -861,9 +861,9 @@ Frage des Nutzers: „Wann sollten wir auf eine stabile V2 gehen?“ Antwort: **
 
 **Ablauf**
 
-1. **1.29.0 – Ankündigung**: Hinweis im Backend (für Administratoren) und Upgrade Notice zu den neuen Mindestversionen und den entfallenden Altwegen; die Vertragsseite in die Doku; ein Hinweis, falls die Seite auf einer PHP-Version unter der künftigen Mindestversion läuft.
+1. **1.29.0 – Ankündigung**: Hinweis im Backend (für Administratoren) und Upgrade Notice zu den neuen Mindestversionen, den entfallenden Altwegen und dem neuen Namen „Connect ChurchTools“; die Vertragsseite in die Doku; ein Hinweis, falls die Seite auf einer PHP-Version unter der künftigen Mindestversion läuft.
 2. **Übergangszeit** von etwa vier bis sechs Wochen, damit jede Installation die Migrationen durchlaufen hat und Betreiber ihre PHP-Version anheben können.
-3. **2.0.0**: Mindestversionen gelten, Ballast entfernt, Vertrag gilt. Danach Minor- und Patch-Releases, bis wieder gebündelt gebrochen wird.
+3. **2.0.0**: Mindestversionen gelten, Ballast entfernt, Vertrag gilt, das Plugin heißt „Connect ChurchTools“ und trägt den Hinweis auf seine Unabhängigkeit. Danach Minor- und Patch-Releases, bis wieder gebündelt gebrochen wird.
 
 ### Offene Kleinigkeiten im Frontend
 
