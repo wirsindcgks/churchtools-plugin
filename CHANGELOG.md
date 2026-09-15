@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.32.0] - 2026-09-15
+
+### Changed
+
+- **WPBakery-Elemente einheitlich.** Das Element „ChurchTools Events“ wählt Kalender jetzt in derselben Auswahlliste wie „Einzelne Gruppen“ im Element „ChurchTools Gruppen“ – mit Filter, ohne Reihenfolge, leer = alle aktiven Kalender – statt in einem Textfeld mit IDs. Beide Elemente teilen ihre Optionen in die Reiter „Auswahl“ und „Darstellung“, wie die Bereiche der Blöcke.
+- **Kalendernamen bleiben erhalten.** Nennt ein bestehender Shortcode Kalender beim Namen, erkennt das Element sie und speichert sie als ID. Ein Name ohne passenden Kalender bleibt als „nicht gefunden“ stehen und wird mitgespeichert, statt beim ersten Speichern zu verschwinden.
+
 ## [1.31.0] - 2026-09-15
 
 ### Added
