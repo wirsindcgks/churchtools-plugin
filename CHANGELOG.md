@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.32.2] - 2026-09-15
+
+### Fixed
+
+- **Termine erschienen ohne Bild, obwohl in ChurchTools eines hinterlegt ist.** Das Plugin lud Terminbilder über den Dateidownload von ChurchTools (`fileUrl`), und den beantwortet ChurchTools ohne Anmeldung inzwischen mit HTTP 401 („Die Berechtigung appointment_image ist notwendig“). Der Import gab dabei still auf. Betroffen waren nur Serien mit neu hochgeladenem Bild – die übrigen behielten das früher importierte. Terminbilder kommen jetzt wie die Gruppenbilder über den Bilddienst (`imageUrl`, in höchstens 1600 Pixeln, mit dem in ChurchTools gespeicherten Ausschnitt). Weil sich damit die Quelladresse ändert, lädt der nächste Sync jedes Terminbild einmal neu; der Lauf dauert entsprechend länger. Mit der Anmeldung an die API hatte der Ausfall nichts zu tun – der Bild-Download lief nie über den Key.
+
 ## [1.32.1] - 2026-09-15
 
 ### Fixed

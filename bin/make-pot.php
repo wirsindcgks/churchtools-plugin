@@ -48,7 +48,9 @@ $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, Filesy
 foreach ($it as $f) {
     $path = $f->getPathname();
     $rel  = ltrim(str_replace($root, '', $path), '/');
-    if (preg_match('#^(vendor|node_modules|tests|\.git|blocks/[^/]+/build)/#', $rel)) {
+    // .claude: Claude-Code-Sitzungen legen dort eigene Worktrees an, eine
+    // vollstaendige zweite Kopie des Plugins (am 2026-09-15 landete sie in der POT).
+    if (preg_match('#^(vendor|node_modules|tests|\.git|\.claude|blocks/[^/]+/build)/#', $rel)) {
         continue;
     }
     if (preg_match('/\.(php|js)$/', $rel)) {

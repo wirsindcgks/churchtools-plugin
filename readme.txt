@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.32.1
+Stable tag: 1.32.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -277,6 +277,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.32.2 =
+
+Behebt, dass Termine ohne Bild erschienen, obwohl in ChurchTools eines hinterlegt ist – betroffen waren Serien mit neu hochgeladenem Bild. Der nächste Sync lädt dafür alle Terminbilder einmal neu und dauert entsprechend länger; wer nicht warten will, klickt „Jetzt synchronisieren“. Danach den Seiten-Cache leeren.
+
 = 1.32.1 =
 
 Die WPBakery-Elemente „ChurchTools Events“ und „ChurchTools Gruppen“ haben wieder keine Reiter: Beim Wechsel zwischen „Auswahl“ und „Darstellung“ konnte eine noch nicht gespeicherte Auswahl verloren gehen. Die Kalender- und Gruppenauswahl steht jetzt oben im Formular. Auf der Website ändert sich nichts.
@@ -464,6 +468,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.32.2 =
+
+* Behoben: Terminbilder, die in ChurchTools neu hochgeladen wurden, kamen nicht mehr auf der Website an – ChurchTools lehnt den bisher genutzten Dateidownload ohne Anmeldung ab. Die Bilder kommen jetzt über den Bilddienst von ChurchTools wie bei den Gruppen, in höchstens 1600 Pixeln
 
 = 1.32.1 =
 
