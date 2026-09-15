@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.1] - 2026-09-15
+
+### Changed
+
+- **Platzhinweis an Gruppen ab 11 freien Plätzen gedeckelt.** Statt „Noch 52 Plätze frei“ steht „10+ Plätze frei“ – eine hohe Zahl liest sich eher nach einer leeren Gruppe als nach einem Anlass, sich anzumelden. Bis 10 freie Plätze bleibt die genaue Zahl, „Ausgebucht“ und „Warteliste“ bleiben unverändert.
+
 ## [1.29.0] - 2026-09-15
 
 Die Ankündigung von 2.0. Auf der Website ändert sich mit diesem Update nichts.

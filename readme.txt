@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.29.0
+Stable tag: 1.29.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -274,6 +274,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.29.1 =
+
+Gruppen mit mehr als 10 freien Plätzen zeigen „10+ Plätze frei“ statt der genauen Zahl.
+
 = 1.29.0 =
 
 Kündigt Version 2.0 an: neuer Name „Connect ChurchTools“, Mindestversionen PHP 8.3 und WordPress 6.6, Übergangswege für alte Einstellungen entfallen. Die Übersicht im Backend zeigt, ob auf dieser Website vorher etwas zu tun ist. Auf der Website selbst ändert sich mit diesem Update nichts.
@@ -429,6 +433,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.29.1 =
+
+* Geändert: Platzhinweis an Gruppen ab 11 freien Plätzen als „10+ Plätze frei“; bis 10 bleibt die genaue Zahl
 
 = 1.29.0 =
 
