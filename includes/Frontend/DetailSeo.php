@@ -210,8 +210,8 @@ final class DetailSeo
     /**
      * Achtung, hier steckt eine Falle: Die Spalte `image_url` der Tabelle ist
      * *nicht* die Adresse, unter der das Bild ausgeliefert wird — sie hält die
-     * ursprüngliche ChurchTools-Adresse, und die antwortet einem Besucher
-     * (und jedem Dienst, der eine Vorschau baut) mit HTTP 401. Ausgeliefert
+     * ursprüngliche ChurchTools-Adresse, und die gehört als Quelle des Imports
+     * nicht nach draußen (siehe EventListRenderer::resolveImage()). Ausgeliefert
      * wird der importierte Anhang, ersatzweise das Standardbild des Kalenders,
      * und genau diese Frage beantwortet EventListRenderer::resolveImage().
      *

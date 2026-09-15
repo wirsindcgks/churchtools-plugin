@@ -104,29 +104,6 @@ final class GroupSyncTest extends TestCase
     }
 
     /**
-     * Ohne Parameter liefert ChurchTools ein Vorschaubild mit 150x150 Pixeln.
-     * `fit=max` haelt das Seitenverhaeltnis und vergroessert nicht.
-     */
-    public function testImagesAreRequestedLargeInTheirOwnAspectRatio(): void
-    {
-        $this->assertSame(
-            'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
-            GroupSync::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc')
-        );
-        $this->assertSame('', GroupSync::sizedImageUrl(''));
-        $this->assertSame('', GroupSync::sizedImageUrl('  '));
-    }
-
-    /** Eine vorhandene Abfrage bleibt stehen; die spaeteren Parameter gewinnen. */
-    public function testAnExistingQueryIsKept(): void
-    {
-        $this->assertSame(
-            'https://musterkirche.church.tools/images/5123/abc?v=2&w=1600&h=1600&fit=max',
-            GroupSync::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc?v=2')
-        );
-    }
-
-    /**
      * Bilder aus der Zeit vor der Umstellung stehen mit der Adresse des
      * Vorschaubilds in der Mediathek. Die neue Adresse weicht davon ab, und
      * genau das laesst syncImages() sie einmal neu holen.

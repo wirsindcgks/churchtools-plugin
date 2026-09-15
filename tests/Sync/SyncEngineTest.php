@@ -433,7 +433,10 @@ final class SyncEngineTest extends TestCase
             'description' => 'Herzliche Einladung',
             'allDay' => false,
             'calendar' => ['id' => 32],
-            'image' => ['fileUrl' => 'https://musterkirche.church.tools/files/image.jpg'],
+            'image' => [
+                'fileUrl' => 'https://musterkirche.church.tools/?q=public/filedownload&id=9327&filename=abc',
+                'imageUrl' => 'https://musterkirche.church.tools/images/9327/def',
+            ],
             'address' => [
                 'name' => 'Gemeindehaus',
                 'street' => 'Hauptstraße 1',
@@ -493,8 +496,46 @@ final class SyncEngineTest extends TestCase
         $this->assertSame('Predigt: Max Mustermann', $row['subtitle']);
         $this->assertSame('Herzliche Einladung', $row['description']);
         $this->assertFalse($row['all_day']);
-        $this->assertSame('https://musterkirche.church.tools/files/image.jpg', $row['image_url']);
+        $this->assertSame('https://musterkirche.church.tools/images/9327/def?w=1600&h=1600&fit=max', $row['image_url']);
         $this->assertSame('Gemeindehaus, Hauptstraße 1, 75015 Bretten', $row['location']);
+    }
+
+    /**
+     * Den Dateidownload (`fileUrl`) beantwortet ChurchTools ohne Anmeldung
+     * mit 401, und importImage() laedt ohne Anmeldung. Stuende er hier als
+     * Quelle, bliebe jede Serie mit neuem Bild still ohne Bild - so geschehen
+     * bis 1.32.1. Ohne `imageUrl` gibt es deshalb keine Bildadresse, auch
+     * wenn `fileUrl` da ist.
+     */
+    public function testTakesTheImageServiceAddressNotTheFileDownload(): void
+    {
+        $envelope = $this->envelope();
+        unset($envelope['appointment']['base']['image']['imageUrl']);
+
+        $this->assertSame('', $this->mapOccurrence($envelope)['image_url']);
+    }
+
+    /**
+     * Ohne Parameter liefert ChurchTools ein Vorschaubild mit 150x150 Pixeln.
+     * `fit=max` haelt das Seitenverhaeltnis und vergroessert nicht.
+     */
+    public function testImagesAreRequestedLargeInTheirOwnAspectRatio(): void
+    {
+        $this->assertSame(
+            'https://musterkirche.church.tools/images/5123/abc?w=1600&h=1600&fit=max',
+            SyncEngine::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc')
+        );
+        $this->assertSame('', SyncEngine::sizedImageUrl(''));
+        $this->assertSame('', SyncEngine::sizedImageUrl('  '));
+    }
+
+    /** Eine vorhandene Abfrage bleibt stehen; die spaeteren Parameter gewinnen. */
+    public function testAnExistingQueryIsKept(): void
+    {
+        $this->assertSame(
+            'https://musterkirche.church.tools/images/5123/abc?v=2&w=1600&h=1600&fit=max',
+            SyncEngine::sizedImageUrl('https://musterkirche.church.tools/images/5123/abc?v=2')
+        );
     }
 
     /**

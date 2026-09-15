@@ -50,6 +50,9 @@ final class SyncEngine
     /** Name der Sperre dieses Abgleichs, siehe RunLock. */
     public const LOCK = 'events';
 
+    /** Groesse, in der Termin- und Gruppenbilder abgerufen werden - siehe sizedImageUrl(). */
+    public const IMAGE_QUERY = 'w=1600&h=1600&fit=max';
+
     /**
      * Ein Abgleich unter der Sperre `events` - WP-Cron und der Knopf „Jetzt
      * synchronisieren" laufen damit nie gleichzeitig.
@@ -576,8 +579,21 @@ final class SyncEngine
             return null;
         }
 
+        /*
+         * `imageUrl` (Bilddienst) statt `fileUrl` (Dateidownload): Den
+         * Download beantwortet ChurchTools ohne Anmeldung inzwischen mit 401
+         * „Die Berechtigung appointment_image ist notwendig" - gemessen am
+         * 2026-09-15, auch fuer Bilder, die am 2026-08-18 noch so importiert
+         * worden waren. importImage() scheiterte daran still, und jede Serie
+         * mit neuem Bild blieb ohne Bild. Der Bilddienst liefert dasselbe
+         * Bild ohne Anmeldung - so, wie es auch der Kalender von ChurchTools
+         * abgemeldeten Besuchern zeigt. Die Gruppen holen ihre Bilder schon
+         * seit 1.26.0 auf diesem Weg.
+         */
         $image = $base['image'] ?? null;
-        $imageUrl = is_array($image) ? (string) ($image['fileUrl'] ?? '') : '';
+        $imageUrl = is_array($image) && is_string($image['imageUrl'] ?? null)
+            ? self::sizedImageUrl($image['imageUrl'])
+            : '';
         $location = self::formatAddress(is_array($base['address'] ?? null) ? $base['address'] : null);
 
         return [
@@ -771,8 +787,8 @@ final class SyncEngine
      * it requires the URL itself to end in a recognizable image extension
      * (`preg_match('/[^\?]+\.(jpe?g|jpe|gif|png|webp|avif)\b/i', $url)` internally)
      * and immediately fails with "Invalid image URL" otherwise — before even
-     * attempting a download. ChurchTools' file download endpoints are query-string
-     * based (`…?q=public/filedownload&id=…&filename=<hash, no extension>`), so every
+     * attempting a download. ChurchTools' image addresses carry no extension
+     * (`/images/{id}/{hash}`, back then `…?q=public/filedownload&id=…&filename=<hash>`), so every
      * single import failed this way (verified: 0 of 154 synced rows ever got an
      * attachment_id, despite 116 of them having an image_url). Downloads manually
      * instead, determining the real file type from the downloaded content via
@@ -829,6 +845,46 @@ final class SyncEngine
         update_post_meta((int) $attachmentId, CardImage::VERSION_META_KEY, CardImage::SIZES_VERSION);
 
         return (int) $attachmentId;
+    }
+
+    /**
+     * Die Bildadresse in einer Groesse, die fuer Kachel und Detailansicht reicht.
+     *
+     * Ohne Parameter liefert `/images/{id}/{hash}` ein Vorschaubild mit
+     * 150x150 Pixeln (gemessen 2026-09-15) - auf einer Kachel von 400px
+     * Breite pixelig. Die Adresse geht an den Bilddienst Glide (siehe
+     * OpenAPI-Spec, `get-images-fileId-hash`), und der kennt `w`, `h` und
+     * `fit`:
+     *
+     * - `w` allein reicht nicht: `?w=1600` ergab 1600x150, die Hoehe blieb
+     *   beim Vorgabewert.
+     * - `w` und `h` allein schneiden auf genau dieses Format zu. Die Kachel
+     *   kennt aber drei Seitenverhaeltnisse (CardDesign::MEDIA_ASPECT_RATIOS),
+     *   und Detailansicht wie hervorgehobene Ansicht zeigen das Bild ganz.
+     * - `fit=max` haelt das Seitenverhaeltnis und vergroessert nicht:
+     *   `w=5000&h=5000&fit=max` lieferte das Original mit 1620x1080. Den in
+     *   ChurchTools gespeicherten Bildausschnitt beachtet Glide dabei weiter.
+     *
+     * 1600 statt mehr: Die `srcset`-Liste einer Kachel endet bei
+     * CardImage::CARD_MAX_SRCSET_WIDTH, und die Detailansicht ist hoechstens
+     * 480px breit, auf dem Telefon 92vw (CardImage::detailSizes()) - selbst
+     * bei dreifacher Pixeldichte bleibt das unter 1600.
+     *
+     * Angehaengt statt ersetzt: Traegt die Adresse eines Tages selbst eine
+     * Abfrage, bleibt die erhalten, und die spaeteren gleichnamigen Parameter
+     * gewinnen. Weil sich die Adresse damit aendert, holen syncSeriesImage()
+     * und GroupSync::syncImages() jedes vorhandene Bild einmal neu - genau
+     * das, was ein Update braucht.
+     */
+    public static function sizedImageUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return '';
+        }
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . self::IMAGE_QUERY;
     }
 
     /**

@@ -635,11 +635,14 @@ final class EventListRenderer
      * oder fehlschlug. Das kann nicht funktionieren: importImage() laedt mit
      * download_url(), also ohne Anmeldung und damit genau so, wie es auch der
      * Browser eines Besuchers taete. Was der Import nicht herunterladen konnte,
-     * kann der Besucher erst recht nicht - auf der Referenzinstanz antwortet
-     * eine solche Adresse mit HTTP 401. Der Rueckfall lieferte also ein
+     * kann der Besucher erst recht nicht - damals antwortete die gespeicherte
+     * Download-Adresse mit HTTP 401. Der Rueckfall lieferte also ein
      * garantiert kaputtes Bild und verhinderte obendrein das Standardbild des
      * Kalenders, weil `image_url` ja belegt war (Nutzerbefund 2026-09-02: „Beim
-     * 3. Event scheint etwas am Bild kaputt zu sein").
+     * 3. Event scheint etwas am Bild kaputt zu sein"). Und wo die Adresse
+     * doch laedt (seit dem Bilddienst, siehe SyncEngine::mapOccurrence()),
+     * spraeche sie gegen das Versprechen des Plugins, dass Besucher nichts
+     * von der ChurchTools-Domain laden.
      *
      * Eigene Methode, seit die Vorschau beim Teilen dieselbe Frage stellt wie
      * die Kachel (Frontend\DetailSeo::imageUrl()) - und zwar im <head>, also
