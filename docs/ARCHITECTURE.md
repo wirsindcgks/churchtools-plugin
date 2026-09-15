@@ -1,7 +1,8 @@
 # Architektur
 
 Dieses Dokument richtet sich an Entwickler. Wer das Plugin einrichten und
-benutzen will, ist in der [README](../README.md) richtig, die vollständige
+benutzen will, ist in der [README](../README.md) und der von dort verlinkten
+[Anleitung](EINRICHTUNG.md) richtig, die vollständige
 Optionsreferenz steht in [readme.txt](../readme.txt).
 
 Anforderungen: WordPress ≥ 6.4, PHP ≥ 8.1.
@@ -120,7 +121,8 @@ Was Anwender sehen, ist erst fertig, wenn es auch dort steht, wo Anwender nachse
 
 | Stelle | Wer liest sie |
 | --- | --- |
-| `README.md` | Wer das Repo besucht, bevor er das Plugin installiert – mit den Bildern aus `docs/screenshots/` |
+| `README.md` | Wer das Repo besucht, bevor er das Plugin installiert – nur der Überblick mit den Bildern aus `docs/screenshots/`, kurz halten |
+| `docs/EINRICHTUNG.md`, `TERMINE.md`, `GRUPPEN.md`, `GUT-ZU-WISSEN.md` | Wer nach dem Überblick tiefer einsteigt: die ausführliche Anwenderdoku, von der README verlinkt |
 | `readme.txt` | Dieselben Leute im WordPress-Backend unter *Plugins → Details*, plus die vollständige Referenz aller Optionen. Dorthin kommt sie nicht von allein: `bin/make-update-json.php` schreibt ihre Abschnitte in `update.json`, WordPress zeigt eine `readme.txt` nur bei Plugins von wordpress.org an (seit 1.17.3, davor stand im Detailfenster nur der Changelog) |
 | `CHANGELOG.md` | Wer wissen will, was ein Update ändert |
 | Beschriftungen und Hilfetexte im Backend | Wer die Einstellung gerade vor sich hat |

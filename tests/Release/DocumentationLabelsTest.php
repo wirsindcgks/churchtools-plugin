@@ -67,6 +67,20 @@ final class DocumentationLabelsTest extends TestCase
         $this->assertLabelsExist('README.md', (string) file_get_contents(self::ROOT . '/README.md'));
     }
 
+    /**
+     * Die Anwenderdoku, die aus der README ausgelagert wurde. Ohne diese
+     * Prüfung wären die Zitate mit dem Umzug aus dem Blick des Tests gefallen.
+     */
+    public function testQuotedLabelsInUserDocsExistInThePlugin(): void
+    {
+        foreach (['EINRICHTUNG.md', 'TERMINE.md', 'GRUPPEN.md', 'GUT-ZU-WISSEN.md'] as $datei) {
+            $pfad = self::ROOT . '/docs/' . $datei;
+
+            $this->assertFileExists($pfad);
+            $this->assertLabelsExist('docs/' . $datei, (string) file_get_contents($pfad));
+        }
+    }
+
     public function testQuotedLabelsInPluginReadmeExistInThePlugin(): void
     {
         /*

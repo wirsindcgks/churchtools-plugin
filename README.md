@@ -7,201 +7,101 @@
 ![PHP](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwirsindcgks%2Fchurchtools-plugin%2Fmain%2Fupdate.json&query=%24.requires_php&label=PHP&prefix=%E2%89%A5)
 [![Lizenz](https://img.shields.io/github/license/wirsindcgks/churchtools-plugin?label=Lizenz)](LICENSE)
 
-Holt die Termine ausgewählter ChurchTools-Kalender automatisch nach WordPress und zeigt sie dort in drei fertig gestalteten Ansichten an — als Liste, als Kachelraster oder als „Nächster Termin". Termine werden einmal in ChurchTools gepflegt und erscheinen auf der Website von selbst.
+**Termine und Gruppen aus ChurchTools auf der eigenen WordPress-Website – einmal in ChurchTools gepflegt, auf der Website von selbst aktuell.**
 
-- **Automatischer Abgleich** per WP-Cron; Intervall und Vorlaufzeitraum einstellbar. Terminserien („jeden Montag") kommen als einzelne Termine an, abgesagte verschwinden wieder.
-- **Drei Ansichten**, einbindbar als Shortcode, Gutenberg-Block oder WPBakery-Element.
-- **Finden statt scrollen**: Kalenderfilter, Suche, Monatstrenner und der geführte Eventfinder („Welche Angebote sprechen dich an?").
-- **Bilder in der Größe, in der sie angezeigt werden**: eigene Bildbreiten plus `srcset`, WebP beim Import, ein Bild je Terminserie statt je Termin.
-- **Termindetails** wahlweise als Popup oder als eigene Termin-Seite, auf Wunsch mit Knöpfen für „Teilen“, „Importieren“ und „Abonnieren“ — teilen über das Teilen-Menü des Geräts bzw. die Zwischenablage, importieren als Kalenderdatei für Handy, Outlook und Thunderbird (bei einer Terminserie auf Wunsch gleich alle Termine), abonnieren als Feed, der sich von selbst aktualisiert. Ohne Drittanbieter-Skript und ohne Zählpixel.
-- **Auffindbar für Suchmaschinen**: jeder Termin mit eigener Adresse, strukturierten Daten (schema.org/Event), eigener Sitemap und passenden Angaben für die Vorschau beim Teilen — verträglich mit Yoast SEO und Rank Math. Der Ort steht dabei als vollständige Anschrift mit Koordinaten, wo ChurchTools eine kennt: bei einem gebuchten Raum die Anschrift der Gemeinde, bei einem auswärtigen Termin dessen eigene.
-- **Gruppen statt iframe**: die Gruppen einer Gruppen-Homepage aus ChurchTools als Kachelraster in derselben Optik wie die Termine, mit freien Plätzen und eigenem Sync-Intervall – oder einzelne Gruppen groß hervorgehoben. Welche Gruppen erscheinen können, entscheidet die Homepage in ChurchTools.
-- **Aussehen einstellbar** im Backend, mit Live-Vorschau — ohne CSS anfassen zu müssen.
-- **Bilder werden importiert** statt von ChurchTools nachgeladen: Besucher laden nichts von der ChurchTools-Domain.
-- **Updates** kommen wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
+Das Plugin gleicht ausgewählte ChurchTools-Kalender und Gruppen-Homepages regelmäßig ab und zeigt sie in fertig gestalteten Ansichten an. Farben, Ecken und Aufbau stellt man im Backend mit Live-Vorschau ein, ganz ohne CSS.
 
-Voraussetzungen: WordPress ab 6.4, PHP ab 8.1, eine ChurchTools-Instanz und ein API-Key dafür.
+## Was es kann
+
+- **Termine automatisch übernehmen:** Serien kommen als einzelne Termine an, abgesagte verschwinden wieder.
+- **Drei Ansichten:** Liste, Kachelraster und „Nächster Termin“. Einbinden per Gutenberg-Block, WPBakery-Element oder Shortcode.
+- **Schnell finden:** Eventfinder mit Themen- und Zeitraum-Knöpfen, Suche und Monatsüberschriften.
+- **Termindetails** als Popup oder als eigene Seite, auf Wunsch zum Teilen, als Kalenderdatei oder als Kalender-Abo.
+- **Gruppen statt iframe:** die Gruppen einer Gruppen-Homepage in derselben Optik, mit freien Plätzen.
+- **Gut für Suchmaschinen:** eigene Adresse je Termin, strukturierte Daten und Sitemap, verträglich mit Yoast SEO und Rank Math.
+- **Datensparsam:** Bilder werden importiert, Besucher laden nichts von der ChurchTools-Domain. Die Teilen-Knöpfe kommen ohne Skript von Drittanbietern und ohne Zählpixel aus.
+- **Updates** wie bei jedem anderen Plugin über die WordPress-Plugin-Übersicht.
 
 ## So sieht das aus
 
-Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/grid.png" width="100%" alt="Kachelraster mit drei Spalten"><br>
+      <b>Kachelraster</b>: Bild, Datum und kurzer Auszug
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/gruppen.png" width="100%" alt="Drei Gruppenkacheln mit Treffzeit und freien Plätzen"><br>
+      <b>Gruppen</b>: die Gruppen einer Homepage als Kacheln
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/naechster-termin.png" width="100%" alt="Große Kachel für den nächsten Termin, darunter die folgenden"><br>
+      <b>Nächster Termin</b>: groß, die folgenden darunter
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/eventfinder.png" width="100%" alt="Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste"><br>
+      <b>Eventfinder</b>: nach Thema und Zeitraum filtern
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/liste.png" width="100%" alt="Terminliste mit Monatsüberschriften"><br>
+      <b>Liste</b>: kompakt, nach Monaten gruppiert
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/popup.png" width="100%" alt="Popup mit Bild, Datum, Titel, Zeit, Ort und Beschreibung"><br>
+      <b>Termindetails</b>: als Popup oder eigene Seite
+    </td>
+  </tr>
+</table>
 
-**Liste** — kompakte Zeilen mit Datums-Chip, Kategorie, Titel, Zeit und Ort; mit `month_dividers="1"` nach Monaten gruppiert.
-
-![Listenansicht mit Monatsüberschriften](docs/screenshots/liste.png)
-
-**Kachelraster** — Bild, Datums-Badge und ein kurzer Auszug, Spaltenzahl einstellbar. Termine ohne eigenes Bild bekommen eine Fläche in der Farbe ihres Kalenders.
-
-![Grid-Ansicht mit drei Spalten](docs/screenshots/grid.png)
-
-**Nächster Termin** — eine große Kachel für den nächsten Termin, darunter die folgenden in Kurzform.
-
-![Ansicht „Nächster Termin" mit großer Kachel und Folgeterminen](docs/screenshots/naechster-termin.png)
-
-**Eventfinder** — geführter Einstieg statt Dropdown: ein Button je Thema in der Farbe des Kalenders, dazu Zeitraum und Suche. Geht ein Zeitraum leer aus („Diesen Monat" am Monatsende), stehen die nächsten Termine danach darunter statt einer leeren Liste.
-
-![Eventfinder mit Themen- und Zeitraum-Knöpfen über einer Terminliste](docs/screenshots/eventfinder.png)
-
-**Termindetails** — als Popup auf derselben Seite (im Bild) oder als eigene Termin-URL.
-
-![Popup mit Bild, Datums-Chip, Titel, Zeit, Ort und Beschreibung](docs/screenshots/popup.png)
-
-**Teilen** — der „Teilen"-Button steht unter dem Termin, im Popup rechts unter der Beschreibung. Auf dem Telefon öffnet er das Teilen-Menü des Geräts, am Rechner legt er die Adresse des Termins in die Zwischenablage und meldet „Link kopiert". Er ist standardmäßig aus; eingeschaltet wird er im Design-Tab im Bereich *Detailansicht* unter *Aufbau der Detailansicht*, wo er sich auch frei platzieren lässt wie jedes andere Feld.
-
-![Popup mit dem „Teilen"-Button unter der Beschreibung](docs/screenshots/teilen-popup.png)
-
-Auf der eigenen Terminseite steht er unter der vollen Breite, linksbündig an der Textkante — hier mit der Rückmeldung nach einem Klick am Rechner.
-
-Daneben lässt sich ein **„Importieren"-Button** einschalten: Er legt den Termin als Kalenderdatei ab, die Handy, Outlook und Thunderbird direkt öffnen — mit Titel, Zeit, Ort, Beschreibung, Kategorie und Bild, dazu Anschrift und Koordinaten, wo ChurchTools sie kennt. Ein dritter Knopf **„Abonnieren“** trägt stattdessen alle künftigen Termine des Kalenders dauerhaft ein — der Kalender des Besuchers holt sie sich selbst wieder ab, Verschiebungen und Absagen kommen von allein an. Zwei Knöpfe passen nebeneinander, drei werden im Popup eng; jeder ist einzeln abschaltbar. Gehört der Termin zu einer Serie, fragt der Importieren-Knopf nach dem Klick, was in die Datei soll — „Nur dieser Termin" oder „Alle N Termine". Die Zahl steht dort, weil „ganze Serie" mehr verspräche, als sich halten lässt: Gezählt wird über den Basistermin aus ChurchTools, und ein dort einzeln nachbearbeitetes Datum zählt als eigener. Bei einem Einzeltermin entfällt die Rückfrage.
-
-Die heruntergeladene Datei ist eine Momentaufnahme: Ändert sich der Termin später, erfährt der Kalender davon nichts; wer sie erneut herunterlädt, aktualisiert seinen Eintrag aber, statt einen zweiten anzulegen. Genau das ist der Unterschied zum Abonnement, das von selbst nachfragt. Alle drei Knöpfe sind einzeln schaltbar und stehen nebeneinander — zwei davon passen gut, bei dreien wird es im Popup eng.
-
-![Eigene Terminseite mit „Teilen"-Button und der Meldung „Link kopiert"](docs/screenshots/teilen-seite.png)
-
-**Gruppen** — die Gruppen einer Gruppen-Homepage als Kacheln, mit Treffzeit, Auszug und – wo die Gruppe eine Höchstzahl hat – den freien Plätzen. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet.
-
-![Drei Gruppenkacheln mit dem Button „In ChurchTools ansehen“, eine davon mit der Zahl der freien Plätze](docs/screenshots/gruppen.png)
-
-**Einzelne Gruppen hervorgehoben** — ausgewählte Gruppen je als große Kachel, Bild neben dem ganzen Text.
-
-![Zwei hervorgehobene Gruppen, Bild links, rechts Name, Text, Treffzeit und Button](docs/screenshots/gruppen-hervorgehoben.png)
+<sub>Alle Bilder zeigen erfundene Beispieltermine mit Platzhalterbildern.</sub>
 
 ## Installation
 
-1. Unter [Releases](https://github.com/wirsindcgks/churchtools-plugin/releases) beim neuesten Eintrag die Datei `churchtools-plugin-vX.Y.Z.zip` herunterladen. **Nicht** „Source code (zip)" — darin fehlen die fertig gebauten Bestandteile, das Plugin läuft damit nicht.
-2. In WordPress unter *Plugins → Installieren → Plugin hochladen* die ZIP-Datei auswählen und installieren.
-3. Plugin aktivieren. Im linken Menü erscheint der Punkt **ChurchTools**.
+Voraussetzungen: WordPress ab 6.4, PHP ab 8.1, eine ChurchTools-Instanz und ein API-Key dafür.
 
-Ab dann meldet sich das Plugin selbst, wenn es eine neue Version gibt — die Aktualisierung läuft über die normale Plugin-Übersicht.
+1. Unter [Releases](https://github.com/wirsindcgks/churchtools-plugin/releases/latest) die Datei `churchtools-plugin-vX.Y.Z.zip` herunterladen. **Nicht** „Source code (zip)“ – darin fehlen die gebauten Bestandteile, das Plugin läuft damit nicht.
+2. In WordPress unter *Plugins → Installieren → Plugin hochladen* die ZIP-Datei installieren und aktivieren.
+3. Im linken Menü erscheint **ChurchTools**. Neue Versionen meldet das Plugin danach selbst.
 
-## Einrichten in fünf Minuten
+## Erste Schritte
 
-Das Plugin hat vier Bereiche, jeder mit eigenem Eintrag im linken WordPress-Menü unter *ChurchTools*: **Übersicht** (Zustand von Events und Gruppen), **Events** (Terminliste, Kalender, Räume, Synchronisation, Einbinden), **Gruppen** (Gruppenliste, Homepages, Einbinden) und **Einstellungen** (Verbindung, Design, Updates). Innerhalb eines Bereichs wechseln die Reiter oben auf der Seite.
+1. **Verbinden:** *ChurchTools → Einstellungen → Verbindung* – Instanz-Name und API-Key eintragen.
+2. **Kalender wählen:** *ChurchTools → Events → Kalender* – Kalender laden und anhaken.
+3. **Abgleichen:** *ChurchTools → Übersicht* – **Jetzt synchronisieren**.
+4. **Einbauen:** auf einer Seite den Block „ChurchTools Events“ einfügen, oder als Shortcode:
 
-1. **Verbindung herstellen.** *ChurchTools → Einstellungen → Verbindung*: den Instanz-Namen eintragen — bei `https://musterkirche.church.tools` also `musterkirche` — und den API-Key hinterlegen. Der Key ist ein Login-Token aus ChurchTools; welche Kalender das Plugin sieht, hängt an den Rechten des zugehörigen Zugangs. Am besten ein eigener ChurchTools-Benutzer nur für die Website, der die übernommenen Kalender und Räume sehen darf und sonst nichts – ein Login-Token läuft nicht ab. Ein Klick auf **Verbindung testen** prüft beides sofort, auch ungespeichert. Ohne Key fragt das Plugin ChurchTools gar nicht.
-2. **Kalender auswählen.** *ChurchTools → Events → Kalender*: **Kalender von ChurchTools laden**, dann die gewünschten anhaken. Optional je Kalender eine Farbe (taucht im Frontend als Kategorie-Auszeichnung wieder auf) und ein Standardbild für Termine ohne eigenes Bild.
-3. **Erstmals abgleichen.** *ChurchTools → Übersicht*: **Jetzt synchronisieren**. Danach übernimmt WP-Cron im eingestellten Intervall.
-4. **Termine einbauen.** Auf einer Seite den Block „ChurchTools Events" einfügen (oder das WPBakery-Element bzw. den Shortcode, siehe unten).
-5. **Aussehen anpassen.** *ChurchTools → Einstellungen → Design*, aufgeteilt in vier Unterbereiche: **Stil** (eine von vier Vorlagen als Grundlage — Standard, Ruhig, Warm, Strukturiert —, Eckenstil, Akzent- und Buttonfarbe), **Kachel** (Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis), **Detailansicht** (Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge) und **Listen** (Zeitraum pro Seite). Stil, Kachel und Detailansicht haben ihre Vorschau daneben. Die Einzeleinstellungen gelten über der Vorlage: Wer „Eckig“ wählt, bekommt eckige Ecken auch in einer Vorlage mit runden.
+   ```
+   [ctp_events layout="list" eventfinder="1" month_dividers="1"]
+   ```
 
-6. **Wenn Termine eine eigene Seite bekommen sollen.** Im Bereich *Detailansicht* bei *Bei Klick auf eine Kachel* „Eigene Seite“ wählen und darunter unter *Adresse der Terminseite* eine bestehende Seite auswählen — meist die, auf der die Terminliste steht. Die Termine liegen dann unter deren Adresse (`/termine/gottesdienst-06-09-2026/`) und werden als Inhalt dieser Seite ausgeliefert, also mit der Vorlage, dem Kopf- und dem Fußbereich des Theme. Ohne ausgewählte Seite funktioniert alles weiter, die Adresse ist dann `/churchtools-termin/4021/` und die Seite steht neben statt in der Vorlage des Theme.
+Die ausführliche Anleitung mit Design, eigenen Terminseiten und Gruppen steht unter [Einrichtung](docs/EINRICHTUNG.md).
 
-7. **Gruppen zeigen (optional).** *ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Abgefragt wird mit demselben API-Key wie für die Termine. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich.
+## Dokumentation
 
-Läuft etwas nicht, steht der Grund in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext.
-
-## Termine auf einer Seite anzeigen
-
-Alle drei Wege benutzen denselben Unterbau und können dasselbe:
-
-- **Gutenberg-Block** — Block „ChurchTools Events" einfügen, alles Weitere in der Seitenleiste rechts.
-- **WPBakery** — Element „ChurchTools Events" aus der Kategorie „ChurchTools".
-- **Shortcode** — für Theme-Dateien, Widgets und alles andere.
-
-### Beispiele
-
-**Startseite: der nächste Termin, groß, mit drei weiteren darunter**
-
-```
-[ctp_events layout="upcoming" limit="4"]
-```
-
-**Terminseite: alle Kalender mit geführter Suche und Monatsüberschriften**
-
-```
-[ctp_events layout="list" eventfinder="1" month_dividers="1"]
-```
-
-**Nur die Gottesdienste als Kachelraster, drei Spalten**
-
-```
-[ctp_events calendar="Gottesdienste" layout="grid" columns="3"]
-```
-
-**Teaser in der Seitenleiste: drei Termine, ohne Nachladen-Button**
-
-```
-[ctp_events layout="list" limit="3" paging="0"]
-```
-
-**Zwei Kalender, Auswahl per Dropdown und Suchfeld**
-
-```
-[ctp_events calendar="Gottesdienste,Jugend" layout="list" filter="1" search="1"]
-```
-
-Welche Kalender-Namen und -IDs zur Verfügung stehen, zeigt *Events → Kalender*. Unter *Events → Einbinden* stehen dieselben Beispiele noch einmal — dort mit einem echten Kalender aus der eigenen Instanz eingesetzt, fertig zum Kopieren, samt Tabelle aller Optionen.
-
-### Die wichtigsten Optionen
-
-| Option | Wirkung |
+| | |
 | --- | --- |
-| `calendar` | Kalender-IDs und/oder -Namen, kommagetrennt. Leer = alle aktiven |
-| `layout` | `list` (Standard), `grid` oder `upcoming` |
-| `columns` | Spalten bei `grid`, 2–6 (Standard 3) – höchstens so viele, wie in den Inhaltsbereich passen, je Kachel mindestens 240px |
-| `limit` | Obergrenze; bei `upcoming` die Gesamtzahl inklusive der großen Kachel |
-| `eventfinder` | Geführte Leiste mit Themen- und Zeitraum-Knöpfen |
-| `filter` / `search` | Kalender-Dropdown bzw. Suchfeld (die einfache Variante des Eventfinders) |
-| `month_dividers` | Termine nach Monaten gruppieren |
-| `months` / `paging` | Länge eines Zeitraums bzw. der „Weitere Termine laden"-Button |
-| `click` | Was ein Klick auf eine Kachel tut: `popup`, `page` oder `none` |
-
-Die vollständige Referenz mit allen Standardwerten und Feinheiten steht in [readme.txt](readme.txt) — im Backend unter *Plugins → ChurchTools Events → Details* im Reiter *Verwendung* dieselbe.
-
-## Gruppen auf einer Seite anzeigen
-
-Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in der Optik des Plugins. Unter *Gruppen → Homepages* steht neben jeder angehakten Homepage der passende Shortcode zum Kopieren, unter *Gruppen → Einbinden* stehen fertige Beispiele samt allen Optionen:
-
-```
-[ctp_groups homepage="Kleingruppen" columns="3"]
-[ctp_groups groups="514,269" layout="featured"]
-```
-
-Oder der Block „ChurchTools Gruppen" bzw. das WPBakery-Element „ChurchTools Gruppen": Dort wird zuerst gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen; danach steht nur das passende Feld da, dazu die Ansicht „Raster" oder „Hervorgehoben".
-
-- **Einzelne Gruppen** stehen mit `groups="…"` in der angegebenen Reihenfolge da; die IDs stehen unter *Gruppen → Gruppenliste*. Wählbar sind nur Gruppen der angehakten Homepages – so bleibt ChurchTools die Stelle, die entscheidet, was öffentlich ist. Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar".
-- **Absprung mit Ansage**: Unter jeder Gruppe steht der Button „In ChurchTools ansehen". Die Kachel selbst ist nicht klickbar – ein Klick auf eine Kachel führt bei den Terminen zu einer Ansicht auf der eigenen Website, bei Gruppen hätte dieselbe Geste unangekündigt in ein anderes System geführt.
-
-- **ChurchTools entscheidet, was erscheint.** Es erscheinen die Gruppen, die die Homepage in ChurchTools öffentlich zeigt, Bilder nur, wo sie Gruppenbilder zeigt. Übernommen werden Name, Beschreibung, Treffzeit, Plätze und Bild – keine Leiter und nichts über Personen, auch wenn ChurchTools dem API-Key mehr mitschickt.
-- **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das Intervall kürzer.
-- **Aussehen wie die Termine**: Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche.
-- **Bewusst eine Liste, kein Suchwerkzeug**: keine Filterleiste, keine eigene Gruppenseite. Den vollen Text zeigt die hervorgehobene Ansicht, die Anmeldung liegt in ChurchTools.
-
-## Gut zu wissen
-
-**Es wird nicht alles auf einmal geladen.** Liste und Grid zeigen zunächst den laufenden und den nächsten Monat; „Weitere Termine laden" hängt die folgenden an, ohne die Seite neu zu laden. Das hält die Seite schnell, auch bei vielen wöchentlichen Serien. Abschaltbar mit `paging="0"`.
-
-**Filter und Suche laufen im Browser** und funktionieren deshalb auch hinter einem Caching-Plugin. Was jenseits des geladenen Zeitraums liegt, holt das Plugin bei Bedarf nach.
-
-**Ein Caching-Plugin braucht eine Ausnahme.** Zusammengefasstes JavaScript („Minify“/„Combine“) sollte `assets/js/frontend.js` und `assets/css/frontend.css` auslassen. Das Plugin hängt seine Versionsnummer an beide Adressen, ein Update erneuert sie damit von selbst; in einer zusammengefassten Datei entfällt dieser Mechanismus, und wiederkehrende Besucher können nach einem Update noch tagelang das alte Skript benutzen. Dasselbe gilt für „JavaScript erst bei der ersten Interaktion laden“ – diese erste Interaktion ist der Klick auf einen Termin. Näheres im FAQ-Teil der [readme.txt](readme.txt).
-
-**Weniger Spalten als eingestellt?** `columns` ist eine Obergrenze. Jede Kachel ist mindestens 240px breit; passt die gewünschte Zahl nicht in den Inhaltsbereich des Themes, stehen weniger nebeneinander – drei Kacheln brauchen rund 790px, viele Block-Themes geben dem Inhalt nur um 650px. Abhilfe: den Block „ChurchTools Events“ bzw. „ChurchTools Gruppen“ in der Werkzeugleiste auf **Weite Breite** oder **Volle Breite** stellen, einen Shortcode-Block dafür in einen Gruppe-Block mit weiter Breite legen.
-
-**Die Adresse eines Termins besteht aus Titel und Datum** (`gottesdienst-06-09-2026`), nicht aus einer Nummer und nicht aus dem Titel allein: „Gottesdienst" gibt es jedes Wochenende, ein Titel benennt also eine Serie und nicht einen Termin. Ändert sich der Titel in ChurchTools, ändert sich die Adresse mit. Wird die Elternseite nachträglich gesetzt, leiten die bisherigen Adressen dauerhaft auf die neuen weiter.
-
-**Alte Termine räumen sich selbst weg**, samt importierter Bilder, nach der unter *Events → Synchronisation* eingestellten Frist.
-
-**Ein eigenes Layout** ist möglich, aber selten nötig: Die Templates aus `includes/Frontend/templates/` lassen sich nach `wp-content/themes/euer-theme/churchtools-plugin/` kopieren und dort anpassen — updatesicher. Details dazu in [readme.txt](readme.txt).
-
-**Der API-Key muss nicht in der Datenbank liegen.** Steht in `wp-config.php` die Zeile `define('CTP_API_KEY', '…');` (oder gibt es eine Umgebungsvariable `CTP_API_KEY`), nimmt das Plugin den Key von dort, und das Feld unter *Einstellungen → Verbindung* ist gesperrt. Sonst liegt er verschlüsselt in der Datenbank, mit einem aus den WordPress-Salts (`AUTH_KEY`) abgeleiteten Schlüssel — nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin sagt das im Backend. Beim Deinstallieren wird er in jedem Fall gelöscht, auch wenn die Daten behalten werden.
-
-**Grenzen**: eine ChurchTools-Instanz pro WordPress-Installation, Multisite ungetestet, kein Monatskalender-Raster.
+| [Einrichtung](docs/EINRICHTUNG.md) | Verbindung, Kalender, Design, Terminseiten, API-Key |
+| [Termine anzeigen](docs/TERMINE.md) | Ansichten, Beispiele, Optionen, Teilen, Importieren und Abonnieren |
+| [Gruppen anzeigen](docs/GRUPPEN.md) | Gruppen-Homepages, einzelne Gruppen hervorheben |
+| [Gut zu wissen](docs/GUT-ZU-WISSEN.md) | Caching-Plugins, Spaltenzahl, Grenzen, häufige Fragen |
+| [readme.txt](readme.txt) | Vollständige Referenz aller Optionen und FAQ, im Backend unter *Plugins → ChurchTools Events → Details* |
+| [Changelog](CHANGELOG.md) | Was sich mit jeder Version geändert hat |
 
 ## Version 2.0 kommt
 
-Mit 2.0 heißt das Plugin **Connect ChurchTools**, braucht PHP 8.3 und WordPress 6.6, und Übergangswege für Einstellungen aus älteren Versionen entfallen. Einstellungen, Shortcodes, Blöcke und Adressen bleiben erhalten. Was auf der eigenen Website vorher noch zu tun ist, zeigt die **Übersicht** im Backend. Was ab 2.0 nur noch mit einer neuen Hauptversion geändert wird, steht in der [Kompatibilitätszusage](docs/COMPATIBILITY.md).
+Mit 2.0 heißt das Plugin **Connect ChurchTools** und braucht PHP 8.3 und WordPress 6.6. Einstellungen, Shortcodes, Blöcke und Adressen bleiben erhalten. Was vorher noch zu tun ist, zeigt die **Übersicht** im Backend; alles Weitere steht in der [Kompatibilitätszusage](docs/COMPATIBILITY.md).
 
 Connect ChurchTools ist ein unabhängiges Projekt und steht in keiner Verbindung zur ChurchTools Innovations GmbH, der Herstellerin von ChurchTools.
 
-## Fragen und Antworten
+## Hilfe und Mitmachen
 
-Antworten zu Sync-Intervall und WP-Cron, deaktivierten Kalendern, Serverumzügen und Datenschutz stehen im FAQ-Teil der [readme.txt](readme.txt) — im Backend bequemer zu lesen unter *Plugins → ChurchTools Events → Details*.
+Ein Problem gefunden oder etwas vermisst? Gern als [Issue](https://github.com/wirsindcgks/churchtools-plugin/issues) melden.
 
-Ein Problem gefunden oder etwas vermisst? [Issues](https://github.com/wirsindcgks/churchtools-plugin/issues) im Repository.
-
-## Für Entwickler
-
-Aufbau, Klassen, Theme-Overrides, lokale Entwicklung und der Release-Ablauf: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Was stabil bleibt und was nicht: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). Alle nennenswerten Änderungen stehen im [Changelog](CHANGELOG.md).
+Für Entwickler: Aufbau, lokale Entwicklung und Release-Ablauf stehen in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Lizenz
 
