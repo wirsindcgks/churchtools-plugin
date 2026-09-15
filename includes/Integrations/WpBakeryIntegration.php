@@ -262,7 +262,7 @@ final class WpBakeryIntegration
             // Klassenname, keine Bildadresse - warum, steht in
             // enqueueElementIcon().
             'icon' => self::ICON_CLASS,
-            'params' => self::inTabs(['calendar'], [
+            'params' => [
                 [
                     // Dieselbe Auswahlliste wie „Einzelne Gruppen" im
                     // Gruppen-Element (Nutzerwunsch 2026-09-15: einheitliche
@@ -373,7 +373,7 @@ final class WpBakeryIntegration
                     'value' => '0',
                     'dependency' => ['element' => 'layout', 'value_not_equal_to' => 'upcoming'],
                 ],
-            ]),
+            ],
         ]);
 
         vc_map([
@@ -381,7 +381,7 @@ final class WpBakeryIntegration
             'base' => self::GROUPS_BASE,
             'category' => __('ChurchTools', 'churchtools-plugin'),
             'icon' => self::GROUPS_ICON_CLASS,
-            'params' => self::inTabs(['source', 'homepage', 'groups'], [
+            'params' => [
                 [
                     // Erst die Frage, dann nur das passende Feld (Nutzerwunsch
                     // 2026-09-15: „Sonst ist der Startscreen gleich ueberladen").
@@ -462,31 +462,16 @@ final class WpBakeryIntegration
                     'value' => [__('Anzeigen', 'churchtools-plugin') => '1'],
                     'dependency' => ['element' => 'layout', 'value' => 'grid'],
                 ],
-            ]),
+            ],
+            // Bewusst ohne Reiter (`group`), in beiden Elementen gleich: Mit den
+            // Reitern „Auswahl" und „Darstellung" aus 1.32.0 ging im echten
+            // WPBakery der Live-Seite (Uncode, 8.7) eine ungespeicherte Auswahl
+            // beim Wechsel des Reiters verloren; erst Speichern, dann Wechseln
+            // behielt sie (Nutzerbefund 2026-09-15). WPBakerys eigener
+            // Reiter-Code (8.7.4, gelesen) setzt dabei keine Werte zurueck - die
+            // Ursache liess sich ohne das Theme nicht finden. Ein Formular ohne
+            // Reiter hatte die Auswahl bis 1.31.0 zuverlaessig behalten.
         ]);
-    }
-
-    /**
-     * Verteilt die Felder auf die Reiter „Auswahl" und „Darstellung" - dieselbe
-     * Aufteilung wie die Bereiche der Bloecke, in beiden Elementen gleich.
-     * WPBakery zeigt Felder mit `group` als eigenen Reiter; die Abhaengigkeiten
-     * wirken ueber Reiter hinweg.
-     *
-     * @param list<string>              $selection param_name der Felder im Reiter „Auswahl"
-     * @param list<array<string, mixed>> $params
-     *
-     * @return list<array<string, mixed>>
-     */
-    public static function inTabs(array $selection, array $params): array
-    {
-        foreach ($params as &$param) {
-            $param['group'] = in_array($param['param_name'] ?? '', $selection, true)
-                ? __('Auswahl', 'churchtools-plugin')
-                : __('Darstellung', 'churchtools-plugin');
-        }
-        unset($param);
-
-        return $params;
     }
 
     /**

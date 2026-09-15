@@ -63,19 +63,19 @@ namespace ChurchToolsPlugin\Tests\Integrations {
             $this->assertSame(['element' => 'layout', 'value' => 'grid'], $params['finder']['dependency']);
         }
 
-        /** Beide Elemente mit denselben Reitern wie die Bereiche der Bloecke. */
-        public function testBothElementsUseTheTabsOfTheBlocks(): void
+        /**
+         * Ohne Reiter: Mit `group` ging im WPBakery der Live-Seite eine
+         * ungespeicherte Auswahl beim Wechsel des Reiters verloren (1.32.0).
+         */
+        public function testNeitherElementUsesTabs(): void
         {
             (new WpBakeryIntegration())->mapShortcode();
 
-            $tabs = static fn (string $base): array => array_column($GLOBALS['ctp_test_vc_map'][$base]['params'], 'group', 'param_name');
-
-            $this->assertSame('Auswahl', $tabs('ctp_events')['calendar']);
-            $this->assertSame('Darstellung', $tabs('ctp_events')['layout']);
-            $this->assertSame('Darstellung', $tabs('ctp_events')['search']);
-            $this->assertSame(['Auswahl'], array_values(array_unique(array_intersect_key($tabs('ctp_groups'), array_flip(['source', 'homepage', 'groups'])))));
-            $this->assertSame('Darstellung', $tabs('ctp_groups')['finder']);
-            $this->assertSame(['Auswahl', 'Darstellung'], array_values(array_unique(array_merge(array_values($tabs('ctp_events')), array_values($tabs('ctp_groups'))))));
+            foreach (['ctp_events', 'ctp_groups'] as $base) {
+                foreach ($GLOBALS['ctp_test_vc_map'][$base]['params'] as $param) {
+                    $this->assertArrayNotHasKey('group', $param, $base . ': ' . $param['param_name']);
+                }
+            }
         }
 
         /** Die Kalender kommen in dieselbe Auswahlliste wie die Gruppen, statt als Textfeld mit IDs. */

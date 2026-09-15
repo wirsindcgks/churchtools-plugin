@@ -45,7 +45,7 @@ Neue Angaben erscheinen nach dem nächsten Gruppen-Abgleich.
 
 ## Einbinden
 
-**Block oder WPBakery:** „ChurchTools Gruppen“ einfügen. Aufgeteilt ist beides wie bei den Terminen in „Auswahl“ und „Darstellung“. Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen; danach steht nur das passende Feld da, dazu die Ansicht „Raster“ oder „Hervorgehoben“ und im Raster die Schalter „Gruppenfinder anzeigen“ und „Suchleiste anzeigen“.
+**Block oder WPBakery:** „ChurchTools Gruppen“ einfügen. Zuerst wird gewählt, ob alle Gruppen einer Homepage oder einzelne Gruppen erscheinen; danach steht nur das passende Feld da, dazu die Ansicht „Raster“ oder „Hervorgehoben“ und im Raster die Schalter „Gruppenfinder anzeigen“ und „Suchleiste anzeigen“.
 
 **Shortcode:**
 
