@@ -137,4 +137,53 @@ final class SyncHealthNoticeTest extends TestCase
         $this->assertSame('error', $problem['type']);
         $this->assertStringContainsString('No valid token', $problem['message']);
     }
+
+    /**
+     * Gruppen melden seit 2026-09-15 dasselbe wie Termine: Fehlt der
+     * Zeitplan, laeuft nie wieder etwas - bis dahin blieb das bei den Gruppen
+     * still, waehrend die Termine es meldeten.
+     */
+    public function testAGroupSyncWithoutScheduleIsReportedLikeTheEvents(): void
+    {
+        $this->enableGroups('daily');
+        ctp_test_set_next_run(\ChurchToolsPlugin\Groups\GroupSync::HOOK, null);
+
+        $problem = SyncHealthNotice::groupProblem();
+        $this->assertSame('error', $problem['type']);
+        $this->assertStringContainsString('kein Zeitplan', $problem['message']);
+    }
+
+    /** Ueberfaellig nach derselben Schwelle wie bei den Terminen: drei Intervalle. */
+    public function testAStaleGroupSyncIsReportedAfterThreeIntervals(): void
+    {
+        $this->enableGroups('daily');
+        ctp_test_set_next_run(\ChurchToolsPlugin\Groups\GroupSync::HOOK, time() + HOUR_IN_SECONDS);
+
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSync::LAST_SYNC_OPTION, gmdate('Y-m-d H:i:s', time() - 2 * DAY_IN_SECONDS));
+        $this->assertNull(SyncHealthNotice::groupProblem(), 'Zwei ausgefallene Tage bei „täglich" sind noch kein Befund.');
+
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSync::LAST_SYNC_OPTION, gmdate('Y-m-d H:i:s', time() - 4 * DAY_IN_SECONDS));
+        $problem = SyncHealthNotice::groupProblem();
+        $this->assertSame('warning', $problem['type']);
+        $this->assertStringContainsString('Gruppen', $problem['message']);
+    }
+
+    /** „Woechentlich" rechnet mit der Woche - vier Tage ohne Lauf sind dort normal. */
+    public function testAWeeklyGroupSyncIsNotStaleAfterFourDays(): void
+    {
+        $this->enableGroups('weekly');
+        ctp_test_set_next_run(\ChurchToolsPlugin\Groups\GroupSync::HOOK, time() + DAY_IN_SECONDS);
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSync::LAST_SYNC_OPTION, gmdate('Y-m-d H:i:s', time() - 4 * DAY_IN_SECONDS));
+
+        $this->assertNull(SyncHealthNotice::groupProblem());
+    }
+
+    private function enableGroups(string $interval): void
+    {
+        ctp_test_reset_options();
+        ctp_test_set_option(\ChurchToolsPlugin\Groups\GroupSettings::OPTION_KEY, [
+            'homepages' => [9 => ['name' => 'Kleingruppen', 'hash' => 'AbC123', 'enabled' => true]],
+            'sync_interval' => $interval,
+        ]);
+    }
 }

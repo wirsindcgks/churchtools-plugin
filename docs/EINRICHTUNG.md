@@ -10,7 +10,7 @@ Nach der Aktivierung erscheint im linken WordPress-Menü **ChurchTools** mit vie
 | --- | --- |
 | **Übersicht** | Zustand von Events und Gruppen: letzter Abgleich, Anzahl, Fehler im Klartext |
 | **Events** | Terminliste, Kalender, Räume, Synchronisation, Einbinden |
-| **Gruppen** | Gruppenliste, Homepages, Einbinden |
+| **Gruppen** | Gruppenliste, Homepages, Synchronisation, Einbinden |
 | **Einstellungen** | Verbindung, Design, Updates |
 
 ## Schritt für Schritt
@@ -61,7 +61,7 @@ Mehr zu den Adressen: [Termine anzeigen → Adressen der Terminseiten](TERMINE.m
 
 ### 7. Gruppen zeigen (optional)
 
-*ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten anhaken und speichern. Abgefragt wird mit demselben API-Key wie für die Termine. Wie oft die Gruppen abgeglichen werden, steht darunter unter *Sync-Intervall* – unabhängig von den Terminen, standardmäßig täglich. Weiter geht es unter [Gruppen anzeigen](GRUPPEN.md).
+*ChurchTools → Gruppen → Homepages*: **Homepages von ChurchTools laden**, die gewünschten aktivieren und speichern. Abgefragt wird mit demselben API-Key wie für die Termine. Wie oft die Gruppen abgeglichen werden, steht unter *Gruppen → Synchronisation* – unabhängig von den Terminen, standardmäßig täglich. Weiter geht es unter [Gruppen anzeigen](GRUPPEN.md).
 
 ## Wenn etwas nicht läuft
 
@@ -77,7 +77,7 @@ define( 'CTP_API_KEY', '…' );
 
 oder gibt es eine Umgebungsvariable `CTP_API_KEY`, nimmt das Plugin den Key von dort, und das Feld unter *Einstellungen → Verbindung* ist gesperrt.
 
-Sonst liegt er verschlüsselt in der Datenbank, mit einem aus den WordPress-Salts (`AUTH_KEY`) abgeleiteten Schlüssel. Nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin weist im Backend darauf hin. Beim Deinstallieren wird er in jedem Fall gelöscht, auch wenn die übrigen Daten behalten werden.
+Sonst liegt er verschlüsselt in der Datenbank, mit einem aus den WordPress-Salts (`AUTH_KEY`) abgeleiteten Schlüssel. Nach einem Serverumzug mit neuen Salts muss er einmal neu eingegeben werden; das Plugin weist im Backend darauf hin. Beim Deinstallieren wird er in jedem Fall gelöscht, auch wenn die übrigen Daten behalten werden (Schalter unter *Einstellungen → Updates*, gilt für Termine und Gruppen).
 
 ## Updates
 

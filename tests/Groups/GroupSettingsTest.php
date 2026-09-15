@@ -48,6 +48,31 @@ final class GroupSettingsTest extends TestCase
         );
     }
 
+    /**
+     * „Homepages" und „Synchronisation" sind seit 2026-09-15 zwei Formulare
+     * derselben Option. Das Speichern des einen darf den anderen nicht
+     * zuruecksetzen.
+     */
+    public function testEachTabSavesOnlyItsOwnPartOfTheOption(): void
+    {
+        $afterSyncTab = GroupSettings::sanitize(['sync_interval' => 'weekly']);
+        $this->assertSame(self::HOMEPAGES, $afterSyncTab['homepages']);
+
+        ctp_test_set_option(GroupSettings::OPTION_KEY, $afterSyncTab);
+        $afterHomepagesTab = GroupSettings::sanitize(['homepages' => [6 => ['enabled' => '1']]]);
+        $this->assertSame('weekly', $afterHomepagesTab['sync_interval']);
+    }
+
+    /** Termine und Gruppen bieten dieselbe Auswahl, mit denselben Beschriftungen. */
+    public function testGroupsOfferTheSameIntervalsAsEvents(): void
+    {
+        $this->assertSame(\ChurchToolsPlugin\Db\Installer::SYNC_INTERVALS, GroupSettings::INTERVALS);
+        $this->assertSame(
+            \ChurchToolsPlugin\Db\Installer::SYNC_INTERVALS,
+            array_keys(\ChurchToolsPlugin\Admin\SettingsPage::syncIntervalLabels())
+        );
+    }
+
     public function testSanitizeAcceptsWeeklyAndRejectsUnknownIntervals(): void
     {
         $this->assertSame('weekly', GroupSettings::sanitize(['sync_interval' => 'weekly'])['sync_interval']);

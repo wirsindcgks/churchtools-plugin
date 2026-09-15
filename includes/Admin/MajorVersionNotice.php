@@ -156,7 +156,7 @@ final class MajorVersionNotice
             return true;
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation state, see SyncHealthNotice::isOwnStatusTab().
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation state, see SyncHealthNotice::isShownOnPage().
         $page = sanitize_key((string) ($_GET['page'] ?? ''));
 
         return str_contains($screen->id, 'churchtools-plugin') && $page !== 'churchtools-plugin';

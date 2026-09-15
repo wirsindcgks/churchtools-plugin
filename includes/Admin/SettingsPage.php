@@ -13,6 +13,7 @@ use ChurchToolsPlugin\Frontend\DetailDesign;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Settings;
@@ -117,11 +118,16 @@ final class SettingsPage
      * Menueeintrag oeffnet. Die Reiter-Schluessel sind dieselben wie vorher - sie benennen
      * zugleich die Settings-Seiten (siehe registerSettings()), und
      * `&tab=calendars` bleibt als Adresse gueltig.
+     *
+     * Termine und Gruppen folgen derselben Reihe: Liste, Auswahl,
+     * Synchronisation, Einbinden (Nutzerwunsch 2026-09-15). Die Raeume gibt
+     * es nur bei den Terminen. Bis dahin stand die Synchronisation der Gruppen
+     * unten im Reiter „Homepages" und wurde dort nicht gefunden.
      */
     private const AREA_TABS = [
         'overview' => ['status'],
         'events' => ['events', 'calendars', 'rooms', 'sync', 'embed'],
-        'groups' => ['group_list', 'groups', 'group_embed'],
+        'groups' => ['group_list', 'groups', 'group_sync', 'group_embed'],
         'settings' => ['connection', 'design', 'updates'],
     ];
 
@@ -257,6 +263,7 @@ final class SettingsPage
             'rooms' => __('Räume', 'churchtools-plugin'),
             'group_list' => __('Gruppenliste', 'churchtools-plugin'),
             'groups' => __('Homepages', 'churchtools-plugin'),
+            'group_sync' => __('Synchronisation', 'churchtools-plugin'),
             'group_embed' => __('Einbinden', 'churchtools-plugin'),
             'sync' => __('Synchronisation', 'churchtools-plugin'),
             'design' => __('Design', 'churchtools-plugin'),
@@ -330,6 +337,7 @@ final class SettingsPage
             'rooms' => 'location-alt',
             'group_list' => 'list-view',
             'groups' => 'groups',
+            'group_sync' => 'update',
             'group_embed' => 'editor-code',
             'sync' => 'update',
             'design' => 'admin-appearance',
@@ -405,7 +413,12 @@ final class SettingsPage
         add_settings_field('sync_interval', __('Sync-Intervall', 'churchtools-plugin'), [$this, 'renderSyncIntervalField'], $syncPage, 'ctp_sync');
         add_settings_field('sync_days_ahead', __('Sync-Zeitraum (Tage in die Zukunft)', 'churchtools-plugin'), [$this, 'renderSyncDaysAheadField'], $syncPage, 'ctp_sync');
         add_settings_field('retention_days', __('Aufbewahrung nach Event-Ende (Tage)', 'churchtools-plugin'), [$this, 'renderRetentionField'], $syncPage, 'ctp_sync');
-        add_settings_field('keep_data_on_uninstall', __('Beim Deinstallieren', 'churchtools-plugin'), [$this, 'renderKeepDataOnUninstallField'], $syncPage, 'ctp_sync');
+
+        // Gilt fuer Termine *und* Gruppen (siehe uninstall.php) und stand bis
+        // 2026-09-15 trotzdem unter „Events → Synchronisation". Jetzt unter
+        // „Einstellungen → Updates", wo es um das Plugin als Ganzes geht.
+        add_settings_section('ctp_uninstall', __('Deinstallieren', 'churchtools-plugin'), '__return_false', self::PAGE_SLUG . '_uninstall');
+        add_settings_field('keep_data_on_uninstall', __('Beim Deinstallieren', 'churchtools-plugin'), [$this, 'renderKeepDataOnUninstallField'], self::PAGE_SLUG . '_uninstall', 'ctp_uninstall');
 
         /*
          * Vier Gruppen statt der bisherigen drei plus Sammelbecken. Bis 1.5.2
@@ -1369,24 +1382,30 @@ final class SettingsPage
     }
 
     /**
-     * German labels for Installer::SYNC_INTERVALS, shared by the Sync tab's
-     * select and the Übersicht tab's "Nächste Synchronisation" card — keyed by
-     * the WP-Cron recurrence name the schedule is actually created with.
+     * German labels for Installer::SYNC_INTERVALS — keyed by the WP-Cron
+     * recurrence name the schedule is actually created with. Eine Liste fuer
+     * Termine und Gruppen, wie die Auswahl selbst.
+     *
+     * @return array<string, string>
      */
-    private static function syncIntervalLabels(): array
+    public static function syncIntervalLabels(): array
     {
         return [
             'hourly' => __('Stündlich', 'churchtools-plugin'),
             'twicedaily' => __('Zweimal täglich', 'churchtools-plugin'),
             'daily' => __('Täglich', 'churchtools-plugin'),
+            'weekly' => __('Wöchentlich', 'churchtools-plugin'),
         ];
     }
 
-    public function renderSyncIntervalField(): void
+    /**
+     * Das Feld „Sync-Intervall" fuer Termine und Gruppen - dieselbe Auswahl,
+     * derselbe Hinweis zu WP-Cron. $extraHint steht als eigener Absatz
+     * darunter, fuer das, was nur einen der beiden betrifft.
+     */
+    public static function renderIntervalSelect(string $name, string $current, string $extraHint = ''): void
     {
-        $current = Settings::get()['sync_interval'];
-
-        echo '<select name="' . esc_attr(self::OPTION_KEY) . '[sync_interval]">';
+        echo '<select name="' . esc_attr($name) . '">';
         foreach (self::syncIntervalLabels() as $value => $label) {
             printf(
                 '<option value="%1$s" %2$s>%3$s</option>',
@@ -1399,6 +1418,15 @@ final class SettingsPage
         echo '<p class="description">'
             . esc_html__('Beim Speichern wird der WP-Cron-Termin auf dieses Intervall umgestellt. Wann er tatsächlich feuert, hängt vom Seitenaufkommen ab – siehe Hinweis zu WP-Cron in der readme.txt.', 'churchtools-plugin')
             . '</p>';
+
+        if ($extraHint !== '') {
+            echo '<p class="description">' . esc_html($extraHint) . '</p>';
+        }
+    }
+
+    public function renderSyncIntervalField(): void
+    {
+        self::renderIntervalSelect(self::OPTION_KEY . '[sync_interval]', Settings::get()['sync_interval']);
     }
 
     public function renderSyncDaysAheadField(): void
@@ -1466,7 +1494,7 @@ final class SettingsPage
             '<label><input type="checkbox" name="%1$s[keep_data_on_uninstall]" value="1" %2$s /> %3$s</label>',
             esc_attr(self::OPTION_KEY),
             checked(!empty(Settings::get()['keep_data_on_uninstall']), true, false),
-            esc_html__('Termindaten, importierte Bilder und Einstellungen beim Deinstallieren behalten', 'churchtools-plugin')
+            esc_html__('Termine, Gruppen, importierte Bilder und Einstellungen beim Deinstallieren behalten', 'churchtools-plugin')
         );
         echo '<p class="description">'
             . esc_html__('Gilt nur für „Deinstallieren“ (Plugin löschen), nicht für „Deaktivieren“. Standardmäßig aus, damit ein versehentliches Löschen keine Daten hinterlässt, die niemand mehr sieht.', 'churchtools-plugin')
@@ -1580,13 +1608,41 @@ final class SettingsPage
      */
     public static function renderSyncIntro(): void
     {
-        self::renderActionBar(
+        self::renderSyncHead(
             'ctp-run-sync',
+            SyncHealthNotice::eventProblem(),
+            SyncEngine::getImageWarning(),
+            'events'
+        );
+    }
+
+    /**
+     * Der Kopf beider Reiter „Synchronisation", fuer Termine und Gruppen
+     * gleich: Knopf, dann was am Abgleich gerade nicht stimmt (Fehler,
+     * fehlender Zeitplan, ueberfaellig - dieselbe Auskunft wie der Hinweis
+     * auf den uebrigen Backend-Seiten), dann die Bild-Warnung.
+     *
+     * @param array{type: string, message: string}|null            $problem
+     * @param array{time: string, count: int, reasons: string}|null $imageWarning
+     * @param 'events'|'groups'                                    $subject
+     */
+    public static function renderSyncHead(string $buttonId, ?array $problem, ?array $imageWarning, string $subject): void
+    {
+        self::renderActionBar(
+            $buttonId,
             __('Jetzt synchronisieren', 'churchtools-plugin'),
             __('Läuft sofort, unabhängig vom Intervall. Änderungen unten vorher speichern.', 'churchtools-plugin')
         );
 
-        self::renderImageWarning(SyncEngine::getImageWarning(), 'events');
+        if ($problem !== null) {
+            printf(
+                '<div class="notice notice-%1$s inline"><p>%2$s</p></div>',
+                esc_attr($problem['type']),
+                esc_html($problem['message'])
+            );
+        }
+
+        self::renderImageWarning($imageWarning, $subject);
     }
 
     /**
@@ -2627,20 +2683,7 @@ final class SettingsPage
                         'label' => __('Instanz', 'churchtools-plugin'),
                         'tone' => $settings['instance'] !== '' ? 'ok' : 'warn',
                     ],
-                    [
-                        'icon' => 'lock',
-                        'value' => $facts['api_key_broken']
-                            ? __('nicht lesbar', 'churchtools-plugin')
-                            : (ApiKey::isFromConfig()
-                                ? __('aus Konfiguration', 'churchtools-plugin')
-                                : (ApiKey::isConfigured()
-                                    ? __('hinterlegt', 'churchtools-plugin')
-                                    : __('fehlt', 'churchtools-plugin'))),
-                        'label' => __('API-Key', 'churchtools-plugin'),
-                        'tone' => $facts['api_key_broken']
-                            ? 'error'
-                            : (ApiKey::isConfigured() ? 'ok' : 'warn'),
-                    ],
+                    self::apiKeyCard($facts),
                     [
                         'icon' => 'calendar-alt',
                         'value' => sprintf(
@@ -2706,6 +2749,7 @@ final class SettingsPage
                         'icon' => 'update',
                         'value' => $facts['last_sync_label'],
                         'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                        'tone' => self::lastSyncTone(SyncEngine::getLastError() !== null, $facts['last_sync']),
                     ],
                     [
                         'icon' => 'clock',
@@ -2773,8 +2817,15 @@ final class SettingsPage
 
                 return;
             case 'group_list':
+                self::renderStatStrip(GroupsTab::listCards());
+
+                return;
             case 'groups':
-                self::renderStatStrip(GroupsTab::statusCards());
+                self::renderStatStrip(GroupsTab::selectionCards());
+
+                return;
+            case 'group_sync':
+                self::renderStatStrip(GroupsTab::syncCards());
 
                 return;
         }
@@ -2856,9 +2907,11 @@ final class SettingsPage
     }
 
     /**
-     * Die fuenf Kacheln der Uebersicht - als eigene Funktion, weil
-     * renderTabStatus() sie nur durchreicht und die Liste sonst den
-     * switch-Block ueberwuchern wuerde.
+     * Die Kacheln der Uebersicht: was fuer Termine *und* Gruppen gilt, dazu
+     * je eine Zahl fuer beide. Bis 2026-09-15 standen hier Kalender, letzter
+     * und naechster Sync - also nur die Termine, waehrend das Panel „Gruppen"
+     * darunter dieselben Angaben als Tabelle trug. Jetzt tragen beide Panels
+     * ihre Sync-Angaben in derselben Tabelle (siehe overviewRows()).
      *
      * @param array<string, mixed> $facts
      *
@@ -2868,50 +2921,114 @@ final class SettingsPage
     {
         $settings = $facts['settings'];
 
-        return [
+        $cards = [
             [
                 'icon' => 'admin-links',
                 'value' => $settings['instance'] !== '' ? $settings['instance'] : '—',
                 'label' => __('Instanz', 'churchtools-plugin'),
                 'tone' => $facts['configured'] ? 'ok' : 'warn',
             ],
+            self::apiKeyCard($facts),
             [
                 'icon' => 'calendar-alt',
-                'value' => sprintf(
-                    /* translators: 1: number of enabled calendars, 2: total number of known calendars */
-                    __('%1$d von %2$d', 'churchtools-plugin'),
-                    $facts['enabled_count'],
-                    $facts['calendar_count']
-                ),
-                'label' => __('Aktive Kalender', 'churchtools-plugin'),
-                'tone' => $facts['enabled_count'] > 0 ? '' : 'warn',
-            ],
-            [
-                'icon' => 'update',
-                'value' => $facts['last_sync_label'],
-                'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
-            ],
-            [
-                'icon' => 'list-view',
                 'value' => (string) (new EventRepository())->count(),
                 'label' => __('Gespeicherte Termine', 'churchtools-plugin'),
             ],
-            [
-                // „Letzte Synchronisation“ allein kann „lief vor einer Stunde,
-                // die naechste steht gleich an“ nicht von „der Cron-Eintrag ist
-                // verschwunden, diese Zahl bewegt sich nie wieder“ unterscheiden -
-                // und genau das ist der Ausfall, dem dieses Plugin am staerksten
-                // ausgesetzt ist (siehe WP-Cron-Hinweis in der readme.txt).
-                'icon' => 'clock',
-                'value' => $facts['next_sync_label'],
-                'label' => sprintf(
-                    /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
-                    __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
-                    self::syncIntervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval']
-                ),
-                'tone' => $facts['next_sync_scheduled'] ? '' : 'error',
-            ],
         ];
+
+        // Ohne aktive Homepage keine Gruppen-Kachel: Die meisten
+        // Installationen zeigen keine Gruppen, eine dauerhafte 0 waere Rauschen.
+        if (GroupSettings::enabledHomepages() !== []) {
+            $cards[] = [
+                'icon' => 'groups',
+                'value' => (string) GroupsTab::storedGroupCount(),
+                'label' => __('Gespeicherte Gruppen', 'churchtools-plugin'),
+            ];
+        }
+
+        return $cards;
+    }
+
+    /**
+     * Die Kachel „API-Key" - auf der Uebersicht und im Reiter „Verbindung".
+     *
+     * @param array<string, mixed> $facts
+     *
+     * @return array{icon: string, value: string, label: string, tone: string}
+     */
+    private static function apiKeyCard(array $facts): array
+    {
+        return [
+            'icon' => 'lock',
+            'value' => $facts['api_key_broken']
+                ? __('nicht lesbar', 'churchtools-plugin')
+                : (ApiKey::isFromConfig()
+                    ? __('aus Konfiguration', 'churchtools-plugin')
+                    : (ApiKey::isConfigured()
+                        ? __('hinterlegt', 'churchtools-plugin')
+                        : __('fehlt', 'churchtools-plugin'))),
+            'label' => __('API-Key', 'churchtools-plugin'),
+            'tone' => $facts['api_key_broken']
+                ? 'error'
+                : (ApiKey::isConfigured() ? 'ok' : 'warn'),
+        ];
+    }
+
+    /**
+     * Die Zeilen der Tabelle in einem Panel der Uebersicht, fuer Termine und
+     * Gruppen in derselben Reihenfolge: Auswahl, Bestand, letzter und
+     * naechster Lauf.
+     *
+     * @param array<int, array{label: string, value: string}> $rows
+     */
+    public static function renderOverviewRows(array $rows): void
+    {
+        ?>
+        <table class="widefat striped ctp-borderless ctp-keyvalue-table">
+            <tbody>
+                <?php foreach ($rows as $row) : ?>
+                    <tr>
+                        <th><?php echo esc_html($row['label']); ?></th>
+                        <td><?php echo esc_html($row['value']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php
+    }
+
+    /**
+     * Die Linkzeile unter einem Panel der Uebersicht - fuer Termine und
+     * Gruppen dieselben Ziele in derselben Reihenfolge.
+     *
+     * @param array<int, array{url: string, icon: string, label: string}> $links
+     */
+    public static function renderQuicklinks(array $links): void
+    {
+        ?>
+        <p class="ctp-quicklinks">
+            <?php foreach ($links as $link) : ?>
+                <a href="<?php echo esc_url($link['url']); ?>">
+                    <span class="dashicons dashicons-<?php echo esc_attr($link['icon']); ?>" aria-hidden="true"></span>
+                    <?php echo esc_html($link['label']); ?>
+                </a>
+            <?php endforeach; ?>
+        </p>
+        <?php
+    }
+
+    /**
+     * Die Farbe der Kachel „Letzte Synchronisation" - fuer Termine und Gruppen
+     * nach derselben Regel: rot nach einem Fehler, gruen nach einem Erfolg,
+     * neutral, solange noch nie etwas lief.
+     */
+    public static function lastSyncTone(bool $failed, string $lastSync): string
+    {
+        if ($failed) {
+            return 'error';
+        }
+
+        return $lastSync !== '' ? 'ok' : '';
     }
 
     /**
@@ -3078,6 +3195,23 @@ final class SettingsPage
             </p>
         </div>
 
+        <?php
+        /*
+         * Der einzige Schalter, der das Plugin als Ganzes betrifft - Termine
+         * und Gruppen gleichermassen. Bis 2026-09-15 stand er unter
+         * „Events → Synchronisation", wo ihn bei den Gruppen niemand sucht.
+         */
+        ?>
+        <form method="post" action="options.php" class="ctp-settings-form">
+            <div class="ctp-panel">
+                <?php
+                settings_fields(self::PAGE_SLUG);
+                do_settings_sections(self::PAGE_SLUG . '_uninstall');
+                ?>
+            </div>
+            <?php self::renderSaveBar(); ?>
+        </form>
+
         <?php if ($releases !== []) : ?>
             <div class="ctp-panel">
                 <h2><?php esc_html_e('Änderungen der letzten Versionen', 'churchtools-plugin'); ?></h2>
@@ -3133,6 +3267,14 @@ final class SettingsPage
         $health = SyncHealthNotice::problem($settings);
         $update = self::updateStatus();
         ?>
+        <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) : ?>
+            <?php // Gilt fuer Termine und Gruppen, steht deshalb vor beiden Panels statt in einem davon. ?>
+            <div class="notice notice-info inline">
+                <p>
+                    <?php esc_html_e('WP-Cron ist per DISABLE_WP_CRON deaktiviert. Der geplante Sync läuft dann nur, wenn ein System-Cronjob wp-cron.php regelmäßig aufruft (siehe readme.txt).', 'churchtools-plugin'); ?>
+                </p>
+            </div>
+        <?php endif; ?>
         <div class="ctp-panel">
             <?php // Seit der Teilung in Bereiche (2026-09-14) neben dem Panel „Gruppen" darunter - vorher „Verbindung & Betrieb", obwohl alles darin die Termine betrifft. ?>
             <h2><?php esc_html_e('Events', 'churchtools-plugin'); ?></h2>
@@ -3146,7 +3288,7 @@ final class SettingsPage
             self::renderActionBar(
                 'ctp-run-sync',
                 __('Jetzt synchronisieren', 'churchtools-plugin'),
-                __('Holt die Termine aller aktiven Kalender sofort, unabhängig vom eingestellten Intervall.', 'churchtools-plugin')
+                __('Holt die Termine aller aktiven Kalender sofort, unabhängig vom Intervall.', 'churchtools-plugin')
             );
             ?>
             <?php if ($lastError !== null) : ?>
@@ -3213,38 +3355,49 @@ final class SettingsPage
                 </div>
             <?php endif; ?>
             <?php self::renderImageWarning(SyncEngine::getImageWarning(), 'events'); ?>
-            <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) : ?>
-                <div class="notice notice-info inline">
-                    <p>
-                        <?php esc_html_e('WP-Cron ist per DISABLE_WP_CRON deaktiviert. Der geplante Sync läuft dann nur, wenn ein System-Cronjob wp-cron.php regelmäßig aufruft (siehe readme.txt).', 'churchtools-plugin'); ?>
-                    </p>
-                </div>
-            <?php endif; ?>
             <?php
+            self::renderOverviewRows([
+                [
+                    'label' => __('Aktive Kalender', 'churchtools-plugin'),
+                    'value' => sprintf(
+                        /* translators: 1: number of enabled calendars, 2: total number of known calendars */
+                        __('%1$d von %2$d', 'churchtools-plugin'),
+                        $facts['enabled_count'],
+                        $facts['calendar_count']
+                    ),
+                ],
+                [
+                    'label' => __('Gespeicherte Termine', 'churchtools-plugin'),
+                    'value' => (string) (new EventRepository())->count(),
+                ],
+                [
+                    'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                    'value' => $facts['last_sync_label'],
+                ],
+                [
+                    'label' => sprintf(
+                        /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
+                        __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
+                        self::syncIntervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval']
+                    ),
+                    'value' => $facts['next_sync_label'],
+                ],
+            ]);
+
             /*
              * Die naechsten Handgriffe als Linkzeile statt als Fliesstext: von
              * der Uebersicht aus fuehrt jeder Weg ohnehin in einen anderen Tab,
-             * und der Weg dorthin war bisher nur der Tab-Reiter selbst.
+             * und der Weg dorthin war bisher nur der Tab-Reiter selbst. Fuer
+             * Termine und Gruppen dieselben Ziele in derselben Reihenfolge wie
+             * ihre Reiter.
              */
+            self::renderQuicklinks([
+                ['url' => self::eventsOverviewUrl(), 'icon' => 'list-view', 'label' => __('Gespeicherte Termine ansehen', 'churchtools-plugin')],
+                ['url' => self::tabUrl('calendars'), 'icon' => 'calendar-alt', 'label' => __('Kalender auswählen', 'churchtools-plugin')],
+                ['url' => self::tabUrl('sync'), 'icon' => 'update', 'label' => __('Sync-Einstellungen', 'churchtools-plugin')],
+                ['url' => self::tabUrl('embed'), 'icon' => 'editor-code', 'label' => __('Termine einbinden', 'churchtools-plugin')],
+            ]);
             ?>
-            <p class="ctp-quicklinks">
-                <a href="<?php echo esc_url(self::tabUrl('calendars')); ?>">
-                    <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
-                    <?php esc_html_e('Kalender auswählen', 'churchtools-plugin'); ?>
-                </a>
-                <a href="<?php echo esc_url(self::tabUrl('sync')); ?>">
-                    <span class="dashicons dashicons-update" aria-hidden="true"></span>
-                    <?php esc_html_e('Sync-Einstellungen', 'churchtools-plugin'); ?>
-                </a>
-                <a href="<?php echo esc_url(self::eventsOverviewUrl()); ?>">
-                    <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
-                    <?php esc_html_e('Gespeicherte Termine ansehen', 'churchtools-plugin'); ?>
-                </a>
-                <a href="<?php echo esc_url(self::tabUrl('design')); ?>">
-                    <span class="dashicons dashicons-admin-appearance" aria-hidden="true"></span>
-                    <?php esc_html_e('Darstellung anpassen', 'churchtools-plugin'); ?>
-                </a>
-            </p>
         </div>
 
         <?php GroupsTab::renderOverviewPanel(); ?>
@@ -4002,6 +4155,8 @@ final class SettingsPage
                 <?php GroupsTab::renderList(); ?>
             <?php elseif ($tab === 'groups') : ?>
                 <?php GroupsTab::render(); ?>
+            <?php elseif ($tab === 'group_sync') : ?>
+                <?php GroupsTab::renderSync(); ?>
             <?php elseif ($tab === 'group_embed') : ?>
                 <?php GroupsTab::renderEmbed(); ?>
             <?php elseif ($tab === 'updates') : ?>
@@ -4285,10 +4440,10 @@ final class SettingsPage
         })();
 
         /*
-         * Die beiden Knoepfe des Reiters „Gruppen". Gleiches Muster wie
-         * „Kalender laden" und „Jetzt synchronisieren" darueber, nur ohne
-         * Instanz- und Key-Feld: Die Gruppen werden ohne Key abgefragt, und
-         * die Instanz steht dort nicht im Formular.
+         * Die beiden Knoepfe des Bereichs „Gruppen" („Homepages" und
+         * „Synchronisation", dazu die Uebersicht). Gleiches Muster wie
+         * „Kalender laden" und „Jetzt synchronisieren", nur ohne Instanz- und
+         * Key-Feld im Formular: Beide nehmen die gespeicherte Verbindung.
          */
         [
             ['ctp-fetch-group-homepages', 'ctp_fetch_group_homepages', '<?php echo esc_js(wp_create_nonce('ctp_fetch_group_homepages')); ?>', '<?php echo esc_js(__('Lade…', 'churchtools-plugin')); ?>'],
@@ -4349,6 +4504,12 @@ final class SettingsPage
                     ctpSetStatus(result, 'error', (data.data && data.data.message)
                         ? data.data.message
                         : '<?php echo esc_js(__('Synchronisation fehlgeschlagen', 'churchtools-plugin')); ?>');
+                })
+                // Wie bei den Gruppen: Ohne das bliebe der Knopf nach einem
+                // Netzwerkfehler gesperrt und „Synchronisiere…" stehen.
+                .catch(function () {
+                    button.disabled = false;
+                    ctpSetStatus(result, 'error', '<?php echo esc_js(__('Synchronisation fehlgeschlagen', 'churchtools-plugin')); ?>');
                 });
         });
 

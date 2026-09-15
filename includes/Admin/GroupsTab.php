@@ -13,8 +13,14 @@ use ChurchToolsPlugin\Settings;
 use Throwable;
 
 /**
- * Der Bereich „Gruppen" im Backend: Gruppenliste, Homepage-Auswahl samt
- * eigenem Sync-Intervall, Einbinden - dazu das Gruppen-Panel der Uebersicht.
+ * Der Bereich „Gruppen" im Backend: Gruppenliste, Homepages,
+ * Synchronisation, Einbinden - dazu das Gruppen-Panel der Uebersicht.
+ *
+ * Aufgebaut wie der Bereich „Events" (Nutzerwunsch 2026-09-15: „Das Plugin
+ * soll sich egal ob Events oder Gruppen gleich oder mindestens aehnlich
+ * verhalten"): dieselben Reiter in derselben Reihenfolge, dieselben Kacheln in
+ * der Statuszeile, dieselben Knoepfe und Hinweise. Wer hier etwas aendert,
+ * sieht beim Gegenstueck in SettingsPage nach.
  *
  * Eine eigene Klasse statt weiterer Methoden in SettingsPage - die steht bei
  * gut 5.300 Zeilen, und die Gruppen teilen mit ihr nur den Rahmen (Reiterreihe,
@@ -40,133 +46,202 @@ final class GroupsTab
     }
 
     /**
-     * Deutsche Beschriftungen fuer GroupSettings::INTERVALS.
+     * Was die Statuszeilen und das Uebersichts-Panel gemeinsam brauchen, einmal
+     * je Seitenaufbau - das Gegenstueck zu SettingsPage::statusFacts().
      *
-     * @return array<string, string>
+     * @return array{settings: array, enabled: array, group_count: int, image_count: int, groups_from_enabled: int, last_sync: string, last_sync_label: string, next_sync_label: string, next_sync_scheduled: bool, failed: bool, date_format: string}
      */
-    public static function intervalLabels(): array
-    {
-        return [
-            'hourly' => __('Stündlich', 'churchtools-plugin'),
-            'twicedaily' => __('Zweimal täglich', 'churchtools-plugin'),
-            'daily' => __('Täglich', 'churchtools-plugin'),
-            'weekly' => __('Wöchentlich', 'churchtools-plugin'),
-        ];
-    }
-
-    /**
-     * Die Kacheln der Statuszeile ueber dem Reiter.
-     *
-     * @return array<int, array{icon: string, value: string, label: string, tone?: string}>
-     */
-    public static function statusCards(): array
+    private static function facts(): array
     {
         $settings = GroupSettings::get();
         $enabled = GroupSettings::enabledHomepages($settings);
+        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
         // Verschiedene Gruppen, nicht Eintraege: Dieselbe Gruppe kann auf zwei
         // Homepages stehen (an der Referenzinstanz zwei von 17).
         $groupIds = [];
+        $entries = 0;
 
         foreach (array_keys($enabled) as $id) {
             foreach (GroupSync::groupsFor((int) $id) as $group) {
                 $groupIds[(int) $group['id']] = true;
+                $entries++;
             }
         }
 
         $lastSync = (string) get_option(GroupSync::LAST_SYNC_OPTION, '');
-        $error = GroupSync::getLastError();
+        $next = wp_next_scheduled(GroupSync::HOOK);
+
+        return [
+            'settings' => $settings,
+            'enabled' => $enabled,
+            'group_count' => count($groupIds),
+            'image_count' => count(array_intersect_key(GroupSync::imageMap(), $groupIds)),
+            'groups_from_enabled' => $entries,
+            'last_sync' => $lastSync,
+            'last_sync_label' => $lastSync !== ''
+                ? (string) mysql2date($dateFormat, $lastSync)
+                : __('noch nie', 'churchtools-plugin'),
+            'next_sync_label' => $next !== false
+                ? (string) wp_date($dateFormat, $next)
+                : __('nicht geplant', 'churchtools-plugin'),
+            'next_sync_scheduled' => $next !== false,
+            'failed' => GroupSync::getLastError() !== null,
+            'date_format' => $dateFormat,
+        ];
+    }
+
+    /** Verschiedene gespeicherte Gruppen der aktiven Homepages - fuer die Kachel der Uebersicht. */
+    public static function storedGroupCount(): int
+    {
+        return self::facts()['group_count'];
+    }
+
+    /**
+     * Statuszeile der Gruppenliste - wie die der Terminliste: was gespeichert
+     * ist, nicht wie es dorthin kam.
+     *
+     * @return array<int, array{icon: string, value: string, label: string, tone?: string}>
+     */
+    public static function listCards(): array
+    {
+        $facts = self::facts();
 
         return [
             [
+                'icon' => 'database',
+                'value' => (string) $facts['group_count'],
+                'label' => __('Gesamt', 'churchtools-plugin'),
+            ],
+            [
                 'icon' => 'groups',
-                'value' => sprintf(
-                    /* translators: 1: number of enabled group homepages, 2: total number of known group homepages */
-                    __('%1$d von %2$d', 'churchtools-plugin'),
-                    count($enabled),
-                    count($settings['homepages'])
-                ),
+                'value' => (string) count($facts['enabled']),
                 'label' => __('Aktive Homepages', 'churchtools-plugin'),
             ],
             [
-                'icon' => 'id-alt',
-                'value' => (string) count($groupIds),
-                'label' => __('Gespeicherte Gruppen', 'churchtools-plugin'),
-            ],
-            [
-                'icon' => 'update',
-                'value' => $lastSync !== ''
-                    ? mysql2date(get_option('date_format') . ' ' . get_option('time_format'), $lastSync)
-                    : __('noch nie', 'churchtools-plugin'),
-                'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
-                'tone' => $error !== null ? 'error' : ($lastSync !== '' ? 'ok' : ''),
-            ],
-            [
-                'icon' => 'clock',
-                'value' => self::intervalLabels()[$settings['sync_interval']] ?? $settings['sync_interval'],
-                'label' => __('Sync-Intervall', 'churchtools-plugin'),
+                'icon' => 'format-image',
+                'value' => (string) $facts['image_count'],
+                'label' => __('Mit importiertem Bild', 'churchtools-plugin'),
             ],
         ];
     }
 
+    /**
+     * Statuszeile des Reiters „Homepages" - wie die des Reiters „Kalender".
+     *
+     * @return array<int, array{icon: string, value: string, label: string, tone?: string}>
+     */
+    public static function selectionCards(): array
+    {
+        $facts = self::facts();
+        $known = count($facts['settings']['homepages']);
+        $fetched = (string) get_option(GroupSync::HOMEPAGES_FETCHED_OPTION, '');
+
+        return [
+            [
+                'icon' => 'groups',
+                'value' => (string) $known,
+                'label' => __('Bekannte Homepages', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'yes-alt',
+                'value' => sprintf(
+                    /* translators: 1: number of enabled group homepages, 2: total number of known group homepages */
+                    __('%1$d von %2$d', 'churchtools-plugin'),
+                    count($facts['enabled']),
+                    $known
+                ),
+                'label' => __('Zur Synchronisation aktiviert', 'churchtools-plugin'),
+                // Anders als bei den Kalendern nicht gelb ohne Auswahl: Die
+                // meisten Installationen zeigen keine Gruppen, und das ist
+                // kein Fehler.
+                'tone' => $facts['enabled'] !== [] ? 'ok' : '',
+            ],
+            [
+                'icon' => 'list-view',
+                'value' => (string) $facts['groups_from_enabled'],
+                'label' => __('Gruppen aus aktiven Homepages', 'churchtools-plugin'),
+            ],
+            [
+                'icon' => 'download',
+                'value' => $fetched !== ''
+                    ? (string) mysql2date($facts['date_format'], $fetched)
+                    : __('noch nie', 'churchtools-plugin'),
+                'label' => __('Homepage-Liste zuletzt geladen', 'churchtools-plugin'),
+            ],
+        ];
+    }
+
+    /**
+     * Statuszeile des Reiters „Synchronisation" - wie die der Termine, ohne
+     * Zeitraum und Aufbewahrung, die es nur dort gibt.
+     *
+     * @return array<int, array{icon: string, value: string, label: string, tone?: string}>
+     */
+    public static function syncCards(): array
+    {
+        $facts = self::facts();
+
+        return [
+            [
+                'icon' => 'update',
+                'value' => $facts['last_sync_label'],
+                'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                'tone' => SettingsPage::lastSyncTone($facts['failed'], $facts['last_sync']),
+            ],
+            [
+                'icon' => 'clock',
+                'value' => $facts['next_sync_label'],
+                'label' => sprintf(
+                    /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
+                    __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
+                    SettingsPage::syncIntervalLabels()[$facts['settings']['sync_interval']] ?? $facts['settings']['sync_interval']
+                ),
+                // Ohne aktive Homepage gibt es bewusst keinen Zeitplan (siehe
+                // Installer::ensureSchedules()) - das ist dann nicht rot.
+                'tone' => $facts['next_sync_scheduled'] || $facts['enabled'] === [] ? '' : 'error',
+            ],
+            [
+                'icon' => 'list-view',
+                'value' => (string) $facts['group_count'],
+                'label' => __('Gespeicherte Gruppen', 'churchtools-plugin'),
+            ],
+        ];
+    }
+
+    /**
+     * Der Reiter „Homepages" - aufgebaut wie der Reiter „Kalender": Knopf zum
+     * Laden, Auswahl, Hinweis, was mit einer abgewaehlten passiert. Die
+     * Synchronisation hat seit 2026-09-15 einen eigenen Reiter.
+     */
     public static function render(): void
     {
         $settings = GroupSettings::get();
         $homepages = $settings['homepages'];
-        $fetched = (string) get_option(GroupSync::HOMEPAGES_FETCHED_OPTION, '');
-        $error = GroupSync::getLastError();
-        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
         ?>
         <form method="post" action="options.php" class="ctp-settings-form">
             <div class="ctp-panel">
                 <?php settings_fields(GroupSettings::OPTION_GROUP); ?>
-                <h2><?php esc_html_e('Gruppen-Homepages', 'churchtools-plugin'); ?></h2>
+                <h2><?php esc_html_e('Homepage-Auswahl', 'churchtools-plugin'); ?></h2>
 
                 <p class="description">
-                    <?php esc_html_e('Zeigt die Gruppen einer Gruppen-Homepage aus ChurchTools in der Optik des Plugins – als Ersatz für den iframe. Welche Gruppen erscheinen, entscheidet die Homepage in ChurchTools.', 'churchtools-plugin'); ?>
+                    <?php esc_html_e('Zeigt die Gruppen einer Gruppen-Homepage aus ChurchTools in der Optik des Plugins – als Ersatz für den iframe. Welche Gruppen erscheinen, entscheidet die Homepage in ChurchTools. Übernommen werden nur Name, Beschreibung, Treffzeit, Zielgruppe, Plätze und Bild – keine Leiter und keine Angaben über Personen.', 'churchtools-plugin'); ?>
                 </p>
 
                 <?php
                 SettingsPage::renderActionBar(
                     'ctp-fetch-group-homepages',
                     __('Homepages von ChurchTools laden', 'churchtools-plugin'),
-                    __('Nutzt den API-Key aus „Einstellungen → Verbindung“. Übernommen werden nur Name, Beschreibung, Treffzeit, Zielgruppe, Plätze und Bild – keine Leiter und keine Angaben über Personen.', 'churchtools-plugin')
+                    __('Jede Synchronisation gleicht die Liste automatisch mit ab – dieser Button holt sie sofort.', 'churchtools-plugin')
                 );
                 ?>
 
-                <?php if ($error !== null) : ?>
-                    <div class="notice notice-warning inline">
-                        <p>
-                            <?php
-                            printf(
-                                /* translators: 1: date/time the group sync last failed, 2: error message */
-                                esc_html__('Die letzte Synchronisation der Gruppen ist fehlgeschlagen (%1$s): %2$s. Bereits geladene Gruppen bleiben stehen.', 'churchtools-plugin'),
-                                esc_html(mysql2date($dateFormat, $error['time'])),
-                                esc_html(wp_html_excerpt($error['message'], 400, '…'))
-                            );
-                            ?>
-                        </p>
-                    </div>
-                <?php endif; ?>
-
                 <?php if ($homepages === []) : ?>
-                    <p class="ctp-empty-state"><?php esc_html_e('Noch keine Gruppen-Homepages geladen.', 'churchtools-plugin'); ?></p>
+                    <p class="ctp-empty-state"><?php esc_html_e('Noch keine Homepages geladen.', 'churchtools-plugin'); ?></p>
                 <?php else : ?>
-                    <?php if ($fetched !== '') : ?>
-                        <p class="description">
-                            <?php
-                            printf(
-                                /* translators: %s: date and time the homepage list was last fetched */
-                                esc_html__('Zuletzt geladen: %s', 'churchtools-plugin'),
-                                esc_html(mysql2date($dateFormat, $fetched))
-                            );
-                            ?>
-                        </p>
-                    <?php endif; ?>
-
                     <table class="widefat striped ctp-rooms-table ctp-group-homepages">
                         <thead>
                             <tr>
-                                <th scope="col"><?php esc_html_e('Übernehmen', 'churchtools-plugin'); ?></th>
+                                <th scope="col"><?php esc_html_e('Aktiv', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Homepage', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Gruppen', 'churchtools-plugin'); ?></th>
                                 <th scope="col"><?php esc_html_e('Shortcode', 'churchtools-plugin'); ?></th>
@@ -214,39 +289,53 @@ final class GroupsTab
                     </table>
 
                     <p class="description">
-                        <?php esc_html_e('Nur angehakte Homepages werden synchronisiert. Bilder landen dabei in der Mediathek. Beim Abwählen entfernt der nächste Lauf die Gruppen samt Bildern.', 'churchtools-plugin'); ?>
+                        <?php esc_html_e('Nur aktive Homepages werden synchronisiert. Gruppen einer gerade deaktivierten Homepage entfernt der nächste Sync samt Bildern.', 'churchtools-plugin'); ?>
                     </p>
                 <?php endif; ?>
             </div>
+            <?php SettingsPage::renderSaveBar(); ?>
+        </form>
+        <?php
+    }
 
+    /**
+     * Der Reiter „Synchronisation" der Gruppen - aufgebaut wie der der
+     * Termine: Knopf und Befund oben, darunter die Einstellungen. Bis
+     * 2026-09-15 stand das als zweites Panel unter der Homepage-Tabelle, erst
+     * nach dem Scrollen sichtbar.
+     *
+     * Eigenes Formular derselben Option wie „Homepages": GroupSettings::sanitize()
+     * uebernimmt, was nicht im Formular steht, aus dem Bestand.
+     */
+    public static function renderSync(): void
+    {
+        $settings = GroupSettings::get();
+        ?>
+        <form method="post" action="options.php" class="ctp-settings-form">
             <div class="ctp-panel">
-                <h2><?php esc_html_e('Synchronisation der Gruppen', 'churchtools-plugin'); ?></h2>
+                <?php settings_fields(GroupSettings::OPTION_GROUP); ?>
+                <h2><?php esc_html_e('Sync-Einstellungen', 'churchtools-plugin'); ?></h2>
 
                 <?php
-                SettingsPage::renderActionBar(
+                SettingsPage::renderSyncHead(
                     'ctp-run-group-sync',
-                    __('Gruppen jetzt synchronisieren', 'churchtools-plugin'),
-                    __('Unabhängig vom Termin-Sync, mit eigenem Intervall.', 'churchtools-plugin')
+                    SyncHealthNotice::groupProblem(),
+                    GroupSync::getImageWarning(),
+                    'groups'
                 );
-                SettingsPage::renderImageWarning(GroupSync::getImageWarning(), 'groups');
                 ?>
 
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row">
-                            <label for="ctp-group-sync-interval"><?php esc_html_e('Sync-Intervall', 'churchtools-plugin'); ?></label>
-                        </th>
+                        <th scope="row"><?php esc_html_e('Sync-Intervall', 'churchtools-plugin'); ?></th>
                         <td>
-                            <select id="ctp-group-sync-interval" name="<?php echo esc_attr(GroupSettings::OPTION_KEY); ?>[sync_interval]">
-                                <?php foreach (self::intervalLabels() as $value => $label) : ?>
-                                    <option value="<?php echo esc_attr($value); ?>" <?php selected($settings['sync_interval'], $value); ?>>
-                                        <?php echo esc_html($label); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <p class="description">
-                                <?php esc_html_e('Die freien Plätze auf den Kacheln sind so alt wie der letzte Lauf. Die Anmeldung in ChurchTools zeigt immer den echten Stand.', 'churchtools-plugin'); ?>
-                            </p>
+                            <?php
+                            SettingsPage::renderIntervalSelect(
+                                GroupSettings::OPTION_KEY . '[sync_interval]',
+                                $settings['sync_interval'],
+                                __('Die freien Plätze auf den Kacheln sind so alt wie der letzte Lauf. Die Anmeldung in ChurchTools zeigt immer den echten Stand.', 'churchtools-plugin')
+                            );
+                            ?>
                         </td>
                     </tr>
                 </table>
@@ -365,24 +454,21 @@ final class GroupsTab
     }
 
     /**
-     * Das Panel „Gruppen" auf der Uebersicht - die Uebersicht zeigt seit der
-     * Teilung in Bereiche den Zustand von beidem, und ein dauerhaft
-     * scheiternder Gruppen-Sync fiel bis dahin nur im Reiter der Gruppen auf.
+     * Das Panel „Gruppen" auf der Uebersicht - aufgebaut wie das Panel
+     * „Events" darueber: Knopf, Befund, dieselbe Tabelle, dieselben Links.
      *
-     * Ohne angehakte Homepage bleibt es bei einem Satz und einem Verweis:
+     * Ohne aktive Homepage bleibt es bei einem Satz und einem Verweis:
      * Die meisten Installationen zeigen keine Gruppen, und vier Zahlen, die
      * alle „nichts" sagen, waeren auf ihrer Uebersicht nur Rauschen.
      */
     public static function renderOverviewPanel(): void
     {
-        $settings = GroupSettings::get();
-        $enabled = GroupSettings::enabledHomepages($settings);
-        $error = GroupSync::getLastError();
-        $dateFormat = get_option('date_format') . ' ' . get_option('time_format');
+        $facts = self::facts();
+        $problem = SyncHealthNotice::groupProblem();
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Gruppen', 'churchtools-plugin'); ?></h2>
-            <?php if ($enabled === []) : ?>
+            <?php if ($facts['enabled'] === []) : ?>
                 <p class="description">
                     <?php
                     printf(
@@ -396,60 +482,52 @@ final class GroupsTab
                 <?php
                 SettingsPage::renderActionBar(
                     'ctp-run-group-sync',
-                    __('Gruppen jetzt synchronisieren', 'churchtools-plugin'),
-                    __('Unabhängig vom Termin-Sync, mit eigenem Intervall.', 'churchtools-plugin')
+                    __('Jetzt synchronisieren', 'churchtools-plugin'),
+                    __('Holt die Gruppen aller aktiven Homepages sofort, unabhängig vom Intervall.', 'churchtools-plugin')
                 );
                 ?>
-                <?php if ($error !== null) : ?>
-                    <div class="notice notice-error inline">
-                        <p>
-                            <?php
-                            printf(
-                                /* translators: 1: date/time the group sync last failed, 2: error message */
-                                esc_html__('Letzter Fehler beim Gruppen-Sync (%1$s): %2$s', 'churchtools-plugin'),
-                                esc_html(mysql2date($dateFormat, $error['time'])),
-                                esc_html(wp_html_excerpt($error['message'], 600, '…'))
-                            );
-                            ?>
-                        </p>
+                <?php if ($problem !== null) : ?>
+                    <div class="notice notice-<?php echo esc_attr($problem['type']); ?> inline">
+                        <p><?php echo esc_html($problem['message']); ?></p>
                     </div>
                 <?php endif; ?>
                 <?php SettingsPage::renderImageWarning(GroupSync::getImageWarning(), 'groups'); ?>
-                <?php $next = wp_next_scheduled(GroupSync::HOOK); ?>
-                <table class="widefat striped ctp-borderless ctp-keyvalue-table">
-                    <tbody>
-                        <?php foreach (self::statusCards() as $card) : ?>
-                            <tr>
-                                <th><?php echo esc_html($card['label']); ?></th>
-                                <td><?php echo esc_html($card['value']); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <tr>
-                            <th><?php esc_html_e('Nächste Synchronisation', 'churchtools-plugin'); ?></th>
-                            <td>
-                                <?php
-                                echo esc_html($next !== false
-                                    ? (string) wp_date($dateFormat, $next)
-                                    : __('nicht geplant', 'churchtools-plugin'));
-                                ?>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="ctp-quicklinks">
-                    <a href="<?php echo esc_url(SettingsPage::tabUrl('group_list')); ?>">
-                        <span class="dashicons dashicons-list-view" aria-hidden="true"></span>
-                        <?php esc_html_e('Gespeicherte Gruppen ansehen', 'churchtools-plugin'); ?>
-                    </a>
-                    <a href="<?php echo esc_url(SettingsPage::tabUrl('groups')); ?>">
-                        <span class="dashicons dashicons-groups" aria-hidden="true"></span>
-                        <?php esc_html_e('Homepages auswählen', 'churchtools-plugin'); ?>
-                    </a>
-                    <a href="<?php echo esc_url(SettingsPage::tabUrl('group_embed')); ?>">
-                        <span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
-                        <?php esc_html_e('Gruppen einbinden', 'churchtools-plugin'); ?>
-                    </a>
-                </p>
+                <?php
+                SettingsPage::renderOverviewRows([
+                    [
+                        'label' => __('Aktive Homepages', 'churchtools-plugin'),
+                        'value' => sprintf(
+                            /* translators: 1: number of enabled group homepages, 2: total number of known group homepages */
+                            __('%1$d von %2$d', 'churchtools-plugin'),
+                            count($facts['enabled']),
+                            count($facts['settings']['homepages'])
+                        ),
+                    ],
+                    [
+                        'label' => __('Gespeicherte Gruppen', 'churchtools-plugin'),
+                        'value' => (string) $facts['group_count'],
+                    ],
+                    [
+                        'label' => __('Letzte Synchronisation', 'churchtools-plugin'),
+                        'value' => $facts['last_sync_label'],
+                    ],
+                    [
+                        'label' => sprintf(
+                            /* translators: %s: configured sync recurrence, e.g. "Stündlich" */
+                            __('Nächste Synchronisation (%s)', 'churchtools-plugin'),
+                            SettingsPage::syncIntervalLabels()[$facts['settings']['sync_interval']] ?? $facts['settings']['sync_interval']
+                        ),
+                        'value' => $facts['next_sync_label'],
+                    ],
+                ]);
+
+                SettingsPage::renderQuicklinks([
+                    ['url' => SettingsPage::tabUrl('group_list'), 'icon' => 'list-view', 'label' => __('Gespeicherte Gruppen ansehen', 'churchtools-plugin')],
+                    ['url' => SettingsPage::tabUrl('groups'), 'icon' => 'groups', 'label' => __('Homepages auswählen', 'churchtools-plugin')],
+                    ['url' => SettingsPage::tabUrl('group_sync'), 'icon' => 'update', 'label' => __('Sync-Einstellungen', 'churchtools-plugin')],
+                    ['url' => SettingsPage::tabUrl('group_embed'), 'icon' => 'editor-code', 'label' => __('Gruppen einbinden', 'churchtools-plugin')],
+                ]);
+                ?>
             <?php endif; ?>
         </div>
         <?php
@@ -462,8 +540,8 @@ final class GroupsTab
      * Einbinden-Reiter der Termine, wo sie niemand suchte, der gerade Gruppen
      * einrichtet.
      *
-     * Die Beispiele nennen die angehakten Homepages beim Namen, damit sie
-     * ohne Anpassen funktionieren; ohne angehakte Homepage steht statt ihrer
+     * Die Beispiele nennen die aktiven Homepages beim Namen, damit sie
+     * ohne Anpassen funktionieren; ohne aktive Homepage steht statt ihrer
      * der Weg dorthin - ein Beispiel mit erfundenem Namen erzeugte beim
      * Einfuegen nur eine leere Liste.
      */
@@ -514,10 +592,10 @@ final class GroupsTab
                 <?php esc_html_e('Gruppen lassen sich per Shortcode, über den Gutenberg-Block „ChurchTools Gruppen“ oder über das WPBakery-Element „ChurchTools Gruppen“ einbinden. Alle drei zeigen dieselben Kacheln; Vorlage, Farben und Ecken kommen aus „Einstellungen → Design“.', 'churchtools-plugin'); ?>
             </p>
             <p class="description">
-                <?php esc_html_e('Block und WPBakery-Element bieten die angehakten Homepages und ihre Gruppen als Auswahl an. Unter jeder Gruppe steht der Button „In ChurchTools ansehen“; er führt zur Gruppe in ChurchTools, wo man sich anmeldet. Die Kachel selbst ist nicht klickbar.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Block und WPBakery-Element bieten die aktiven Homepages und ihre Gruppen als Auswahl an. Unter jeder Gruppe steht der Button „In ChurchTools ansehen“; er führt zur Gruppe in ChurchTools, wo man sich anmeldet. Die Kachel selbst ist nicht klickbar.', 'churchtools-plugin'); ?>
             </p>
             <p class="description">
-                <?php esc_html_e('Einzeln wählbar sind die Gruppen der angehakten Homepages – eine Gruppe, die auf keiner steht, entscheidet ChurchTools nicht als öffentlich und erscheint deshalb auch hier nicht.', 'churchtools-plugin'); ?>
+                <?php esc_html_e('Einzeln wählbar sind die Gruppen der aktiven Homepages – eine Gruppe, die auf keiner steht, entscheidet ChurchTools nicht als öffentlich und erscheint deshalb auch hier nicht.', 'churchtools-plugin'); ?>
             </p>
         </div>
 
@@ -529,15 +607,15 @@ final class GroupsTab
                         <?php
                         printf(
                             /* translators: %s: link to the "Homepages" tab */
-                            esc_html__('Noch keine Gruppen-Homepage angehakt. Unter %s laden und anhaken, dann stehen hier fertige Shortcodes.', 'churchtools-plugin'),
-                            '<a href="' . esc_url(SettingsPage::tabUrl('groups')) . '">' . esc_html__('Homepages', 'churchtools-plugin') . '</a>'
+                            esc_html__('Noch keine Gruppen-Homepage aktiv. Unter %s laden und aktivieren, dann stehen hier fertige Shortcodes.', 'churchtools-plugin'),
+                            '<a href="' . esc_url(SettingsPage::tabUrl('groups')) . '">' . esc_html__('Gruppen → Homepages', 'churchtools-plugin') . '</a>'
                         );
                         ?>
                     </p>
                 </div>
             <?php else : ?>
                 <p class="description">
-                    <?php esc_html_e('Fertige Shortcodes mit den angehakten Homepages dieser Instanz.', 'churchtools-plugin'); ?>
+                    <?php esc_html_e('Fertige Shortcodes mit den aktiven Homepages dieser Instanz.', 'churchtools-plugin'); ?>
                 </p>
                 <ul class="ctp-shortcode-examples">
                     <?php foreach ($examples as $example) : ?>
@@ -566,12 +644,12 @@ final class GroupsTab
                 <tbody>
                     <tr>
                         <td><code>homepage</code></td>
-                        <td><?php esc_html_e('Name oder ID der Gruppen-Homepage. Leer = die einzige angehakte Homepage.', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Name oder ID der Gruppen-Homepage. Leer = die einzige aktive Homepage.', 'churchtools-plugin'); ?></td>
                         <td>&ndash;</td>
                     </tr>
                     <tr>
                         <td><code>groups</code></td>
-                        <td><?php esc_html_e('Einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge (IDs stehen unter „Gruppen → Gruppenliste“). Gilt statt homepage. Nur Gruppen der angehakten Homepages.', 'churchtools-plugin'); ?></td>
+                        <td><?php esc_html_e('Einzelne Gruppen nach ID, kommagetrennt, in dieser Reihenfolge (IDs stehen unter „Gruppen → Gruppenliste“). Gilt statt homepage. Nur Gruppen der aktiven Homepages.', 'churchtools-plugin'); ?></td>
                         <td>&ndash;</td>
                     </tr>
                     <tr>

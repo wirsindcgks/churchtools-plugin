@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Groups;
 
+use ChurchToolsPlugin\Db\Installer;
+
 /**
  * Die Einstellungen des Reiters „Gruppen": welche Gruppen-Homepages
  * uebernommen werden und wie oft.
@@ -24,15 +26,16 @@ final class GroupSettings
     public const OPTION_GROUP = 'churchtools-plugin-groups';
 
     /**
-     * Seltener als bei den Terminen, und mit „Woechentlich" als viertem Wert
-     * (Nutzerwunsch 2026-09-14: „stuendlich ist fuer unseren Anwendungsfall
+     * Standard seltener als bei den Terminen, und „Woechentlich" kam hier
+     * zuerst (Nutzerwunsch 2026-09-14: „stuendlich ist fuer unseren Anwendungsfall
      * aktuell zu haeufig"). Eine Gruppe aendert Treffpunkt oder Beschreibung
      * selten; was sich oefter bewegt, sind die freien Plaetze, und die zeigt
      * die Anmeldung in ChurchTools ohnehin mit dem echten Stand an.
      *
-     * `weekly` bringt WordPress seit 5.4 selbst mit, das Plugin verlangt 6.4.
+     * Die Auswahl selbst ist seit 2026-09-15 dieselbe wie bei den Terminen
+     * (siehe Installer::SYNC_INTERVALS); verschieden ist nur der Standard.
      */
-    public const INTERVALS = ['hourly', 'twicedaily', 'daily', 'weekly'];
+    public const INTERVALS = Installer::SYNC_INTERVALS;
 
     public const DEFAULT_INTERVAL = 'daily';
 

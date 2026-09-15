@@ -1079,3 +1079,49 @@ function wp_unique_id(string $prefix = ''): string
 
     return $prefix . (string) ++$counter;
 }
+
+/*
+ * WP-Cron, so weit SyncHealthNotice ihn liest: der naechste Termin je Hook
+ * und die Laenge der Intervalle. Gesetzt wird mit ctp_test_set_next_run().
+ */
+$GLOBALS['ctp_test_next_runs'] = [];
+
+function ctp_test_set_next_run(string $hook, ?int $timestamp): void
+{
+    if ($timestamp === null) {
+        unset($GLOBALS['ctp_test_next_runs'][$hook]);
+
+        return;
+    }
+
+    $GLOBALS['ctp_test_next_runs'][$hook] = $timestamp;
+}
+
+/** @return int|false */
+function wp_next_scheduled(string $hook, array $args = [])
+{
+    return $GLOBALS['ctp_test_next_runs'][$hook] ?? false;
+}
+
+function wp_get_schedules(): array
+{
+    return [
+        'hourly' => ['interval' => HOUR_IN_SECONDS],
+        'twicedaily' => ['interval' => 12 * HOUR_IN_SECONDS],
+        'daily' => ['interval' => DAY_IN_SECONDS],
+        'weekly' => ['interval' => 7 * DAY_IN_SECONDS],
+    ];
+}
+
+/** Die Tests laufen in UTC - lokale Zeit und GMT sind dieselbe. */
+function get_gmt_from_date(string $date, string $format = 'Y-m-d H:i:s')
+{
+    $timestamp = strtotime($date . ' UTC');
+
+    return $timestamp === false ? false : gmdate($format, $timestamp);
+}
+
+function human_time_diff(int $from, int $to = 0): string
+{
+    return (string) round(abs($to - $from) / DAY_IN_SECONDS) . ' Tage';
+}

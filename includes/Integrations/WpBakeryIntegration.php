@@ -421,7 +421,7 @@ final class WpBakeryIntegration
                     // WPBakery 8.7). Siehe renderGroupPicker().
                     'type' => self::GROUP_PICKER_TYPE,
                     'heading' => __('Einzelne Gruppen', 'churchtools-plugin'),
-                    'description' => __('Zur Auswahl stehen die Gruppen der angehakten Homepages, in der Reihenfolge der Liste „Ausgewählt“.', 'churchtools-plugin'),
+                    'description' => __('Zur Auswahl stehen die Gruppen der aktiven Homepages, in der Reihenfolge der Liste „Ausgewählt“.', 'churchtools-plugin'),
                     'param_name' => 'groups',
                     'admin_label' => true,
                     'ctp_choices' => self::groupOptions(),
@@ -499,7 +499,7 @@ final class WpBakeryIntegration
     }
 
     /**
-     * Die angehakten Homepages als Auswahl, mit dem Namen als Wert - so steht
+     * Die aktiven Homepages als Auswahl, mit dem Namen als Wert - so steht
      * im Shortcode derselbe lesbare Wert wie in dem, den der Reiter „Gruppen"
      * zum Kopieren anbietet. Der leere erste Eintrag ist noetig, weil WPBakery
      * ein Auswahlfeld ohne gespeicherten Wert sonst stillschweigend auf den
@@ -612,7 +612,7 @@ final class WpBakeryIntegration
             'heading' => __('Ausgewählt – in dieser Reihenfolge auf der Seite', 'churchtools-plugin'),
             'empty' => __('Keine einzelnen Gruppen gewählt – es gilt die Gruppen-Homepage.', 'churchtools-plugin'),
             'filter' => __('Gruppen filtern …', 'churchtools-plugin'),
-            'none' => __('Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage anhaken.', 'churchtools-plugin'),
+            'none' => __('Noch keine Gruppen abgeglichen. Unter „ChurchTools → Gruppen“ eine Homepage aktivieren.', 'churchtools-plugin'),
         ], true);
     }
 

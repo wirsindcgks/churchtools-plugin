@@ -6,7 +6,7 @@ Als Ersatz für den iframe einer Gruppen-Homepage: dieselben Gruppen, aber in de
 
 Auf Wunsch mit **Gruppenfinder**: Knöpfe für Kategorie, Wochentag und Zielgruppe plus Suche, wie der Eventfinder bei den Terminen.
 
-Voraussetzung ist eine angehakte Homepage unter *ChurchTools → Gruppen → Homepages*, siehe [Einrichtung, Schritt 7](EINRICHTUNG.md#7-gruppen-zeigen-optional).
+Voraussetzung ist eine aktive Homepage unter *ChurchTools → Gruppen → Homepages*, siehe [Einrichtung, Schritt 7](EINRICHTUNG.md#7-gruppen-zeigen-optional).
 
 ## Zwei Ansichten
 
@@ -55,9 +55,9 @@ Neue Angaben erscheinen nach dem nächsten Gruppen-Abgleich.
 [ctp_groups homepage="Kleingruppen" finder="1" search="1"]
 ```
 
-Unter *Gruppen → Homepages* steht neben jeder angehakten Homepage der passende Shortcode zum Kopieren, unter *Gruppen → Einbinden* stehen fertige Beispiele samt allen Optionen.
+Unter *Gruppen → Homepages* steht neben jeder Homepage der passende Shortcode zum Kopieren, unter *Gruppen → Einbinden* stehen fertige Beispiele samt allen Optionen.
 
-**Einzelne Gruppen** stehen mit `groups="…"` in der angegebenen Reihenfolge da; die IDs stehen unter *Gruppen → Gruppenliste*. Wählbar sind nur Gruppen der angehakten Homepages. Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
+**Einzelne Gruppen** stehen mit `groups="…"` in der angegebenen Reihenfolge da; die IDs stehen unter *Gruppen → Gruppenliste*. Wählbar sind nur Gruppen der aktiven Homepages. Fällt eine gewählte Gruppe dort heraus, verschwindet sie von der Seite; der Block zeigt sie als „nicht mehr verfügbar“.
 
 ## Gut zu wissen
 

@@ -123,6 +123,46 @@ final class SettingsPageTest extends TestCase
         }
     }
 
+    /**
+     * Termine und Gruppen haben dieselbe Reihe: Liste, Auswahl,
+     * Synchronisation, Einbinden. Die Raeume gibt es nur bei den Terminen
+     * (Nutzerwunsch 2026-09-15: „Das Plugin soll sich egal ob Events oder
+     * Gruppen gleich verhalten").
+     */
+    public function testEventsAndGroupsShareTheSameTabSequence(): void
+    {
+        $areaTabs = (new \ReflectionClass(SettingsPage::class))->getConstant('AREA_TABS');
+        $labels = $this->invokePrivate('tabs');
+
+        $events = array_values(array_diff($areaTabs['events'], ['rooms']));
+        $this->assertSame(['events', 'calendars', 'sync', 'embed'], $events);
+        $this->assertSame(['group_list', 'groups', 'group_sync', 'group_embed'], $areaTabs['groups']);
+        $this->assertSame($labels['sync'], $labels['group_sync']);
+        $this->assertSame($labels['embed'], $labels['group_embed']);
+    }
+
+    /**
+     * „Daten behalten" gilt fuer Termine und Gruppen und steht deshalb unter
+     * „Einstellungen → Updates", nicht mehr unter „Events → Synchronisation".
+     */
+    public function testKeepDataOnUninstallSitsWithThePluginWideSettings(): void
+    {
+        $GLOBALS['ctp_test_settings'] = [];
+        (new SettingsPage())->registerSettings();
+
+        $ids = static fn (string $page): array => array_column(ctp_test_settings_fields($page), 'id');
+
+        $this->assertNotContains('keep_data_on_uninstall', $ids('churchtools-plugin_sync'));
+        $this->assertSame(['keep_data_on_uninstall'], $ids('churchtools-plugin_uninstall'));
+    }
+
+    public function testLastSyncToneFollowsTheSameRuleForEventsAndGroups(): void
+    {
+        $this->assertSame('error', SettingsPage::lastSyncTone(true, '2026-09-15 10:00:00'));
+        $this->assertSame('ok', SettingsPage::lastSyncTone(false, '2026-09-15 10:00:00'));
+        $this->assertSame('', SettingsPage::lastSyncTone(false, ''));
+    }
+
     public function testTabUrlPointsAtThePageOfTheTabsArea(): void
     {
         $this->assertStringContainsString('page=churchtools-plugin-settings', SettingsPage::tabUrl('design', ['section' => 'list']));

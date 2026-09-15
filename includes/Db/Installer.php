@@ -15,12 +15,17 @@ final class Installer
     public const DB_VERSION = '1.8.0';
 
     /**
-     * The three recurrences the "Sync-Intervall" select offers — kept here
+     * The recurrences the "Sync-Intervall" select offers — kept here
      * rather than in SettingsPage because this class is what actually hands
      * them to wp_schedule_event(); the select's own whitelist in
      * sanitizeSettings() validates against this same list.
+     *
+     * Termine und Gruppen bieten dieselbe Auswahl (Nutzerentscheidung
+     * 2026-09-15: „Das Plugin soll sich egal ob Events oder Gruppen gleich
+     * verhalten"). „Woechentlich" kam mit den Gruppen und gilt seitdem auch
+     * fuer Termine; `weekly` bringt WordPress seit 5.4 selbst mit.
      */
-    public const SYNC_INTERVALS = ['hourly', 'twicedaily', 'daily'];
+    public const SYNC_INTERVALS = ['hourly', 'twicedaily', 'daily', 'weekly'];
 
     public static function registerHooks(): void
     {

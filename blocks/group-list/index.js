@@ -63,7 +63,7 @@ registerBlockType(metadata.name, {
 								{knownHomepages.length === 0 && (
 									<p>
 										{__(
-											'Keine Homepage aktiv. Unter „ChurchTools → Gruppen“ zuerst eine Homepage laden und anhaken.',
+											'Keine Homepage aktiv. Unter „ChurchTools → Gruppen“ zuerst eine Homepage laden und aktivieren.',
 											'churchtools-plugin'
 										)}
 									</p>
@@ -80,14 +80,14 @@ registerBlockType(metadata.name, {
 							<>
 								<p className="components-base-control__help">
 									{__(
-										'Zur Auswahl stehen die Gruppen der angehakten Homepages. Die Reihenfolge auf der Seite folgt der Reihenfolge der Haken.',
+										'Zur Auswahl stehen die Gruppen der aktiven Homepages. Die Reihenfolge auf der Seite folgt der Reihenfolge der Haken.',
 										'churchtools-plugin'
 									)}
 								</p>
 								{missingIds.length > 0 && (
 									<Notice status="warning" isDismissible={false}>
 										{sprintf(
-											__('Nicht mehr verfügbar: %s. Diese Gruppen stehen auf keiner angehakten Homepage mehr und erscheinen nicht.', 'churchtools-plugin'),
+											__('Nicht mehr verfügbar: %s. Diese Gruppen stehen auf keiner aktiven Homepage mehr und erscheinen nicht.', 'churchtools-plugin'),
 											missingIds.map((id) => `#${id}`).join(', ')
 										)}
 									</Notice>

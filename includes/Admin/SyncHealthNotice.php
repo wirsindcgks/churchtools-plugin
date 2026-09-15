@@ -26,9 +26,10 @@ use ChurchToolsPlugin\Sync\SyncEngine;
  *   - Der letzte erfolgreiche Lauf liegt deutlich länger zurück, als das
  *     eingestellte Intervall erlaubt
  *
- * problem() ist öffentlich, weil der Tab „Übersicht“ dieselbe Auskunft rendert
- * (siehe SettingsPage::renderStatusOverview()) – ohne das stünde der stehengebliebene
- * Sync ausgerechnet auf der Seite nicht, auf die dieser Hinweis verlinkt.
+ * problem() und groupProblem() sind öffentlich, weil die Übersicht und die
+ * Reiter „Synchronisation“ dieselbe Auskunft rendern – ohne das stünde der
+ * stehengebliebene Sync ausgerechnet auf der Seite nicht, auf die dieser
+ * Hinweis verlinkt.
  */
 final class SyncHealthNotice
 {
@@ -64,61 +65,105 @@ final class SyncHealthNotice
             return;
         }
 
-        if (self::isOwnStatusTab()) {
-            return;
-        }
-
-        // Eine frische, noch nicht eingerichtete Installation hat nichts zu melden.
-        $settings = Settings::get();
-        if ($settings['instance'] === '') {
-            return;
-        }
-
-        $problem = ApiKey::isConfigured() && Settings::getEnabledCalendarIds() !== [] ? self::problem($settings) : null;
+        $problem = self::isShownOnPage('sync') ? null : self::eventProblem();
 
         if ($problem !== null) {
-            self::printNotice($problem, SettingsPage::tabUrl('status'), __('Zur Übersicht', 'churchtools-plugin'));
+            self::printNotice($problem, SettingsPage::tabUrl('sync'), __('Zur Synchronisation', 'churchtools-plugin'));
         }
 
-        $groupProblem = self::groupProblem();
+        $groupProblem = self::isShownOnPage('group_sync') ? null : self::groupProblem();
 
         if ($groupProblem !== null) {
-            self::printNotice($groupProblem, SettingsPage::tabUrl('groups'), __('Zu den Gruppen', 'churchtools-plugin'));
+            self::printNotice($groupProblem, SettingsPage::tabUrl('group_sync'), __('Zur Synchronisation', 'churchtools-plugin'));
         }
     }
 
     /**
-     * Der Gruppen-Abgleich laeuft auf eigenem Zeitplan und schreibt seinen
-     * Fehler in eine eigene Option - bis zum Sicherheits-Review vom 2026-09-14
-     * stand er nur in der Uebersicht und im Reiter „Homepages". Seit die
-     * Gruppen den API-Key brauchen, ist ein Fehler hier genauso wahrscheinlich
-     * wie bei den Terminen: Ein abgelaufener Key trifft beide.
+     * problem() mit der Vorbedingung, unter der es fuer Termine ueberhaupt
+     * etwas zu melden gibt - fuer den Hinweis im Backend und den Reiter
+     * „Synchronisation" dieselbe, wie groupProblem() sie fuer Gruppen selbst
+     * mitbringt. Eine frische, noch nicht eingerichtete Installation hat
+     * nichts zu melden.
      *
-     * Nur der Fehler, keine Ueberfaelligkeit: Das Intervall reicht bis
-     * „woechentlich", und eine Woche ohne Lauf ist dort der Normalfall.
+     * @return array{type: string, message: string}|null
+     */
+    public static function eventProblem(): ?array
+    {
+        $settings = Settings::get();
+
+        if ($settings['instance'] === '' || !ApiKey::isConfigured() || Settings::getEnabledCalendarIds() === []) {
+            return null;
+        }
+
+        return self::problem($settings);
+    }
+
+    /**
+     * Der Gruppen-Abgleich laeuft auf eigenem Zeitplan und schreibt seinen
+     * Fehler in eine eigene Option. Gemeldet wird seit 2026-09-15 dasselbe wie
+     * bei den Terminen - Fehler, fehlender Zeitplan, ueberfaellig -, nach
+     * derselben Schwelle (Nutzerwunsch: „Das Plugin soll sich egal ob Events
+     * oder Gruppen gleich verhalten"). Bis dahin nur der Fehler, mit der
+     * Begruendung, eine Woche ohne Lauf sei bei „woechentlich" normal; die
+     * Schwelle rechnet aber ohnehin mit dem Intervall, und „woechentlich"
+     * gibt es inzwischen auch fuer Termine.
+     *
+     * Ohne aktive Homepage gibt es bewusst keinen Zeitplan (siehe
+     * Installer::ensureSchedules()) und damit nichts zu melden.
      *
      * @return array{type: string, message: string}|null
      */
     public static function groupProblem(): ?array
     {
-        if (GroupSettings::enabledHomepages() === []) {
+        $settings = GroupSettings::get();
+
+        if (GroupSettings::enabledHomepages($settings) === []) {
             return null;
         }
 
         $error = GroupSync::getLastError();
 
-        if ($error === null) {
-            return null;
+        if ($error !== null) {
+            return [
+                'type' => 'error',
+                'message' => sprintf(
+                    /* translators: %s: error message from the last failed group sync */
+                    __('Die letzte Synchronisation der Gruppen ist fehlgeschlagen: %s', 'churchtools-plugin'),
+                    self::shorten($error['message'])
+                ),
+            ];
         }
 
-        return [
-            'type' => 'error',
-            'message' => sprintf(
-                /* translators: %s: error message from the last failed group sync */
-                __('Die letzte Synchronisation der Gruppen ist fehlgeschlagen: %s', 'churchtools-plugin'),
-                self::shorten($error['message'])
-            ),
-        ];
+        $nextRun = wp_next_scheduled(GroupSync::HOOK);
+        if ($nextRun === false) {
+            return [
+                'type' => 'error',
+                'message' => __('Für die Synchronisation der Gruppen ist kein Zeitplan hinterlegt – es werden derzeit keine Gruppen mehr aktualisiert.', 'churchtools-plugin'),
+            ];
+        }
+
+        $lastSync = self::timestamp((string) get_option(GroupSync::LAST_SYNC_OPTION, ''));
+        $allowed = self::staleThreshold(Installer::intervalSeconds($settings['sync_interval']));
+
+        switch (self::stalenessState($lastSync, (int) $nextRun, time(), $allowed)) {
+            case 'never':
+                return [
+                    'type' => 'warning',
+                    'message' => __('Die Gruppen wurden noch nie synchronisiert, und der geplante Lauf ist überfällig – vermutlich läuft WP-Cron auf dieser Website nicht.', 'churchtools-plugin'),
+                ];
+
+            case 'stale':
+                return [
+                    'type' => 'warning',
+                    'message' => sprintf(
+                        /* translators: %s: human-readable time difference, e.g. "3 days" */
+                        __('Die letzte erfolgreiche Synchronisation der Gruppen liegt %s zurück – die angezeigten Gruppen könnten veraltet sein.', 'churchtools-plugin'),
+                        human_time_diff((int) $lastSync, time())
+                    ),
+                ];
+        }
+
+        return null;
     }
 
     /**
@@ -261,12 +306,16 @@ final class SyncHealthNotice
     }
 
     /**
-     * Nur der Tab „Übersicht“ zeigt dasselbe bereits selbst. Auf „Design“ oder
-     * „Events“ stünde sonst nirgends, dass der Sync klemmt – und der Link
-     * „Zur Übersicht“ führte auf eine Seite, auf der der gemeldete Zustand
-     * wieder verschwunden ist.
+     * Die Uebersicht und der Reiter „Synchronisation" des jeweiligen Bereichs
+     * zeigen denselben Befund bereits selbst. Dort stuende er sonst zweimal,
+     * und der Link fuehrte auf die Seite, auf der man schon ist. Auf „Design"
+     * oder der Terminliste stuende dagegen nirgends, dass der Sync klemmt.
+     *
+     * Termine verlinken seit 2026-09-15 wie Gruppen auf ihren Reiter
+     * „Synchronisation" statt auf die Uebersicht - dort steht der Knopf, mit
+     * dem man es erneut versucht.
      */
-    private static function isOwnStatusTab(): bool
+    private static function isShownOnPage(string $syncTab): bool
     {
         $screen = get_current_screen();
 
@@ -274,11 +323,12 @@ final class SyncHealthNotice
             return false;
         }
 
-        // Seit die Bereiche eigene Unterseiten sind, reicht der fehlende
-        // `tab` nicht mehr: Auf „Events" ohne Reiter-Angabe steht nicht die
-        // Uebersicht, der Hinweis gehoert dort also hin. Die Uebersicht ist
-        // die Seite mit dem blanken Slug.
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation state (which page is open), not a state change; same pattern as SettingsPage::currentTab().
-        return sanitize_key((string) ($_GET['page'] ?? '')) === 'churchtools-plugin';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation state (which page is open), not a state change; same pattern as SettingsPage::currentTab().
+        $page = sanitize_key((string) ($_GET['page'] ?? ''));
+        $tab = sanitize_key((string) ($_GET['tab'] ?? ''));
+        // phpcs:enable
+
+        // Die Uebersicht ist die Seite mit dem blanken Slug.
+        return $page === 'churchtools-plugin' || $tab === $syncTab;
     }
 }
