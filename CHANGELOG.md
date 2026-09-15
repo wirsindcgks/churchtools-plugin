@@ -5,6 +5,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.28.2] - 2026-09-15
+
+### Changed
+
+- **Im WPBakery-Element „ChurchTools Gruppen“ steht zuerst die Frage „Welche Gruppen?“** – alle Gruppen einer Homepage oder einzelne Gruppen. Danach zeigt das Formular nur noch das passende Feld statt Homepage-Auswahl und Gruppenliste gleichzeitig. Die Wahl steht als `source` im Shortcode.
+
+### Fixed
+
+- Im Baustein standen bei einzeln gewählten Gruppen deren IDs („29,200“) statt der Namen.
+- Nach mehrmaligem Öffnen des Bearbeitungsfensters verschob „nach oben“ bzw. „nach unten“ eine Gruppe nicht mehr.
+
 ## [1.28.1] - 2026-09-15
 
 ### Changed
