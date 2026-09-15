@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.33.0] - 2026-09-15
+
+### Added
+
+- **Gescheiterte Bild-Importe sind sichtbar.** Bisher gab der Import bei jedem Fehler still auf – so blieb der 401 beim Bilddownload, den 1.32.2 behebt, zwei Wochen unbemerkt. Jetzt sammelt jeder Lauf die Gründe mit Anzahl und zeigt sie als gelben Hinweis auf der Übersicht, unter Events → Synchronisation und unter Gruppen → Homepages, getrennt für Termine und Gruppen, etwa „HTTP 401 Unauthorized (3×) · Die Antwort ist kein Bild (1×)“. Den HTTP-Status liest das Plugin aus den Fehlerdaten von WordPress, denn in der Meldung selbst steht nur der Statustext. Der Lauf gilt trotzdem als erfolgreich – Termine und Gruppen sind wichtiger als ihre Bilder –, und der erste Lauf ohne Fehlschlag entfernt den Hinweis.
+
 ## [1.32.2] - 2026-09-15
 
 ### Fixed

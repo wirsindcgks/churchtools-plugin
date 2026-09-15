@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.32.2
+Stable tag: 1.33.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -279,6 +279,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.33.0 =
+
+Lässt sich ein Termin- oder Gruppenbild nicht aus ChurchTools übernehmen, zeigt das Backend jetzt einen gelben Hinweis mit dem Grund, etwa „HTTP 401 Unauthorized (3×)“ – bisher blieb das still. Der Abgleich selbst läuft weiter, jeder Lauf versucht die Bilder erneut. Auf der Website ändert sich nichts.
+
 = 1.32.2 =
 
 Behebt, dass Termine ohne Bild erschienen, obwohl in ChurchTools eines hinterlegt ist – betroffen waren Serien mit neu hochgeladenem Bild. Der nächste Sync lädt dafür alle Terminbilder einmal neu und dauert entsprechend länger; wer nicht warten will, klickt „Jetzt synchronisieren“. Danach den Seiten-Cache leeren.
@@ -470,6 +474,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.33.0 =
+
+* Neu: Gescheiterte Bild-Importe erscheinen als Hinweis auf der Übersicht, unter Events → Synchronisation und unter Gruppen → Homepages – mit Zeitpunkt, Anzahl und Grund. Der Lauf gilt weiter als erfolgreich; der erste Lauf ohne Fehlschlag entfernt den Hinweis
 
 = 1.32.2 =
 
