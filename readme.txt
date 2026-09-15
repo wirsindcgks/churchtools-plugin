@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.29.3
+Stable tag: 1.29.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -274,6 +274,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.29.4 =
+
+Gruppenkacheln zeigen die Zielgruppe aus ChurchTools („Jeder“, „Familien“ …) mit Personensymbol unter der Treffzeit. Sie erscheint nach dem nächsten Gruppen-Abgleich; wer nicht warten will, klickt „Gruppen jetzt synchronisieren“. Danach den Seiten-Cache leeren.
+
 = 1.29.3 =
 
 Gruppenbilder erscheinen in voller Auflösung statt als unscharfe Vorschau. Der nächste Gruppen-Abgleich lädt dafür alle Gruppenbilder einmal neu; wer nicht warten will, klickt „Gruppen jetzt synchronisieren“. Danach den Seiten-Cache leeren.
@@ -441,6 +445,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.29.4 =
+
+* Neu: Zielgruppe einer Gruppe als Angabezeile mit Personensymbol unter der Treffzeit, in Raster und hervorgehobener Ansicht; ausblendbar mit dem Kalendernamen
 
 = 1.29.3 =
 

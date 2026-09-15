@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.4] - 2026-09-15
+
+### Added
+
+- **Zielgruppe an den Gruppenkacheln.** Die Zielgruppe aus ChurchTools („Jeder“, „Familien“ …) steht jetzt wie die Treffzeit als eigene Zeile mit Personensymbol direkt darunter, im Raster und in der hervorgehobenen Ansicht. Sie folgt der Uhrzeit, wenn diese im Design-Tab verschoben wird, und wird mit dem Kalendernamen ausgeblendet. Gruppen ohne Zielgruppe in ChurchTools bekommen keine Zeile. Die Angabe erscheint nach dem nächsten Gruppen-Abgleich.
+
 ## [1.29.3] - 2026-09-15
 
 ### Fixed
