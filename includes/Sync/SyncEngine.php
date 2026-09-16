@@ -10,6 +10,7 @@ use ChurchToolsPlugin\Db\EventRepository;
 use ChurchToolsPlugin\Db\Installer;
 use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\EventQueryCache;
+use ChurchToolsPlugin\Log;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
 use DateTimeImmutable;
@@ -130,10 +131,21 @@ final class SyncEngine
         // (ajaxRunSync(), which calls this method directly) get a persisted,
         // user-visible error instead.
         try {
-            self::doRun($settings, $calendarIds);
+            $startedAt = microtime(true);
+            $stats = self::doRun($settings, $calendarIds);
             delete_option(self::OPTION_LAST_SYNC_ERROR);
             update_option('ctp_last_sync', current_time('mysql'));
             EventQueryCache::flush();
+
+            // Eine Zeile je Lauf, damit "77 s statt 2 s" oder "3 Bilder
+            // gescheitert" ohne Datenbankzugriff zu sehen ist - genau der Fall,
+            // der den stillen 401 beim Bilddownload zwei Wochen unbemerkt liess.
+            Log::info(Log::AREA_EVENTS, sprintf(
+                'Synchronisation abgeschlossen: %d Termine, %d Bilder gescheitert (%.1f s).',
+                $stats['occurrences'],
+                $stats['images_failed'],
+                microtime(true) - $startedAt
+            ));
         } catch (Throwable $exception) {
             self::rememberError($exception);
         }
@@ -161,6 +173,8 @@ final class SyncEngine
                     'message' => $result['message'],
                 ]);
 
+                Log::error(Log::AREA_EVENTS, 'Kalenderliste konnte nicht abgeglichen werden: ' . $result['message']);
+
                 return;
             }
 
@@ -176,6 +190,8 @@ final class SyncEngine
                 'time' => current_time('mysql'),
                 'message' => $exception->getMessage(),
             ]);
+
+            Log::error(Log::AREA_EVENTS, 'Kalenderliste konnte nicht abgeglichen werden: ' . $exception->getMessage());
         }
     }
 
@@ -184,20 +200,23 @@ final class SyncEngine
      * neu angelegter Raum dort von selbst auftaucht - unangehakt, wie ein neuer
      * Kalender.
      *
-     * Fehler bleiben hier ohne Folgen und ohne Meldung, anders als beim
+     * Fehler bleiben ohne Folgen fuer den Sync, anders als beim
      * Kalenderabgleich: Die Raumliste ist eine Zutat, keine Grundlage. Ein
      * API-Key ohne Freigabe fuer Ressourcen ist der Normalfall fuer jede
-     * Installation, die diese Funktion nicht benutzt - daraus jede Stunde eine
-     * Fehlermeldung im Backend zu machen, waere Laerm ueber eine Abwesenheit.
-     * Wer Raeume ausgewaehlt hat und deren Liste veraltet, sieht es am
-     * Zeitstempel „zuletzt geladen" auf dem Tab.
+     * Installation, die diese Funktion nicht benutzt - ins Protokoll kommt ein
+     * Fehlschlag deshalb nur, wenn ueberhaupt ein Raum ausgewaehlt ist (sonst
+     * waere jeder stuendliche Lauf ohne Raumnutzung eine Protokollzeile ueber
+     * eine Abwesenheit). Wer Raeume ausgewaehlt hat und deren Liste veraltet,
+     * sieht es zusaetzlich am Zeitstempel „zuletzt geladen" auf dem Tab.
      */
     private static function refreshResourceList(): void
     {
         try {
             ResourceList::refresh(new Client(Settings::getBaseUrl(), ApiKey::current()));
-        } catch (Throwable) {
-            return;
+        } catch (Throwable $exception) {
+            if (ResourceList::enabledIds() !== []) {
+                Log::info(Log::AREA_EVENTS, 'Raumliste konnte nicht abgeglichen werden: ' . $exception->getMessage());
+            }
         }
     }
 
@@ -238,6 +257,8 @@ final class SyncEngine
             'time' => current_time('mysql'),
             'message' => $exception->getMessage(),
         ]);
+
+        Log::error(Log::AREA_EVENTS, 'Synchronisation fehlgeschlagen: ' . $exception->getMessage());
     }
 
     /**
@@ -301,7 +322,11 @@ final class SyncEngine
         ];
     }
 
-    private static function doRun(array $settings, array $calendarIds): void
+    /**
+     * @return array{occurrences: int, images_failed: int} fuer die
+     *         Zusammenfassung, die runUnlocked() als Info-Eintrag protokolliert
+     */
+    private static function doRun(array $settings, array $calendarIds): array
     {
         // run() prueft das schon vorher; der Aufruf bleibt fuer den Fall, dass
         // doRun() einmal von anderswo gerufen wird.
@@ -386,8 +411,11 @@ final class SyncEngine
          */
         try {
             ChurchAddress::refresh($client);
-        } catch (Throwable) {
-            // Bewusst still: siehe oben.
+        } catch (Throwable $exception) {
+            // Haelt den Sync nicht an (siehe oben), bleibt aber nicht mehr
+            // still: Die Anschrift steht auch im .ics und in den
+            // strukturierten Daten (Frontend\Ics, Frontend\EventSchema).
+            Log::warning(Log::AREA_EVENTS, 'Gemeindeanschrift konnte nicht abgeglichen werden: ' . $exception->getMessage());
         }
 
         $roomIdsAtChurch = ResourceList::idsInBuilding(
@@ -435,6 +463,11 @@ final class SyncEngine
         foreach ($repository->orphanedAttachmentIds() as $attachmentId) {
             wp_delete_attachment($attachmentId, true);
         }
+
+        return [
+            'occurrences' => count($keepOccurrenceKeys),
+            'images_failed' => $imageFailures->count(),
+        ];
     }
 
     /**
@@ -474,7 +507,12 @@ final class SyncEngine
                 $resourceIds,
                 $mode
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            // Kein Fruehausstieg wie bei $resourceIds === [] oben - hier sind
+            // Raeume ausgewaehlt, ein Fehlschlag hat also sichtbare Folgen
+            // (die Termine behalten ihre bisherige Ortsangabe).
+            Log::warning(Log::AREA_EVENTS, 'Raumbuchungen konnten nicht abgefragt werden: ' . $exception->getMessage());
+
             return RoomLookup::fromBookings([], []);
         }
     }
@@ -856,10 +894,12 @@ final class SyncEngine
         $downloadedFile = download_url($url);
 
         if (is_wp_error($downloadedFile)) {
-            $failures?->record(ImageImportFailures::reasonFor(
+            $reason = ImageImportFailures::reasonFor(
                 $downloadedFile->get_error_message(),
                 $downloadedFile->get_error_data()
-            ));
+            );
+            $failures?->record($reason);
+            Log::warning(Log::AREA_IMAGES, self::imageFailureMessage($filePrefix, $reason), ['url' => $url]);
 
             return null;
         }
@@ -872,7 +912,9 @@ final class SyncEngine
 
         if ($sideloadFile === null) {
             // Typisch fuer eine Anmeldeseite, die mit 200 statt mit 401 kommt.
-            $failures?->record(__('Die Antwort ist kein Bild', 'churchtools-plugin'));
+            $reason = __('Die Antwort ist kein Bild', 'churchtools-plugin');
+            $failures?->record($reason);
+            Log::warning(Log::AREA_IMAGES, self::imageFailureMessage($filePrefix, $reason), ['url' => $url]);
 
             return null;
         }
@@ -884,10 +926,12 @@ final class SyncEngine
 
         if (is_wp_error($attachmentId)) {
             wp_delete_file($sideloadFile);
-            $failures?->record(ImageImportFailures::reasonFor(
+            $reason = ImageImportFailures::reasonFor(
                 $attachmentId->get_error_message(),
                 $attachmentId->get_error_data()
-            ));
+            );
+            $failures?->record($reason);
+            Log::warning(Log::AREA_IMAGES, self::imageFailureMessage($filePrefix, $reason), ['url' => $url]);
 
             return null;
         }
@@ -900,6 +944,26 @@ final class SyncEngine
         update_post_meta((int) $attachmentId, CardImage::VERSION_META_KEY, CardImage::SIZES_VERSION);
 
         return (int) $attachmentId;
+    }
+
+    /**
+     * Die Log-Meldung eines gescheiterten Bild-Imports - Termin oder Gruppe
+     * unterschieden am Dateipraefix, ohne dass importImage() einen eigenen
+     * Parameter dafuer braucht (siehe dessen Aufrufer: SyncEngine selbst und
+     * GroupSync::syncImages()).
+     */
+    private static function imageFailureMessage(string $filePrefix, string $reason): string
+    {
+        $subject = str_starts_with($filePrefix, 'churchtools-group-')
+            ? __('Gruppenbild', 'churchtools-plugin')
+            : __('Terminbild', 'churchtools-plugin');
+
+        return sprintf(
+            /* translators: 1: "Terminbild" or "Gruppenbild", 2: the underlying error reason */
+            __('%1$s konnte nicht importiert werden: %2$s', 'churchtools-plugin'),
+            $subject,
+            $reason
+        );
     }
 
     /**

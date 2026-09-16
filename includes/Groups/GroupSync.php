@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Groups;
 
 use ChurchToolsPlugin\Api\Client;
+use ChurchToolsPlugin\Log;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\ImageImportFailures;
@@ -98,6 +99,7 @@ final class GroupSync
 
     private static function runUnlocked(): void
     {
+        $startedAt = microtime(true);
         $baseUrl = Settings::getBaseUrl();
 
         if ($baseUrl === '') {
@@ -112,6 +114,8 @@ final class GroupSync
                     'time' => current_time('mysql'),
                     'message' => ApiKey::unusableMessage(),
                 ]);
+
+                Log::error(Log::AREA_GROUPS, 'Synchronisation der Gruppen fehlgeschlagen: ' . ApiKey::unusableMessage());
             }
 
             return;
@@ -127,9 +131,11 @@ final class GroupSync
 
             if ($result['status'] === 'empty') {
                 $errors[] = $result['message'];
+                Log::error(Log::AREA_GROUPS, 'Homepage-Liste konnte nicht abgeglichen werden: ' . $result['message']);
             }
         } catch (Throwable $exception) {
             $errors[] = $exception->getMessage();
+            Log::error(Log::AREA_GROUPS, 'Homepage-Liste konnte nicht abgeglichen werden: ' . $exception->getMessage());
         }
 
         $stored = self::storedData();
@@ -155,6 +161,11 @@ final class GroupSync
                 $data[$id]['filters'] = self::shownFilters($response);
             } catch (Throwable $exception) {
                 $errors[] = sprintf('%s: %s', (string) $homepage['name'], $exception->getMessage());
+                Log::error(Log::AREA_GROUPS, sprintf(
+                    'Homepage „%s“ konnte nicht abgeglichen werden: %s',
+                    (string) $homepage['name'],
+                    $exception->getMessage()
+                ));
 
                 // Der Bestand bleibt, bis ein Abruf gelingt.
                 if (isset($stored[$id])) {
@@ -171,6 +182,22 @@ final class GroupSync
         $imageFailures = new ImageImportFailures();
         self::syncImages($data, $imageFailures);
         $imageFailures->store(self::IMAGE_WARNING_OPTION, $now);
+
+        $groupCount = array_sum(array_map(
+            static fn (array $homepage): int => count($homepage['groups'] ?? []),
+            $data
+        ));
+
+        // Dasselbe Prinzip wie SyncEngine::runUnlocked(): eine Zeile je Lauf,
+        // unabhaengig davon, ob $errors leer ist - eine einzelne gescheiterte
+        // Homepage soll die Dauer der uebrigen nicht verschweigen.
+        Log::info(Log::AREA_GROUPS, sprintf(
+            'Synchronisation abgeschlossen: %d Homepages, %d Gruppen, %d Bilder gescheitert (%.1f s).',
+            count($data),
+            $groupCount,
+            $imageFailures->count(),
+            microtime(true) - $startedAt
+        ));
 
         if ($errors === []) {
             delete_option(self::ERROR_OPTION);

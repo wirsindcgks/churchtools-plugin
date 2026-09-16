@@ -11,7 +11,7 @@ Nach der Aktivierung erscheint im linken WordPress-Menü **ChurchTools** mit vie
 | **Übersicht** | Zustand von Events und Gruppen: letzter Abgleich, Anzahl, Fehler im Klartext |
 | **Events** | Terminliste, Kalender, Räume, Synchronisation, Einbinden |
 | **Gruppen** | Gruppenliste, Homepages, Synchronisation, Einbinden |
-| **Einstellungen** | Verbindung, Design, Updates |
+| **Einstellungen** | Verbindung, Design, Updates, Protokoll |
 
 ## Schritt für Schritt
 
@@ -65,7 +65,7 @@ Mehr zu den Adressen: [Termine anzeigen → Adressen der Terminseiten](TERMINE.m
 
 ## Wenn etwas nicht läuft
 
-Der Grund steht in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext. Fehlt ein Bild, das in ChurchTools hinterlegt ist, steht dort ein gelber Hinweis mit dem Grund, etwa „HTTP 401 Unauthorized (3×)“ – der Abgleich der Termine und Gruppen läuft trotzdem, und jeder weitere Lauf versucht die Bilder erneut. Gelingt das, verschwindet der Hinweis von selbst. Weitere Antworten: [Gut zu wissen](GUT-ZU-WISSEN.md).
+Der Grund steht in der **Übersicht**: Sie zeigt für Events und Gruppen getrennt den letzten Abgleich, die gespeicherten Termine bzw. Gruppen und Fehler im Klartext. Fehlt ein Bild, das in ChurchTools hinterlegt ist, steht dort ein gelber Hinweis mit dem Grund, etwa „HTTP 401 Unauthorized (3×)“ – der Abgleich der Termine und Gruppen läuft trotzdem, und jeder weitere Lauf versucht die Bilder erneut. Gelingt das, verschwindet der Hinweis von selbst. Weitere Antworten: [Gut zu wissen](GUT-ZU-WISSEN.md). Mehr Verlauf als „letzter Fehler“ zeigt der Reiter **Einstellungen → Protokoll**: jeder Lauf mit Zeitpunkt, Dauer und Zahlen, dazu Fehler und Warnungen der letzten 30 Tage.
 
 ## Den API-Key außerhalb der Datenbank ablegen
 

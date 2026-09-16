@@ -39,6 +39,7 @@ final class PrivacyPolicy
             __('Beschreibungstexte können Namen oder Kontaktdaten von Ansprechpersonen enthalten, wenn die Gemeinde sie dort eingetragen hat. Sie werden so angezeigt, wie sie in ChurchTools stehen; E-Mail-Adressen werden dabei gegen automatisches Auslesen verschleiert.', 'churchtools-plugin'),
             __('Beim Besuch der Seiten mit Terminen oder Gruppen werden keine Inhalte von ChurchTools oder anderen fremden Servern geladen, und das Plugin setzt keine Cookies. Wer einen Termin in den eigenen Kalender übernimmt oder einen Kalender abonniert, lädt eine Kalenderdatei von dieser Website. Links zur Anmeldung führen zu ChurchTools; dort gilt die Datenschutzerklärung der Gemeinde für ChurchTools.', 'churchtools-plugin'),
             __('Vergangene Termine werden nach der eingestellten Aufbewahrungsfrist gelöscht. Gruppen und Bilder, die in ChurchTools nicht mehr veröffentlicht sind, verschwinden beim nächsten Abgleich.', 'churchtools-plugin'),
+            __('Ein Protokoll hält fest, ob Migrationen, Synchronisation und Bild-Importe wirklich gelungen sind: Zeitpunkt, Stufe (Fehler, Warnung, Info) und eine kurze technische Meldung, sichtbar für Administratoren unter Einstellungen → Protokoll. Kein Zugangsschlüssel und keine Personendaten stehen darin. Aufbewahrt werden höchstens 30 Tage oder 1000 Einträge.', 'churchtools-plugin'),
         ];
 
         return '<p>' . implode('</p><p>', $paragraphs) . '</p>';

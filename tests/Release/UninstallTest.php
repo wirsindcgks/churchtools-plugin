@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Tests\Release;
 
 use ChurchToolsPlugin\Security\Crypto;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -48,5 +49,33 @@ final class UninstallTest extends TestCase
 
         $left = array_filter(array_keys($GLOBALS['ctp_test_options']), static fn (string $name): bool => str_starts_with($name, 'ctp_'));
         $this->assertSame([], array_values($left));
+    }
+
+    /**
+     * Das Protokoll ist Betriebsspur, kein Datenbestand wie Termine oder
+     * Gruppen - es geht wie die Sperren (Sync\RunLock) in jedem Fall, auch
+     * bei "Daten beim Deinstallieren behalten" (siehe
+     * testDropsTheLogTableEvenWhenKeepingData() unten).
+     */
+    public function testRemovingDataDropsTheLogTable(): void
+    {
+        ctp_test_set_option('ctp_settings', ['instance' => 'musterkirche', 'keep_data_on_uninstall' => false]);
+        $wpdb = ctp_test_install_wpdb();
+
+        require dirname(__DIR__, 2) . '/uninstall.php';
+
+        $this->expectException(PDOException::class);
+        $wpdb->countLogRows();
+    }
+
+    public function testDropsTheLogTableEvenWhenKeepingData(): void
+    {
+        ctp_test_set_option('ctp_settings', ['instance' => 'musterkirche', 'keep_data_on_uninstall' => true]);
+        $wpdb = ctp_test_install_wpdb();
+
+        require dirname(__DIR__, 2) . '/uninstall.php';
+
+        $this->expectException(PDOException::class);
+        $wpdb->countLogRows();
     }
 }

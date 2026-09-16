@@ -23,11 +23,13 @@ Die **Gruppen** (seit dem Reiter „Gruppen") liegen nicht in einer Tabelle, son
 
 Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das Upgrade beim nächsten Seitenaufruf aus, eine Reaktivierung ist nicht nötig.
 
+Eine dritte Tabelle, `{prefix}ctp_log`, ist kein Datenbestand wie die beiden oben, sondern Betriebsspur: Sie hält fest, ob Migrationen, Synchronisation und Bild-Importe wirklich gelungen sind (siehe `Log`), und wird deshalb auch bei „Daten beim Deinstallieren behalten“ gelöscht.
+
 ## Klassen
 
 | Klasse | Aufgabe |
 | --- | --- |
-| `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden); Gruppen (Gruppenliste, Homepages, Synchronisation, Einbinden – gerendert von `Admin\GroupsTab`, in derselben Reihenfolge wie bei den Events); Einstellungen (Verbindung, Design, Updates). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der gespeicherte API-Key geht nur an die gespeicherte Instanz (`effectiveConnection()`). |
+| `Admin\SettingsPage` | Backend in vier Bereichen, jeder eine eigene Unterseite im WordPress-Menü (`areas()`, `AREA_TABS`): Übersicht; Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden); Gruppen (Gruppenliste, Homepages, Synchronisation, Einbinden – gerendert von `Admin\GroupsTab`, in derselben Reihenfolge wie bei den Events); Einstellungen (Verbindung, Design, Updates, Protokoll). Adressen immer über `tabUrl()`; alte `page=churchtools-plugin&tab=…`-Adressen leitet `redirectLegacyTabUrl()` weiter. Der gespeicherte API-Key geht nur an die gespeicherte Instanz (`effectiveConnection()`). |
 | `Settings` | Die Option `ctp_settings`: Vorgaben, Lesen, Basis-Adresse, aktive Kalender. `writeUnsanitized()` schreibt frisch aus ChurchTools geholte Listen und Migrationen am Formular-Sanitizer vorbei, ohne dass der Aufrufer die Admin-Klasse kennen muss. |
 | `Sync\CalendarList` / `ResourceList` / `ChurchAddress` | Abruf und Abgleich von Kalenderliste, Raumliste und Gemeindeanschrift – für die Knöpfe im Backend und für jeden Sync-Lauf, mit dem Schutz gegen leere Antworten. |
 | `Api\Client` | REST-Client für die ChurchTools API (`Authorization: Login <token>`). Jeder Aufruf mit Key, ohne Key keiner; Weiterleitungen abgeschaltet (WordPress gäbe den Header sonst an den neuen Host weiter). |
@@ -43,6 +45,7 @@ Das Schema wird über `dbDelta()` gepflegt; `Db\Installer::DB_VERSION` löst das
 | `Sync\RetentionCleanup` | Per WP-Cron (`ctp_run_retention_cleanup`) löscht abgelaufene Events nach konfigurierbarer Frist. |
 | `Db\Installer` | Schema via `dbDelta()`, Cron-Zeitpläne (inkl. Umplanung bei Intervall-Wechsel). |
 | `Db\EventRepository` | Sämtliche SQL-Zugriffe, inkl. der gefilterten Abfragen für die Admin-Events-Übersicht. |
+| `Log` / `Db\LogRepository` | Protokoll für das, was sonst still bleibt (Fehler, Warnungen, eine Zusammenfassung je Lauf) - eigene Tabelle `wp_ctp_log`, drei Stufen, vier Bereiche. `Log` kennt die Datenschutzregeln (keine Personenverweise, kein Key, keine Adresse mit Abfrageteil) und feuert den Hook `ctp_log`; `LogRepository` kennt nur das SQL. Aufgeräumt täglich mit `Sync\RetentionCleanup` (30 Tage oder 1000 Einträge). |
 | `Frontend\EventListRenderer` | Zentrale Rendering-Logik; wählt je nach `layout` eines von drei theme-überschreibbaren Templates. |
 | `Frontend\EventWindow` / `EventPager` | Monatsfenster-Paging: welcher Zeitraum eine „Seite" ist und wie „Weitere Termine laden" weiterschaltet. |
 | `Frontend\EventQueryCache` | Transient-Cache vor den Lese-Queries, invalidiert per Versionszähler nach jedem Sync. |

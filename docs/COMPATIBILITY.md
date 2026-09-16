@@ -64,9 +64,13 @@ Nicht zugesagt: konkrete Abstände, Größen und Farbwerte, die `--ctp-order-*`-
 - Termin-Sitemap: `/churchtools-termine-sitemap.xml`
 - Terminseiten: `/churchtools-termin/<id>/` sowie `/<elternseite>/<titel>-<datum>/`, wenn eine Elternseite gesetzt ist; die ältere Form leitet dauerhaft auf die neuere weiter
 
+### Hooks
+
+- `ctp_log` (seit 1.35.0, der erste Hook, den dieses Plugin anbietet): feuert bei jedem Protokolleintrag (`Log::error()`/`warning()`/`info()`) mit `(string $level, string $area, string $message, array $context)`. `$level` ist eine von `error`, `warning`, `info`; `$area` eine von `events`, `groups`, `images`, `migration`; `$context` ist bereits bereinigt – kein API-Key, keine Personendaten, keine Adresse mit Abfrageteil. Eine Aktion, kein Filter: Ein angehängter Callback bekommt keinen Rückgabewert ausgewertet.
+
 ## Was nicht zugesagt ist
 
-- PHP-Klassen, Methoden und Konstanten unter `includes/` – das Plugin bietet keine PHP-Schnittstelle an
+- PHP-Klassen, Methoden und Konstanten unter `includes/` – außer dem Hook oben bietet das Plugin keine PHP-Schnittstelle an
 - Datenbanktabelle, Optionen und ihre Inhalte
 - das Markup und die Klassen außerhalb der überschreibbaren Vorlagen (Backend, Popup-Rahmen, Partials)
 - Texte und Beschriftungen

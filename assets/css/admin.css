@@ -1570,6 +1570,55 @@ ul.ctp-hint-list li::before {
     margin-right: 6px;
 }
 
+/* Reiter „Protokoll" (Admin\SettingsPage::renderLogTab()) - Filter und Pager
+ * teilen sich .ctp-events-filters/.ctp-events-pager mit der Terminliste,
+ * nur die Stufe braucht eine eigene, farbige Kennzeichnung. */
+.ctp-log-level {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: var(--ctp-admin-radius);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ctp-log-level--error {
+    color: var(--ctp-admin-error);
+    background: color-mix(in srgb, var(--ctp-admin-error) 12%, transparent);
+}
+
+.ctp-log-level--warning {
+    color: var(--ctp-admin-warn);
+    background: color-mix(in srgb, var(--ctp-admin-warn) 12%, transparent);
+}
+
+.ctp-log-level--info {
+    color: var(--ctp-admin-muted);
+    background: color-mix(in srgb, var(--ctp-admin-muted) 12%, transparent);
+}
+
+/* Der Kontext einer Protokollzeile (Log::sanitizeContext()) ist bereits klein
+ * gehalten - eingeklappt, damit er die Meldung selbst nicht verdraengt. */
+.ctp-log-context {
+    margin-top: 4px;
+}
+
+.ctp-log-context summary {
+    cursor: pointer;
+    color: var(--ctp-admin-muted);
+    font-size: 12px;
+}
+
+.ctp-log-context pre {
+    margin: 4px 0 0;
+    padding: 8px;
+    background: color-mix(in srgb, var(--ctp-admin-accent) 4%, var(--ctp-admin-surface));
+    border: 1px solid var(--ctp-admin-border);
+    border-radius: var(--ctp-admin-radius);
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 .ctp-muted-text {
     opacity: 0.6;
 }
