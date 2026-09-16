@@ -80,6 +80,45 @@ final class SqliteWpdb
                 updated_at TEXT NOT NULL DEFAULT \'\'
             )'
         );
+
+        // Fuer Db\LogRepository (siehe LogRepositoryTest) - dieselben Spalten
+        // wie Db\Installer::createLogTable(), id statt AUTO_INCREMENT als
+        // INTEGER PRIMARY KEY (SQLite-Aequivalent).
+        $this->pdo->exec(
+            'CREATE TABLE `wp_ctp_log` (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                logged_at TEXT NOT NULL,
+                level TEXT NOT NULL,
+                area TEXT NOT NULL,
+                message TEXT NOT NULL,
+                context TEXT NULL
+            )'
+        );
+    }
+
+    /**
+     * Legt eine Protokollzeile direkt an, ohne ueber Log/LogRepository zu
+     * gehen - fuer Tests, die einen bestimmten Zeitstempel brauchen (etwa
+     * LogRepository::prune() an der Altersgrenze), statt immer die aktuelle
+     * Zeit zu bekommen wie insert() sie schreibt.
+     */
+    public function seedLogEntry(
+        string $loggedAt,
+        string $level = 'info',
+        string $area = 'events',
+        string $message = 'Testeintrag',
+        string $context = ''
+    ): void {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO `wp_ctp_log` (logged_at, level, area, message, context) VALUES (?, ?, ?, ?, ?)'
+        );
+
+        $statement->execute([$loggedAt, $level, $area, $message, $context]);
+    }
+
+    public function countLogRows(): int
+    {
+        return (int) $this->pdo->query('SELECT COUNT(1) FROM `wp_ctp_log`')->fetchColumn();
     }
 
     /**

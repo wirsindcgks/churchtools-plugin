@@ -6,13 +6,14 @@ namespace ChurchToolsPlugin\Db;
 
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Log;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\SyncEngine;
 
 final class Installer
 {
-    public const DB_VERSION = '1.8.0';
+    public const DB_VERSION = '1.9.0';
 
     /**
      * The recurrences the "Sync-Intervall" select offers — kept here
@@ -295,15 +296,32 @@ final class Installer
      */
     public static function maybeUpgrade(): void
     {
-        if (get_option('ctp_db_version') === self::DB_VERSION) {
+        $previous = (string) get_option('ctp_db_version', '');
+
+        if ($previous === self::DB_VERSION) {
             return;
         }
 
         self::createTables();
         self::dropRetiredSettings();
-        ApiKey::migrate();
+        $keyMigrated = ApiKey::migrate();
         self::stripPersonReferencesFromRawData();
         update_option('ctp_db_version', self::DB_VERSION);
+
+        // Erst ab hier: wp_ctp_log existiert erst nach createTables() oben,
+        // und ein Log-Eintrag ueber die eigene erste Migration waere ohnehin
+        // ohne Nutzen. Die Frage, die die Uebergangszeit bis 2.0.0 offen
+        // haelt ("hat diese Installation ihre Migrationen hinter sich?"),
+        // beantwortet dieser Eintrag ab dem naechsten Versionssprung.
+        Log::info(Log::AREA_MIGRATION, sprintf(
+            'Datenbank von %s auf %s aktualisiert.',
+            $previous === '' ? '(neu)' : $previous,
+            self::DB_VERSION
+        ));
+
+        if ($keyMigrated) {
+            Log::info(Log::AREA_MIGRATION, 'API-Key auf die aktuelle Verschlüsselung (ctp2:) umgestellt.');
+        }
     }
 
     /**
@@ -423,6 +441,41 @@ final class Installer
             KEY ct_calendar_id (ct_calendar_id),
             KEY end_date (end_date),
             KEY start_date (start_date)
+        ) {$charsetCollate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+
+        self::createLogTable();
+    }
+
+    /**
+     * Die Tabelle des Protokolls (Log/Db\LogRepository), seit DB 1.9.0. Eine
+     * eigene Tabelle statt einer Option - eine Option wuechse mit jedem
+     * Eintrag und wuerde bei jedem Schreiben komplett neu gespeichert.
+     *
+     * `context` ist bewusst klein gehalten (siehe Log::sanitizeContext()) -
+     * LONGTEXT nur, damit ein Feld dieselbe Grosszuegigkeit hat wie
+     * `raw_data` in der Termintabelle, nicht weil hier etwas Grosses erwartet
+     * wird.
+     */
+    private static function createLogTable(): void
+    {
+        global $wpdb;
+
+        $tableName = $wpdb->prefix . 'ctp_log';
+        $charsetCollate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE {$tableName} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            logged_at DATETIME NOT NULL,
+            level VARCHAR(20) NOT NULL,
+            area VARCHAR(32) NOT NULL,
+            message TEXT NOT NULL,
+            context LONGTEXT NULL,
+            PRIMARY KEY  (id),
+            KEY logged_at (logged_at),
+            KEY level_area (level, area)
         ) {$charsetCollate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';

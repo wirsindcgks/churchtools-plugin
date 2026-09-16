@@ -20,6 +20,11 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     delete_option('ctp_lock_events');
     delete_option('ctp_lock_groups');
 
+    // Das Protokoll (Log/Db\LogRepository) ist Betriebsspur, kein
+    // Datenbestand wie Termine oder Gruppen - es geht wie die Sperren oben in
+    // jedem Fall, auch bei "Daten beim Deinstallieren behalten".
+    $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $wpdb->prefix . 'ctp_log'));
+
     if (!empty($settings['keep_data_on_uninstall'])) {
         // „Daten behalten" heisst Termine, Gruppen und Einstellungen - nicht
         // das Geheimnis. Ein API-Key in der Datenbank eines Plugins, das es

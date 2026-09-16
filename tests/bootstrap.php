@@ -352,6 +352,17 @@ function ctp_test_set_current_time(string $mysqlDate): void
 }
 
 /**
+ * Wie current_time('mysql'), nur als DateTimeImmutable - RetentionCleanup::run()
+ * baut seine Loeschgrenzen darauf. Beide muessen sich auf denselben
+ * eingefrorenen Zeitpunkt einigen, sonst koennte ein Test durch echtes
+ * Verstreichen der Zeit zwischen beiden Aufrufen flackern.
+ */
+function current_datetime(): DateTimeImmutable
+{
+    return new DateTimeImmutable($GLOBALS['ctp_test_current_time'], wp_timezone());
+}
+
+/**
  * Setzt eine leere SQLite-Datenbank als $wpdb ein und gibt sie zurueck, damit
  * der Test seine Zeilen anlegen kann. Siehe SqliteWpdb fuer den Grund, warum
  * es diesen Ersatz ueberhaupt gibt.
@@ -601,6 +612,19 @@ function add_filter(string $hook, $callback, int $priority = 10, int $acceptedAr
 function add_action(string $hook, $callback, int $priority = 10, int $acceptedArgs = 1): bool
 {
     return add_filter($hook, $callback, $priority, $acceptedArgs);
+}
+
+/**
+ * Ruft jeden unter $hook registrierten Callback auf - der erste echte Hook,
+ * den dieses Plugin selbst feuert (Log::write() ueber `ctp_log`). Sortiert
+ * bewusst nicht nach Prioritaet: Kein Test hier haengt zwei Callbacks an
+ * denselben Hook, und add_filter() speichert ohnehin in Einhaengereihenfolge.
+ */
+function do_action(string $hook, ...$args): void
+{
+    foreach (ctp_test_hook_callbacks($hook) as $callback) {
+        $callback(...$args);
+    }
 }
 
 /**

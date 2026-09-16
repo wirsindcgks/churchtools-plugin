@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace ChurchToolsPlugin\Admin;
 
 use ChurchToolsPlugin\Db\Installer;
+use ChurchToolsPlugin\Db\LogRepository;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
+use ChurchToolsPlugin\Log;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Settings;
 use ChurchToolsPlugin\Sync\SyncEngine;
@@ -75,6 +77,23 @@ final class SyncHealthNotice
 
         if ($groupProblem !== null) {
             self::printNotice($groupProblem, SettingsPage::tabUrl('group_sync'), __('Zur Synchronisation', 'churchtools-plugin'));
+        }
+
+        // Ergaenzend zu den beiden Befunden oben, nicht an ihre Stelle: Ein
+        // Lauf kann gelingen (kein Fehler, nicht ueberfaellig) und trotzdem
+        // seit dem letzten Erfolg Warnungen hinterlassen haben (Raumbuchung,
+        // Gemeindeanschrift, Bild-Import) - siehe Log. Unterdrueckt auf dem
+        // Reiter "Protokoll" selbst, der dieselbe Auskunft schon zeigt.
+        $eventWarnings = self::isShownOnPage('log') ? null : self::eventWarnings();
+
+        if ($eventWarnings !== null) {
+            self::printNotice($eventWarnings, SettingsPage::tabUrl('log', ['area' => Log::AREA_EVENTS]), __('Zum Protokoll', 'churchtools-plugin'));
+        }
+
+        $groupWarnings = self::isShownOnPage('log') ? null : self::groupWarnings();
+
+        if ($groupWarnings !== null) {
+            self::printNotice($groupWarnings, SettingsPage::tabUrl('log', ['area' => Log::AREA_GROUPS]), __('Zum Protokoll', 'churchtools-plugin'));
         }
     }
 
@@ -164,6 +183,71 @@ final class SyncHealthNotice
         }
 
         return null;
+    }
+
+    /**
+     * Warnungen seit dem letzten erfolgreichen Termin-Sync - ergaenzend zu
+     * eventProblem() oben, nicht an dessen Stelle: Ein Lauf, der gelingt,
+     * kann trotzdem in Log::warning() gelandete Nebenbefunde hinterlassen
+     * (Raumbuchung, Gemeindeanschrift, Bild-Import), die sonst nur auf dem
+     * Reiter "Protokoll" sichtbar waeren.
+     *
+     * @return array{type: string, message: string}|null
+     */
+    public static function eventWarnings(): ?array
+    {
+        $settings = Settings::get();
+
+        if ($settings['instance'] === '' || !ApiKey::isConfigured() || Settings::getEnabledCalendarIds() === []) {
+            return null;
+        }
+
+        return self::warningsSince(Log::AREA_EVENTS, (string) get_option('ctp_last_sync', ''));
+    }
+
+    /**
+     * @return array{type: string, message: string}|null
+     */
+    public static function groupWarnings(): ?array
+    {
+        if (GroupSettings::enabledHomepages() === []) {
+            return null;
+        }
+
+        return self::warningsSince(Log::AREA_GROUPS, (string) get_option(GroupSync::LAST_SYNC_OPTION, ''));
+    }
+
+    /**
+     * @return array{type: string, message: string}|null
+     */
+    private static function warningsSince(string $area, string $lastSync): ?array
+    {
+        // Noch nie erfolgreich synchronisiert: eventProblem()/groupProblem()
+        // melden das bereits als "never" - eine zweite Meldung hier waere
+        // dieselbe Aussage in anderen Worten.
+        if ($lastSync === '') {
+            return null;
+        }
+
+        $count = (new LogRepository())->count(['level' => Log::LEVEL_WARNING, 'area' => $area, 'since' => $lastSync]);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        return [
+            'type' => 'warning',
+            'message' => sprintf(
+                // Zahl am Satzende statt vor dem Substantiv (wie
+                // MajorVersionNotice::render() es fuer "Punkte" schon
+                // macht) - so bleibt der Satz fuer jede Anzahl richtig,
+                // ohne fuer eine Singular-/Pluralform extra uebersetzt
+                // werden zu muessen.
+                /* translators: %d: number of warnings logged since the last successful run */
+                __('Seit dem letzten erfolgreichen Lauf stehen neue Warnungen im Protokoll: %d.', 'churchtools-plugin'),
+                $count
+            ),
+        ];
     }
 
     /**
