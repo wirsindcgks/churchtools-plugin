@@ -5,6 +5,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.0] - 2026-09-16
+
+### Added
+
+- **Ein Protokoll hält fest, ob Migrationen, Synchronisation und Bild-Importe wirklich gelungen sind.** Anlass war der stille 401 beim Bilddownload, der zwei Wochen unbemerkt blieb (1.32.2): Bis hierhin gab es nur den „letzten Fehler“ als Momentaufnahme, keine Historie. Jetzt schreibt jeder Lauf in eine eigene Tabelle – Fehler, Warnungen (Raumbuchung, Gemeindeanschrift, Bild-Import) und eine Zusammenfassung je Lauf mit Dauer und Zahlen, etwa „Synchronisation abgeschlossen: 98 Termine, 0 Bilder gescheitert (2.2 s).“ Neuer Reiter „Protokoll“ unter Einstellungen (Liste mit Filter nach Stufe und Bereich, serverseitig geblättert), aufbewahrt werden höchstens 30 Tage oder 1000 Einträge, aufgeräumt im täglichen Lauf, der auch die Termine bereinigt. `SyncHealthNotice` meldet zusätzlich, wenn seit dem letzten erfolgreichen Lauf Warnungen aufgelaufen sind, und verlinkt auf den Reiter. Nie im Protokoll: der API-Key, Personendaten, der Abfrageteil einer Adresse.
+- **Ein Hook für einen eigenen Logger.** `ctp_log` ist der erste Hook, den dieses Plugin anbietet – feuert bei jedem Protokolleintrag mit Stufe, Bereich, Meldung und bereits bereinigtem Kontext, Teil der Kompatibilitätszusage. Bei `WP_DEBUG_LOG` zusätzlich `error_log()`.
+
 ## [1.34.0] - 2026-09-15
 
 ### Added

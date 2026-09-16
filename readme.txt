@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.34.0
+Stable tag: 1.35.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,7 +35,7 @@ Die Reiter dieses Fensters sind die Referenz: *Verwendung* beschreibt jede Optio
 5. In der Übersicht einmal „Jetzt synchronisieren“ – danach übernimmt WP-Cron.
 6. Den Block „ChurchTools Events“ auf einer Seite einfügen, oder das WPBakery-Element bzw. einen Shortcode. Fertige Beispiele stehen unter Events → Einbinden, für Gruppen unter Gruppen → Einbinden.
 
-Das Backend hat vier Bereiche im linken Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen, Fehler im Klartext), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Gruppenliste, Homepages, Synchronisation, Einbinden) und Einstellungen (Verbindung, Design, Updates). Termine und Gruppen sind gleich aufgebaut: dieselben Reiter in derselben Reihenfolge, dieselben Knöpfe und Hinweise.
+Das Backend hat vier Bereiche im linken Menü unter „ChurchTools“: Übersicht (Zustand von Events und Gruppen, Fehler im Klartext), Events (Terminliste, Kalender, Räume, Synchronisation, Einbinden), Gruppen (Gruppenliste, Homepages, Synchronisation, Einbinden) und Einstellungen (Verbindung, Design, Updates, Protokoll). Termine und Gruppen sind gleich aufgebaut: dieselben Reiter in derselben Reihenfolge, dieselben Knöpfe und Hinweise.
 
 Neue Versionen meldet das Plugin selbst.
 
@@ -279,6 +279,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.35.0 =
+
+Neu: Reiter „Protokoll“ unter Einstellungen zeigt, ob Migrationen, Synchronisation und Bild-Importe wirklich gelungen sind – Fehler, Warnungen und eine Zusammenfassung je Lauf, aufbewahrt höchstens 30 Tage oder 1000 Einträge. Einstellungen bleiben unverändert, auf der Website ändert sich nichts.
+
 = 1.34.0 =
 
 Termine und Gruppen bedienen sich im Backend jetzt gleich: Die Synchronisation der Gruppen hat einen eigenen Reiter unter Gruppen → Synchronisation, und der Schalter „Daten beim Deinstallieren behalten“ steht unter Einstellungen → Updates. Beide Bereiche bieten dieselben Intervalle, Termine also neu auch „Wöchentlich“. Ein stehengebliebener Gruppen-Abgleich wird jetzt wie bei den Terminen gemeldet. Einstellungen bleiben unverändert, auf der Website ändert sich nichts.
@@ -478,6 +482,13 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.35.0 =
+
+* Neu: Reiter „Protokoll“ unter Einstellungen – Fehler, Warnungen und eine Zusammenfassung je Lauf (Dauer, Termine, gescheiterte Bilder), mit Filter nach Stufe und Bereich. Aufbewahrt werden höchstens 30 Tage oder 1000 Einträge
+* Neu: Hook `ctp_log` für einen eigenen Logger, feuert bei jedem Protokolleintrag; bei WP_DEBUG_LOG zusätzlich error_log()
+* Geändert: Bisher stille Fehlschläge (Raumbuchungen, Gemeindeanschrift, Kalenderliste) stehen jetzt im Protokoll statt nirgends
+* Geändert: Der Hinweis im Backend meldet zusätzlich, wenn seit dem letzten erfolgreichen Lauf Warnungen aufgelaufen sind, und verlinkt auf den Reiter „Protokoll“
 
 = 1.34.0 =
 
