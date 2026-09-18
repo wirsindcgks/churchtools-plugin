@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.4] - 2026-09-18
+
+### Fixed
+
+- **Der Auszug einer hervorgehobenen Gruppe zeigte E-Mail-Adressen im Klartext.** Seit 1.35.3 steht dort der kurze Auszug statt des ganzen Textes, und er ging nur durch `esc_html()` statt durch die Aufbereitung der Beschreibung – eine Adresse aus ChurchTools stand damit unverschleiert im Quelltext, wo Adresssammler sie finden. Jetzt wird er aufbereitet wie der Auszug im Raster: Adressen verschleiert und klickbar, Links klickbar. Gefunden vom Integrationstest nach dem Release.
+
 ## [1.35.3] - 2026-09-18
 
 ### Changed
