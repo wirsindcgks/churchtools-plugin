@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.2] - 2026-09-18
+
+### Changed
+
+- **Hervorgehobene Gruppen öffnen beim Klick das Popup, wie die Hero-Kachel von „Nächster Termin“.** Bisher war dort nur der Button klickbar. Jetzt öffnet ein Klick irgendwo auf die Kachel die Gruppe im selben Popup wie im Raster; beim Überfahren hebt sich der Schatten wie bei der Hero-Kachel. Nach ChurchTools führt weiterhin nur der Button, Links im Text bleiben eigene Ziele.
+
 ## [1.35.1] - 2026-09-18
 
 ### Changed

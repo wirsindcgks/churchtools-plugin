@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.35.1
+Stable tag: 1.35.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -115,7 +115,7 @@ Im Block „ChurchTools Gruppen“ und im WPBakery-Element „ChurchTools Gruppe
 
 Abgefragt wird mit dem API-Key aus „Einstellungen → Verbindung“. Welche Gruppen erscheinen und ob Bilder dabei sind, entscheidet die Gruppen-Homepage in ChurchTools; eine zweite Auswahl in WordPress gibt es nicht. Übernommen werden Name, Beschreibung, Kategorie, Treffzeit, Zielgruppe, Plätze und Bild. Leiter und Angaben über Personen übernimmt das Plugin bewusst nicht, auch wenn ChurchTools sie mitschickt.
 
-Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit, darunter die Zielgruppe (ausblendbar mit dem Kalendernamen), sowie die ersten 24 Wörter der Beschreibung mit ihren Absätzen und Zeilenumbrüchen (in der hervorgehobenen Ansicht den ganzen Text). Ein Klick auf eine Kachel im Raster öffnet die Gruppe im Popup mit dem ganzen Text; das Bild darin folgt dem Bildformat aus dem Design-Tab. Der Gruppenfinder filtert im Browser, ohne die Seite neu zu laden. Welche Knöpfe er zeigt, entscheiden die Gruppen-Homepage – nur dort eingeschaltete Filter – und die Gruppen selbst: Ein Knopf erscheint nur, wenn er die Liste eingrenzt, eine Reihe ohne solchen Knopf fällt weg. Die Zielgruppe „Jeder“ ist kein eigener Knopf, sondern passt zu jeder Auswahl, ebenso eine Gruppe ohne Zielgruppe; bei Kategorie und Wochentag erscheinen nur Gruppen mit genau diesem Wert. Die Suche findet Name, Kategorie, Wochentag, Zielgruppe und Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet; nur dieser Button führt aus der Website hinaus, ein Klick auf die Kachel bleibt im Popup. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
+Jede Kachel zeigt Bild, Name, Wochentag und Treffzeit, darunter die Zielgruppe (ausblendbar mit dem Kalendernamen), sowie die ersten 24 Wörter der Beschreibung mit ihren Absätzen und Zeilenumbrüchen (in der hervorgehobenen Ansicht den ganzen Text). Ein Klick auf eine Kachel – im Raster wie in der hervorgehobenen Ansicht – öffnet die Gruppe im Popup mit dem ganzen Text; das Bild darin folgt dem Bildformat aus dem Design-Tab. Der Gruppenfinder filtert im Browser, ohne die Seite neu zu laden. Welche Knöpfe er zeigt, entscheiden die Gruppen-Homepage – nur dort eingeschaltete Filter – und die Gruppen selbst: Ein Knopf erscheint nur, wenn er die Liste eingrenzt, eine Reihe ohne solchen Knopf fällt weg. Die Zielgruppe „Jeder“ ist kein eigener Knopf, sondern passt zu jeder Auswahl, ebenso eine Gruppe ohne Zielgruppe; bei Kategorie und Wochentag erscheinen nur Gruppen mit genau diesem Wert. Die Suche findet Name, Kategorie, Wochentag, Zielgruppe und Beschreibung. Hat die Gruppe eine Höchstzahl, steht daneben, wie viele Plätze noch frei sind – bei einer vollen Gruppe „Ausgebucht“. Der Button „In ChurchTools ansehen“ führt zur Gruppe in ChurchTools, wo man sich anmeldet; nur dieser Button führt aus der Website hinaus, ein Klick auf die Kachel bleibt im Popup. Vorlage, Farben, Ecken, Bildformat, Reihenfolge und ausgeblendete Felder unter „Einstellungen → Design“ gelten auch hier; hat nur ein Teil der Gruppen ein Bild, bekommen die übrigen die Farbfläche, damit die Reihen fluchten.
 
 Die Gruppen haben ein eigenes „Sync-Intervall“ unter Gruppen → Synchronisation, unabhängig vom Termin-Sync: stündlich, zweimal täglich, täglich (Standard) oder wöchentlich – dieselbe Auswahl wie bei den Terminen. Die freien Plätze sind so alt wie der letzte Abgleich – die Anmeldung in ChurchTools zeigt immer den echten Stand. „Jetzt synchronisieren“ gleicht sofort ab. Liefert eine Homepage plötzlich keine Gruppen mehr, bleiben die zuletzt geladenen drei Läufe lang stehen, bevor sie verschwinden: So nimmt eine kurze Störung der Website nicht die Gruppen. Beim Deaktivieren einer Homepage entfernt der nächste Lauf ihre Gruppen samt importierter Bilder.
 
@@ -278,6 +278,10 @@ Ja. Unter Einstellungen → Datenschutz → „Richtlinien-Leitfaden“ steht ei
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Upgrade Notice ==
+
+= 1.35.2 =
+
+Hervorgehobene Gruppen öffnen beim Klick auf die Kachel jetzt das Popup, wie die Hero-Kachel von „Nächster Termin“. Nach ChurchTools führt weiterhin der Button. Einstellungen bleiben unverändert.
 
 = 1.35.1 =
 
@@ -486,6 +490,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.35.2 =
+
+* Geändert: Hervorgehobene Gruppen (`layout="featured"`) öffnen beim Klick auf die Kachel das Popup wie im Raster, mit dem Hover-Schatten der Hero-Kachel von „Nächster Termin“; nach ChurchTools führt weiterhin nur der Button
 
 = 1.35.1 =
 
