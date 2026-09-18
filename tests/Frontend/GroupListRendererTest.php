@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Tests\Frontend;
 
-use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\GroupListRenderer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
@@ -325,7 +324,8 @@ final class GroupListRendererTest extends TestCase
         $card = (string) preg_replace('#<template class="ctp-events__detail-template">.*?</template>#s', '', $html);
         preg_match('#<template class="ctp-events__detail-template">(.*?)</template>#s', $html, $popup);
 
-        $this->assertStringContainsString('<p class="ctp-events__excerpt">' . esc_html(EventFormatter::excerpt($words)) . '</p>', $card);
+        $this->assertStringContainsString('<p class="ctp-events__excerpt">' . GroupListRenderer::featureExcerptHtml($words) . '</p>', $card);
+        $this->assertStringContainsString('<p class="ctp-events__excerpt">Wort1 Wort2 ', $card, 'Eine Zeile ohne eigenen <p>-Rahmen darin.');
         $this->assertStringContainsString('Wort20', $card);
         $this->assertStringNotContainsString('Wort21', $card);
         $this->assertStringContainsString('Wort40', $popup[1]);

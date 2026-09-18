@@ -2912,9 +2912,10 @@
 }
 
 /* Der Titel-Link liegt mit seinem ::after ueber der ganzen Kachel (siehe
-   .ctp-events__card-trigger). Der Button nach ChurchTools hat ein eigenes
-   Ziel und muss darueber liegen, wie im Raster. */
-.ctp-groups__feature .ctp-events__cta-row {
+   .ctp-events__card-trigger). Was selbst ein Ziel hat - der Button nach
+   ChurchTools, Links im Auszug -, muss darueber liegen, wie im Raster. */
+.ctp-groups__feature .ctp-events__cta-row,
+.ctp-groups__feature .ctp-events__excerpt a {
     position: relative;
     z-index: 1;
 }

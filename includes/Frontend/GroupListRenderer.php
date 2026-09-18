@@ -304,15 +304,13 @@ final class GroupListRenderer
             $group['places_label'] = self::placesLabel($group);
             $group['excerpt'] = in_array('excerpt', $hiddenElements, true) || (string) ($group['note'] ?? '') === ''
                 ? ''
-                : ($withDescription
-                    // Hervorgehoben: derselbe Auszug wie in der Hero-Kachel der
-                    // Termine (event-upcoming.php), damit dort wie hier das Bild
-                    // die Kachelhoehe bestimmt; den ganzen Text zeigt das Popup.
-                    ? EventFormatter::excerpt((string) $group['note'])
-                    : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS));
+                : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS);
             $group['excerpt_html'] = $group['excerpt'] === '' || $withDescription
                 ? ''
                 : self::excerptHtml((string) $group['note']);
+            $group['feature_excerpt_html'] = $group['excerpt'] === '' || !$withDescription
+                ? ''
+                : self::featureExcerptHtml((string) $group['note']);
             // Der volle Text geht durch dieselbe Aufbereitung wie eine
             // Terminbeschreibung: enge kses-Liste, klickbare Links,
             // verschleierte E-Mail-Adressen (EventFormatter::descriptionHtml()).
@@ -385,6 +383,25 @@ final class GroupListRenderer
         }
 
         return EventFormatter::descriptionHtml(EventFormatter::trimWordsKeepingLines($allowed, self::GRID_EXCERPT_WORDS));
+    }
+
+    /**
+     * Auszug der hervorgehobenen Kachel: so lang wie in der Hero-Kachel der
+     * Termine (EventFormatter::excerpt() mit seiner Wortzahl, drei Zeilen per
+     * CSS), damit dort wie hier das Bild die Kachelhoehe bestimmt
+     * (Nutzerwunsch 2026-09-18). Eine Zeile Klartext, aber durch
+     * descriptionHtml() wie der Rasterauszug - in 1.35.3 stand hier nur
+     * esc_html(), und eine E-Mail-Adresse aus der Beschreibung stand
+     * unverschleiert im Quelltext (Integrationstest, 2026-09-18).
+     *
+     * Ohne den <p>-Rahmen von wpautop(): Die Vorlage setzt den Auszug in ihr
+     * eigenes <p class="ctp-events__excerpt">, auf dem die Zeilenkappung liegt.
+     */
+    public static function featureExcerptHtml(string $note): string
+    {
+        $line = EventFormatter::excerpt(EventFormatter::plainText(wp_kses($note, EventFormatter::DESCRIPTION_TAGS)));
+
+        return (string) preg_replace('#^<p>(.*)</p>$#s', '$1', trim(EventFormatter::descriptionHtml($line)));
     }
 
     /**

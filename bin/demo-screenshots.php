@@ -180,6 +180,7 @@ foreach ([
         'target_group_label' => $zielgruppe,
         'places_label' => $plaetze,
         'excerpt' => $text,
+        'feature_excerpt_html' => esc_html($text),
         // Wie GroupListRenderer::excerptHtml(): Absaetze und Zeilen bleiben.
         'excerpt_html' => '<p>' . str_replace("\n\n", '</p><p>', $text) . '</p>',
         'image_srcset_full' => '',

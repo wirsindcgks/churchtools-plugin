@@ -8,7 +8,7 @@
  * yourtheme/churchtools-plugin/group-featured.php.
  *
  * Dieselben Design-Variablen wie das Raster. Der Text ist der Auszug der
- * Hero-Kachel von „Nächster Termin" (`excerpt`, gleiche Wortzahl, gleiche
+ * Hero-Kachel von „Nächster Termin" (`feature_excerpt_html`, gleiche Wortzahl, gleiche
  * Klasse mit drei Zeilen): So bestimmt wie dort das Bild die Kachelhoehe
  * (Nutzerwunsch 2026-09-18), der ganze Text steht im Popup.
  *
@@ -76,8 +76,9 @@ if (!defined('ABSPATH')) {
                                 <?php echo esc_html($group['target_group_label']); ?>
                             </span>
                         <?php endif; ?>
-                        <?php if ($group['excerpt'] !== '') : ?>
-                            <p class="ctp-events__excerpt"><?php echo esc_html($group['excerpt']); ?></p>
+                        <?php if ($group['feature_excerpt_html'] !== '') : ?>
+                            <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- GroupListRenderer::featureExcerptHtml() runs the note through EventFormatter::descriptionHtml() (wp_kses() with its own allowlist, obfuscated mail addresses). ?>
+                            <p class="ctp-events__excerpt"><?php echo $group['feature_excerpt_html']; ?></p>
                         <?php endif; ?>
                         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-cta.php'; ?>
                     </div>

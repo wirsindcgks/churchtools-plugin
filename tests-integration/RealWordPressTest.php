@@ -202,9 +202,11 @@ final class RealWordPressTest extends TestCase
     }
 
     /**
-     * Die hervorgehobene Gruppe zeigt den ganzen Text - aufbereitet wie eine
-     * Terminbeschreibung, also mit der engen kses-Liste und verschleierten
-     * Adressen. Im echten WordPress, weil wp_kses() im Nachbau fehlt.
+     * Die hervorgehobene Gruppe zeigt einen Auszug, ihr Popup den ganzen Text -
+     * beides aufbereitet wie eine Terminbeschreibung, also mit der engen
+     * kses-Liste und verschleierten Adressen. Im echten WordPress, weil
+     * wp_kses() im Nachbau fehlt. Hat 1.35.3 gefangen: Der Auszug ging dort
+     * nur durch esc_html(), die Adresse stand im Klartext in der Kachel.
      */
     public function testAFeaturedGroupShowsItsFullTextSafely(): void
     {
@@ -221,6 +223,7 @@ final class RealWordPressTest extends TestCase
         delete_option(\ChurchToolsPlugin\Groups\GroupSync::DATA_OPTION);
 
         $this->assertStringContainsString('<p>Wir lesen gemeinsam.</p>', $html);
+        $this->assertMatchesRegularExpression('#<p class="ctp-events__excerpt">Wir lesen gemeinsam\. Kontakt: <a href="mailto:#', $html);
         $this->assertStringNotContainsString('<img', $html);
         $this->assertStringNotContainsString('hauskreis@example.org', $html);
         $this->assertStringContainsString('href="https://musterkirche.church.tools/publicgroup/269"', $html);
