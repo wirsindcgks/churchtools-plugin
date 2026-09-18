@@ -58,7 +58,7 @@ if (!defined('ABSPATH')) {
         <?php endif; ?>
         class="ctp-events__item<?php echo $args['click_behavior'] !== 'none' ? ' ctp-events__item--clickable' : ''; ?>"
         data-ctp-calendar="<?php echo esc_attr($event['ct_calendar_id']); ?>"
-        data-ctp-search="<?php echo esc_attr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); ?>"
+        data-ctp-search="<?php echo EventFormatter::safeAttr(mb_strtolower($event['title'] . ' ' . $event['subtitle'] . ' ' . $event['location'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_attr() plus antispambot(), see EventFormatter::safeAttr(). ?>"
         data-ctp-start="<?php echo esc_attr(EventFormatter::dateKey($event['start_date'])); ?>"
         <?php if ($event['calendar_color'] !== '') : ?>
             style="--ctp-accent:<?php echo esc_attr($event['calendar_color']); ?>;"
@@ -96,7 +96,7 @@ if (!defined('ABSPATH')) {
                 <?php endif; ?>
             </span>
             <?php if (!in_array('subtitle', $args['hidden_elements'], true) && $event['subtitle'] !== '') : ?>
-                <span class="ctp-events__subtitle"><?php echo esc_html($event['subtitle']); ?></span>
+                <span class="ctp-events__subtitle"><?php echo EventFormatter::safeText($event['subtitle']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html() plus antispambot(), see EventFormatter::safeText(). ?></span>
             <?php endif; ?>
             <?php if (!in_array('date', $args['hidden_elements'], true)) : ?>
                 <span class="ctp-events__meta-item ctp-events__meta-item--date">
@@ -121,7 +121,7 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
             <?php if (!in_array('excerpt', $args['hidden_elements'], true) && $event['description'] !== '') : ?>
                 <span class="ctp-events__excerpt">
-                    <?php echo esc_html(EventFormatter::excerpt($event['description'])); ?>
+                    <?php echo EventFormatter::safeText(EventFormatter::excerpt($event['description'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html() plus antispambot(), see EventFormatter::safeText(). ?>
                 </span>
             <?php endif; ?>
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup, same trust boundary as $args['design_style'] above. ?>

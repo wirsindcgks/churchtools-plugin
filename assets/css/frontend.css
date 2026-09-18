@@ -9,7 +9,11 @@
     --ctp-accent: var(--wp--preset--color--primary, #2563eb);
     --ctp-color-text: inherit;
     --ctp-color-muted: color-mix(in srgb, currentColor 64%, transparent);
-    --ctp-color-surface: var(--wp--preset--color--base, #fdfbf8);
+    /* Weiss statt des frueheren Cremetons (#fdfbf8), Nutzerwunsch 2026-09-18:
+       Auf der Live-Seite (Uncode, ohne theme.json-Palette) griff der Ersatzwert
+       und stand als leichter Farbstich neben dem weissen Seitengrund. Themes mit
+       eigener Grundfarbe behalten sie. */
+    --ctp-color-surface: var(--wp--preset--color--base, #ffffff);
     --ctp-color-border: color-mix(in srgb, currentColor 12%, transparent);
     --ctp-radius: var(--wp--custom--ctp--radius, 14px);
     /* Radius for the fully rounded bits (calendar/all-day badges, eventfinder

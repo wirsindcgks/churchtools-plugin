@@ -371,6 +371,20 @@ final class EventSchema
             return '';
         }
 
+        /*
+         * E-Mail-Adressen (etwa aus einem Untertitel, der hier als
+         * Beschreibung einspringt) mit \u0040 statt „@": gueltiges JSON mit
+         * unveraendertem Wert, aber keine Adresse im Klartext des Quelltexts.
+         * Entities wie in maskEmails() gingen hier nicht - JSON-LD liest sie
+         * nicht als Zeichen. Die Schluessel „@context"/„@type" trifft das
+         * Muster nicht, vor ihrem @ steht kein Adressteil.
+         */
+        $json = (string) preg_replace_callback(
+            EventFormatter::EMAIL_PATTERN,
+            static fn (array $match): string => str_replace('@', '\\u0040', $match[0]),
+            $json
+        );
+
         return '<script type="application/ld+json">' . $json . '</script>';
     }
 }

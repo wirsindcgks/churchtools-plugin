@@ -257,9 +257,9 @@ final class DetailSeo
         $siteName = trim((string) get_bloginfo('name'));
 
         if ($description !== '') {
-            printf('<meta name="description" content="%s" />' . "\n", esc_attr($description));
-            printf('<meta property="og:description" content="%s" />' . "\n", esc_attr($description));
-            printf('<meta name="twitter:description" content="%s" />' . "\n", esc_attr($description));
+            printf('<meta name="description" content="%s" />' . "\n", EventFormatter::safeAttr($description)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_attr() plus antispambot().
+            printf('<meta property="og:description" content="%s" />' . "\n", EventFormatter::safeAttr($description)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_attr() plus antispambot().
+            printf('<meta name="twitter:description" content="%s" />' . "\n", EventFormatter::safeAttr($description)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_attr() plus antispambot().
         }
 
         printf('<meta property="og:title" content="%s" />' . "\n", esc_attr(self::title()));

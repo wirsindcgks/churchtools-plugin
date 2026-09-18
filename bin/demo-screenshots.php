@@ -29,14 +29,10 @@ $GLOBALS['ctp_test_options']['date_format'] = 'd.m.Y';
 /*
  * Stubs, die der Test-Bootstrap nicht braucht, die Templates aber schon.
  * wp_json_encode(), wp_unique_id() und seit dem formatierten Gruppenauszug auch
- * wp_kses(), make_clickable() und wpautop() standen hier ebenfalls, bis der
- * Bootstrap sie selbst mitbrachte - eine zweite Deklaration bricht PHP hart ab,
- * deshalb kommen sie nicht zurueck.
+ * wp_kses(), make_clickable(), wpautop() und antispambot() standen hier
+ * ebenfalls, bis der Bootstrap sie selbst mitbrachte - eine zweite Deklaration
+ * bricht PHP hart ab, deshalb kommen sie nicht zurueck.
  */
-function antispambot(string $email): string
-{
-    return $email;
-}
 
 function _e(string $text, string $domain = ''): void
 {

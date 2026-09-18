@@ -23,6 +23,7 @@
  */
 
 use ChurchToolsPlugin\Frontend\CardImage;
+use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
 
 if (!defined('ABSPATH')) {
@@ -49,7 +50,7 @@ if (!defined('ABSPATH')) {
                         data-ctp-group-category="<?php echo esc_attr($group['finder_category']); ?>"
                         data-ctp-group-weekday="<?php echo esc_attr($group['finder_weekday']); ?>"
                         data-ctp-group-target="<?php echo esc_attr($group['finder_target']); ?>"
-                        data-ctp-group-search="<?php echo esc_attr($group['finder_search']); ?>"
+                        data-ctp-group-search="<?php echo EventFormatter::safeAttr($group['finder_search']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_attr() plus antispambot(), see EventFormatter::safeAttr(). ?>"
                     <?php endif; ?>
                 >
                     <article class="ctp-events__card ctp-events__card--clickable ctp-groups__card">

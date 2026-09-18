@@ -128,7 +128,7 @@ if (!defined('ABSPATH')) {
     case 'subtitle':
         ?>
         <?php if ($event['subtitle'] !== '') : ?>
-            <p class="ctp-events__subtitle"><?php echo esc_html($event['subtitle']); ?></p>
+            <p class="ctp-events__subtitle"><?php echo EventFormatter::safeText($event['subtitle']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html() plus antispambot(), see EventFormatter::safeText(). ?></p>
         <?php endif; ?>
         <?php
         break;

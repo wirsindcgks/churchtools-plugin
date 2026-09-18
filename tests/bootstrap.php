@@ -430,6 +430,16 @@ function esc_attr(string $text): string
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Wie WordPress: Zeichenreferenzen statt Klartext. Das Original mischt
+ * zufaellig kodierte und offene Zeichen; hier alles kodiert, damit Tests
+ * stabil sind - entscheidend ist nur, dass kein „@" im Klartext bleibt.
+ */
+function antispambot(string $email_address, int $hex_encoding = 0): string
+{
+    return implode('', array_map(static fn (string $char): string => '&#' . ord($char) . ';', str_split($email_address)));
+}
+
 function esc_url(string $url): string
 {
     return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');

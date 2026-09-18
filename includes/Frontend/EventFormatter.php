@@ -276,7 +276,10 @@ final class EventFormatter
     {
         $html = wpautop(make_clickable(wp_kses($description, self::DESCRIPTION_TAGS)));
 
-        return self::obfuscateMailLinks($html);
+        // maskEmails() danach fuer alles, was make_clickable() nicht zum Link
+        // gemacht hat - etwa eine Adresse direkt an einem Satzzeichen oder in
+        // einem title-Attribut. In schon verschleierten Links steht kein @ mehr.
+        return self::maskEmails(self::obfuscateMailLinks($html));
     }
 
     /**
@@ -300,6 +303,44 @@ final class EventFormatter
         'blockquote' => [],
         'a' => ['href' => true, 'title' => true],
     ];
+
+    /**
+     * Eine E-Mail-Adresse in Klartext. Bewusst schlicht: Es geht darum, was ein
+     * Adresssammler im Quelltext findet, nicht um jede Form, die RFC 5322
+     * erlaubt.
+     */
+    public const EMAIL_PATTERN = '/[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/';
+
+    /**
+     * Verschleiert E-Mail-Adressen in bereits escaptem Text oder Attributwert
+     * durch antispambot() - wie descriptionHtml() es fuer Links tut. Browser
+     * und JavaScript (dataset) sehen die Adresse unveraendert, im Quelltext
+     * steht sie als Zeichenreferenzen.
+     *
+     * Anlass (2026-09-18): Adressen stehen in ChurchTools auch in Untertiteln
+     * („Infos unter: gebet@…“) und landeten ueber esc_html() im Klartext auf
+     * Kachel, Popup, Terminseite und im Suchattribut der Kachel.
+     */
+    public static function maskEmails(string $escaped): string
+    {
+        return (string) preg_replace_callback(
+            self::EMAIL_PATTERN,
+            static fn (array $match): string => antispambot($match[0]),
+            $escaped
+        );
+    }
+
+    /** esc_html() plus maskEmails() - fuer jeden Text aus ChurchTools im Fliesstext. */
+    public static function safeText(string $text): string
+    {
+        return self::maskEmails(esc_html($text));
+    }
+
+    /** esc_attr() plus maskEmails() - fuer Text aus ChurchTools in Attributen. */
+    public static function safeAttr(string $text): string
+    {
+        return self::maskEmails(esc_attr($text));
+    }
 
     /**
      * Ersetzt in `mailto:`-Links Adresse und Linktext durch antispambot() -
