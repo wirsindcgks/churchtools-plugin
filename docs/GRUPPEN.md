@@ -14,7 +14,7 @@ Voraussetzung ist eine aktive Homepage unter *ChurchTools → Gruppen → Homepa
 
 <img src="screenshots/gruppen.png" width="600" alt="Drei Gruppenkacheln mit dem Button In ChurchTools ansehen, eine davon mit der Zahl der freien Plätze">
 
-**Hervorgehoben:** ausgewählte Gruppen je als große Kachel, Bild neben dem ganzen Text.
+**Hervorgehoben:** ausgewählte Gruppen je als große Kachel im Aufbau von „Nächster Termin“: Bild neben einem kurzen Auszug, den ganzen Text zeigt ein Klick auf die Kachel.
 
 <img src="screenshots/gruppen-hervorgehoben.png" width="600" alt="Zwei hervorgehobene Gruppen, Bild links, rechts Name, Text, Treffzeit und Button">
 
@@ -65,4 +65,4 @@ Unter *Gruppen → Homepages* steht neben jeder Homepage der passende Shortcode 
 - **Die freien Plätze sind so alt wie der letzte Abgleich.** Die Anmeldung in ChurchTools zeigt immer den echten Stand. Wer es genauer braucht, stellt das *Sync-Intervall* kürzer.
 - **Aussehen wie die Termine:** Vorlage, Farben, Ecken, Bildformat und Reihenfolge aus *Einstellungen → Design* gelten auch hier. Hat eine Gruppe kein Bild, steht dort eine Farbfläche. Die Zielgruppe steht mit Personensymbol unter der Treffzeit; wer unter *Kachel* den Kalendernamen ausblendet, blendet auch sie aus.
 - **Ganzer Text im Popup:** Ein Klick auf eine Kachel – im Raster wie in der hervorgehobenen Ansicht, dort wie bei der Hero-Kachel der Termine – öffnet die Gruppe in einem Popup auf der eigenen Website: großes Bild im selben Seitenverhältnis wie auf der Kachel, Treffzeit, Zielgruppe, der ganze Text und der Button nach ChurchTools. Nach ChurchTools geht es nur über den Button.
-- **Keine eigene Gruppenseite:** Den vollen Text zeigen das Popup und die hervorgehobene Ansicht, die Anmeldung liegt in ChurchTools.
+- **Keine eigene Gruppenseite:** Den vollen Text zeigt das Popup, die Anmeldung liegt in ChurchTools.

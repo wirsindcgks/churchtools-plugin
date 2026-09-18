@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ChurchToolsPlugin\Tests\Frontend;
 
+use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\GroupListRenderer;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Groups\GroupSync;
@@ -307,6 +308,27 @@ final class GroupListRendererTest extends TestCase
         foreach ($described[1] as $id) {
             $this->assertSame(1, substr_count($html, 'id="' . $id . '"'));
         }
+    }
+
+    /**
+     * Hervorgehoben steht der Auszug der Hero-Kachel (20 Woerter, drei Zeilen
+     * per CSS), nicht der ganze Text - so bestimmt das Bild die Kachelhoehe
+     * wie bei den Terminen (Nutzerwunsch 2026-09-18). Der ganze Text steht im
+     * Popup.
+     */
+    public function testTheFeaturedCardShowsTheHeroExcerptAndThePopupTheWholeText(): void
+    {
+        $words = implode(' ', array_map(static fn (int $i): string => 'Wort' . $i, range(1, 40)));
+        $this->homepageWith([array_merge($this->group(269, ''), ['note' => $words])]);
+
+        $html = (new GroupListRenderer())->render(['groups' => '269', 'layout' => 'featured']);
+        $card = (string) preg_replace('#<template class="ctp-events__detail-template">.*?</template>#s', '', $html);
+        preg_match('#<template class="ctp-events__detail-template">(.*?)</template>#s', $html, $popup);
+
+        $this->assertStringContainsString('<p class="ctp-events__excerpt">' . esc_html(EventFormatter::excerpt($words)) . '</p>', $card);
+        $this->assertStringContainsString('Wort20', $card);
+        $this->assertStringNotContainsString('Wort21', $card);
+        $this->assertStringContainsString('Wort40', $popup[1]);
     }
 
     public function testAnUnknownLayoutFallsBackToTheGrid(): void

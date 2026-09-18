@@ -2,13 +2,15 @@
 
 /**
  * Hervorgehobene Gruppen ([ctp_groups layout="featured"]): je Gruppe eine
- * grosse Kachel, Bild neben dem vollen Text, auf schmalem Platz darueber
+ * grosse Kachel, Bild neben dem Text, auf schmalem Platz darueber
  * (plan.md, G2). Gedacht fuer wenige, einzeln ausgewaehlte Gruppen, geht aber
  * ebenso mit einer ganzen Homepage. Ueberschreibbar durch eine Kopie unter
  * yourtheme/churchtools-plugin/group-featured.php.
  *
- * Dieselben Design-Variablen wie das Raster; statt des Auszugs der ganze Text
- * (`description_html`, aufbereitet wie eine Terminbeschreibung).
+ * Dieselben Design-Variablen wie das Raster. Der Text ist der Auszug der
+ * Hero-Kachel von „Nächster Termin" (`excerpt`, gleiche Wortzahl, gleiche
+ * Klasse mit drei Zeilen): So bestimmt wie dort das Bild die Kachelhoehe
+ * (Nutzerwunsch 2026-09-18), der ganze Text steht im Popup.
  *
  * Ein Klick auf die Kachel oeffnet das Popup wie bei der Hero-Kachel der
  * Termine und im Raster (partials/group-detail.php, partials/modal.php); nach
@@ -74,11 +76,8 @@ if (!defined('ABSPATH')) {
                                 <?php echo esc_html($group['target_group_label']); ?>
                             </span>
                         <?php endif; ?>
-                        <?php if ($group['description_html'] !== '') : ?>
-                            <div class="ctp-groups__feature-text">
-                                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EventFormatter::descriptionHtml() runs the raw value through wp_kses() with its own allowlist before adding any markup of its own (see its docblock). ?>
-                                <?php echo $group['description_html']; ?>
-                            </div>
+                        <?php if ($group['excerpt'] !== '') : ?>
+                            <p class="ctp-events__excerpt"><?php echo esc_html($group['excerpt']); ?></p>
                         <?php endif; ?>
                         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-cta.php'; ?>
                     </div>

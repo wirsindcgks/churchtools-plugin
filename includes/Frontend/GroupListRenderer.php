@@ -304,7 +304,12 @@ final class GroupListRenderer
             $group['places_label'] = self::placesLabel($group);
             $group['excerpt'] = in_array('excerpt', $hiddenElements, true) || (string) ($group['note'] ?? '') === ''
                 ? ''
-                : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS);
+                : ($withDescription
+                    // Hervorgehoben: derselbe Auszug wie in der Hero-Kachel der
+                    // Termine (event-upcoming.php), damit dort wie hier das Bild
+                    // die Kachelhoehe bestimmt; den ganzen Text zeigt das Popup.
+                    ? EventFormatter::excerpt((string) $group['note'])
+                    : EventFormatter::excerpt((string) $group['note'], self::EXCERPT_WORDS));
             $group['excerpt_html'] = $group['excerpt'] === '' || $withDescription
                 ? ''
                 : self::excerptHtml((string) $group['note']);
