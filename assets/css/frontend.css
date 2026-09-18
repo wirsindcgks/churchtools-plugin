@@ -2839,33 +2839,72 @@
 
 .ctp-groups__features {
     display: grid;
-    gap: 1.5rem;
+    gap: var(--ctp-gap);
+}
+
+/*
+ * Dieselbe Kachel wie die Hero-Kachel von „Nächster Termin" (siehe
+ * .ctp-events--upcoming .ctp-events__hero): Innenabstand statt randlosem Bild,
+ * das Bild mit eigener Rundung, Text und Bild gleich breit, der Text senkrecht
+ * mittig daneben. Nur die Seite ist gespiegelt - das Bild steht hier links.
+ * Die Masse sind bewusst dieselben Zahlen, damit beide Bloecke auf einer Seite
+ * wie aus einem Guss aussehen (Nutzerwunsch 2026-09-18).
+ *
+ * `height: auto` und `overflow: visible` nehmen zurueck, was
+ * .ctp-events__card fuers Raster mitbringt: Dort muss eine Kachel ihre Zeile
+ * fuellen und das Bild an der Kante abschneiden, hier gibt es keine Zeile und
+ * das Bild beschneidet sich selbst.
+ */
+.ctp-events .ctp-groups__feature {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.1rem;
+    height: auto;
+    padding: 1.25rem;
+    overflow: visible;
 }
 
 .ctp-groups__feature .ctp-events__media {
     order: 0;
+    overflow: hidden;
+    border-radius: calc(var(--ctp-radius) * 0.6);
 }
 
-.ctp-groups__feature-content {
+/* Der Innenabstand kommt von der Kachel, der Abstand zwischen den Angaben aus
+   dem gap - wie in .ctp-events__hero-body, mit derselben Begruendung: Der
+   Titel ist ein <h3> und bringt sonst die Abstaende des Themes mit. */
+.ctp-events .ctp-groups__feature-content {
     order: 1;
+    gap: 0.7rem;
+    padding: 0;
 }
 
+.ctp-events .ctp-groups__feature-content > * {
+    margin-block: 0;
+}
+
+/* Schriftgrad, Schnitt und Zeilenhoehe von .ctp-events__hero-title. */
 .ctp-events .ctp-groups__feature-title {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem 0.6rem;
     margin: 0;
-    font-size: var(--ctp-font-xl, 1.5rem);
-    line-height: 1.25;
+    font-size: clamp(var(--ctp-font-xl), 1rem + 1.4vw, var(--ctp-font-2xl));
+    font-weight: 600;
+    line-height: 1.15;
 }
 
 /* Die Stelle des Auszugs in der Design-Reihenfolge: Die Felder der Kachel
    sortieren sich ueber --ctp-order-*, und ohne eigene Angabe stand der Text
-   mit `order: 0` ueber dem Titel (so im ersten Anlauf gesehen). */
+   mit `order: 0` ueber dem Titel (so im ersten Anlauf gesehen).
+   Farbe und Schriftgrad wie der Auszug in der Hero-Kachel
+   (.ctp-events__excerpt); die Zeilenhoehe eine Spur weiter, weil hier der
+   ganze Text mit Absaetzen steht und nicht drei Zeilen. */
 .ctp-groups__feature-text {
     order: var(--ctp-order-excerpt);
-    color: var(--ctp-color-text, inherit);
+    color: var(--ctp-color-muted);
+    font-size: var(--ctp-font-sm);
     line-height: 1.6;
     max-width: 42rem;
 }
@@ -2878,21 +2917,32 @@
     margin-block-end: 0;
 }
 
+/* Der Button folgt dem Text, statt an den Kachelboden zu rutschen: Der Text
+   steht senkrecht mittig, ein unten klebender Button risse ihn davon ab. */
+.ctp-groups__feature .ctp-events__cta-row {
+    margin-block-start: 0;
+    padding-block-start: 0.3rem;
+}
+
+/* 40rem Blockbreite statt 768px Fenster wie bei der Hero-Kachel - siehe oben,
+   warum hier der Container zaehlt. Abstaende ab dort wie dort ab 768px. */
 @container ctp-groups-featured (min-width: 40rem) {
-    .ctp-groups__feature:not(.ctp-groups__feature--no-media) {
-        display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-        align-items: stretch;
+    .ctp-events .ctp-groups__feature {
+        gap: 1.5rem;
+        padding: 1.5rem;
     }
 
-    /* Neben dem Text fuellt das Bild die Hoehe der Kachel, statt oben mit
-       seinem Seitenverhaeltnis zu stehen und darunter eine Luecke zu lassen. */
-    .ctp-groups__feature:not(.ctp-groups__feature--no-media) .ctp-events__media {
-        aspect-ratio: auto;
-        min-height: 100%;
+    .ctp-events .ctp-groups__feature:not(.ctp-groups__feature--no-media) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
-    .ctp-groups__feature .ctp-groups__feature-content {
-        padding: 1.5rem 1.75rem;
+    /* Das Bild behaelt sein Seitenverhaeltnis und steht oben, der Text daneben
+       mittig - wie Angaben und Bild in der Hero-Kachel. */
+    .ctp-groups__feature .ctp-events__media {
+        align-self: start;
+    }
+
+    .ctp-events .ctp-groups__feature .ctp-groups__feature-content {
+        align-self: center;
     }
 }
