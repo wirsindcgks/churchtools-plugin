@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.1] - 2026-09-18
+
+### Changed
+
+- **Hervorgehobene Gruppen sehen aus wie die Hero-Kachel von „Nächster Termin“.** Gleicher Innenabstand, das Bild mit eigener Rundung statt bis an den Kachelrand, Bild und Text gleich breit und der Text senkrecht mittig daneben. Das Bild bleibt links. Titel, Text und Angaben haben dieselben Schriftgrade wie dort (Titel wie die Hero-Überschrift, Text grau in Auszugsgröße), und der Button folgt direkt dem Text, statt am Kachelboden zu stehen.
+
 ## [1.35.0] - 2026-09-16
 
 ### Added

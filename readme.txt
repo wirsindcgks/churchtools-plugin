@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.35.0
+Stable tag: 1.35.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -279,6 +279,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.35.1 =
+
+Hervorgehobene Gruppen haben jetzt den Aufbau der Hero-Kachel von „Nächster Termin“: gleiche Abstände, gleiche Schriftgrade, Bild und Text gleich breit. Einstellungen bleiben unverändert.
+
 = 1.35.0 =
 
 Neu: Reiter „Protokoll“ unter Einstellungen zeigt, ob Migrationen, Synchronisation und Bild-Importe wirklich gelungen sind – Fehler, Warnungen und eine Zusammenfassung je Lauf, aufbewahrt höchstens 30 Tage oder 1000 Einträge. Einstellungen bleiben unverändert, auf der Website ändert sich nichts.
@@ -482,6 +486,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.35.1 =
+
+* Geändert: Hervorgehobene Gruppen (`layout="featured"`) im Aufbau der Hero-Kachel von „Nächster Termin“ – gleicher Innenabstand, Bild mit eigener Rundung links, Bild und Text gleich breit, Text senkrecht mittig; Titel, Text und Angaben in denselben Schriftgraden, der Button direkt unter dem Text
 
 = 1.35.0 =
 
