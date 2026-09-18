@@ -10,6 +10,11 @@
  * Dieselben Design-Variablen wie das Raster; statt des Auszugs der ganze Text
  * (`description_html`, aufbereitet wie eine Terminbeschreibung).
  *
+ * Ein Klick auf die Kachel oeffnet das Popup wie bei der Hero-Kachel der
+ * Termine und im Raster (partials/group-detail.php, partials/modal.php); nach
+ * ChurchTools fuehrt der Button (partials/group-cta.php). Die Zelle um die
+ * Kachel ist die Einheit, in der frontend.js das <template> sucht.
+ *
  * @var array $groups
  * @var array $args
  */
@@ -30,7 +35,8 @@ if (!defined('ABSPATH')) {
         <div class="ctp-groups__features" role="list">
             <?php foreach ($groups as $index => $group) : ?>
                 <?php $titleId = $args['instance'] . '-' . (int) $index; ?>
-                <article class="ctp-events__card ctp-groups__feature<?php echo $group['image_src'] === '' ? ' ctp-groups__feature--no-media' : ''; ?>" role="listitem">
+                <div class="ctp-events__cell" role="listitem">
+                <article class="ctp-events__card ctp-events__hero--clickable ctp-groups__feature<?php echo $group['image_src'] === '' ? ' ctp-groups__feature--no-media' : ''; ?>">
                     <?php if ($group['image_src'] !== '') : ?>
                         <div class="ctp-events__media ctp-groups__feature-media">
                             <img
@@ -46,7 +52,10 @@ if (!defined('ABSPATH')) {
                     <?php endif; ?>
                     <div class="ctp-events__content ctp-groups__feature-content">
                         <h3 class="ctp-events__title ctp-groups__feature-title">
-                            <span id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($group['name']); ?></span>
+                            <?php // Ein Verweis und kein Knopf: Ohne JavaScript fuehrt er nach ChurchTools, wie der Button unten. ?>
+                            <a class="ctp-events__card-trigger" data-ctp-modal="1" href="<?php echo esc_url($group['url']); ?>">
+                                <span id="<?php echo esc_attr($titleId); ?>"><?php echo esc_html($group['name']); ?></span>
+                            </a>
                             <?php if ($group['places_label'] !== '') : ?>
                                 <span class="ctp-events__badge"><?php echo esc_html($group['places_label']); ?></span>
                             <?php endif; ?>
@@ -74,7 +83,10 @@ if (!defined('ABSPATH')) {
                         <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-cta.php'; ?>
                     </div>
                 </article>
+                <template class="ctp-events__detail-template"><?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/group-detail.php'; ?></template>
+                </div>
             <?php endforeach; ?>
         </div>
+        <?php require CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/modal.php'; ?>
     <?php endif; ?>
 </div>

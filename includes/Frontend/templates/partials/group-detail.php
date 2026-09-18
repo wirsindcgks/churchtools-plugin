@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Inhalt des Gruppen-Popups im Raster (group-grid.php). Steht je Kachel in
+ * Inhalt des Gruppen-Popups (group-grid.php, group-featured.php). Steht je Kachel in
  * einem <template> und wird beim Klick in den gemeinsamen Dialog kopiert -
  * derselbe Weg wie beim Termin-Popup (partials/modal.php, frontend.js).
  *

@@ -318,7 +318,8 @@ final class GroupListRenderer
                 : '';
             // Das Popup zeigt das Bild groesser als die Kachel, also ohne den
             // Deckel der Kachel-srcset (wie die Detailansicht der Termine).
-            $group['image_srcset_full'] = $imageUrl !== '' && !$withDescription
+            // In beiden Darstellungen: Auch die hervorgehobene oeffnet es.
+            $group['image_srcset_full'] = $imageUrl !== ''
                 ? CardImage::srcsetFor($attachmentId)
                 : '';
 

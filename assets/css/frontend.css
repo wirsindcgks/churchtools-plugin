@@ -2917,6 +2917,15 @@
     margin-block-end: 0;
 }
 
+/* Der Titel-Link liegt mit seinem ::after ueber der ganzen Kachel (siehe
+   .ctp-events__card-trigger). Was selbst ein Ziel hat - der Button nach
+   ChurchTools, Links im Text -, muss darueber liegen, wie im Raster. */
+.ctp-groups__feature .ctp-events__cta-row,
+.ctp-groups__feature-text a {
+    position: relative;
+    z-index: 1;
+}
+
 /* Der Button folgt dem Text, statt an den Kachelboden zu rutschen: Der Text
    steht senkrecht mittig, ein unten klebender Button risse ihn davon ab. */
 .ctp-groups__feature .ctp-events__cta-row {

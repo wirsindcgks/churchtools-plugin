@@ -285,6 +285,30 @@ final class GroupListRendererTest extends TestCase
         $this->assertMatchesRegularExpression('#meta-item--target-group">\s*<svg [^>]*>.*?</svg>\s*Jeder\s*</span>#s', $html);
     }
 
+    /**
+     * Die hervorgehobene Kachel oeffnet das Popup wie die Hero-Kachel der
+     * Termine (Nutzerwunsch 2026-09-18); der Button fuehrt weiter nach ChurchTools.
+     */
+    public function testTheFeaturedCardOpensThePopupLikeTheEventHero(): void
+    {
+        $this->homepageWith([$this->group(269, ''), $this->group(514, '')]);
+
+        $html = (new GroupListRenderer())->render(['groups' => '269,514', 'layout' => 'featured']);
+        $cards = (string) preg_replace('#<template class="ctp-events__detail-template">.*?</template>#s', '', $html);
+
+        $this->assertSame(2, substr_count($cards, '<a class="ctp-events__card-trigger" data-ctp-modal="1" href="https://musterkirche.church.tools/publicgroup/'));
+        $this->assertSame(2, substr_count($cards, 'ctp-events__hero--clickable'));
+        $this->assertSame(2, substr_count($cards, '<div class="ctp-events__cell" role="listitem">'), 'In der Zelle sucht frontend.js das Template.');
+        $this->assertSame(2, substr_count($cards, 'class="ctp-events__cta ctp-button"'));
+        $this->assertSame(1, substr_count($html, '<dialog class="ctp-events__modal">'));
+        $this->assertSame(2, substr_count($html, '<template class="ctp-events__detail-template">'));
+
+        preg_match_all('/aria-describedby="([^"]+)"/', $html, $described);
+        foreach ($described[1] as $id) {
+            $this->assertSame(1, substr_count($html, 'id="' . $id . '"'));
+        }
+    }
+
     public function testAnUnknownLayoutFallsBackToTheGrid(): void
     {
         $this->homepageWith([$this->group(269, '')]);
