@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.35.4
+Stable tag: 1.35.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -279,6 +279,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.35.5 =
+
+E-Mail-Adressen aus ChurchTools (etwa in Untertiteln) stehen nicht mehr im Klartext im Quelltext, sondern verschleiert wie in Beschreibungen. Kacheln und Popup sind weiß statt cremefarben, sofern das Theme keine eigene Grundfarbe setzt. Einstellungen bleiben unverändert.
+
 = 1.35.4 =
 
 Behebt, dass der Auszug einer hervorgehobenen Gruppe seit 1.35.3 E-Mail-Adressen unverschleiert zeigte. Bitte aktualisieren. Einstellungen bleiben unverändert.
@@ -498,6 +502,11 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.35.5 =
+
+* Behoben: E-Mail-Adressen in Untertiteln, Auszügen, Suchattributen, Meta-Beschreibung und JSON-LD standen im Klartext im Quelltext; sie werden jetzt mit antispambot() verschleiert (JSON-LD: \u0040), Besucher sehen sie unverändert. Die ICS-Datei bleibt im Klartext
+* Geändert: Kacheln, Popup und Werkzeugleisten sind weiß statt cremefarben, wenn das Theme keine eigene Grundfarbe setzt
 
 = 1.35.4 =
 

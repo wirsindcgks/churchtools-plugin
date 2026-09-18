@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.5] - 2026-09-18
+
+### Changed
+
+- **Kacheln, Popup und Werkzeugleisten sind weiß statt cremefarben.** Die Grundfläche kam bisher aus der Grundfarbe des Themes und fiel sonst auf ein leichtes Creme (`#fdfbf8`) zurück. Themes ohne eigene Farbpalette wie Uncode bekamen dieses Creme, und es stand als Farbstich neben dem weißen Seitengrund. Jetzt ist der Ersatzwert Weiß. Themes mit eigener Grundfarbe behalten sie. Screenshots in README und Doku neu.
+
+### Fixed
+
+- **E-Mail-Adressen aus ChurchTools stehen nirgends mehr im Klartext im Quelltext.** Verschleiert wurden bisher nur Adressen, die in einer Beschreibung zum Link wurden. Untertitel und Auszüge gingen nur durch `esc_html()`. Live stand so „Infos unter: gebet@…“ offen auf Kachel, Popup und Terminseite. Jetzt verschleiert `antispambot()` Adressen in Untertiteln, Auszügen (Termine und Gruppen), in den Suchattributen der Kacheln und des Gruppenfinders, in der Meta-Beschreibung der Terminseite und in Beschreibungen, die `make_clickable()` nicht verlinkt (etwa eine Adresse in Klammern). Im JSON-LD steht das `@` als `\u0040`. Besucher und die Suche im Browser sehen die Adresse unverändert. Die ICS-Datei für Kalender-Apps bleibt im Klartext.
+
 ## [1.35.4] - 2026-09-18
 
 ### Fixed
