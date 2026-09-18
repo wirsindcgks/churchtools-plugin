@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.3] - 2026-09-18
+
+### Changed
+
+- **Hervorgehobene Gruppen zeigen einen Auszug statt des ganzen Textes, und das Bild bestimmt die Kachelhöhe.** Gerechnet wird wie bei der Hero-Kachel von „Nächster Termin“: 20 Wörter, höchstens drei Zeilen. Vorher machte ein langer Text die Kachel ein Vielfaches so hoch wie das Bild, unter dem Bild blieb eine leere Fläche. Den ganzen Text zeigt das Popup, das ein Klick auf die Kachel öffnet.
+
+### Fixed
+
+- **Hervorgehobene Gruppen zeigten in Safari nur einen vergrößerten Ausschnitt ihres Bildes.** Safari löst `height: 100%` gegen einen Bildrahmen, dessen Höhe nur aus dem Seitenverhältnis kommt, nicht auf. Das Bild nahm deshalb seine eigene Höhe an, und der Rahmen schnitt es ab. Verschärft wurde das durch das Uncode-Theme: Es macht in Safari aus jedem `sizes` mit Medienabfrage `NaNpx`, das Bild wurde dann für die volle Fensterbreite berechnet (beim Kaffeedienst 840 statt 294 Pixel hoch). Das Bild liegt jetzt absolut im Rahmen wie bei der Hero-Kachel der Termine. Raster und Termine waren nicht betroffen.
+
 ## [1.35.2] - 2026-09-18
 
 ### Changed
