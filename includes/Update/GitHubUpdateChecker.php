@@ -40,6 +40,12 @@ final class GitHubUpdateChecker
     private const METADATA_URL = 'https://raw.githubusercontent.com/wirsindcgks/churchtools-plugin/main/update.json';
 
     /**
+     * Der Name, unter dem WordPress dieses Plugin in Update- und
+     * Infoabfragen fuehrt.
+     */
+    private const SLUG = 'churchtools-plugin';
+
+    /**
      * Der Pruefer der Bibliothek, damit „Nach Updates suchen“ ihn direkt
      * fragen kann (siehe checkNow()).
      *
@@ -63,7 +69,102 @@ final class GitHubUpdateChecker
         // der Hostliste der Bibliothek (PucFactory::getVcsService()), sie baut
         // fuer diese Adresse also den reinen JSON-Metadaten-Pruefer - genau
         // den, der hier gebraucht wird.
-        self::$checker = PucFactory::buildUpdateChecker(self::METADATA_URL, CTP_PLUGIN_FILE, 'churchtools-plugin');
+        self::$checker = PucFactory::buildUpdateChecker(self::METADATA_URL, CTP_PLUGIN_FILE, self::SLUG);
+
+        // Die Bibliothek haengt ihr Ergebnis mit Standardprioritaet ein, diese
+        // Nachbesserung muss danach laufen.
+        add_filter('site_transient_update_plugins', [self::class, 'normalizeTested'], 20);
+        add_filter('plugins_api', [self::class, 'normalizeTestedInInfo'], 20);
+    }
+
+    /**
+     * Zieht `tested` auf die laufende WordPress-Version hoch, solange beide im
+     * selben Zweig liegen.
+     *
+     * Der Satz „Kompatibilitaet mit WordPress X: Ja (laut Autor)" auf Dashboard
+     * -> Aktualisierungen entsteht aus genau diesem Feld des angebotenen
+     * Updates (wp-admin/update-core.php). Fehlt es, steht dort „Nicht
+     * getestet" - neben lauter Plugins von wordpress.org, die „Ja" melden, und
+     * das liest sich wie eine Warnung. update.json traegt das Feld deshalb aus
+     * der readme.txt („Tested up to"), die Bibliothek reicht es durch.
+     *
+     * Allein reicht das aber nicht: Verglichen wird mit
+     * version_compare($tested, $laufende_version, '>='), und die laufende
+     * Version hat drei Stellen - „7.1" gilt auf 7.1.1 als *nicht* getestet.
+     * api.wordpress.org umgeht das, indem es das Feld auf die aktuelle
+     * Punktversion hochzieht; Akismet und Yoast melden beide 7.1.1, obwohl ihre
+     * readme.txt nur den Zweig nennt. Eine feste Datei im Repo kann das nicht,
+     * also passiert es hier beim Einhaengen.
+     *
+     * @param mixed $updates Die Liste verfuegbarer Updates - vor dem ersten
+     *                       Abruf false, nicht zwingend ein Objekt.
+     * @return mixed Dieselbe Liste.
+     */
+    public static function normalizeTested($updates)
+    {
+        $file = plugin_basename(CTP_PLUGIN_FILE);
+
+        if (!is_object($updates) || !isset($updates->response[$file]->tested)) {
+            return $updates;
+        }
+
+        $updates->response[$file]->tested = self::testedInRunningBranch(
+            (string) $updates->response[$file]->tested,
+            (string) get_bloginfo('version')
+        );
+
+        return $updates;
+    }
+
+    /**
+     * Dasselbe fuer das Fenster hinter „Details anzeigen".
+     *
+     * Dort haengt am selben Feld nicht die Kompatibilitaetszeile, sondern eine
+     * gelbe Warnung („Dieses Plugin wurde nicht mit deiner aktuellen Version
+     * von WordPress getestet", wp-admin/includes/plugin-install.php) - und die
+     * steht genau in dem Fenster, das man vor dem Update oeffnet. Ohne diese
+     * zweite Stelle waere die Kompatibilitaetszeile gruen und die Warnung
+     * daneben trotzdem da.
+     *
+     * @param mixed $result Die Antwort der Info-Abfrage - false, solange sie
+     *                      niemand beantwortet hat.
+     * @return mixed Dieselbe Antwort.
+     */
+    public static function normalizeTestedInInfo($result)
+    {
+        if (!is_object($result) || ($result->slug ?? '') !== self::SLUG || !isset($result->tested)) {
+            return $result;
+        }
+
+        $result->tested = self::testedInRunningBranch(
+            (string) $result->tested,
+            (string) get_bloginfo('version')
+        );
+
+        return $result;
+    }
+
+    /**
+     * Die Regel dahinter, ohne WordPress: „7.1" wird auf 7.1.1 zu „7.1.1",
+     * bleibt auf 7.2 aber „7.1" - getestet ist getestet, und was nicht
+     * getestet ist, soll auch nicht so aussehen.
+     *
+     * @param string $tested  Was die readme.txt behauptet.
+     * @param string $running Die laufende WordPress-Version, samt Zusaetzen wie
+     *                        „-RC1", die hier nichts zu suchen haben.
+     * @return string Der Wert, den WordPress vergleichen soll.
+     */
+    public static function testedInRunningBranch(string $tested, string $running): string
+    {
+        $running = (string) preg_replace('/-.*$/', '', $running);
+
+        if ($tested === '' || $running === '') {
+            return $tested;
+        }
+
+        // Der Punkt am Ende beider Seiten verhindert, dass „7.1" auch auf
+        // 7.10.1 passt.
+        return str_starts_with($running . '.', $tested . '.') ? $running : $tested;
     }
 
     /**

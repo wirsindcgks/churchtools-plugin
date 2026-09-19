@@ -31,6 +31,7 @@ if ($root === false) {
 }
 
 $bootstrap = (string) file_get_contents($root . '/churchtools-plugin.php');
+$readme = (string) file_get_contents($root . '/readme.txt');
 
 function header_field(string $bootstrap, string $field): string
 {
@@ -43,6 +44,22 @@ function header_field(string $bootstrap, string $field): string
 }
 
 $version = header_field($bootstrap, 'Version');
+
+/**
+ * Ein Kopffeld der readme.txt. „Tested up to" steht nur dort: Der Plugin-Header
+ * kennt das Feld gar nicht, WordPress liest es bei Plugins von wordpress.org aus
+ * der readme.txt. Ohne das Feld in update.json meldet Dashboard ->
+ * Aktualisierungen „Nicht getestet" (siehe Update\GitHubUpdateChecker).
+ */
+function readme_field(string $readme, string $field): string
+{
+    if (!preg_match('/^' . preg_quote($field, '/') . ':\s*(.+)$/m', $readme, $matches)) {
+        fwrite(STDERR, "readme.txt ohne \"{$field}\".\n");
+        exit(1);
+    }
+
+    return trim($matches[1]);
+}
 
 /**
  * Der oberste Changelog-Abschnitt als HTML fuer das Detailfenster, das
@@ -270,10 +287,11 @@ $metadata = [
     'author_homepage' => REPO_URL,
     'requires' => header_field($bootstrap, 'Requires at least'),
     'requires_php' => header_field($bootstrap, 'Requires PHP'),
+    'tested' => readme_field($readme, 'Tested up to'),
     'last_updated' => gmdate('Y-m-d H:i:s'),
     'download_url' => sprintf('%s/releases/download/v%s/churchtools-plugin-v%s.zip', REPO_URL, $version, $version),
     'sections' => array_merge(
-        readme_sections((string) file_get_contents($root . '/readme.txt')),
+        readme_sections($readme),
         ['changelog' => changelog_html((string) file_get_contents($root . '/CHANGELOG.md'), $version)]
     ),
 ];

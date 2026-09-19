@@ -83,6 +83,39 @@ final class VersionConsistencyTest extends TestCase
     }
 
     /**
+     * Neben der Version traegt update.json die drei Angaben, an denen
+     * WordPress Kompatibilitaet misst: `requires` und `requires_php` aus dem
+     * Plugin-Header, `tested` aus der readme.txt („Tested up to"). Aus `tested`
+     * entsteht der Satz „Kompatibilitaet mit WordPress X: Ja (laut Autor)" auf
+     * Dashboard -> Aktualisierungen - eine Behauptung ueber etwas, das niemand
+     * automatisch nachpruefen kann. Diese Pruefung kann nur sichern, dass die
+     * ausgelieferte Datei dasselbe behauptet wie die readme.txt; sie bewusst zu
+     * pflegen bleibt Sache des Releases.
+     */
+    public function testUpdateMetadataMatchesTheDeclaredRequirements(): void
+    {
+        $metadata = json_decode((string) file_get_contents(self::ROOT . '/update.json'), true);
+        $this->assertIsArray($metadata, 'update.json is not valid JSON.');
+
+        $bootstrap = (string) file_get_contents(self::ROOT . '/churchtools-plugin.php');
+        $readme = (string) file_get_contents(self::ROOT . '/readme.txt');
+
+        $erwartet = [
+            'requires' => $this->headerField($bootstrap, 'Requires at least'),
+            'requires_php' => $this->headerField($bootstrap, 'Requires PHP'),
+            'tested' => $this->readmeField($readme, 'Tested up to'),
+        ];
+
+        foreach ($erwartet as $feld => $wert) {
+            $this->assertSame(
+                $wert,
+                $metadata[$feld] ?? null,
+                "update.json ist bei \"{$feld}\" nicht mehr auf dem Stand - neu erzeugen mit \"php bin/make-update-json.php .\"."
+            );
+        }
+    }
+
+    /**
      * update.json traegt den Changelog-Abschnitt der ausgelieferten Version
      * mit - das ist der Text, den WordPress im Update-Dialog unter „Details
      * anzeigen" ausgibt. Er wird beim Erzeugen der Datei aus CHANGELOG.md
@@ -137,6 +170,22 @@ final class VersionConsistencyTest extends TestCase
     private function pluginVersion(): string
     {
         return $this->headerVersion((string) file_get_contents(self::ROOT . '/churchtools-plugin.php'));
+    }
+
+    private function headerField(string $bootstrap, string $field): string
+    {
+        preg_match('/^\s*\*\s*' . preg_quote($field, '/') . ':\s*(.+)$/m', $bootstrap, $matches);
+        $this->assertNotEmpty($matches, "churchtools-plugin.php has no \"{$field}:\" header.");
+
+        return trim($matches[1]);
+    }
+
+    private function readmeField(string $readme, string $field): string
+    {
+        preg_match('/^' . preg_quote($field, '/') . ':\s*(.+)$/m', $readme, $matches);
+        $this->assertNotEmpty($matches, "readme.txt has no \"{$field}:\" line.");
+
+        return trim($matches[1]);
     }
 
     private function headerVersion(string $bootstrap): string
