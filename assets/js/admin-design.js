@@ -632,6 +632,31 @@
 	 * here would mean duplicating every label in JS. Separators are simply
 	 * dropped, since the default order contains none by definition.
 	 */
+	/*
+	 * Das Wort fuer laufende Termine spiegelt sich beim Tippen in die
+	 * Vorschau - dieselbe Absicht wie bei Ecken und Reihenfolge daneben: Wer
+	 * „Live" gegen „Laeuft gerade" abwaegt, soll die Pille sehen, bevor er
+	 * speichert, statt zu raten, wie breit sie neben dem Namen wird.
+	 *
+	 * Das leere Feld ist der Ausschalter, also verschwindet die Pille hier
+	 * ebenso - sonst versprach die Vorschau etwas, was die Seite nicht zeigt.
+	 */
+	var liveLabelInput = document.getElementById('ctp-design-live-label');
+	var livePreview = document.getElementById('ctp-design-live-preview');
+	var livePreviewText = document.getElementById('ctp-design-live-preview-text');
+
+	if (liveLabelInput && livePreview && livePreviewText) {
+		liveLabelInput.addEventListener('input', function () {
+			var label = liveLabelInput.value.trim();
+
+			// textContent, nicht innerHTML: Der Wert kommt aus einem Feld, in
+			// das jemand alles tippen kann, und in der Vorschau laeuft er an
+			// PHPs Maskierung vorbei.
+			livePreviewText.textContent = label;
+			livePreview.hidden = label === '';
+		});
+	}
+
 	document.addEventListener('click', function (event) {
 		var button = event.target.closest ? event.target.closest('.ctp-order-reset') : null;
 		if (!button) {

@@ -14,6 +14,7 @@ use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\LiveBadge;
 use ChurchToolsPlugin\Frontend\ReturnAnchor;
 
 if (!defined('ABSPATH')) {
@@ -88,6 +89,8 @@ if (!defined('ABSPATH')) {
                             <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
                         </span>
                     <?php endif; ?>
+                    <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- LiveBadge:: maskiert Wort und Zeitstempel selbst (esc_html()/esc_attr()), dieselbe Vertrauensgrenze wie Icons:: und ClickTrigger:: oben. ?>
+                    <?php echo LiveBadge::render($event, $args['live_label'] ?? ''); ?>
                 </span>
                 <?php if (!in_array('subtitle', $args['hidden_elements'], true) && $event['subtitle'] !== '') : ?>
                     <span class="ctp-events__subtitle"><?php echo EventFormatter::safeText($event['subtitle']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html() plus antispambot(), see EventFormatter::safeText(). ?></span>

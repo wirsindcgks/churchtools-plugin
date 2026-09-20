@@ -8,6 +8,7 @@ use ChurchToolsPlugin\Admin\SettingsPage;
 use ChurchToolsPlugin\Api\Client;
 use ChurchToolsPlugin\Frontend\CardDesign;
 use ChurchToolsPlugin\Frontend\DesignPreset;
+use ChurchToolsPlugin\Frontend\LiveBadge;
 use ChurchToolsPlugin\Security\ApiKey;
 use ChurchToolsPlugin\Security\Crypto;
 use ChurchToolsPlugin\Settings;
@@ -715,6 +716,53 @@ final class SettingsPageTest extends TestCase
         $sanitized = SettingsPage::sanitizeSettings(['instance' => 'musterkirche']);
 
         $this->assertSame(90, $sanitized['sync_days_ahead']);
+    }
+
+    /**
+     * Das Wort fuer laufende Termine ist vorbelegt und nicht leer: Anders als
+     * Teilen- und Importieren-Knopf ist es kein Bedienelement, das bestellt
+     * werden will, sondern eine Angabe zum Termin wie „Ganztaegig" - die steht
+     * auch ungefragt da. Die Zeile haelt die Entscheidung fest, damit ein
+     * Wechsel auf „aus" eine bewusste bleibt.
+     */
+    public function testLiveLabelIsPresetRatherThanOptIn(): void
+    {
+        $this->assertSame('Jetzt', Settings::defaults()['live_label']);
+        $this->assertSame('Jetzt', SettingsPage::sanitizeSettings([])['live_label']);
+    }
+
+    public function testSanitizeSettingsAcceptsACustomLiveLabel(): void
+    {
+        $this->assertSame('Live', SettingsPage::sanitizeSettings(['live_label' => '  Live  '])['live_label']);
+    }
+
+    /**
+     * Das leere Feld ist der Ausschalter, und genau das ist die Stelle, an der
+     * das uebliche Muster dieses Sanitizers („leer heisst nicht abgeschickt")
+     * das Gegenteil bewirkt haette: Das Kennzeichen liesse sich dann nie
+     * wieder abschalten.
+     */
+    public function testEmptyLiveLabelActuallyClearsIt(): void
+    {
+        ctp_test_set_option('ctp_settings', ['live_label' => 'Jetzt']);
+
+        $this->assertSame('', SettingsPage::sanitizeSettings(['live_label' => ''])['live_label']);
+    }
+
+    /** Ein Tab, der das Feld nicht rendert, darf es nicht loeschen. */
+    public function testLiveLabelSurvivesASubmitFromAnotherTab(): void
+    {
+        ctp_test_set_option('ctp_settings', ['live_label' => 'Läuft gerade']);
+
+        $this->assertSame('Läuft gerade', SettingsPage::sanitizeSettings(['instance' => 'musterkirche'])['live_label']);
+    }
+
+    /** Die Pille teilt sich die Zeile mit dem Terminnamen, siehe LiveBadge. */
+    public function testLiveLabelIsCappedAndStrippedOfMarkup(): void
+    {
+        $sanitized = SettingsPage::sanitizeSettings(['live_label' => '<b>' . str_repeat('a', 80) . '</b>']);
+
+        $this->assertSame(str_repeat('a', LiveBadge::MAX_LABEL_LENGTH), $sanitized['live_label']);
     }
 
     public function testSanitizeSettingsAcceptsValidDesignPreset(): void

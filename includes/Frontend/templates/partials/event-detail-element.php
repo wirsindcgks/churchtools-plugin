@@ -9,6 +9,7 @@
  * @var array  $event         Already enriched via EventListRenderer::withCalendarMeta().
  * @var string $key           One of DetailDesign::ELEMENT_KEYS.
  * @var string $detailContext 'popup' or 'page', see event-detail-content.php.
+ * @var string $liveLabel     Einstellung `live_label`, siehe event-detail-content.php.
  */
 
 use ChurchToolsPlugin\Frontend\CardImage;
@@ -16,6 +17,7 @@ use ChurchToolsPlugin\Frontend\EventFeed;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventIcs;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\LiveBadge;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -120,6 +122,8 @@ if (!defined('ABSPATH')) {
                         <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
                     </span>
                 <?php endif; ?>
+                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- LiveBadge:: maskiert Wort und Zeitstempel selbst (esc_html()/esc_attr()), dieselbe Vertrauensgrenze wie Icons:: an den anderen Faellen. ?>
+                <?php echo LiveBadge::render($event, isset($liveLabel) ? (string) $liveLabel : ''); ?>
             <?php printf('</%s>', esc_html($titleTag)); ?>
         </div>
         <?php

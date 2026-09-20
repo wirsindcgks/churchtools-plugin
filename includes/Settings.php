@@ -84,6 +84,24 @@ final class Settings
             // Matches frontend.css's own --ctp-color-button-strong fallback,
             // same "start on the value already in effect" rule as accent_color.
             'button_color' => '#111827',
+            /**
+             * Das Wort, das an einem gerade laufenden Termin steht („Jetzt",
+             * „Live", „Läuft gerade" - was die Gemeinde sagt). Leer heißt: kein
+             * Kennzeichen, das leere Feld ist der Ausschalter (siehe
+             * Frontend\LiveBadge).
+             *
+             * Anders als Teilen- und Importieren-Knopf mit einem Wert
+             * vorbelegt statt aus: Die beiden sind Bedienelemente, die
+             * ausdrücklich bestellt werden wollen - das hier ist eine Angabe
+             * zum Termin, so wie „Ganztägig", und die steht auch ungefragt da.
+             *
+             * Der Vorgabewert ist bewusst nicht übersetzbar: defaults() läuft
+             * auch, bevor WordPress die Sprachdateien geladen hat, und ein
+             * __() an dieser Stelle löste die Meldung über zu früh geladene
+             * Textdomains aus. Das Wort ist ohnehin eine Eingabe des
+             * Betreibers, keine Oberflächenbeschriftung.
+             */
+            'live_label' => 'Jetzt',
             'click_behavior' => 'popup',
             // 0 = keine Elternseite: Termine behalten die Adresse
             // /churchtools-termin/<id>/, mit der sie bis 1.4.1 ausgeliefert

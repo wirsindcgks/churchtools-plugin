@@ -438,6 +438,7 @@
 				}
 
 				list.innerHTML = payload.data.html;
+				updateLiveBadges();
 				setResultsMode(container, true);
 				// A complete answer (next_page: null) retires the button; a
 				// calendar-filtered "Jederzeit" keeps paging, and the cursor it
@@ -501,6 +502,7 @@
 
 		if (stashed) {
 			list.innerHTML = stashed.html;
+			updateLiveBadges();
 			setPagingState(container, stashed.paging);
 			stashedLists.delete(container);
 		}
@@ -759,6 +761,11 @@
 				}
 
 				list.insertAdjacentHTML('beforeend', payload.data.html);
+				// Wie applyToolbarState() unten: Was gerade dazugekommen ist,
+				// muss dieselbe Behandlung bekommen wie das, was schon stand -
+				// sonst bliebe ein laufender Termin bis zum nächsten Takt
+				// ungekennzeichnet.
+				updateLiveBadges();
 
 				// A null next_page means the server found nothing beyond this
 				// window — the button has done its job and would otherwise sit
@@ -833,6 +840,10 @@
 		var content = template.content.cloneNode(true);
 		restoreLazyImages(content);
 		body.appendChild(content);
+		// Im <template> ist die Pille außerhalb des Dokuments und wird von
+		// updateLiveBadges() nicht erfasst - erst der Klon hier ist erreichbar,
+		// und er muss stimmen, bevor der Dialog aufgeht.
+		updateLiveBadges();
 		dialog.showModal();
 	}
 
@@ -1244,6 +1255,64 @@
 			knopf.focus();
 		}
 	}
+
+	/*
+	 * Das Kennzeichen „läuft gerade" (siehe Frontend\LiveBadge).
+	 *
+	 * Die Entscheidung fällt hier und nicht in PHP, weil sie eine Uhr braucht,
+	 * die weitergeht: Die Ausgabe der Shortcodes liegt in jedem
+	 * Caching-Plugin als fertiges HTML und wird Stunden später unverändert
+	 * erneut ausgeliefert. Serverseitig gesetzt wäre das Kennzeichen genau so
+	 * lange richtig, wie der Seiten-Cache jung ist.
+	 *
+	 * PHP gibt deshalb jede Pille verborgen aus und schreibt Anfang und Ende
+	 * als ISO-8601-Zeitpunkte samt Zeitzonen-Versatz daneben; hier fällt nur
+	 * noch `hidden` weg oder wieder an. Kommt dieses Skript nicht an, bleibt
+	 * es bei „verborgen" - eine Kachel ohne Kennzeichen ist unauffällig, eine
+	 * mit einem falschen nicht.
+	 */
+	var LIVE_INTERVAL_MS = 30000;
+
+	function updateLiveBadges() {
+		var badges = document.querySelectorAll('.ctp-events__badge--live[data-ctp-live-start]');
+		var now = Date.now();
+
+		Array.prototype.forEach.call(badges, function (badge) {
+			var start = Date.parse(badge.getAttribute('data-ctp-live-start'));
+			var end = Date.parse(badge.getAttribute('data-ctp-live-end'));
+
+			// Ein unlesbarer Zeitpunkt ergibt NaN, und jeder Vergleich damit
+			// ist falsch - die Pille bleibt dann verborgen, was die richtige
+			// Richtung ist.
+			badge.hidden = !(now >= start && now <= end);
+		});
+	}
+
+	/*
+	 * Der Takt ist bewusst grob: Eine Minute daneben fällt an einem Termin,
+	 * der eine Stunde läuft, niemandem auf, und ein Sekundentakt wäre ein
+	 * Timer, der auf jedem Telefon mit offener Seite mitläuft.
+	 *
+	 * Der zweite Aufhänger ist der wichtigere: Ein Browser drosselt Timer in
+	 * Tabs im Hintergrund bis zum Stillstand. Wer eine Seite morgens öffnet
+	 * und mittags zurückkehrt, bekommt den Stand von morgens - `visibilitychange`
+	 * holt ihn beim Zurückkommen nach, bevor das Fenster gezeichnet wird.
+	 */
+	if (document.readyState === 'loading') {
+		// Das Skript laeuft normalerweise im Footer, die Kacheln stehen dann
+		// schon. Der Zweig gilt einer Einbindung im Kopf - etwa durch ein
+		// Optimierungs-Plugin, das Skripte umhaengt.
+		document.addEventListener('DOMContentLoaded', updateLiveBadges);
+	} else {
+		updateLiveBadges();
+	}
+
+	setInterval(updateLiveBadges, LIVE_INTERVAL_MS);
+	document.addEventListener('visibilitychange', function () {
+		if (!document.hidden) {
+			updateLiveBadges();
+		}
+	});
 
 	document.addEventListener('keydown', function (event) {
 		if (event.key !== 'Escape') {

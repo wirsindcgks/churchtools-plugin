@@ -22,6 +22,14 @@ Dazu kommt der **Eventfinder** (`finder="1"`): ein geführter Einstieg statt Dro
 
 Bilder der Ansichten zeigt die [Übersicht](../README.md#so-sieht-das-aus).
 
+## Termine, die gerade stattfinden
+
+Läuft ein Termin gerade, steht neben seinem Namen ein Kennzeichen mit einem pulsierenden Punkt – in allen drei Ansichten und in der Detailansicht. Es erscheint, sobald der Termin beginnt, und verschwindet, wenn er endet. Ganztägige Termine und mehrtägige Freizeiten tragen es an jedem ihrer Tage.
+
+Das Wort steht unter *ChurchTools → Einstellungen → Design → Stil* bei **Laufende Termine** und ist ab Werk „Jetzt“. Dort passt jede Gemeinde es an ihren Ton an – „Live“, „Läuft gerade“, „Wir sind dabei“. **Ein leeres Feld schaltet das Kennzeichen ab.** Die Vorschau daneben zeigt beim Tippen, wie die Pille aussieht.
+
+Die Entscheidung, ob ein Termin gerade läuft, fällt im Browser des Besuchers und nicht auf dem Server. Das ist Absicht: Ein Caching-Plugin legt die fertige Seite ab und liefert sie stundenlang unverändert aus – ein auf dem Server gesetztes „Jetzt“ bliebe darin stehen, lange nachdem der Termin vorbei ist. Die Uhr im Browser läuft dagegen immer richtig, auch aus dem Cache heraus. Wo JavaScript abgeschaltet ist, erscheint das Kennzeichen nicht; die Kachel sieht dann aus wie ohne die Funktion.
+
 ## Beispiele
 
 **Startseite: der nächste Termin, groß, mit drei weiteren darunter**

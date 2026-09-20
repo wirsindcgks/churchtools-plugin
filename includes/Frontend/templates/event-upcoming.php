@@ -20,6 +20,7 @@ use ChurchToolsPlugin\Frontend\CardImage;
 use ChurchToolsPlugin\Frontend\ClickTrigger;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\LiveBadge;
 use ChurchToolsPlugin\Frontend\ReturnAnchor;
 
 if (!defined('ABSPATH')) {
@@ -116,6 +117,8 @@ $heroHasMedia = $hero !== null
                         <?php echo esc_html($hero['title']); ?>
                         <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- see above. ?>
                         <?php echo ClickTrigger::close($args['click_behavior']); ?>
+                        <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- LiveBadge:: maskiert Wort und Zeitstempel selbst (esc_html()/esc_attr()), dieselbe Vertrauensgrenze wie Icons:: und ClickTrigger:: oben. ?>
+                        <?php echo LiveBadge::render($hero, $args['live_label'] ?? ''); ?>
                     </h3>
                     <?php if (!in_array('subtitle', $args['hidden_elements'], true) && $hero['subtitle'] !== '') : ?>
                         <p class="ctp-events__subtitle"><?php echo EventFormatter::safeText($hero['subtitle']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html() plus antispambot(), see EventFormatter::safeText(). ?></p>
@@ -206,6 +209,8 @@ $heroHasMedia = $hero !== null
                                         <?php esc_html_e('Ganztägig', 'churchtools-plugin'); ?>
                                     </span>
                                 <?php endif; ?>
+                                <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- siehe oben. ?>
+                                <?php echo LiveBadge::render($event, $args['live_label'] ?? ''); ?>
                             </span>
                             <?php if (!in_array('date', $args['hidden_elements'], true)) : ?>
                                 <span class="ctp-events__meta-item ctp-events__meta-item--date">

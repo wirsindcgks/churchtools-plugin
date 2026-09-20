@@ -6,7 +6,7 @@ Zurück zur [Übersicht](../README.md).
 
 Zusammengefasstes JavaScript („Minify“/„Combine“) sollte `assets/js/frontend.js` und `assets/css/frontend.css` auslassen. Das Plugin hängt seine Versionsnummer an beide Adressen, ein Update erneuert sie damit von selbst. In einer zusammengefassten Datei entfällt dieser Mechanismus, und wiederkehrende Besucher können nach einem Update noch tagelang das alte Skript benutzen.
 
-Dasselbe gilt für „JavaScript erst bei der ersten Interaktion laden“ – diese erste Interaktion ist der Klick auf einen Termin. Näheres im FAQ-Teil der [readme.txt](../readme.txt).
+Dasselbe gilt für „JavaScript erst bei der ersten Interaktion laden“ – diese erste Interaktion ist der Klick auf einen Termin. Das Kennzeichen an [laufenden Terminen](TERMINE.md#termine-die-gerade-stattfinden) erscheint mit dieser Einstellung erst, nachdem der Besucher irgendwo geklickt hat. Näheres im FAQ-Teil der [readme.txt](../readme.txt).
 
 ## Weniger Spalten als eingestellt?
 

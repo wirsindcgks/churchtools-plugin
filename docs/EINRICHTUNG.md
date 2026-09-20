@@ -44,7 +44,7 @@ Auf einer Seite den Block „ChurchTools Events“ einfügen – oder das WPBake
 
 | Unterbereich | Einstellungen |
 | --- | --- |
-| **Stil** | eine von vier Vorlagen als Grundlage (Standard, Ruhig, Warm, Strukturiert), Eckenstil, Akzent- und Buttonfarbe |
+| **Stil** | eine von vier Vorlagen als Grundlage (Standard, Ruhig, Warm, Strukturiert), Eckenstil, Akzent- und Buttonfarbe, das Wort für laufende Termine |
 | **Kachel** | Reihenfolge und Sichtbarkeit der Angaben, Bild-Seitenverhältnis |
 | **Detailansicht** | Klickverhalten, Adresse, Teilen- und Importieren-Button, Reihenfolge |
 | **Listen** | Zeitraum pro Seite |

@@ -75,6 +75,12 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 **Liste** und **Grid** können zusätzlich eine Werkzeugleiste mit Kalenderfilter (`filter="1"`) und/oder Freitext-Suche (`search="1"`) anzeigen sowie Termine nach Monat gruppieren (`month_dividers="1"`) – alle drei standardmäßig aus, per Attribut (Shortcode), Umschalter (Gutenberg-Block) oder Checkbox (WPBakery) einzeln aktivierbar. Filter und Suche laufen komplett clientseitig (kein Neuladen der Seite, funktioniert unter Full-Page-Caching); der Kalenderfilter erscheint dabei nur, wenn das tatsächliche Ergebnis mindestens zwei verschiedene Kalender enthält. Die „Nächster Termin“-Ansicht unterstützt keines der drei, da sie nur einen einzelnen Hero-Termin zeigt.
 
+= Laufende Termine =
+
+Ein Termin, der gerade stattfindet, trägt in allen drei Ansichten und in der Detailansicht ein Kennzeichen neben seinem Namen – eine Pille mit pulsierendem Punkt in der Farbe des Kalenders, in derselben Form wie das „Ganztägig“-Badge daneben. Es erscheint zum Beginn des Termins und verschwindet an seinem Ende; ganztägige und mehrtägige Termine tragen es an jedem ihrer Tage.
+
+Das Wort stellt man unter „Einstellungen → Design“ im Bereich „Stil“ bei „Laufende Termine“ ein, ab Werk „Jetzt“. Ein leeres Feld schaltet das Kennzeichen ab. Ob ein Termin gerade läuft, entscheidet der Browser des Besuchers und nicht der Server – nur so stimmt die Angabe auch auf einer Seite, die aus einem Full-Page-Cache kommt. Ohne JavaScript erscheint das Kennzeichen nicht.
+
 = Zeitraum und Nachladen =
 
 **Liste** und **Grid** zeigen nicht alle synchronisierten Termine auf einmal, sondern zunächst den angebrochenen laufenden Monat plus den darauffolgenden – bei Bedarf hängt ein Klick auf „Weitere Termine laden“ die jeweils nächsten zwei Monate unten an, ohne die Seite neu zu laden. Das hält die erste Seitenauslieferung klein, gerade bei vielen Kalendern mit wöchentlichen Serien.

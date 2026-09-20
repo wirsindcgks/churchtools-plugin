@@ -378,6 +378,11 @@ final class EventListRenderer
 
         $args = array_merge($args, self::designArgs($designSettings));
 
+        // Nicht in designArgs(): Das Kennzeichen gehoert zum Termin, und die
+        // Gruppenliste, die sich jene Methode mit den Terminen teilt, hat
+        // nichts, was „gerade laufen" koennte.
+        $args['live_label'] = LiveBadge::sanitizeLabel((string) ($designSettings['live_label'] ?? ''));
+
         // "default" (the shortcode/block attribute's own default) defers to the
         // Design tab's global setting; an explicit none/popup/page always wins,
         // even over a global "popup" default — same override relationship "columns"
@@ -531,6 +536,10 @@ final class EventListRenderer
         $shareEnabled = (bool) $designSettings['detail_share_enabled'];
         $icsEnabled = (bool) $designSettings['detail_ics_enabled'];
         $subscribeEnabled = (bool) $designSettings['detail_subscribe_enabled'];
+        // Auf demselben Weg wie die drei darueber: Diese Ansicht bekommt kein
+        // $args (sie zeigt genau einen Termin), das Wort muss also als eigene
+        // Variable bis ins Partial.
+        $liveLabel = LiveBadge::sanitizeLabel((string) ($designSettings['live_label'] ?? ''));
 
         $templateName = 'churchtools-plugin/event-detail.php';
         $template = locate_template($templateName);
@@ -570,6 +579,7 @@ final class EventListRenderer
         $shareEnabled = (bool) $settings['detail_share_enabled'];
         $icsEnabled = (bool) $settings['detail_ics_enabled'];
         $subscribeEnabled = (bool) $settings['detail_subscribe_enabled'];
+        $liveLabel = LiveBadge::sanitizeLabel((string) ($settings['live_label'] ?? ''));
         $order = DetailDesign::isValidOrder($detailOrder) ? $detailOrder : DetailDesign::DEFAULT_ORDER;
         self::primeAttachmentCache($events, $calendars);
 
@@ -615,7 +625,7 @@ final class EventListRenderer
             $event['series_count'] = $seriesCounts[(int) $event['ct_event_id']] ?? 1;
 
             if ($clickBehavior === 'popup') {
-                $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled, $icsEnabled, $subscribeEnabled);
+                $event['detail_html'] = $this->renderDetailPartial($event, $order, $shareEnabled, $icsEnabled, $subscribeEnabled, $liveLabel);
             }
         }
         unset($event);
@@ -680,7 +690,8 @@ final class EventListRenderer
         array $order,
         bool $shareEnabled = false,
         bool $icsEnabled = false,
-        bool $subscribeEnabled = false
+        bool $subscribeEnabled = false,
+        string $liveLabel = ''
     ): string {
         $detailContext = 'popup';
 

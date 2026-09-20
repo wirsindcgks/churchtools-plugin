@@ -44,6 +44,7 @@
  * @var bool   $shareEnabled  Einstellung `detail_share_enabled`, siehe unten.
  * @var bool   $icsEnabled    Einstellung `detail_ics_enabled`, ebenso.
  * @var bool   $subscribeEnabled Einstellung `detail_subscribe_enabled`, ebenso.
+ * @var string $liveLabel     Einstellung `live_label` (Wort fuer laufende Termine), ebenso.
  */
 
 use ChurchToolsPlugin\Frontend\DetailDesign;
@@ -58,6 +59,11 @@ if (!defined('ABSPATH')) {
 // Partial direkt einbindet: Die flache Fassung steht in jedem Container für
 // sich, die zweispaltige braucht .ctp-events--detail um sich herum.
 $detailContext = isset($detailContext) && $detailContext === 'page' ? 'page' : 'popup';
+
+// Derselbe Rueckfall wie bei den Knoepfen weiter unten: Wer dieses Partial
+// direkt einbindet, hat die Einstellung nicht mitgeschickt - dann gibt es
+// kein Kennzeichen, und die Ansicht sieht aus wie vor dieser Fassung.
+$ctpLiveLabel = isset($liveLabel) ? (string) $liveLabel : '';
 
 /*
  * „share" steht seit 1.17.0 fest in DetailDesign::ELEMENT_KEYS, ist aber der
@@ -120,7 +126,11 @@ $ctpElement = CTP_PLUGIN_DIR . 'includes/Frontend/templates/partials/event-detai
  *
  * @var callable(string[]): void $ctpRender
  */
-$ctpRender = static function (array $keys) use ($ctpElement, $ctpAktionen, $event, $detailContext): void {
+$ctpRender = static function (array $keys) use ($ctpElement, $ctpAktionen, $event, $detailContext, $ctpLiveLabel): void {
+    // Das Element-Partial liest `$liveLabel`, wie es `$key` liest - beide
+    // werden hier gesetzt, nicht als Argument uebergeben.
+    $liveLabel = $ctpLiveLabel;
+
     foreach ($keys as $key) {
         if (in_array($key, $ctpAktionen, true)) {
             if ($key !== $ctpAktionen[0]) {

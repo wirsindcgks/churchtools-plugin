@@ -14,6 +14,7 @@ use ChurchToolsPlugin\Frontend\DetailDesign;
 use ChurchToolsPlugin\Frontend\EventFormatter;
 use ChurchToolsPlugin\Frontend\EventWindow;
 use ChurchToolsPlugin\Frontend\Icons;
+use ChurchToolsPlugin\Frontend\LiveBadge;
 use ChurchToolsPlugin\Groups\GroupSettings;
 use ChurchToolsPlugin\Log;
 use ChurchToolsPlugin\Security\ApiKey;
@@ -468,6 +469,14 @@ final class SettingsPage
         add_settings_field('corner_style', __('Ecken', 'churchtools-plugin'), [$this, 'renderCornerStyleField'], $designStylePage, 'ctp_design_look');
         add_settings_field('accent_color', __('Akzentfarbe', 'churchtools-plugin'), [$this, 'renderAccentColorField'], $designStylePage, 'ctp_design_look');
         add_settings_field('button_color', __('Buttonfarbe', 'churchtools-plugin'), [$this, 'renderButtonColorField'], $designStylePage, 'ctp_design_look');
+        /*
+         * Steht hier und nicht unter „Aufbau der Kachel": Das Kennzeichen
+         * erscheint in allen vier Ansichten *und* in der Detailansicht,
+         * genau wie Ecken, Akzent- und Buttonfarbe daneben - der Abschnitt
+         * „Kachel" ist laut seinem eigenen Kommentar denen vorbehalten, die
+         * nur dort wirken.
+         */
+        add_settings_field('live_label', __('Laufende Termine', 'churchtools-plugin'), [$this, 'renderLiveLabelField'], $designStylePage, 'ctp_design_look');
 
         $designTilePage = self::PAGE_SLUG . '_design_tile';
         add_settings_section('ctp_design_order', __('Aufbau der Kachel', 'churchtools-plugin'), '__return_false', $designTilePage);
@@ -679,6 +688,15 @@ final class SettingsPage
             }
         }
 
+        // Leer ist ein gueltiger Wert und bedeutet „kein Kennzeichen" - das
+        // leere Feld ist der Ausschalter. Deshalb array_key_exists() und nicht
+        // eine Pruefung auf einen nichtleeren String: Sonst liesse sich das
+        // Kennzeichen nie wieder abschalten.
+        $liveLabel = $existing['live_label'] ?? '';
+        if (array_key_exists('live_label', $input)) {
+            $liveLabel = LiveBadge::sanitizeLabel((string) $input['live_label']);
+        }
+
         return [
             'instance' => array_key_exists('instance', $input)
                 ? self::sanitizeInstance((string) $input['instance'])
@@ -722,6 +740,7 @@ final class SettingsPage
                 ? (bool) $input['button_color_enabled']
                 : $existing['button_color_enabled'],
             'button_color' => $buttonColor,
+            'live_label' => $liveLabel,
             'click_behavior' => $clickBehavior,
             'detail_page_id' => $detailPageId,
             'detail_element_order' => array_key_exists('detail_element_order', $input)
@@ -1781,6 +1800,33 @@ final class SettingsPage
     }
 
     /**
+     * Das Wort, das an einem gerade laufenden Termin steht.
+     *
+     * Ein freies Textfeld und keine Auswahlliste: „Läuft gerade", „Live",
+     * „Jetzt", „Wir sind dabei" - welches davon passt, ist eine Frage des
+     * Tonfalls der Gemeinde und nicht eine, auf die dieses Plugin drei
+     * richtige Antworten kennt.
+     *
+     * Das leere Feld ist zugleich der Ausschalter, statt dass ein Kästchen
+     * daneben stünde: Ein Kennzeichen ohne Wort gibt es nicht, ein zweites
+     * Bedienelement für denselben Sachverhalt wäre eine Stelle mehr, an der
+     * beide auseinanderlaufen können. Der Hinweistext sagt das ausdrücklich -
+     * ohne ihn wäre es eine versteckte Nebenwirkung.
+     */
+    public function renderLiveLabelField(): void
+    {
+        printf(
+            '<input type="text" id="ctp-design-live-label" name="%1$s[live_label]" value="%2$s" class="regular-text" maxlength="%3$d" />',
+            esc_attr(self::OPTION_KEY),
+            esc_attr((string) Settings::get()['live_label']),
+            (int) LiveBadge::MAX_LABEL_LENGTH
+        );
+        echo '<p class="description">'
+            . esc_html__('Steht neben dem Namen, solange ein Termin gerade stattfindet – in allen Ansichten. Leer lassen schaltet das Kennzeichen ab.', 'churchtools-plugin')
+            . '</p>';
+    }
+
+    /**
      * Hidden "[]" marker before the checkboxes, same reasoning as
      * renderKeepDataOnUninstallField()'s single hidden input: without it, an
      * all-unchecked submit posts no "hidden_elements" key at all, which
@@ -2139,6 +2185,11 @@ final class SettingsPage
             $settings['button_color_enabled'] ? $settings['button_color'] : ''
         );
         $hidden = $settings['hidden_elements'];
+        // Das Kennzeichen steht in der Vorschau *immer* sichtbar, sobald ein
+        // Wort eingestellt ist - anders als im Frontend, wo ein Skript es an
+        // die Uhr bindet. Die Vorschau zeigt, wie es aussieht, nicht wann es
+        // erscheint; ein Beispiel-Termin am 24.12. laeuft ohnehin nie gerade.
+        $liveLabel = LiveBadge::sanitizeLabel((string) $settings['live_label']);
         ?>
         <div class="ctp-panel">
             <h2><?php esc_html_e('Vorschau', 'churchtools-plugin'); ?></h2>
@@ -2161,6 +2212,10 @@ final class SettingsPage
                                 </span>
                                 <span class="ctp-events__title">
                                     <?php esc_html_e('Beispiel-Termin', 'churchtools-plugin'); ?>
+                                    <span class="ctp-events__badge ctp-events__badge--live" id="ctp-design-live-preview" <?php echo $liveLabel === '' ? 'hidden' : ''; ?>>
+                                        <span class="ctp-events__live-dot" aria-hidden="true"></span>
+                                        <span id="ctp-design-live-preview-text"><?php echo esc_html($liveLabel); ?></span>
+                                    </span>
                                 </span>
                                 <span class="ctp-events__subtitle" data-key="subtitle" <?php echo in_array('subtitle', $hidden, true) ? 'hidden' : ''; ?>>
                                     <?php esc_html_e('Untertitel-Beispiel', 'churchtools-plugin'); ?>
@@ -2909,6 +2964,16 @@ final class SettingsPage
                 'icon' => 'format-image',
                 'value' => $ratioLabels[$settings['media_aspect_ratio']] ?? $settings['media_aspect_ratio'],
                 'label' => __('Bild-Seitenverhältnis', 'churchtools-plugin'),
+            ],
+            [
+                // Das eingestellte Wort selbst statt „An"/„Aus": Es ist die
+                // ganze Einstellung, und in Anfuehrungszeichen ist sofort
+                // erkennbar, dass es woertlich so auf der Kachel steht.
+                'icon' => 'clock',
+                'value' => trim((string) $settings['live_label']) !== ''
+                    ? sprintf('„%s“', (string) $settings['live_label'])
+                    : __('Aus', 'churchtools-plugin'),
+                'label' => __('Laufende Termine', 'churchtools-plugin'),
             ],
         ];
     }

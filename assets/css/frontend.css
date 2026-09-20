@@ -983,6 +983,104 @@
     text-transform: uppercase;
 }
 
+/*
+ * Das Kennzeichen an einem Termin, der gerade laeuft (siehe
+ * Frontend\LiveBadge und die Umschaltung in frontend.js).
+ *
+ * Bewusst dieselbe Pille wie „Ganztaegig" daneben, nur um den Punkt ergaenzt:
+ * Es steht in derselben Zeile wie der Terminname und soll dort nicht lauter
+ * sein als der Name selbst. Was es vom Nachbarn unterscheidet, ist die
+ * Bewegung - und die traegt der Punkt allein.
+ *
+ * Keine eigene Farbe: currentColor ist die Kalenderfarbe, die die Pille
+ * ohnehin fuehrt. Eine feste Signalfarbe (Rot) haette neben einer beliebig
+ * eingestellten Kalenderfarbe stehen muessen, und gegen einen hellen
+ * Kalenderton waere weisse Schrift auf gefuellter Pille nicht mehr lesbar
+ * gewesen.
+ *
+ * Ein Theme, das die ganze Kachel kennzeichnen will, kommt ueber
+ * `:has(.ctp-events__badge--live:not([hidden]))` an sie heran.
+ */
+.ctp-events__badge--live {
+    gap: 0.45em;
+}
+
+/*
+ * Ohne eine Regel dieser Art stuende das Kennzeichen an jedem Termin, auch am
+ * laengst vergangenen: Die UA-Regel `[hidden] { display: none }` steht im
+ * schwaechsten Ursprung der Kaskade, und `.ctp-events__badge { display:
+ * inline-flex }` darueber schlaegt sie.
+ *
+ * Gefangen wuerde das heute schon von `.ctp-events [hidden]` weiter unten
+ * (0,1,1 gegen 0,1,0), und alle Einbauorte liegen in einem solchen Container -
+ * auch das Popup und die Vorschau im Backend. Die eigene Regel steht hier
+ * trotzdem, und zwar wegen des Unterschieds zu jenem Nachbarn: Dort ist
+ * `hidden` eine Zutat (ein weggefiltertes Listenelement ist ohne sie bloss
+ * sichtbar), hier ist es die ganze Zusicherung. Die Behauptung „laeuft
+ * gerade" haelt nichts anderes zurueck, und sie soll nicht davon abhaengen,
+ * welchen Vorfahren das Markup gerade hat.
+ */
+.ctp-events__badge--live[hidden] {
+    display: none;
+}
+
+.ctp-events__live-dot {
+    position: relative;
+    flex-shrink: 0;
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/*
+ * Der Ring, der aus dem Punkt laeuft. Als Pseudo-Element und nicht als
+ * Animation auf dem Punkt selbst: Der Punkt soll stehen bleiben, damit das
+ * Kennzeichen auch im Standbild - Screenshot, Ausdruck, reduzierte Bewegung -
+ * vollstaendig ist.
+ */
+.ctp-events__live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/*
+ * Der Puls wird zugeschaltet und nicht abgeschaltet - dieselbe Richtung wie
+ * bei den uebrigen Bewegungen dieser Datei. Der Unterschied ist nicht nur
+ * Stilfrage: Wo die Abfrage gar nicht beantwortet wird, faellt ein
+ * `reduce`-Block aus und die Bewegung liefe trotzdem. So herum steht das
+ * Kennzeichen im Zweifel still, und still sagt es seine Sache ebenso - die
+ * Bewegung ist die Zugabe, nicht die Aussage.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    .ctp-events__live-dot::after {
+        animation: ctp-live-pulse 2.4s ease-out infinite;
+    }
+}
+
+@keyframes ctp-live-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    70%,
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+/* Siehe .ctp-events__detail-title unten: In den Kacheln ist .ctp-events__title
+   ein Flex-Container und stellt die Pille selbst mittig, die beiden grossen
+   Ueberschriften tun das nicht und setzten sie auf die Grundlinie. */
+.ctp-events__hero-title .ctp-events__badge {
+    vertical-align: middle;
+}
+
 /* frontend.js toggles the native [hidden] attribute on filtered-out items and
  * empty month dividers (see updateMonthDividers()/applyToolbarState()) — the
  * browser's own "[hidden] { display: none }" UA rule normally handles that on
