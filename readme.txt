@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.35.5
+Stable tag: 1.36.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -285,6 +285,10 @@ Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert
 
 == Upgrade Notice ==
 
+= 1.36.0 =
+
+Termine, die gerade stattfinden, bekommen ein Kennzeichen „Jetzt“ neben ihrem Namen. Das Wort ist unter „Einstellungen → Design“ im Bereich „Stil“ änderbar, ein leeres Feld schaltet es ab. Behebt außerdem die Meldung „Nicht getestet“ unter Dashboard → Aktualisierungen. Bestehende Einstellungen bleiben unverändert.
+
 = 1.35.5 =
 
 E-Mail-Adressen aus ChurchTools (etwa in Untertiteln) stehen nicht mehr im Klartext im Quelltext, sondern verschleiert wie in Beschreibungen. Kacheln und Popup sind weiß statt cremefarben, sofern das Theme keine eigene Grundfarbe setzt. Einstellungen bleiben unverändert.
@@ -508,6 +512,12 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.36.0 =
+
+* Neu: Termine, die gerade stattfinden, tragen ein Kennzeichen neben ihrem Namen – eine Pille mit pulsierendem Punkt in der Farbe des Kalenders, in allen Ansichten und in der Detailansicht. Ganztägige und mehrtägige Termine tragen es an jedem ihrer Tage
+* Neu: Das Wort dafür ist frei wählbar unter „Einstellungen → Design“ im Bereich „Stil“ bei „Laufende Termine“ (ab Werk „Jetzt“); ein leeres Feld schaltet das Kennzeichen ab. Ob ein Termin läuft, entscheidet der Browser, damit die Angabe auch aus einem Full-Page-Cache stimmt
+* Behoben: Dashboard → Aktualisierungen meldete „Kompatibilität mit WordPress X: Nicht getestet“, weil update.json das Feld `tested` nicht trug; es kommt jetzt aus readme.txt und wird innerhalb desselben Zweigs auf die laufende Punktversion gehoben
 
 = 1.35.5 =
 

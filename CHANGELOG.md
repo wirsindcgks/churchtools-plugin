@@ -5,6 +5,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.36.0] - 2026-09-20
+
+### Added
+
+- **Termine, die gerade stattfinden, tragen ein Kennzeichen neben ihrem Namen.** Eine Pille mit pulsierendem Punkt in der Farbe des Kalenders, in Liste, Raster, „Nächster Termin“ und Detailansicht. Ganztägige und mehrtägige Termine tragen es an jedem ihrer Tage. Das Wort steht unter *Einstellungen → Design → Stil* bei „Laufende Termine“, ab Werk „Jetzt“ – ein leeres Feld schaltet das Kennzeichen ab. Ob ein Termin gerade läuft, entscheidet der Browser und nicht der Server: Nur so stimmt die Angabe auch auf einer Seite aus dem Full-Page-Cache. Ohne JavaScript erscheint das Kennzeichen nicht.
+
+### Fixed
+
+- **„Kompatibilität mit WordPress X: Nicht getestet“ unter Dashboard → Aktualisierungen.** `update.json` trug das Feld `tested` gar nicht, aus dem WordPress diesen Satz baut – neben Plugins von wordpress.org, die „Ja (laut Autor)“ melden, las sich das wie eine Warnung. Der Wert kommt jetzt aus `readme.txt` („Tested up to“) und wird innerhalb desselben Zweigs auf die laufende Punktversion gehoben, wie api.wordpress.org es für Plugins aus dem Verzeichnis tut. Damit verschwindet auch die gelbe Warnung im Fenster hinter „Details anzeigen“. `Tested up to` steht jetzt auf 7.1.
+
 ## [1.35.5] - 2026-09-18
 
 ### Changed
