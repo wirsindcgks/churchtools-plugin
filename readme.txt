@@ -4,7 +4,7 @@ Tags: churchtools, calendar, events, sync
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.36.0
+Stable tag: 1.36.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,7 +61,7 @@ Termine lassen sich per Shortcode, Gutenberg-Block oder WPBakery-Element einbind
 
 = Die drei Ansichten =
 
-**Liste** – kompakte Zeilen mit Datums-Chip, Kalendername, Titel, Untertitel sowie Uhrzeit und Ort (mit Icons).
+**Liste** – kompakte Zeilen mit Datums-Chip, Titel, Untertitel sowie Uhrzeit und Ort (mit Icons); der Kalendername steht rechts auf Höhe des Datums-Chips, auf schmalen Bildschirmen unter dem Text.
 
 `[ctp_events calendar="Gottesdienste" layout="list"]`
 
@@ -284,6 +284,10 @@ Ja. Unter Einstellungen → Datenschutz → „Richtlinien-Leitfaden“ steht ei
 Da Termindaten aus ChurchTools lokal auf dem eigenen WordPress-Server dupliziert werden, ist die Nutzung dieses Plugins bei der Bewertung des Verarbeitungsverzeichnisses/AVV-Bedarfs für die jeweilige ChurchTools-Instanz zu berücksichtigen.
 
 == Upgrade Notice ==
+
+= 1.36.1 =
+
+In der Liste und bei „Weitere Termine“ steht der Kalendername jetzt rechts neben dem Text, auf Höhe des Datums-Chips – die Zeilen werden flacher. Bestehende Einstellungen bleiben unverändert.
 
 = 1.36.0 =
 
@@ -512,6 +516,10 @@ Behebt mehrere Fehler rund um Antworten der ChurchTools-API, die als „nichts v
 Release-Kandidat vor 1.0.0. Enthält einen Fix, der den Button „Kalender von ChurchTools laden“ wieder funktionsfähig macht, und stellt den WP-Cron-Termin erstmals tatsächlich auf das im Tab „Synchronisation“ gewählte Intervall um. Nach dem Update einmal die Plugin-Seite im Backend aufrufen, damit der Zeitplan korrigiert wird.
 
 == Changelog ==
+
+= 1.36.1 =
+
+* Geändert: In der Liste und bei „Weitere Termine“ unter „Nächster Termin“ steht der Kalendername rechts neben dem Text, auf Höhe des Datums-Chips, statt als eigene Zeile über dem Titel. Die Zeilen werden dadurch flacher. Ist die Liste schmaler als etwa 510 Pixel, steht er unter dem Text. Seine Position aus der Reihenfolge im Design-Tab gilt dort nicht mehr; Raster und der große Termin von „Nächster Termin“ folgen ihr weiter
 
 = 1.36.0 =
 

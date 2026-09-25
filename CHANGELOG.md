@@ -5,6 +5,12 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 Versionierung folgt [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.36.1] - 2026-09-25
+
+### Changed
+
+- **Der Kalendername steht in der Liste rechts neben dem Text.** In der Liste und bei „Weitere Termine“ unter „Nächster Termin“ stand er bisher als eigene Zeile über dem Titel. Jetzt steht er rechts, auf Höhe des Datums-Chips, und nutzt die Breite, die dort frei blieb – jede Zeile wird um die Höhe der Pille flacher. Ist die Liste schmaler als etwa 510 Pixel, steht er unter dem Text; gemessen wird an der Liste, nicht am Fenster. Seine Position aus der Reihenfolge unter *Einstellungen → Design* gilt in diesen Zeilen deshalb nicht mehr, ein Hinweis dort sagt das; Raster und der große Termin von „Nächster Termin“ folgen ihr weiter. Im Markup steht der Name jetzt nach dem Titel, Vorleseprogramme nennen also erst den Termin, dann den Kalender. Screenshots in README und Doku neu.
+
 ## [1.36.0] - 2026-09-20
 
 ### Added
