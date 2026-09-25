@@ -76,11 +76,6 @@ if (!defined('ABSPATH')) {
             </span>
         <?php endif; ?>
         <span class="ctp-events__body">
-            <?php if (!in_array('calendar', $args['hidden_elements'], true) && $event['calendar_name'] !== '') : ?>
-                <span class="ctp-events__eyebrow">
-                    <?php echo esc_html($event['calendar_name']); ?>
-                </span>
-            <?php endif; ?>
             <span class="ctp-events__title">
                 <?php if ($event['calendar_name'] === '' && $event['calendar_color'] !== '') : ?>
                     <span class="ctp-events__color-dot" aria-hidden="true"></span>
@@ -129,6 +124,20 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CardDesign::renderSeparators() builds its own escaped markup, same trust boundary as $args['design_style'] above. ?>
             <?php echo $args['design_separators']; ?>
+            <?php
+            /*
+             * Der Kalendername steht in den Zeilen nicht an seiner Position aus dem
+             * Design-Tab, sondern rechts neben dem Text (auf schmalen Zeilen unter
+             * ihm, siehe .ctp-events__item .ctp-events__eyebrow in frontend.css).
+             * Deshalb steht er im Markup am Ende: Vorleser nennen erst den Titel,
+             * dann den Kalender - dieselbe Folge, die man auf dem Bildschirm liest.
+             */
+            ?>
+            <?php if (!in_array('calendar', $args['hidden_elements'], true) && $event['calendar_name'] !== '') : ?>
+                <span class="ctp-events__eyebrow">
+                    <?php echo esc_html($event['calendar_name']); ?>
+                </span>
+            <?php endif; ?>
         </span>
         <?php if ($args['click_behavior'] === 'popup') : ?>
             <?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- detail_html is this same event's fields already individually escaped by partials/event-detail-content.php, just pre-rendered server-side (see EventListRenderer::withCalendarMeta()). ?>

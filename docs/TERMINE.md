@@ -14,7 +14,7 @@ Alle drei benutzen denselben Unterbau und können dasselbe:
 
 | Ansicht | `layout` | Beschreibung |
 | --- | --- | --- |
-| **Liste** | `list` | Kompakte Zeilen mit Datums-Chip, Kategorie, Titel, Zeit und Ort; mit `month_dividers="1"` nach Monaten gruppiert. |
+| **Liste** | `list` | Kompakte Zeilen mit Datums-Chip, Titel, Zeit und Ort, die Kategorie rechts daneben; mit `month_dividers="1"` nach Monaten gruppiert. |
 | **Raster** | `grid` | Bild, Datums-Badge und ein kurzer Auszug, Spaltenzahl einstellbar. Termine ohne eigenes Bild bekommen eine Fläche in der Farbe ihres Kalenders. |
 | **Nächster Termin** | `upcoming` | Eine große Kachel für den nächsten Termin, darunter die folgenden in Kurzform. |
 

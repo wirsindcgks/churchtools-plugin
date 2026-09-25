@@ -1620,6 +1620,7 @@ final class SettingsPage
         <ul class="description ctp-hint-list">
             <li><?php esc_html_e('Das Bild steht über oder unter dem Text, nie dazwischen.', 'churchtools-plugin'); ?></li>
             <li><?php esc_html_e('Trennlinien und Abstände lassen sich beliebig oft einfügen und per „×“ wieder entfernen.', 'churchtools-plugin'); ?></li>
+            <li><?php esc_html_e('In der Liste und bei „Weitere Termine“ steht der Kalendername immer rechts neben dem Text, auf schmalen Bildschirmen darunter.', 'churchtools-plugin'); ?></li>
         </ul>
         <?php
     }
